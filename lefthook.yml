@@ -3,10 +3,10 @@ pre-commit:
   commands:
     lint:
       glob: "**/*.{ts,html}"
-      run: "eslint --fix {staged_files}"
+      run: "bunx eslint --fix {staged_files}"
     format:
       glob: "**/*.{ts,html,css,json}"
-      run: "prettier --write {staged_files}"
+      run: "bunx prettier --write {staged_files}"
 
 commit-msg:
   commands:
