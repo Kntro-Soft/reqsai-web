@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
@@ -26,6 +27,7 @@ function toList(csv: string): string[] {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -151,7 +153,12 @@ function toList(csv: string): string[] {
             <ul class="grid gap-3 sm:grid-cols-2">
               @for (project of store.projects(); track project.id) {
                 <li hlmCard class="p-4" data-testid="project-row">
-                  <p class="font-medium">{{ project.name }}</p>
+                  <a
+                    [routerLink]="['/projects', project.id, 'sessions']"
+                    class="font-medium hover:underline"
+                  >
+                    {{ project.name }}
+                  </a>
                   <p class="text-sm text-muted-foreground">
                     {{ project.architecture }} · {{ project.domain }}
                   </p>

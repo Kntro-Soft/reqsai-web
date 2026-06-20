@@ -34,6 +34,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
       },
+      {
+        path: 'projects/:projectId/sessions',
+        title: 'Sesiones · Reqs-AI',
+        loadComponent: () =>
+          import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
+      },
+      {
+        path: 'projects/:projectId/sessions/:sessionId',
+        title: 'Sesión · Reqs-AI',
+        loadComponent: () =>
+          import('./features/discovery/pages/session-detail/session-detail').then(
+            (m) => m.SessionDetail,
+          ),
+      },
     ],
   },
 
