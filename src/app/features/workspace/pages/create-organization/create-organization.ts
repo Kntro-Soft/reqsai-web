@@ -9,9 +9,6 @@ import {
   HlmButton,
   HlmCard,
   HlmCardContent,
-  HlmCardDescription,
-  HlmCardHeader,
-  HlmCardTitle,
   HlmInput,
   HlmLabel,
   HlmSpinner,
@@ -24,50 +21,68 @@ import {
     ReactiveFormsModule,
     HlmButton,
     HlmCard,
-    HlmCardHeader,
-    HlmCardTitle,
-    HlmCardDescription,
     HlmCardContent,
     HlmInput,
     HlmLabel,
     HlmSpinner,
   ],
   template: `
-    <div hlmCard class="mx-auto max-w-lg">
-      <div hlmCardHeader>
-        <h1 hlmCardTitle>Crea tu organización</h1>
-        <p hlmCardDescription>
-          Tu organización es tu espacio de trabajo. Podrás crear proyectos dentro de ella.
-        </p>
+    <div class="mx-auto flex max-w-lg flex-col gap-6 py-6">
+      <div class="flex flex-col items-center gap-3 text-center">
+        <span class="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Crea tu organización</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de
+            descubrimiento.
+          </p>
+        </div>
       </div>
-      <div hlmCardContent>
-        <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <label hlmLabel for="name">Nombre de la organización</label>
-            <input hlmInput id="name" formControlName="name" placeholder="Acme Inc." />
-          </div>
 
-          <div class="flex flex-col gap-2">
-            <label hlmLabel for="meetingLanguage">Idioma de reuniones</label>
-            <input
-              hlmInput
-              id="meetingLanguage"
-              formControlName="meetingLanguage"
-              placeholder="es-PE"
-            />
-          </div>
+      <div hlmCard>
+        <div hlmCardContent class="pt-6">
+          <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <label hlmLabel for="name">Nombre de la organización</label>
+              <input hlmInput id="name" formControlName="name" placeholder="Acme Inc." />
+            </div>
 
-          @if (errorMessage()) {
-            <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
-          }
+            <div class="flex flex-col gap-2">
+              <label hlmLabel for="meetingLanguage">Idioma de reuniones</label>
+              <input
+                hlmInput
+                id="meetingLanguage"
+                formControlName="meetingLanguage"
+                placeholder="es-PE"
+              />
+            </div>
 
-          <button hlmBtn type="submit" [disabled]="form.invalid || loading()" class="mt-2">
-            @if (loading()) {
-              <hlm-spinner class="h-4 w-4" />
+            @if (errorMessage()) {
+              <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
             }
-            Crear y continuar
-          </button>
-        </form>
+
+            <button hlmBtn type="submit" [disabled]="form.invalid || loading()" class="mt-2">
+              @if (loading()) {
+                <hlm-spinner class="h-4 w-4" />
+              }
+              Crear y continuar
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   `,
