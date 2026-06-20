@@ -24,9 +24,6 @@ follows to keep the repository organized, the history clean, and the build green
 - **Docker** + Docker Compose (optional — to run the full stack locally)
 - Access to the `Kntro-Soft/reqsai-web` repository
 
-The backend lives in [`reqsai-api`](../reqsai-api). You do not need it running to develop UI
-components, but you need it for integration work (authentication, real API calls).
-
 ## Local Setup
 
 ```bash
@@ -63,7 +60,7 @@ before a PR can be merged. The CI workflow runs lint → test → build in seque
 
 ## Project Structure
 
-The frontend mirrors the backend bounded contexts:
+The frontend mirrors the backend-bounded contexts:
 
 ```
 src/app/
@@ -184,6 +181,22 @@ docs(adr): record state management decision
 - Fill out the PR template honestly; do not self-merge without review.
 - Keep PRs scoped to one feature module / concern where possible.
 
+## Dependency Security
+
+The CI pipeline includes a weekly dependency audit powered by `bun audit` (built into Bun 1.2+):
+
+```bash
+bun audit --audit-level=critical
+```
+
+- **Critical CVEs** → exit non-zero, fail the build.
+- **High/Moderate/Low** → printed in output, not blocking.
+
+If a critical CVE has no fix available yet, open an issue tracking it and unblock CI by
+temporarily raising the level to `high` in the workflow — never silence it without a ticket.
+
+Run the audit locally before opening a PR if you changed any dependency in `package.json`.
+
 ## Updating the CHANGELOG
 
 Add your change under `## [Unreleased]` in [`CHANGELOG.md`](../CHANGELOG.md) following
@@ -194,5 +207,5 @@ Add your change under `## [Unreleased]` in [`CHANGELOG.md`](../CHANGELOG.md) fol
 ### Added
 - iam: login page with JWT authentication flow
 ### Fixed
-- discovery: SSE stream not closed on component destroy
+- discovery: SSE stream is not closed on component destruction
 ```
