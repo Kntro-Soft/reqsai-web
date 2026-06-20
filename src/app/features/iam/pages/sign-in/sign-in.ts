@@ -75,6 +75,12 @@ import {
           </button>
         </form>
 
+        <p class="mt-4 text-center text-sm">
+          <a routerLink="/auth/forgot-password" class="text-muted-foreground hover:underline">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
+
         <p class="mt-6 text-center text-sm text-muted-foreground">
           ¿No tienes cuenta?
           <a routerLink="/auth/sign-up" class="text-primary font-medium hover:underline">
@@ -114,8 +120,8 @@ export class SignIn {
 
   private messageFor(err: HttpErrorResponse): string {
     if (err.status === 401) return 'Correo o contraseña incorrectos.';
-    // Backend returns 400 ACCOUNT_NOT_ACTIVE when the email is unverified.
-    if (err.status === 400) return 'Verifica tu correo antes de iniciar sesión.';
+    // Backend returns 403 ACCOUNT_NOT_ACTIVE when the email is unverified.
+    if (err.status === 403) return 'Verifica tu correo antes de iniciar sesión.';
     return 'No se pudo iniciar sesión. Intenta de nuevo.';
   }
 }

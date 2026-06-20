@@ -22,6 +22,18 @@ export const IAM_ROUTES: Routes = [
         title: 'Verificar correo · Reqs-AI',
         loadComponent: () => import('./pages/verify-email/verify-email').then((m) => m.VerifyEmail),
       },
+      {
+        path: 'forgot-password',
+        title: 'Recuperar contraseña · Reqs-AI',
+        loadComponent: () =>
+          import('./pages/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+      },
+      {
+        path: 'reset-password',
+        title: 'Nueva contraseña · Reqs-AI',
+        loadComponent: () =>
+          import('./pages/reset-password/reset-password').then((m) => m.ResetPassword),
+      },
     ],
   },
 ];

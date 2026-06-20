@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, map, share, tap } from 'rxjs';
+import { Observable, map, of, share, switchMap, tap } from 'rxjs';
 import { AuthStore } from './auth.store';
 import {
   AuthResponse,
@@ -67,8 +67,12 @@ export class AuthService {
     this.pendingRefresh$ = this.http
       .post<AuthResponse>(`${BASE}/refresh`, {}, { withCredentials: true })
       .pipe(
-        tap((res) => this.store.setSession(res)),
-        map((): void => void 0),
+        switchMap((res) => {
+          this.store.setSession(res);
+          // The refresh response carries no user profile, so reload it to keep
+          // the in-memory session whole across page reloads.
+          return res.user ? of(void 0) : this.loadCurrentUser();
+        }),
         share({ resetOnComplete: true, resetOnError: true, resetOnRefCountZero: true }),
       );
 
@@ -79,6 +83,14 @@ export class AuthService {
     });
 
     return this.pendingRefresh$;
+  }
+
+  /** Loads the current user profile (GET /api/users/me) into the store. */
+  loadCurrentUser(): Observable<void> {
+    return this.http.get<UserResponse>('/api/users/me').pipe(
+      tap((user) => this.store.setUser(user)),
+      map((): void => void 0),
+    );
   }
 
   logout(): void {

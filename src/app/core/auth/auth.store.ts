@@ -28,6 +28,10 @@ export class AuthStore {
     this._organizationId.set(res.organizationId);
   }
 
+  setUser(user: UserResponse): void {
+    this._user.set(user);
+  }
+
   setOrganizationId(orgId: string | null): void {
     this._organizationId.set(orgId);
   }

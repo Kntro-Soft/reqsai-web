@@ -1,24 +1,53 @@
-import { expect, test } from '@playwright/test';
-import { getVerificationToken } from './helpers/mailpit';
+import { expect, Page, test } from '@playwright/test';
+import { getResetToken, getVerificationToken } from './helpers/mailpit';
+import { registerAccount, registerVerified, uniqueEmail } from './helpers/auth';
 
 const PASSWORD = 'Passw0rd!23';
 
-function uniqueEmail(): string {
-  // Date.now() + random keeps parallel workers from colliding.
-  return `e2e.${Date.now()}.${Math.floor(Math.random() * 1e6)}@example.com`;
+async function uiLogin(page: Page, email: string, password: string): Promise<void> {
+  await page.goto('/auth/sign-in');
+  await page.getByLabel('Correo electrónico').fill(email);
+  await page.getByLabel('Contraseña').fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
 }
 
-test.describe('IAM authentication flow', () => {
+test.describe('IAM authentication', () => {
   test('redirects an anonymous visitor to sign-in', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/auth\/sign-in/);
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
   });
 
-  test('register → verify email → sign in', async ({ page, request }) => {
+  test('register → verify email → sign in (full UI flow)', async ({ page, request }) => {
     const email = uniqueEmail();
 
-    // 1. Register a new account.
+    await page.goto('/auth/sign-up');
+    await page.getByLabel('Nombre').fill('E2E');
+    await page.getByLabel('Apellido').fill('Tester');
+    await page.getByLabel('Correo electrónico').fill(email);
+    await page.getByLabel('Contraseña').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Crear cuenta' }).click();
+    await expect(page).toHaveURL(/\/auth\/verify-email/);
+
+    const token = await getVerificationToken(request, email);
+    await page.goto(`/auth/verify-email?token=${token}`);
+    await expect(page.getByTestId('verify-success')).toBeVisible();
+
+    await uiLogin(page, email, PASSWORD);
+    await expect(page).toHaveURL(/\/home/);
+    await expect(page.getByRole('heading', { name: /Hola, E2E/ })).toBeVisible();
+  });
+
+  test('rejects sign-in with wrong credentials', async ({ page }) => {
+    await uiLogin(page, 'nobody@example.com', 'wrong-password');
+    await expect(page.getByTestId('form-error')).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+  });
+
+  test('blocks duplicate registration', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerAccount(request, email, PASSWORD);
+
     await page.goto('/auth/sign-up');
     await page.getByLabel('Nombre').fill('E2E');
     await page.getByLabel('Apellido').fill('Tester');
@@ -26,31 +55,72 @@ test.describe('IAM authentication flow', () => {
     await page.getByLabel('Contraseña').fill(PASSWORD);
     await page.getByRole('button', { name: 'Crear cuenta' }).click();
 
-    // Lands on the "check your inbox" screen.
-    await expect(page).toHaveURL(/\/auth\/verify-email/);
+    await expect(page.getByTestId('form-error')).toContainText('Ya existe');
+    await expect(page).toHaveURL(/\/auth\/sign-up/);
+  });
 
-    // 2. Pull the verification token from the email and open the link.
-    const token = await getVerificationToken(request, email);
-    await page.goto(`/auth/verify-email?token=${token}`);
-    await expect(page.getByTestId('verify-success')).toBeVisible();
+  test('refuses sign-in before email verification', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerAccount(request, email, PASSWORD);
 
-    // 3. Sign in with the now-active account.
-    await page.goto('/auth/sign-in');
-    await page.getByLabel('Correo electrónico').fill(email);
-    await page.getByLabel('Contraseña').fill(PASSWORD);
-    await page.getByRole('button', { name: 'Entrar' }).click();
+    await uiLogin(page, email, PASSWORD);
+    await expect(page.getByTestId('form-error')).toContainText('Verifica');
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+  });
 
+  test('resends the verification email', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerAccount(request, email, PASSWORD);
+
+    await page.goto(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+    await page.getByRole('button', { name: 'Reenviar correo' }).click();
+    await expect(page.getByTestId('resend-ok')).toBeVisible();
+  });
+
+  test('signs out and returns to sign-in', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerVerified(request, email, PASSWORD);
+
+    await uiLogin(page, email, PASSWORD);
+    await expect(page).toHaveURL(/\/home/);
+
+    await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+    await expect(page).toHaveURL(/\/auth\/sign-in/);
+  });
+
+  test('keeps the session across a reload (silent refresh)', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerVerified(request, email, PASSWORD);
+
+    await uiLogin(page, email, PASSWORD);
+    await expect(page).toHaveURL(/\/home/);
+
+    await page.reload();
     await expect(page).toHaveURL(/\/home/);
     await expect(page.getByRole('heading', { name: /Hola, E2E/ })).toBeVisible();
   });
 
-  test('rejects sign-in with wrong credentials', async ({ page }) => {
-    await page.goto('/auth/sign-in');
-    await page.getByLabel('Correo electrónico').fill('nobody@example.com');
-    await page.getByLabel('Contraseña').fill('wrong-password');
-    await page.getByRole('button', { name: 'Entrar' }).click();
+  test('forgot password → reset → sign in with the new password', async ({ page, request }) => {
+    const email = uniqueEmail();
+    await registerVerified(request, email, PASSWORD);
 
-    await expect(page.getByTestId('form-error')).toBeVisible();
-    await expect(page).toHaveURL(/\/auth\/sign-in/);
+    // Request the reset link.
+    await page.goto('/auth/forgot-password');
+    await page.getByLabel('Correo electrónico').fill(email);
+    await page.getByRole('button', { name: 'Enviar enlace' }).click();
+    await expect(page.getByTestId('forgot-sent')).toBeVisible();
+
+    // Open the reset link and set a new password.
+    const token = await getResetToken(request, email);
+    const newPassword = 'NewPassw0rd!9';
+    await page.goto(`/auth/reset-password?token=${token}`);
+    await page.getByLabel('Contraseña', { exact: true }).fill(newPassword);
+    await page.getByLabel('Repite la contraseña').fill(newPassword);
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+    await expect(page.getByTestId('reset-success')).toBeVisible();
+
+    // The new password works.
+    await uiLogin(page, email, newPassword);
+    await expect(page).toHaveURL(/\/home/);
   });
 });
