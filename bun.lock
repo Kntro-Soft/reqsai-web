@@ -37,6 +37,7 @@
         "knip": "^6.16.1",
         "lefthook": "^2.1.9",
         "lint-staged": "^17.0.7",
+        "playwright-ng-schematics": "^22.0.0",
         "postcss": "^8.5.3",
         "prettier": "^3.8.1",
         "tailwindcss": "^4.1.12",
@@ -2133,6 +2134,8 @@
     "playwright": ["playwright@1.60.0", "", { "dependencies": { "playwright-core": "1.60.0" }, "optionalDependencies": { "fsevents": "2.3.2" }, "bin": { "playwright": "cli.js" } }, "sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA=="],
 
     "playwright-core": ["playwright-core@1.60.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA=="],
+
+    "playwright-ng-schematics": ["playwright-ng-schematics@22.0.0", "", { "dependencies": { "@angular-devkit/architect": ">= 0.2200.0 < 0.2300.0", "@angular-devkit/core": "^22.0.0", "@angular-devkit/schematics": "^22.0.0" } }, "sha512-Pvb5qyeCuyPCvUJLDqhBlllR2d4z+ItuwBXENaxggQTI+vB1Y8Ib4o3/xTPg39QYbe2WLMQ16+NYJWLT4jnl2Q=="],
 
     "pngjs": ["pngjs@7.0.0", "", {}, "sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow=="],
 

@@ -48,6 +48,7 @@
     "knip": "^6.16.1",
     "lefthook": "^2.1.9",
     "lint-staged": "^17.0.7",
+    "playwright-ng-schematics": "^22.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.1.12",

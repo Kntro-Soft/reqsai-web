@@ -56,8 +56,11 @@ import { HlmButton } from '../../shared/ui/button/hlm-button';
             <span
               class="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm"
             >
-              <span class="h-2 w-2 rounded-full" [class.bg-emerald-500]="tenant.orgId()"
-                [class.bg-muted-foreground]="!tenant.orgId()"></span>
+              <span
+                class="h-2 w-2 rounded-full"
+                [class.bg-emerald-500]="tenant.orgId()"
+                [class.bg-muted-foreground]="!tenant.orgId()"
+              ></span>
               <span class="truncate text-muted-foreground">
                 {{ tenant.orgId() ? 'Organización activa' : 'Sin organización' }}
               </span>
@@ -66,7 +69,9 @@ import { HlmButton } from '../../shared/ui/button/hlm-button';
 
           <div class="flex items-center gap-3">
             @if (store.user(); as user) {
-              <span class="hidden sm:inline text-sm text-muted-foreground">{{ user.fullName }}</span>
+              <span class="hidden sm:inline text-sm text-muted-foreground">{{
+                user.fullName
+              }}</span>
             }
             <app-theme-toggle />
             <button hlmBtn variant="ghost" size="sm" type="button" (click)="logout()">

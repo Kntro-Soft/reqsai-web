@@ -9,7 +9,6 @@
   "ignoreDependencies": [
     "@spartan-ng/cli",
     "eslint-config-prettier",
-    "lint-staged",
-    "playwright-ng-schematics"
+    "lint-staged"
   ]
 }
