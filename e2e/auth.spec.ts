@@ -34,8 +34,9 @@ test.describe('IAM authentication', () => {
     await expect(page.getByTestId('verify-success')).toBeVisible();
 
     await uiLogin(page, email, PASSWORD);
-    await expect(page).toHaveURL(/\/home/);
-    await expect(page.getByRole('heading', { name: /Hola, E2E/ })).toBeVisible();
+    // A new account has no organization yet → onboarding.
+    await expect(page).toHaveURL(/\/onboarding/);
+    await expect(page.getByRole('heading', { name: 'Crea tu organización' })).toBeVisible();
   });
 
   test('rejects sign-in with wrong credentials', async ({ page }) => {
@@ -82,7 +83,7 @@ test.describe('IAM authentication', () => {
     await registerVerified(request, email, PASSWORD);
 
     await uiLogin(page, email, PASSWORD);
-    await expect(page).toHaveURL(/\/home/);
+    await expect(page).toHaveURL(/\/onboarding/);
 
     await page.getByRole('button', { name: 'Cerrar sesión' }).click();
     await expect(page).toHaveURL(/\/auth\/sign-in/);
@@ -93,11 +94,12 @@ test.describe('IAM authentication', () => {
     await registerVerified(request, email, PASSWORD);
 
     await uiLogin(page, email, PASSWORD);
-    await expect(page).toHaveURL(/\/home/);
+    await expect(page).toHaveURL(/\/onboarding/);
 
     await page.reload();
-    await expect(page).toHaveURL(/\/home/);
-    await expect(page.getByRole('heading', { name: /Hola, E2E/ })).toBeVisible();
+    // Silent refresh keeps the session; still authenticated on reload.
+    await expect(page).toHaveURL(/\/onboarding/);
+    await expect(page.getByRole('heading', { name: 'Crea tu organización' })).toBeVisible();
   });
 
   test('forgot password → reset → sign in with the new password', async ({ page, request }) => {
@@ -121,6 +123,6 @@ test.describe('IAM authentication', () => {
 
     // The new password works.
     await uiLogin(page, email, newPassword);
-    await expect(page).toHaveURL(/\/home/);
+    await expect(page).toHaveURL(/\/onboarding/);
   });
 });

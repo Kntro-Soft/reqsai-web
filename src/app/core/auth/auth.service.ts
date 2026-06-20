@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, map, of, share, switchMap, tap } from 'rxjs';
 import { AuthStore } from './auth.store';
+import { RealtimeService } from '../realtime/realtime.service';
 import {
   AuthResponse,
   ForgotPasswordRequest,
@@ -26,6 +27,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
+  private readonly realtime = inject(RealtimeService);
 
   // Shared so several concurrent 401s collapse into a single refresh HTTP call.
   private pendingRefresh$: Observable<void> | null = null;
@@ -110,6 +112,7 @@ export class AuthService {
     this.http
       .post<void>(`${BASE}/logout`, {}, { withCredentials: true })
       .subscribe({ error: () => void 0 });
+    this.realtime.disconnect();
     this.store.clear();
     void this.router.navigate(['/auth/sign-in']);
   }

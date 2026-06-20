@@ -24,6 +24,7 @@
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
     "@spartan-ng/brain": "^0.0.1-alpha.713",
+    "@stomp/rx-stomp": "^2.4.0",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.5.0",
     "tslib": "^2.3.0"

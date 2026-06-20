@@ -6,6 +6,7 @@
     "src/app/shared/ui/index.ts",
     "src/environments/environment.ts"
   ],
+  "ignore": ["proxy.conf.js"],
   "ignoreDependencies": [
     "@spartan-ng/cli",
     "eslint-config-prettier",
