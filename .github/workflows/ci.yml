@@ -30,7 +30,7 @@ jobs:
         run: bun run lint
 
       - name: Unit tests (Vitest)
-        run: bun run test -- --run
+        run: bun run test:ci
         env:
           CI: true
 
