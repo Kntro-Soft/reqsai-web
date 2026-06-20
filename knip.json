@@ -3,16 +3,18 @@
   "entry": [
     "src/app/app.css",
     "src/styles.css",
-    "src/app/shared/ui/index.ts"
+    "src/app/shared/ui/index.ts",
+    "src/environments/environment.ts"
   ],
   "ignoreDependencies": [
     "@angular/cdk",
     "@angular/forms",
     "@spartan-ng/brain",
-    "tailwind-merge",
     "@spartan-ng/cli",
     "eslint-config-prettier",
     "prettier",
-    "tw-animate-css"
+    "tw-animate-css",
+    "lint-staged",
+    "playwright-ng-schematics"
   ]
 }
