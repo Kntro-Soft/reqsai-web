@@ -20,6 +20,20 @@ export const routes: Routes = [
         title: 'Inicio · Reqs-AI',
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
+      {
+        path: 'onboarding',
+        title: 'Crear organización · Reqs-AI',
+        loadComponent: () =>
+          import('./features/workspace/pages/create-organization/create-organization').then(
+            (m) => m.CreateOrganization,
+          ),
+      },
+      {
+        path: 'projects',
+        title: 'Proyectos · Reqs-AI',
+        loadComponent: () =>
+          import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
+      },
     ],
   },
 

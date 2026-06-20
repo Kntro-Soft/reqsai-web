@@ -93,6 +93,18 @@ export class AuthService {
     );
   }
 
+  /**
+   * Activates an organization: persists it as the user's preference, then
+   * rotates the session so the new orgId is embedded in the access token and
+   * the backend resolves its tenant schema. There is no dedicated switch
+   * endpoint — this is the supported flow.
+   */
+  switchOrganization(orgId: string): Observable<void> {
+    return this.http
+      .patch<void>('/api/users/me/preferences', { lastVisitedOrgId: orgId })
+      .pipe(switchMap(() => this.refresh()));
+  }
+
   logout(): void {
     // Fire-and-forget: the local session is cleared regardless of the response.
     this.http

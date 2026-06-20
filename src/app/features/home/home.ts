@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import {
+  HlmButton,
   HlmCard,
   HlmCardContent,
   HlmCardDescription,
@@ -9,14 +11,22 @@ import {
 } from '../../shared/ui';
 
 /**
- * Minimal authenticated landing. It confirms the session is live and shows the
- * onboarding hint; the real dashboard and the workspace/discovery features
- * replace it in later increments.
+ * Minimal authenticated landing. It confirms the session is live and routes the
+ * user onward — to onboarding when they have no organization yet, or to their
+ * projects otherwise.
  */
 @Component({
   selector: 'app-home',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardContent],
+  imports: [
+    RouterLink,
+    HlmButton,
+    HlmCard,
+    HlmCardHeader,
+    HlmCardTitle,
+    HlmCardDescription,
+    HlmCardContent,
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -34,18 +44,24 @@ import {
           <p hlmCardDescription>
             {{
               store.needsOnboarding()
-                ? 'Aún no perteneces a ninguna organización. El siguiente paso del onboarding llega pronto.'
-                : 'Ya tienes una organización activa. La gestión de proyectos llega en el próximo incremento.'
+                ? 'Aún no perteneces a ninguna organización. Crea una para empezar.'
+                : 'Ya tienes una organización activa. Gestiona tus proyectos.'
             }}
           </p>
         </div>
-        <div hlmCardContent>
+        <div hlmCardContent class="flex flex-col gap-4">
           <dl class="grid grid-cols-2 gap-3 text-sm">
             <dt class="text-muted-foreground">Usuario</dt>
             <dd>{{ store.user()?.fullName }}</dd>
             <dt class="text-muted-foreground">Organización</dt>
             <dd>{{ store.organizationId() ?? '—' }}</dd>
           </dl>
+
+          @if (store.needsOnboarding()) {
+            <a hlmBtn routerLink="/onboarding" class="w-fit">Crear organización</a>
+          } @else {
+            <a hlmBtn routerLink="/projects" class="w-fit">Ver proyectos</a>
+          }
         </div>
       </div>
     </div>

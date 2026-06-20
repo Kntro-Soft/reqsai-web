@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthStore } from '../../../../core/auth/auth.store';
 import {
   HlmButton,
   HlmCard,
@@ -94,6 +95,7 @@ import {
 export class SignIn {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
 
   protected readonly loading = signal(false);
@@ -110,7 +112,8 @@ export class SignIn {
     this.errorMessage.set(null);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => void this.router.navigate(['/home']),
+      next: () =>
+        void this.router.navigate([this.store.needsOnboarding() ? '/onboarding' : '/home']),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(this.messageFor(err));
