@@ -44,21 +44,21 @@ test.describe('Discovery realtime', () => {
 
     // start → backend broadcasts RECORDING_STARTED on the session topic.
     await page.getByRole('button', { name: 'Iniciar grabación' }).click();
-    await expect(page.getByTestId('session-status')).toHaveText('RECORDING');
+    await expect(page.getByTestId('session-status')).toHaveText('Grabando');
     await expect(
       page.getByTestId('live-event').filter({ hasText: 'Grabación iniciada' }),
     ).toBeVisible();
 
     // pause → RECORDING_PAUSED
     await page.getByRole('button', { name: 'Pausar' }).click();
-    await expect(page.getByTestId('session-status')).toHaveText('PAUSED');
+    await expect(page.getByTestId('session-status')).toHaveText('Pausada');
     await expect(
       page.getByTestId('live-event').filter({ hasText: 'Grabación pausada' }),
     ).toBeVisible();
 
     // stop → RECORDING_STOPPED
     await page.getByRole('button', { name: 'Detener' }).click();
-    await expect(page.getByTestId('session-status')).toHaveText('STOPPED');
+    await expect(page.getByTestId('session-status')).toHaveText('Detenida');
     await expect(
       page.getByTestId('live-event').filter({ hasText: 'Grabación detenida' }),
     ).toBeVisible();

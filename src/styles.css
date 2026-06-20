@@ -51,9 +51,9 @@
 
   --background: #050d1a;
   --foreground: #ffffff;
-  --card: #0a1628;
+  --card: #0c1c34;
   --card-foreground: #ffffff;
-  --popover: #0a1628;
+  --popover: #0f2040;
   --popover-foreground: #ffffff;
   --primary: #ef4444;
   --primary-foreground: #ffffff;
@@ -64,8 +64,8 @@
   --accent: #1a2b4a;
   --accent-foreground: #fecaca;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.16);
   --ring: #ef4444;
   --sidebar: #03080f;
   --sidebar-foreground: #cbd5e1;

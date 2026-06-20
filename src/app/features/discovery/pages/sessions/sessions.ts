@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DiscoveryStore } from '../../data/discovery.store';
-import { statusVariant } from '../../data/session-ui';
+import { statusLabel, statusVariant } from '../../data/session-ui';
 import {
   HlmBadge,
   HlmButton,
@@ -105,7 +105,7 @@ import {
                     {{ session.title }}
                   </a>
                   <span hlmBadge [variant]="statusVariant(session.status)">{{
-                    session.status
+                    statusLabel(session.status)
                   }}</span>
                 </li>
               }
@@ -123,6 +123,7 @@ export class Sessions {
 
   readonly projectId = input.required<string>();
   protected readonly statusVariant = statusVariant;
+  protected readonly statusLabel = statusLabel;
 
   protected readonly showForm = signal(false);
   protected readonly loading = signal(false);

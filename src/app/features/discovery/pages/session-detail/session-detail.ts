@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RealtimeService } from '../../../../core/realtime/realtime.service';
 import { DiscoveryStore } from '../../data/discovery.store';
 import { SessionRealtimeMessage } from '../../data/discovery.models';
-import { EVENT_LABEL, statusVariant } from '../../data/session-ui';
+import { EVENT_LABEL, statusLabel, statusVariant } from '../../data/session-ui';
 import {
   HlmBadge,
   HlmButton,
@@ -52,7 +52,7 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
               {{ realtime.connected() ? 'En vivo' : 'Conectando…' }}
             </span>
             <span hlmBadge [variant]="variant()" data-testid="session-status">{{
-              session.status
+              statusLabel(session.status)
             }}</span>
           </div>
         </div>
@@ -203,6 +203,7 @@ export class SessionDetail implements OnInit {
   readonly sessionId = input.required<string>();
 
   protected readonly busy = signal(false);
+  protected readonly statusLabel = statusLabel;
   protected readonly variant = computed(() => {
     const status = this.store.current()?.status;
     return status ? statusVariant(status) : 'secondary';

@@ -1,4 +1,4 @@
-// Quick visual capture of the running app (http://localhost:4200) for review.
+// Visual capture of the running app across viewports for design review.
 // Usage: node scripts/shots.mjs   (dev server + backend must be up)
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
@@ -10,44 +10,102 @@ const OUT = 'shots';
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
-async function shot(name) {
-  await page.waitForTimeout(600);
+async function cap(page, name) {
+  await page.waitForTimeout(500);
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
   console.log('saved', name);
 }
 
-await page.goto(`${BASE}/auth/sign-in`);
-await page.waitForLoadState('networkidle');
-await shot('01-signin');
-
-await page.goto(`${BASE}/auth/sign-up`);
-await shot('02-signup');
-
-// Log in with the demo account.
-await page.goto(`${BASE}/auth/sign-in`);
-await page.getByLabel('Correo electrónico').fill(EMAIL);
-await page.getByLabel('Contraseña').fill(PASSWORD);
-await page.getByRole('button', { name: 'Entrar' }).click();
-await page.waitForURL(/\/(onboarding|home|projects)/);
-await shot('03-after-login');
-
-// If onboarding, create an organization to reach projects.
-if (page.url().includes('/onboarding')) {
-  await page.getByLabel('Nombre de la organización').fill(`Demo Org ${Date.now()}`);
-  await page.getByRole('button', { name: 'Crear y continuar' }).click();
-  await page.waitForURL(/\/projects/);
+async function ctxAt(width, height) {
+  const ctx = await browser.newContext({ viewport: { width, height } });
+  return { ctx, page: await ctx.newPage() };
 }
-await shot('04-projects');
 
-// Mobile viewport of sign-in for responsiveness check.
-const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
-await mobile.goto(`${BASE}/auth/sign-in`);
-await mobile.waitForLoadState('networkidle');
-await mobile.waitForTimeout(600);
-await mobile.screenshot({ path: `${OUT}/05-signin-mobile.png`, fullPage: true });
-console.log('saved 05-signin-mobile');
+async function login(page) {
+  await page.goto(`${BASE}/auth/sign-in`);
+  await page.getByLabel('Correo electrónico').fill(EMAIL);
+  await page.getByLabel('Contraseña').fill(PASSWORD);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.waitForURL(/\/(projects|onboarding)/);
+  if (page.url().includes('/onboarding')) {
+    await page.getByLabel('Nombre de la organización').fill(`Demo Org ${Date.now()}`);
+    await page.getByRole('button', { name: 'Crear y continuar' }).click();
+    await page.waitForURL(/\/projects/);
+  }
+}
+
+async function ensureProject(page) {
+  if ((await page.getByTestId('projects-empty').count()) > 0) {
+    await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
+    await page.getByLabel('Nombre', { exact: true }).fill('Proyecto Demo');
+    await page.getByLabel('Lenguajes (coma)').fill('TypeScript');
+    await page.getByLabel('Frameworks (coma)').fill('Angular');
+    await page.getByLabel('Plataformas (coma)').fill('Web');
+    await page.getByLabel('Bases de datos (coma)').fill('PostgreSQL');
+    await page.getByLabel('Arquitectura').fill('Hexagonal');
+    await page.getByLabel('Dominio').fill('Fintech');
+    await page.getByRole('button', { name: 'Crear proyecto' }).click();
+    await page.getByTestId('project-row').first().waitFor();
+  }
+}
+
+// ---- Wide desktop 1920 ----
+{
+  const { ctx, page } = await ctxAt(1920, 1080);
+  await page.goto(`${BASE}/auth/sign-in`);
+  await page.waitForLoadState('networkidle');
+  await cap(page, 'w-01-signin');
+  await page.goto(`${BASE}/auth/sign-up`);
+  await cap(page, 'w-02-signup');
+  await page.goto(`${BASE}/auth/forgot-password`);
+  await cap(page, 'w-03-forgot');
+  await login(page);
+  await cap(page, 'w-04-projects-empty-or-list');
+  await ensureProject(page);
+  await cap(page, 'w-05-projects-filled');
+  await page.getByTestId('project-row').first().getByRole('link').click();
+  await page.waitForURL(/\/sessions$/);
+  await cap(page, 'w-06-sessions');
+  await page.getByRole('button', { name: 'Nueva sesión' }).click();
+  await page.getByLabel('Título').fill('Sesión Demo');
+  await page.getByRole('button', { name: 'Crear', exact: true }).click();
+  await page.waitForURL(/\/sessions\/[0-9a-f-]+/i);
+  await page
+    .getByTestId('live-indicator')
+    .filter({ hasText: 'En vivo' })
+    .waitFor({ timeout: 8000 })
+    .catch(() => {});
+  await page
+    .getByRole('button', { name: 'Iniciar grabación' })
+    .click()
+    .catch(() => {});
+  await page.waitForTimeout(1500);
+  await cap(page, 'w-07-live-session');
+  await ctx.close();
+}
+
+// ---- Ultrawide 2560 (reproduce stretching) ----
+{
+  const { ctx, page } = await ctxAt(2560, 1440);
+  await page.goto(`${BASE}/auth/sign-in`);
+  await page.waitForLoadState('networkidle');
+  await cap(page, 'uw-01-signin');
+  await login(page);
+  await cap(page, 'uw-02-projects');
+  await ctx.close();
+}
+
+// ---- Mobile 390 ----
+{
+  const { ctx, page } = await ctxAt(390, 844);
+  await page.goto(`${BASE}/auth/sign-in`);
+  await page.waitForLoadState('networkidle');
+  await cap(page, 'm-01-signin');
+  await login(page);
+  await cap(page, 'm-02-projects');
+  await ctx.close();
+}
 
 await browser.close();
 console.log('done');

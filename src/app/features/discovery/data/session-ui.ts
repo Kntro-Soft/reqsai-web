@@ -15,6 +15,20 @@ export function statusVariant(status: SessionStatus): BadgeVariant {
   return map[status];
 }
 
+/** Human-readable Spanish label for each session status. */
+export function statusLabel(status: SessionStatus): string {
+  const map: Record<SessionStatus, string> = {
+    DRAFT: 'Borrador',
+    RECORDING: 'Grabando',
+    PAUSED: 'Pausada',
+    STOPPED: 'Detenida',
+    PROCESSING: 'Procesando',
+    COMPLETED: 'Completada',
+    FAILED: 'Fallida',
+  };
+  return map[status];
+}
+
 /** Human-readable Spanish label for each realtime event type. */
 export const EVENT_LABEL: Record<SessionEventType, string> = {
   RECORDING_STARTED: 'Grabación iniciada',
