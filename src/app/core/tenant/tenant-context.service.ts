@@ -5,6 +5,7 @@ interface JwtPayload {
   sub?: string;
   orgId?: string | null;
   role?: string;
+  termsVersion?: string;
   exp?: number;
 }
 
@@ -26,6 +27,8 @@ export class TenantContextService {
   readonly userId = computed(() => this.payload()?.sub ?? null);
   readonly orgId = computed(() => this.payload()?.orgId ?? null);
   readonly role = computed(() => this.payload()?.role ?? null);
+  /** Terms-of-service version the user has accepted (from the JWT), or null. */
+  readonly termsVersion = computed(() => this.payload()?.termsVersion ?? null);
   readonly isExpired = computed(() => {
     const exp = this.payload()?.exp;
     return exp != null && exp * 1000 <= Date.now();

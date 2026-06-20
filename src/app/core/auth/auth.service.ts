@@ -107,6 +107,16 @@ export class AuthService {
       .pipe(switchMap(() => this.refresh()));
   }
 
+  /**
+   * Records acceptance of the given terms version, then rotates the session so
+   * the new `termsVersion` claim lands in the access token.
+   */
+  acceptTerms(version: string): Observable<void> {
+    return this.http
+      .post<void>('/api/users/me/terms', { termsVersion: version })
+      .pipe(switchMap(() => this.refresh()));
+  }
+
   logout(): void {
     // Fire-and-forget: the local session is cleared regardless of the response.
     this.http

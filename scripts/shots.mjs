@@ -27,7 +27,12 @@ async function login(page) {
   await page.getByLabel('Correo electrónico').fill(EMAIL);
   await page.getByLabel('Contraseña').fill(PASSWORD);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await page.waitForURL(/\/(projects|onboarding)/);
+  await page.waitForURL(/\/(terms|projects|onboarding)/);
+  if (page.url().includes('/terms')) {
+    await page.getByTestId('accept-checkbox').check();
+    await page.getByTestId('accept-terms').click();
+    await page.waitForURL(/\/(projects|onboarding)/);
+  }
   if (page.url().includes('/onboarding')) {
     await page.getByLabel('Nombre de la organización').fill(`Demo Org ${Date.now()}`);
     await page.getByRole('button', { name: 'Crear y continuar' }).click();

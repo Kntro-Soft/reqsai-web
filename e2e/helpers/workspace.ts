@@ -1,6 +1,32 @@
 import { APIRequestContext, expect } from '@playwright/test';
+import { registerVerified } from './auth';
 
 const V1 = { 'Api-Version': '1' };
+
+/** Records terms acceptance for the token's user (skips the T&C gate). */
+export async function apiAcceptTerms(
+  request: APIRequestContext,
+  token: string,
+  version = '2026-01',
+): Promise<void> {
+  const res = await request.post('/api/users/me/terms', {
+    headers: { ...V1, Authorization: `Bearer ${token}` },
+    data: { termsVersion: version },
+  });
+  expect(res.status(), 'api accept terms').toBe(204);
+}
+
+/** Verified account that has already accepted the current terms — fully past
+ * the auth/terms gates, ready to sign in straight into the app. */
+export async function registerReady(
+  request: APIRequestContext,
+  email: string,
+  password: string,
+): Promise<void> {
+  await registerVerified(request, email, password);
+  const token = await apiLogin(request, email, password);
+  await apiAcceptTerms(request, token);
+}
 
 /** Signs in via the API and returns the access token (for seeding fixtures). */
 export async function apiLogin(

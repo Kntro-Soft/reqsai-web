@@ -1,6 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import { getResetToken, getVerificationToken } from './helpers/mailpit';
-import { registerAccount, registerVerified, uniqueEmail } from './helpers/auth';
+import { registerAccount, uniqueEmail } from './helpers/auth';
+import { registerReady } from './helpers/workspace';
 
 const PASSWORD = 'Passw0rd!23';
 
@@ -34,7 +35,11 @@ test.describe('IAM authentication', () => {
     await expect(page.getByTestId('verify-success')).toBeVisible();
 
     await uiLogin(page, email, PASSWORD);
-    // A new account has no organization yet → onboarding.
+    // First-time users must accept the terms.
+    await expect(page).toHaveURL(/\/terms/);
+    await page.getByTestId('accept-checkbox').check();
+    await page.getByTestId('accept-terms').click();
+    // Then onboarding (no organization yet).
     await expect(page).toHaveURL(/\/onboarding/);
     await expect(page.getByRole('heading', { name: 'Crea tu organización' })).toBeVisible();
   });
@@ -80,7 +85,7 @@ test.describe('IAM authentication', () => {
 
   test('signs out and returns to sign-in', async ({ page, request }) => {
     const email = uniqueEmail();
-    await registerVerified(request, email, PASSWORD);
+    await registerReady(request, email, PASSWORD);
 
     await uiLogin(page, email, PASSWORD);
     await expect(page).toHaveURL(/\/onboarding/);
@@ -91,7 +96,7 @@ test.describe('IAM authentication', () => {
 
   test('keeps the session across a reload (silent refresh)', async ({ page, request }) => {
     const email = uniqueEmail();
-    await registerVerified(request, email, PASSWORD);
+    await registerReady(request, email, PASSWORD);
 
     await uiLogin(page, email, PASSWORD);
     await expect(page).toHaveURL(/\/onboarding/);
@@ -104,7 +109,7 @@ test.describe('IAM authentication', () => {
 
   test('forgot password → reset → sign in with the new password', async ({ page, request }) => {
     const email = uniqueEmail();
-    await registerVerified(request, email, PASSWORD);
+    await registerReady(request, email, PASSWORD);
 
     // Request the reset link.
     await page.goto('/auth/forgot-password');

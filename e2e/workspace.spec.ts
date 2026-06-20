@@ -1,6 +1,12 @@
 import { expect, Page, test } from '@playwright/test';
 import { registerVerified, uniqueEmail } from './helpers/auth';
-import { apiCreateOrganization, apiLogin, apiSetActiveOrganization } from './helpers/workspace';
+import {
+  apiAcceptTerms,
+  apiCreateOrganization,
+  apiLogin,
+  apiSetActiveOrganization,
+  registerReady,
+} from './helpers/workspace';
 
 const PASSWORD = 'Passw0rd!23';
 
@@ -14,7 +20,7 @@ async function uiLogin(page: Page, email: string, password: string): Promise<voi
 test.describe('Workspace', () => {
   test('onboarding: create an organization then a project', async ({ page, request }) => {
     const email = uniqueEmail('ws');
-    await registerVerified(request, email, PASSWORD);
+    await registerReady(request, email, PASSWORD);
 
     // A brand-new user has no organization → routed to onboarding.
     await uiLogin(page, email, PASSWORD);
@@ -48,6 +54,7 @@ test.describe('Workspace', () => {
 
     // Seed two organizations and make the first active.
     const token = await apiLogin(request, email, PASSWORD);
+    await apiAcceptTerms(request, token);
     const suffix = Date.now();
     const orgOne = await apiCreateOrganization(request, token, `Org One ${suffix}`);
     const orgTwo = await apiCreateOrganization(request, token, `Org Two ${suffix}`);

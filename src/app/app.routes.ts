@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
+import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
 import { AppShell } from './layout/app-shell/app-shell';
 
 export const routes: Routes = [
@@ -14,9 +15,16 @@ export const routes: Routes = [
   },
 
   {
+    path: 'terms',
+    title: 'Términos y Condiciones · Reqs-AI',
+    canActivate: [authGuard, termsAcceptedGuard],
+    loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
+  },
+
+  {
     path: '',
     component: AppShell,
-    canActivate: [authGuard],
+    canActivate: [authGuard, termsGuard],
     children: [
       {
         path: 'home',

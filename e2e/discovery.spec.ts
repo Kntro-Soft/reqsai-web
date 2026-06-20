@@ -1,6 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import { registerVerified, uniqueEmail } from './helpers/auth';
 import {
+  apiAcceptTerms,
   apiCreateOrganization,
   apiCreateProject,
   apiLogin,
@@ -23,6 +24,7 @@ test.describe('Discovery realtime', () => {
     const email = uniqueEmail('disc');
     await registerVerified(request, email, PASSWORD);
     const token = await apiLogin(request, email, PASSWORD);
+    await apiAcceptTerms(request, token);
     const orgId = await apiCreateOrganization(request, token, `Disc ${Date.now()}`);
     await apiSetActiveOrganization(request, token, orgId);
     const activeToken = await apiRefresh(request); // now carries orgId → tenant resolves
