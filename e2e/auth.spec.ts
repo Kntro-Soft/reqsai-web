@@ -90,7 +90,9 @@ test.describe('IAM authentication', () => {
     await uiLogin(page, email, PASSWORD);
     await expect(page).toHaveURL(/\/onboarding/);
 
-    await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+    // Sign out lives under the user menu (avatar).
+    await page.getByRole('button', { name: 'Menú de usuario' }).click();
+    await page.getByTestId('logout').click();
     await expect(page).toHaveURL(/\/auth\/sign-in/);
   });
 

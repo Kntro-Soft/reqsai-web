@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../shared/components/logo/logo';
+import { UserMenu } from '../../shared/components/user-menu/user-menu';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu],
   template: `
     <div class="relative min-h-dvh bg-background text-foreground">
       <!-- Floating header -->
@@ -71,17 +72,9 @@ import { Logo } from '../../shared/components/logo/logo';
           }
         </div>
 
-        <div class="flex items-center gap-2">
-          @if (store.user(); as user) {
-            <span class="hidden text-sm text-muted-foreground lg:inline">{{ user.fullName }}</span>
-            <span
-              class="grid h-8 w-8 place-items-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
-              [attr.title]="user.fullName"
-            >
-              {{ initials() }}
-            </span>
-          }
+        <div class="flex items-center gap-1.5">
           <app-theme-toggle />
+          <app-user-menu />
         </div>
       </header>
 
@@ -134,28 +127,6 @@ import { Logo } from '../../shared/components/logo/logo';
               />
             </svg>
           </a>
-          <span class="my-1 h-px w-6 bg-border"></span>
-          <button
-            type="button"
-            (click)="logout()"
-            title="Cerrar sesión"
-            aria-label="Cerrar sesión"
-            class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </button>
         </nav>
       </aside>
 
@@ -166,20 +137,20 @@ import { Logo } from '../../shared/components/logo/logo';
         </div>
       </main>
 
-      <!-- Floating bottom nav (mobile) -->
+      <!-- Bottom nav (mobile) — full width like the header -->
       <nav
-        class="fixed bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-border bg-card/90 p-1.5 shadow-lg backdrop-blur md:hidden"
+        class="fixed inset-x-3 bottom-3 z-30 flex items-center gap-1 rounded-2xl border border-border bg-card/90 p-1.5 shadow-lg backdrop-blur md:hidden"
       >
         <a
           [routerLink]="['/home']"
           routerLinkActive="bg-primary/15 text-primary"
           aria-label="Inicio"
-          class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground"
+          class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -189,17 +160,18 @@ import { Logo } from '../../shared/components/logo/logo';
           >
             <path d="M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" />
           </svg>
+          Inicio
         </a>
         <a
           [routerLink]="['/projects']"
           routerLinkActive="bg-primary/15 text-primary"
           aria-label="Proyectos"
-          class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground"
+          class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -211,27 +183,8 @@ import { Logo } from '../../shared/components/logo/logo';
               d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
             />
           </svg>
+          Proyectos
         </a>
-        <button
-          type="button"
-          (click)="logout()"
-          aria-label="Cerrar sesión"
-          class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-          </svg>
-        </button>
       </nav>
     </div>
   `,
@@ -241,12 +194,6 @@ export class AppShell {
   protected readonly workspace = inject(WorkspaceStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
-  protected readonly initials = computed(() => {
-    const user = this.store.user();
-    if (!user) return '';
-    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
-  });
 
   constructor() {
     effect(() => {
@@ -266,9 +213,5 @@ export class AppShell {
       this.workspace.loadProjects(orgId);
       void this.router.navigate(['/projects']);
     });
-  }
-
-  protected logout(): void {
-    this.auth.logout();
   }
 }

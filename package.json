@@ -15,7 +15,8 @@
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
     "shots": "node scripts/shots.mjs",
-    "shots:responsive": "node scripts/responsive-shots.mjs"
+    "shots:responsive": "node scripts/responsive-shots.mjs",
+    "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,
   "packageManager": "bun@1.3.14",
