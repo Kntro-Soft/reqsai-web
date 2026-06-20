@@ -21,6 +21,8 @@ one (and update the old one's status).
 | [0009](0009-deploy-s3-cloudfront.md)               | Deploy to AWS S3 + CloudFront                      | Accepted |
 | [0010](0010-state-management-signals.md)           | State management with Angular signals (no NgRx)    | Accepted |
 | [0011](0011-multitenancy-tenant-context.md)        | Multitenancy via tenant context service            | Accepted |
+| [0012](0012-jwt-rs256-authentication.md)           | JWT RS256 authentication and token storage         | Accepted |
+| [0013](0013-npm-audit-dependency-security.md)      | Dependency security scanning with audit-ci         | Accepted |
 
 ## Template
 
