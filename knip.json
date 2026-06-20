@@ -7,13 +7,8 @@
     "src/environments/environment.ts"
   ],
   "ignoreDependencies": [
-    "@angular/cdk",
-    "@angular/forms",
-    "@spartan-ng/brain",
     "@spartan-ng/cli",
     "eslint-config-prettier",
-    "prettier",
-    "tw-animate-css",
     "lint-staged",
     "playwright-ng-schematics"
   ]
