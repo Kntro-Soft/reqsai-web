@@ -2,7 +2,8 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": [
     "src/app/app.css",
-    "src/styles.css"
+    "src/styles.css",
+    "src/app/shared/ui/index.ts"
   ],
   "ignoreDependencies": [
     "@angular/cdk",

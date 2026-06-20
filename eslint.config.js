@@ -34,6 +34,23 @@ module.exports = defineConfig([
     },
   },
   {
+    // Spartan-style UI primitives use the `hlm` selector prefix and alias the
+    // `class` input (the documented helm-component convention). Relax the two
+    // rules that conflict with it, scoped to the design-system folder only.
+    files: ['src/app/shared/ui/**/*.ts'],
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        { type: 'attribute', prefix: 'hlm', style: 'camelCase' },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        { type: 'element', prefix: 'hlm', style: 'kebab-case' },
+      ],
+      '@angular-eslint/no-input-rename': 'off',
+    },
+  },
+  {
     files: ['**/*.html'],
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
