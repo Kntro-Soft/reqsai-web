@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { AppShell } from './layout/app-shell/app-shell';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  // Default landing: the active organization's workspace (orgGuard bounces
+  // users without an org to onboarding).
+  { path: '', redirectTo: 'projects', pathMatch: 'full' },
 
   {
     path: 'auth',
@@ -23,6 +26,7 @@ export const routes: Routes = [
       {
         path: 'onboarding',
         title: 'Crear organización · Reqs-AI',
+        canActivate: [onboardingGuard],
         loadComponent: () =>
           import('./features/workspace/pages/create-organization/create-organization').then(
             (m) => m.CreateOrganization,
@@ -31,18 +35,21 @@ export const routes: Routes = [
       {
         path: 'projects',
         title: 'Proyectos · Reqs-AI',
+        canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
       },
       {
         path: 'projects/:projectId/sessions',
         title: 'Sesiones · Reqs-AI',
+        canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
       },
       {
         path: 'projects/:projectId/sessions/:sessionId',
         title: 'Sesión · Reqs-AI',
+        canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/discovery/pages/session-detail/session-detail').then(
             (m) => m.SessionDetail,
@@ -51,5 +58,5 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: 'home' },
+  { path: '**', redirectTo: 'projects' },
 ];

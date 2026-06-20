@@ -36,7 +36,8 @@ export class ThemeService {
   private resolveInitialMode(): ThemeMode {
     const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
     if (stored === 'light' || stored === 'dark') return stored;
-    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-    return prefersLight ? 'light' : 'dark';
+    // Dark-first by product decision (see DESIGN.md): ignore the OS preference
+    // so the brand's navy/red surface is what new visitors see.
+    return 'dark';
   }
 }

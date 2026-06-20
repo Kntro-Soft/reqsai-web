@@ -113,7 +113,8 @@ export class SignIn {
 
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () =>
-        void this.router.navigate([this.store.needsOnboarding() ? '/onboarding' : '/home']),
+        // Straight to the active org's workspace; only brand-new users onboard.
+        void this.router.navigate([this.store.needsOnboarding() ? '/onboarding' : '/projects']),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(this.messageFor(err));

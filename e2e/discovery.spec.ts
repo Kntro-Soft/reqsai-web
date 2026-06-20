@@ -30,7 +30,7 @@ test.describe('Discovery realtime', () => {
 
     await uiLogin(page, email, PASSWORD);
     // Wait for the post-login navigation (cookie set, session active) before deep-linking.
-    await expect(page).toHaveURL(/\/home/);
+    await expect(page).toHaveURL(/\/projects/);
 
     // Create a session and land on its live page.
     await page.goto(`/projects/${projectId}/sessions`);
