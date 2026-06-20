@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: General team questions
+    url: https://github.com/Kntro-Soft/reqsai-web/discussions
+    about: For general questions, use GitHub Discussions instead of an Issue.
+  - name: Security or secret exposure
+    url: https://github.com/Kntro-Soft/reqsai-web/blob/main/.github/SECURITY.md
+    about: For security issues, follow SECURITY.md — do not open a public Issue.

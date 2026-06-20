@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/app.css",
+    "src/styles.css"
+  ],
+  "ignoreDependencies": [
+    "@angular/cdk",
+    "@angular/forms",
+    "@spartan-ng/brain",
+    "tailwind-merge",
+    "@spartan-ng/cli",
+    "eslint-config-prettier",
+    "prettier",
+    "tw-animate-css"
+  ]
+}

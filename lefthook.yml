@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: false # eslint --fix y prettier --write no deben correr en paralelo para evitar condiciones de carrera en los mismos archivos.
+  commands:
+    lint:
+      glob: "**/*.{ts,html}"
+      run: "bunx eslint --fix {staged_files}"
+    format:
+      glob: "**/*.{ts,html,css,json}"
+      run: "bunx prettier --write {staged_files}"
+
+commit-msg:
+  commands:
+    commitlint:
+      run: "bunx commitlint --edit {1}"
