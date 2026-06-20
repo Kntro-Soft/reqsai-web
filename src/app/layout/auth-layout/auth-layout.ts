@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
+import { Logo } from '../../shared/components/logo/logo';
 
 /**
  * Auth shell. On desktop it is a centered, capped split card (brand panel +
@@ -10,7 +11,7 @@ import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 @Component({
   selector: 'app-auth-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ThemeToggle],
+  imports: [RouterOutlet, ThemeToggle, Logo],
   template: `
     <div class="min-h-dvh grid place-items-center bg-background text-foreground lg:p-8">
       <div
@@ -24,15 +25,15 @@ import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
           <div
             class="pointer-events-none absolute -bottom-16 right-0 h-72 w-72 rounded-full bg-primary/10 blur-3xl"
           ></div>
+          <!-- Subtle brand-symbol watermark -->
+          <img
+            src="/assets/img/reqsai-combination-mark-white.webp"
+            alt=""
+            aria-hidden="true"
+            class="pointer-events-none absolute -bottom-24 -right-20 w-[26rem] opacity-[0.05]"
+          />
 
-          <div class="relative flex items-center gap-2">
-            <div
-              class="grid h-9 w-9 place-items-center rounded-lg bg-primary font-bold text-primary-foreground"
-            >
-              R
-            </div>
-            <span class="font-semibold tracking-tight">Reqs-AI</span>
-          </div>
+          <app-logo class="relative" [size]="36" />
 
           <div class="relative flex flex-1 flex-col justify-center py-10">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -67,14 +68,7 @@ import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
         <!-- Form column -->
         <main class="relative flex flex-col bg-background">
           <header class="flex items-center justify-between px-6 py-4 lg:justify-end">
-            <div class="flex items-center gap-2 lg:hidden">
-              <div
-                class="grid h-8 w-8 place-items-center rounded-lg bg-primary font-bold text-primary-foreground"
-              >
-                R
-              </div>
-              <span class="font-semibold tracking-tight">Reqs-AI</span>
-            </div>
+            <app-logo class="lg:hidden" [size]="30" />
             <app-theme-toggle />
           </header>
 

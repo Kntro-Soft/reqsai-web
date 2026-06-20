@@ -4,12 +4,13 @@ import { AuthService } from '../../core/auth/auth.service';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
+import { Logo } from '../../shared/components/logo/logo';
 import { HlmButton } from '../../shared/ui/button/hlm-button';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, HlmButton],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, HlmButton, Logo],
   template: `
     <div class="min-h-dvh flex bg-background text-foreground">
       <!-- Sidebar -->
@@ -17,12 +18,7 @@ import { HlmButton } from '../../shared/ui/button/hlm-button';
         class="hidden md:flex w-60 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground"
       >
         <div class="flex items-center gap-2 px-5 h-16 border-b border-sidebar-border">
-          <div
-            class="h-8 w-8 rounded-lg bg-primary text-primary-foreground grid place-items-center font-bold"
-          >
-            R
-          </div>
-          <span class="font-semibold tracking-tight">Reqs-AI</span>
+          <app-logo [size]="30" />
         </div>
         <nav class="flex flex-col gap-1 p-3">
           <a
