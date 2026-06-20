@@ -8,6 +8,7 @@ import {
   HlmButton,
   HlmCard,
   HlmCardContent,
+  HlmCardDescription,
   HlmCardHeader,
   HlmCardTitle,
   HlmInput,
@@ -32,6 +33,7 @@ function toList(csv: string): string[] {
     HlmCard,
     HlmCardHeader,
     HlmCardTitle,
+    HlmCardDescription,
     HlmCardContent,
     HlmInput,
     HlmLabel,
@@ -39,22 +41,24 @@ function toList(csv: string): string[] {
   ],
   template: `
     <div class="flex flex-col gap-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold tracking-tight">Proyectos</h1>
-        <button
-          hlmBtn
-          variant="outline"
-          size="sm"
-          type="button"
-          (click)="showForm.set(!showForm())"
-        >
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
+          <p class="text-sm text-muted-foreground">
+            Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.
+          </p>
+        </div>
+        <button hlmBtn type="button" (click)="showForm.set(!showForm())">
           {{ showForm() ? 'Cancelar' : 'Nuevo proyecto' }}
         </button>
       </div>
 
       @if (showForm()) {
         <div hlmCard>
-          <div hlmCardHeader><h2 hlmCardTitle>Nuevo proyecto</h2></div>
+          <div hlmCardHeader>
+            <h2 hlmCardTitle>Nuevo proyecto</h2>
+            <p hlmCardDescription>Define el stack para afinar las sugerencias de la IA.</p>
+          </div>
           <div hlmCardContent>
             <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 md:grid-cols-2">
               <div class="flex flex-col gap-2 md:col-span-2">
@@ -145,23 +149,89 @@ function toList(csv: string): string[] {
           <p class="text-sm text-destructive">No se pudieron cargar los proyectos.</p>
         }
         @default {
-          @if (store.projects().length === 0) {
-            <p class="text-muted-foreground" data-testid="projects-empty">
-              Aún no hay proyectos. Crea el primero.
-            </p>
+          @if (store.projects().length === 0 && !showForm()) {
+            <div
+              hlmCard
+              class="flex flex-col items-center gap-3 py-16 text-center"
+              data-testid="projects-empty"
+            >
+              <span class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p class="font-medium">Aún no hay proyectos</p>
+                <p class="text-sm text-muted-foreground">
+                  Crea tu primer proyecto para empezar a descubrir requisitos.
+                </p>
+              </div>
+              <button hlmBtn size="sm" type="button" (click)="showForm.set(true)">
+                Crear proyecto
+              </button>
+            </div>
           } @else {
             <ul class="grid gap-3 sm:grid-cols-2">
               @for (project of store.projects(); track project.id) {
-                <li hlmCard class="p-4" data-testid="project-row">
+                <li>
                   <a
+                    hlmCard
                     [routerLink]="['/projects', project.id, 'sessions']"
-                    class="font-medium hover:underline"
+                    class="group flex items-center gap-4 p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
+                    data-testid="project-row"
                   >
-                    {{ project.name }}
+                    <span
+                      class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
+                        />
+                      </svg>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate font-medium">{{ project.name }}</span>
+                      <span class="block truncate text-sm text-muted-foreground">
+                        {{ project.architecture }} · {{ project.domain }}
+                      </span>
+                    </span>
+                    <svg
+                      class="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
                   </a>
-                  <p class="text-sm text-muted-foreground">
-                    {{ project.architecture }} · {{ project.domain }}
-                  </p>
                 </li>
               }
             </ul>

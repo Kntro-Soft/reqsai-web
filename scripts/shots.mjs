@@ -64,7 +64,7 @@ async function ensureProject(page) {
   await cap(page, 'w-04-projects-empty-or-list');
   await ensureProject(page);
   await cap(page, 'w-05-projects-filled');
-  await page.getByTestId('project-row').first().getByRole('link').click();
+  await page.getByTestId('project-row').first().click();
   await page.waitForURL(/\/sessions$/);
   await cap(page, 'w-06-sessions');
   await page.getByRole('button', { name: 'Nueva sesión' }).click();
