@@ -77,7 +77,7 @@ import { HlmSpinner } from '../../../../shared/ui';
                     }
                   </span>
                   <span class="mt-0.5 block truncate text-xs text-muted-foreground">
-                    {{ org.slug }} · {{ org.meetingLanguage }}
+                    Reuniones en {{ org.meetingLanguage }}
                   </span>
                 </span>
                 @if (switching() === org.id) {
