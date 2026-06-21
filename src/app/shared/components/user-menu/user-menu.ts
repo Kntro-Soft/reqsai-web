@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
 
 /**
- * Avatar button that opens a user menu (account + sign out). Consolidating the
- * sign-out action under the user — instead of a stray button — matches the
- * consistency/standards heuristic. Closes on outside click or Escape.
+ * Avatar button that opens a user menu (account, organization switch on phones,
+ * sign out). Consolidating these under the user — instead of stray buttons —
+ * matches the consistency/standards heuristic. The org list only shows below
+ * `sm`, where the header switcher is hidden. Closes on outside click or Escape.
  */
 @Component({
   selector: 'app-user-menu',
@@ -64,6 +67,41 @@ import { AuthStore } from '../../../core/auth/auth.store';
             </div>
           </div>
           <div class="my-1 h-px bg-border"></div>
+
+          @if (workspace.organizations().length) {
+            <div class="sm:hidden">
+              <p class="px-3 pb-1 pt-1 text-xs font-medium text-muted-foreground">Organización</p>
+              @for (org of workspace.organizations(); track org.id) {
+                <button
+                  role="menuitemradio"
+                  type="button"
+                  [attr.aria-checked]="org.id === store.organizationId()"
+                  (click)="switchOrg(org.id)"
+                  class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                >
+                  <span class="truncate">{{ org.name }}</span>
+                  @if (org.id === store.organizationId()) {
+                    <svg
+                      class="shrink-0 text-primary"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  }
+                </button>
+              }
+              <div class="my-1 h-px bg-border"></div>
+            </div>
+          }
+
           <button
             role="menuitem"
             type="button"
@@ -93,7 +131,9 @@ import { AuthStore } from '../../../core/auth/auth.store';
 })
 export class UserMenu {
   protected readonly store = inject(AuthStore);
+  protected readonly workspace = inject(WorkspaceStore);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   protected readonly open = signal(false);
   protected readonly initials = computed(() => {
@@ -108,6 +148,15 @@ export class UserMenu {
 
   protected close(): void {
     this.open.set(false);
+  }
+
+  protected switchOrg(orgId: string): void {
+    this.close();
+    if (orgId === this.store.organizationId()) return;
+    this.auth.switchOrganization(orgId).subscribe(() => {
+      this.workspace.loadProjects(orgId);
+      void this.router.navigate(['/projects']);
+    });
   }
 
   protected logout(): void {

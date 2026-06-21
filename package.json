@@ -16,6 +16,7 @@
     "e2e:report": "playwright show-report",
     "shots": "node scripts/shots.mjs",
     "shots:responsive": "node scripts/responsive-shots.mjs",
+    "shots:flows": "node scripts/flow-shots.mjs",
     "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,
