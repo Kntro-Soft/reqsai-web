@@ -437,7 +437,7 @@ export class SessionDetail implements OnInit {
   }
 
   protected targetStory(s: SuggestionResponse): DisplayStory | undefined {
-    return s.targetStoryId ? this.store.stories().find((x) => x.id === s.targetStoryId) : undefined;
+    return s.targetStoryId ? this.store.findStory(s.targetStoryId) : undefined;
   }
 
   protected approve(id: string): void {

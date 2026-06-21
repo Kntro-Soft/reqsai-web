@@ -20,6 +20,7 @@
     "shots:org": "node scripts/seed-shots.mjs",
     "seed:rich": "node scripts/seed-rich.mjs",
     "shots:themes": "node scripts/theme-shots.mjs",
+    "shots:suggestions": "node scripts/suggestion-shots.mjs",
     "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,

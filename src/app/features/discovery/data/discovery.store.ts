@@ -64,6 +64,8 @@ export class DiscoveryStore {
   private readonly _transcript = signal<SessionTranscriptSegmentMessage[]>([]);
   private readonly _stories = signal<DisplayStory[]>([]);
   private readonly _suggestions = signal<SuggestionResponse[]>([]);
+  // Whole project backlog, used to resolve a suggestion's target story for the diff view.
+  private readonly _projectStories = signal<DisplayStory[]>([]);
 
   readonly sessions = this._sessions.asReadonly();
   readonly sessionsState = this._sessionsState.asReadonly();
@@ -107,6 +109,18 @@ export class DiscoveryStore {
       next: (list) => this._suggestions.set(list),
       error: () => this._suggestions.set([]),
     });
+    // Project backlog, so an UPDATE_STORY/EDGE_CASE target resolves for the diff.
+    this.api.listProjectStories(projectId).subscribe({
+      next: (page) => this._projectStories.set(page.content.map(toDisplayStory)),
+      error: () => this._projectStories.set([]),
+    });
+  }
+
+  /** Resolves a story by id across the session's stories and the project backlog. */
+  findStory(id: string): DisplayStory | undefined {
+    return (
+      this._stories().find((s) => s.id === id) ?? this._projectStories().find((s) => s.id === id)
+    );
   }
 
   acceptSuggestion(
@@ -165,6 +179,7 @@ export class DiscoveryStore {
     this._transcript.set([]);
     this._stories.set([]);
     this._suggestions.set([]);
+    this._projectStories.set([]);
   }
 
   /** Applies an incoming realtime message to the live signals. */
