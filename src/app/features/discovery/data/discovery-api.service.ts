@@ -5,6 +5,8 @@ import {
   CreateDiscoverySessionRequest,
   DiscoverySessionResponse,
   PageResponse,
+  ProcessTranscriptResponse,
+  UserStoryResponse,
 } from './discovery.models';
 
 /** HTTP client for discovery sessions. Tenant is resolved by the backend from the JWT. */
@@ -40,5 +42,21 @@ export class DiscoveryApiService {
       `${this.base(projectId)}/${sessionId}/${action}`,
       {},
     );
+  }
+
+  /** Uploads an audio file for transcription (session-scoped endpoint). */
+  uploadAudio(sessionId: string, file: File): Observable<DiscoverySessionResponse> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<DiscoverySessionResponse>(`/api/sessions/${sessionId}/upload`, form);
+  }
+
+  /** Runs AI extraction on the transcript; returns the session and generated stories. */
+  process(sessionId: string): Observable<ProcessTranscriptResponse> {
+    return this.http.post<ProcessTranscriptResponse>(`/api/sessions/${sessionId}/process`, {});
+  }
+
+  listSessionStories(sessionId: string): Observable<PageResponse<UserStoryResponse>> {
+    return this.http.get<PageResponse<UserStoryResponse>>(`/api/sessions/${sessionId}/stories`);
   }
 }

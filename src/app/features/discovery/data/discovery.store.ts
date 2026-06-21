@@ -4,13 +4,29 @@ import { DiscoveryApiService } from './discovery-api.service';
 import {
   CreateDiscoverySessionRequest,
   DiscoverySessionResponse,
+  DisplayStory,
+  ProcessTranscriptResponse,
   SessionEventType,
   SessionProcessingFailedMessage,
   SessionRealtimeMessage,
   SessionStatus,
   SessionStoryGeneratedMessage,
   SessionTranscriptSegmentMessage,
+  UserStoryResponse,
 } from './discovery.models';
+
+/** Normalizes a REST user story into the chat's display shape. */
+function toDisplayStory(story: UserStoryResponse): DisplayStory {
+  return {
+    id: story.id,
+    title: story.title,
+    role: story.role,
+    action: story.action,
+    benefit: story.benefit,
+    priority: story.priority,
+    storyPoints: story.storyPoints,
+  };
+}
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 type SessionAction = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
@@ -43,7 +59,7 @@ export class DiscoveryStore {
   private readonly _current = signal<DiscoverySessionResponse | null>(null);
   private readonly _events = signal<LiveEvent[]>([]);
   private readonly _transcript = signal<SessionTranscriptSegmentMessage[]>([]);
-  private readonly _stories = signal<SessionStoryGeneratedMessage[]>([]);
+  private readonly _stories = signal<DisplayStory[]>([]);
 
   readonly sessions = this._sessions.asReadonly();
   readonly sessionsState = this._sessionsState.asReadonly();
@@ -77,6 +93,25 @@ export class DiscoveryStore {
       next: (session) => this._current.set(session),
       error: () => this._current.set(null),
     });
+    // Stories already generated for this session (so a re-opened session isn't empty).
+    this.api.listSessionStories(sessionId).subscribe({
+      next: (page) => this._stories.set(page.content.map(toDisplayStory)),
+    });
+  }
+
+  /** Uploads an audio file for transcription and reflects the returned session. */
+  uploadAudio(sessionId: string, file: File): Observable<DiscoverySessionResponse> {
+    return this.api.uploadAudio(sessionId, file).pipe(tap((session) => this._current.set(session)));
+  }
+
+  /** Runs AI extraction; updates the session and seeds the generated stories. */
+  process(sessionId: string): Observable<ProcessTranscriptResponse> {
+    return this.api.process(sessionId).pipe(
+      tap((result) => {
+        this._current.set(result.session);
+        this._stories.set(result.stories.map(toDisplayStory));
+      }),
+    );
   }
 
   /** Runs a lifecycle transition (REST) and reflects the returned session. */
@@ -109,7 +144,19 @@ export class DiscoveryStore {
       return;
     }
     if (message.type === 'STORY_GENERATED') {
-      this._stories.update((s) => [...s, message as SessionStoryGeneratedMessage]);
+      const story = message as SessionStoryGeneratedMessage;
+      this._stories.update((s) => [
+        ...s,
+        {
+          id: story.storyId,
+          title: story.title,
+          role: story.role,
+          action: story.action,
+          benefit: story.benefit,
+          priority: story.priority,
+          storyPoints: story.storyPoints,
+        },
+      ]);
       return;
     }
 

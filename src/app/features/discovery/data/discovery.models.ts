@@ -28,6 +28,36 @@ export interface CreateDiscoverySessionRequest {
   language: string;
 }
 
+/** A generated/backlog user story (REST), normalized for display alongside live ones. */
+export interface UserStoryResponse {
+  id: string;
+  projectId: string;
+  sessionId: string | null;
+  title: string;
+  role: string;
+  action: string;
+  benefit: string;
+  priority: string;
+  storyPoints: number | null;
+  status: string;
+}
+
+export interface ProcessTranscriptResponse {
+  session: DiscoverySessionResponse;
+  stories: UserStoryResponse[];
+}
+
+/** Unified story shape the chat renders (fed by both REST and STORY_GENERATED events). */
+export interface DisplayStory {
+  id: string;
+  title: string;
+  role: string;
+  action: string;
+  benefit: string;
+  priority: string;
+  storyPoints: number | null;
+}
+
 export interface PageResponse<T> {
   content: T[];
   page: {
