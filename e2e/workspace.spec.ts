@@ -60,10 +60,8 @@ test.describe('Workspace', () => {
     await apiCreateOrganization(request, token, `Org Two ${suffix}`);
     await apiSetActiveOrganization(request, token, orgOne);
 
-    // Two orgs → the launch dispatcher lands on the picker.
+    // Two orgs → straight into the active org's workspace, no picker gate.
     await uiLogin(page, email, PASSWORD);
-    await expect(page).toHaveURL(/\/organizations/);
-    await page.getByTestId('org-card').filter({ hasText: 'Org One' }).click();
     await expect(page).toHaveURL(/\/projects/);
 
     // The header switcher reflects the active org and switches to the other.

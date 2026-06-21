@@ -19,14 +19,13 @@ export const launchGuard: CanActivateFn = () => {
   return workspace.loadOrganizations$().pipe(
     switchMap((orgs) => {
       if (orgs.length === 0) return of(router.createUrlTree(['/onboarding']));
-      if (orgs.length === 1) {
-        const only = orgs[0];
-        if (store.organizationId() === only.id) return of(router.createUrlTree(['/projects']));
-        return auth
-          .switchOrganization(only.id)
-          .pipe(map(() => router.createUrlTree(['/projects'])));
+      // Railway/Vercel style: straight into the active (last-visited) org's
+      // workspace. Switching orgs happens from the header dropdown, not a gate.
+      const activeId = store.organizationId();
+      if (activeId && orgs.some((o) => o.id === activeId)) {
+        return of(router.createUrlTree(['/projects']));
       }
-      return of(router.createUrlTree(['/organizations']));
+      return auth.switchOrganization(orgs[0].id).pipe(map(() => router.createUrlTree(['/projects'])));
     }),
   );
 };
