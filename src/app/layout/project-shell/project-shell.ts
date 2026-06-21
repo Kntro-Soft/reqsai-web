@@ -8,8 +8,9 @@ import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 
 /**
- * Workspace shell for a single project. Carries its own navigation (sessions,
- * stories, members, settings) and a breadcrumb back to the org's projects.
+ * Workspace shell for a single project: a top bar with the org/project
+ * breadcrumb, a labelled side nav (sessions / stories / members / settings),
+ * and the project content. Flat app-window styling.
  */
 @Component({
   selector: 'app-project-shell',
@@ -17,12 +18,13 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, NavIcon],
   template: `
     <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+      <!-- Top bar -->
       <header
-        class="z-20 mx-3 mt-3 flex h-16 shrink-0 items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 px-4 shadow-sm backdrop-blur md:mx-4 md:mt-4"
+        class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4"
       >
         <div class="flex min-w-0 items-center gap-2.5">
-          <app-logo [size]="28" [showText]="false" />
-          <span class="hidden h-6 w-px bg-border sm:block"></span>
+          <app-logo [size]="26" [showText]="false" />
+          <span class="hidden h-5 w-px bg-border sm:block"></span>
           <a
             routerLink="/projects"
             class="hidden shrink-0 text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
@@ -32,8 +34,8 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
           <svg
             class="hidden shrink-0 text-muted-foreground sm:block"
             xmlns="http://www.w3.org/2000/svg"
-            width="15"
-            height="15"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -51,41 +53,62 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
         </div>
       </header>
 
-      <!-- Project nav rail (desktop) -->
-      <aside class="fixed left-3 top-1/2 z-30 hidden -translate-y-1/2 md:block">
-        <nav
-          class="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card/80 p-2 shadow-lg backdrop-blur"
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Side nav (desktop) -->
+        <aside
+          class="hidden w-56 shrink-0 flex-col border-r border-border p-3 md:flex"
+          aria-label="Navegación del proyecto"
         >
-          @for (item of nav; track item.path) {
-            <a
-              [routerLink]="['/projects', projectId(), item.path]"
-              routerLinkActive="bg-primary/15 text-primary"
-              [title]="item.label"
-              [attr.aria-label]="item.label"
-              class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          <nav class="flex flex-col gap-1">
+            @for (item of nav; track item.path) {
+              <a
+                [routerLink]="['/projects', projectId(), item.path]"
+                routerLinkActive="bg-primary/15 text-primary"
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <app-nav-icon [name]="item.path" [size]="18" />
+                {{ item.label }}
+              </a>
+            }
+          </nav>
+          <a
+            [routerLink]="['/projects', projectId(), 'sessions']"
+            class="mt-auto flex items-center gap-2 border-t border-border px-3 pt-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <app-nav-icon [name]="item.path" />
-            </a>
-          }
-        </nav>
-      </aside>
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nueva sesión
+          </a>
+        </aside>
 
-      <main class="flex-1 overflow-y-auto px-3 pb-24 md:pb-8 md:pl-24 md:pr-6">
-        <div class="mx-auto w-full max-w-6xl pt-6">
-          <router-outlet />
-        </div>
-      </main>
+        <main class="flex-1 overflow-y-auto px-4 pb-24 pt-5 md:px-6 md:pb-6">
+          <div class="mx-auto w-full max-w-5xl">
+            <router-outlet />
+          </div>
+        </main>
+      </div>
 
       <!-- Bottom nav (mobile) -->
       <nav
-        class="fixed inset-x-3 bottom-3 z-30 flex items-center gap-1 rounded-2xl border border-border bg-card/90 p-1.5 shadow-lg backdrop-blur md:hidden"
+        class="flex shrink-0 items-center gap-1 border-t border-border bg-background p-1.5 md:hidden"
       >
         @for (item of nav; track item.path) {
           <a
             [routerLink]="['/projects', projectId(), item.path]"
             routerLinkActive="bg-primary/15 text-primary"
             [attr.aria-label]="item.label"
-            class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
+            class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-muted-foreground"
           >
             <app-nav-icon [name]="item.path" [size]="20" />
             {{ item.label }}

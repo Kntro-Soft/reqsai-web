@@ -8,32 +8,31 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RealtimeService } from '../../../../core/realtime/realtime.service';
 import { DiscoveryStore } from '../../data/discovery.store';
 import { SessionRealtimeMessage } from '../../data/discovery.models';
-import { EVENT_LABEL, statusLabel, statusVariant } from '../../data/session-ui';
-import { HlmBadge, HlmButton, HlmSpinner } from '../../../../shared/ui';
+import { EVENT_LABEL, statusLabel } from '../../data/session-ui';
+import { HlmButton, HlmSpinner } from '../../../../shared/ui';
 
 type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
 
 /**
- * The session "chat": a recording composer up top, a live transcript stream
- * (Persona 1/2), and the AI's user-story suggestions as they are generated.
+ * The session "chat": a live transcript stream (Persona 1/2) with the AI's
+ * user-story suggestions inline, and a recording composer pinned at the bottom.
  */
 @Component({
   selector: 'app-session-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, HlmBadge, HlmButton, HlmSpinner],
+  imports: [HlmButton, HlmSpinner],
   template: `
     @if (store.current(); as session) {
-      <div class="flex flex-col gap-5">
+      <div class="flex flex-col gap-4">
         <!-- Header -->
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <h1 class="truncate text-2xl font-bold tracking-tight">{{ session.title }}</h1>
-            <div class="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <h1 class="truncate text-xl font-bold tracking-tight">{{ session.title }}</h1>
+            <div class="mt-0.5 flex items-center gap-2 text-sm text-muted-foreground">
               <span>{{ session.language }}</span>
               <span class="h-1 w-1 rounded-full bg-border"></span>
               <span
@@ -50,203 +49,185 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
               </span>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span hlmBadge [variant]="variant()" data-testid="session-status">
-              {{ statusLabel(session.status) }}
-            </span>
-            <a
-              [routerLink]="['/projects', projectId(), 'sessions']"
-              title="Historial de sesiones"
-              aria-label="Historial de sesiones"
-              class="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 3v5h5M3.05 13A9 9 0 1 0 6 5.3L3 8M12 7v5l4 2" />
-              </svg>
-            </a>
-          </div>
+          <span
+            class="inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs font-medium"
+            [class]="statusPill(session.status)"
+            data-testid="session-status"
+          >
+            @if (session.status === 'RECORDING') {
+              <span class="h-2 w-2 rounded-full bg-current"></span>
+            }
+            {{ statusLabel(session.status) }}
+          </span>
         </div>
 
-        <!-- Recording composer -->
-        <div
-          class="flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/60 p-3"
-        >
+        <!-- Chat: transcript + inline AI suggestions -->
+        <div class="flex flex-col gap-4 pb-4">
+          @if (lifecycleEvents().length) {
+            <div class="flex flex-col items-center gap-1">
+              @for (event of lifecycleEvents(); track $index) {
+                <span
+                  class="rounded-full bg-secondary/60 px-2.5 py-0.5 text-xs text-muted-foreground"
+                  data-testid="live-event"
+                >
+                  {{ label(event.type) }}
+                </span>
+              }
+            </div>
+          }
+
+          @for (segment of store.transcript(); track segment.sequence) {
+            <div class="flex gap-3" [class.opacity-60]="!segment.isFinal">
+              <span
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-semibold text-muted-foreground"
+              >
+                {{ personaInitials(segment.speakerLabel) }}
+              </span>
+              <div class="min-w-0">
+                <p class="text-xs text-muted-foreground">{{ personaLabel(segment.speakerLabel) }}</p>
+                <p class="text-sm leading-relaxed">{{ segment.text }}</p>
+              </div>
+            </div>
+          }
+
+          @for (story of store.stories(); track story.id) {
+            <div
+              class="rounded-2xl border border-border bg-card/60 p-4"
+              data-testid="story-row"
+            >
+              <div class="mb-1.5 flex items-center gap-2">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 3v2m0 14v2M5 12H3m18 0h-2M6.3 6.3 4.9 4.9m14.2 14.2-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4" />
+                  </svg>
+                  Historia generada
+                </span>
+                <span
+                  class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                  [class]="priorityClass(story.priority)"
+                >
+                  {{ priorityLabel(story.priority) }}
+                </span>
+                @if (story.storyPoints !== null) {
+                  <span class="ml-auto text-[11px] text-muted-foreground">{{ story.storyPoints }} pts</span>
+                }
+              </div>
+              <p class="text-sm font-medium">{{ story.title }}</p>
+              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Como <span class="text-foreground">{{ story.role }}</span
+                >, quiero <span class="text-foreground">{{ story.action }}</span
+                >, para <span class="text-foreground">{{ story.benefit }}</span
+                >.
+              </p>
+              @if (approved().has(story.id)) {
+                <p class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                  Aprobada
+                </p>
+              } @else {
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button hlmBtn size="sm" variant="outline" type="button" (click)="approve(story.id)">
+                    Aprobar
+                  </button>
+                  <button hlmBtn size="sm" variant="outline" type="button" disabled>Editar</button>
+                  <button hlmBtn size="sm" variant="outline" type="button" disabled>Duplicar</button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (store.transcript().length === 0 && store.stories().length === 0) {
+            <div class="rounded-2xl border border-dashed border-border p-12 text-center">
+              <p class="text-sm text-muted-foreground">
+                Inicia la grabación o sube un audio para empezar a capturar la conversación.
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Composer (pinned) -->
+      <div
+        class="sticky bottom-0 -mx-4 border-t border-border bg-background/90 px-4 py-3 backdrop-blur md:-mx-6 md:px-6"
+      >
+        <div class="mx-auto flex max-w-5xl items-center gap-3">
           @switch (session.status) {
             @case ('DRAFT') {
-              <button hlmBtn type="button" [disabled]="busy()" (click)="run('start')">
-                <span class="mr-1.5 h-2 w-2 rounded-full bg-current"></span>Iniciar grabación
+              <button
+                hlmBtn
+                type="button"
+                [disabled]="busy()"
+                (click)="run('start')"
+                aria-label="Iniciar grabación"
+                class="h-12 w-12 rounded-full p-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3ZM19 10v2a7 7 0 0 1-14 0v-2M12 19v4" /></svg>
               </button>
             }
             @case ('RECORDING') {
-              <button hlmBtn variant="secondary" [disabled]="busy()" (click)="run('pause')">
-                Pausar
+              <button hlmBtn variant="destructive" type="button" [disabled]="busy()" (click)="run('stop')" aria-label="Detener" class="h-12 w-12 rounded-full p-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
               </button>
-              <button hlmBtn variant="destructive" [disabled]="busy()" (click)="run('stop')">
-                Detener
-              </button>
+              <button hlmBtn variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="run('pause')">Pausar</button>
             }
             @case ('PAUSED') {
-              <button hlmBtn [disabled]="busy()" (click)="run('resume')">Reanudar</button>
-              <button hlmBtn variant="destructive" [disabled]="busy()" (click)="run('stop')">
-                Detener
+              <button hlmBtn type="button" [disabled]="busy()" (click)="run('resume')" aria-label="Reanudar" class="h-12 w-12 rounded-full p-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
               </button>
+              <button hlmBtn variant="destructive" size="sm" type="button" [disabled]="busy()" (click)="run('stop')">Detener</button>
             }
             @case ('STOPPED') {
-              <button hlmBtn [disabled]="busy()" (click)="process()" data-testid="process-btn">
+              <button hlmBtn type="button" [disabled]="busy()" (click)="process()" data-testid="process-btn">
                 @if (busy()) {
                   <hlm-spinner class="mr-1.5 h-4 w-4" />
                 }
                 Generar historias
               </button>
-              <button hlmBtn variant="outline" [disabled]="busy()" (click)="run('reset')">
-                Reiniciar
-              </button>
+              <button hlmBtn variant="outline" size="sm" type="button" [disabled]="busy()" (click)="run('reset')">Reiniciar</button>
             }
             @case ('PROCESSING') {
-              <span class="inline-flex items-center gap-2 px-2 text-sm text-muted-foreground">
-                <hlm-spinner class="h-4 w-4" /> Generando historias…
-              </span>
+              <span class="inline-flex items-center gap-2 text-sm text-muted-foreground"><hlm-spinner class="h-4 w-4" /> Generando historias…</span>
             }
             @default {
-              <button hlmBtn variant="outline" [disabled]="busy()" (click)="run('reset')">
-                Nueva grabación
-              </button>
+              <button hlmBtn variant="outline" type="button" [disabled]="busy()" (click)="run('reset')">Nueva grabación</button>
             }
           }
 
-          <span class="mx-1 hidden h-6 w-px bg-border sm:block"></span>
+          <div class="flex flex-1 items-center justify-center gap-1" aria-hidden="true">
+            @for (bar of waveform; track $index) {
+              <span
+                class="w-[3px] rounded-full transition-all"
+                [class.bg-primary]="recording()"
+                [class.bg-border]="!recording()"
+                [style.height.px]="recording() ? bar : 6"
+              ></span>
+            }
+          </div>
 
-          <button
-            hlmBtn
-            variant="outline"
-            type="button"
-            [disabled]="uploading()"
-            (click)="picker.click()"
-            data-testid="upload-btn"
-          >
+          <button hlmBtn variant="outline" type="button" [disabled]="uploading()" (click)="picker.click()" data-testid="upload-btn">
             @if (uploading()) {
               <hlm-spinner class="mr-1.5 h-4 w-4" />
             }
+            <svg class="mr-1.5" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
             Subir audio
           </button>
-          <input
-            #picker
-            type="file"
-            accept="audio/*"
-            class="hidden"
-            (change)="upload($event)"
-          />
-
-          @if (session.processingError) {
-            <span class="text-sm text-destructive">{{ session.processingError }}</span>
-          }
+          <input #picker type="file" accept="audio/*" class="hidden" (change)="upload($event)" />
         </div>
-
-        <div class="grid gap-5 lg:grid-cols-5">
-          <!-- Transcript chat -->
-          <div class="lg:col-span-3">
-            <h2 class="mb-3 text-sm font-medium text-muted-foreground">Transcripción</h2>
-            @if (lifecycleEvents().length) {
-              <div class="mb-3 flex flex-col items-center gap-1">
-                @for (event of lifecycleEvents(); track $index) {
-                  <span
-                    class="rounded-full bg-secondary/60 px-2.5 py-0.5 text-xs text-muted-foreground"
-                    data-testid="live-event"
-                  >
-                    {{ label(event.type) }}
-                  </span>
-                }
-              </div>
-            }
-            @if (store.transcript().length === 0) {
-              <div class="rounded-2xl border border-dashed border-border p-10 text-center">
-                <p class="text-sm text-muted-foreground">
-                  La conversación aparecerá aquí mientras grabas o tras subir un audio.
-                </p>
-              </div>
-            } @else {
-              <div class="flex flex-col gap-3">
-                @for (segment of store.transcript(); track segment.sequence) {
-                  <div class="flex gap-2.5" [class.opacity-60]="!segment.isFinal">
-                    <span
-                      class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-semibold text-muted-foreground"
-                    >
-                      {{ personaInitials(segment.speakerLabel) }}
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-xs text-muted-foreground">
-                        {{ personaLabel(segment.speakerLabel) }}
-                      </p>
-                      <p class="text-sm leading-relaxed">{{ segment.text }}</p>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- AI story suggestions -->
-          <div class="lg:col-span-2">
-            <h2 class="mb-3 text-sm font-medium text-muted-foreground">
-              Sugerencias de la IA
-              @if (store.stories().length) {
-                <span class="text-primary">({{ store.stories().length }})</span>
-              }
-            </h2>
-            @if (store.stories().length === 0) {
-              <div class="rounded-2xl border border-dashed border-border p-10 text-center">
-                <p class="text-sm text-muted-foreground">
-                  Las historias sugeridas aparecerán aquí al generar.
-                </p>
-              </div>
-            } @else {
-              <div class="flex flex-col gap-3">
-                @for (story of store.stories(); track story.id) {
-                  <div
-                    class="rounded-2xl border border-border bg-card p-4"
-                    data-testid="story-row"
-                  >
-                    <div class="mb-1.5 flex items-center gap-2">
-                      <span
-                        class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                      >
-                        Sugerencia IA
-                      </span>
-                      <span
-                        class="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                        [class]="priorityClass(story.priority)"
-                      >
-                        {{ priorityLabel(story.priority) }}
-                      </span>
-                      @if (story.storyPoints !== null) {
-                        <span class="ml-auto text-[11px] text-muted-foreground"
-                          >{{ story.storyPoints }} pts</span
-                        >
-                      }
-                    </div>
-                    <p class="text-sm font-medium">{{ story.title }}</p>
-                    <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      Como <span class="text-foreground">{{ story.role }}</span
-                      >, quiero <span class="text-foreground">{{ story.action }}</span
-                      >, para <span class="text-foreground">{{ story.benefit }}</span
-                      >.
-                    </p>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
+        @if (session.processingError) {
+          <p class="mx-auto mt-2 max-w-5xl text-sm text-destructive">{{ session.processingError }}</p>
+        }
       </div>
     } @else {
       <div class="flex justify-center py-16"><hlm-spinner class="h-6 w-6" /></div>
@@ -263,12 +244,10 @@ export class SessionDetail implements OnInit {
 
   protected readonly busy = signal(false);
   protected readonly uploading = signal(false);
+  protected readonly approved = signal<Set<string>>(new Set());
   protected readonly statusLabel = statusLabel;
-  protected readonly variant = computed(() => {
-    const status = this.store.current()?.status;
-    return status ? statusVariant(status) : 'secondary';
-  });
-  // System markers (lifecycle), excluding the noisy per-segment / per-story events.
+  protected readonly waveform = [10, 18, 24, 14, 20, 9, 16, 22, 12, 19, 8, 15];
+  protected readonly recording = computed(() => this.store.current()?.status === 'RECORDING');
   protected readonly lifecycleEvents = computed(() =>
     this.store
       .events()
@@ -286,6 +265,10 @@ export class SessionDetail implements OnInit {
 
   protected label(type: SessionRealtimeMessage['type']): string {
     return EVENT_LABEL[type];
+  }
+
+  protected approve(id: string): void {
+    this.approved.update((set) => new Set(set).add(id));
   }
 
   protected run(action: Action): void {
@@ -344,5 +327,16 @@ export class SessionDetail implements OnInit {
       LOW: 'bg-secondary text-muted-foreground',
     };
     return classes[priority] ?? 'bg-secondary text-muted-foreground';
+  }
+
+  protected statusPill(status: string): string {
+    const classes: Record<string, string> = {
+      RECORDING: 'bg-emerald-500/15 text-emerald-500',
+      PAUSED: 'bg-amber-500/15 text-amber-600',
+      PROCESSING: 'bg-primary/15 text-primary',
+      COMPLETED: 'bg-emerald-500/15 text-emerald-500',
+      FAILED: 'bg-destructive/15 text-destructive',
+    };
+    return classes[status] ?? 'bg-secondary text-muted-foreground';
   }
 }
