@@ -12,10 +12,10 @@ import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, OrgSwitcher],
   template: `
-    <div class="relative min-h-dvh bg-background text-foreground">
+    <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <!-- Floating header -->
       <header
-        class="sticky top-0 z-20 mx-3 flex h-16 items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 px-4 shadow-sm backdrop-blur md:mx-4 md:mt-4"
+        class="z-20 mx-3 mt-3 flex h-16 shrink-0 items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 px-4 shadow-sm backdrop-blur md:mx-4 md:mt-4"
       >
         <div class="flex min-w-0 items-center gap-3">
           <app-logo [size]="28" />
@@ -83,8 +83,8 @@ import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
         </nav>
       </aside>
 
-      <!-- Content -->
-      <main class="px-3 pb-24 md:pb-8 md:pl-24 md:pr-6">
+      <!-- Content — only this region scrolls, never the whole page -->
+      <main class="flex-1 overflow-y-auto px-3 pb-24 md:pb-8 md:pl-24 md:pr-6">
         <div class="mx-auto w-full max-w-6xl pt-6">
           <router-outlet />
         </div>
