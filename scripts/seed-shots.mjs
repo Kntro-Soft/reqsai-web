@@ -99,11 +99,12 @@ await acceptTerms(st);
 const soloOrg = await createOrg(st, 'Northwind Labs', 0);
 await setActive(st, soloOrg);
 st = await refresh();
-// The plan allows a single project per org; richness lives in the sessions.
-const projectId = await createProject(st, soloOrg, PROJECTS[0]);
+const projectIds = [];
+for (const spec of PROJECTS) projectIds.push(await createProject(st, soloOrg, spec));
+// Populate sessions (varied statuses) in the first project.
 for (const s of SESSIONS) {
-  const sid = await createSession(st, projectId, s.title);
-  for (const step of s.steps) await transition(st, projectId, sid, step);
+  const sid = await createSession(st, projectIds[0], s.title);
+  for (const step of s.steps) await transition(st, projectIds[0], sid, step);
 }
 
 console.log('Seeding multi user…');
