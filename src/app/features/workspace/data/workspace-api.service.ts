@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import {
   CreateOrganizationRequest,
   CreateProjectRequest,
   OrganizationResponse,
+  PageResponse,
   ProjectResponse,
 } from './workspace.models';
 
@@ -23,7 +24,10 @@ export class WorkspaceApiService {
   }
 
   listProjects(orgId: string): Observable<ProjectResponse[]> {
-    return this.http.get<ProjectResponse[]>(`/api/organizations/${orgId}/projects`);
+    // The workspace list endpoint is paginated (Spring Page); unwrap to the rows.
+    return this.http
+      .get<PageResponse<ProjectResponse>>(`/api/organizations/${orgId}/projects`)
+      .pipe(map((page) => page.content));
   }
 
   createProject(orgId: string, request: CreateProjectRequest): Observable<ProjectResponse> {

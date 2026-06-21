@@ -44,3 +44,14 @@ export interface CreateProjectRequest {
   architecture: string;
   domain: string;
 }
+
+/** Spring Data page envelope returned by the paginated list endpoints. */
+export interface PageResponse<T> {
+  content: T[];
+  page: {
+    number: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  };
+}
