@@ -63,19 +63,23 @@ export const routes: Routes = [
         path: 'stories',
         title: 'Historias · Reqs-AI',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
       },
       {
         path: 'members',
         title: 'Miembros del proyecto · Reqs-AI',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/workspace/pages/project-members/project-members').then(
+            (m) => m.ProjectMembers,
+          ),
       },
       {
         path: 'settings',
         title: 'Ajustes del proyecto · Reqs-AI',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/workspace/pages/project-settings/project-settings').then(
+            (m) => m.ProjectSettings,
+          ),
       },
     ],
   },

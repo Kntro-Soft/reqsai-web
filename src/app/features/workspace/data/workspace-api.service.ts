@@ -8,6 +8,7 @@ import {
   MemberResponse,
   OrganizationResponse,
   PageResponse,
+  ProjectMemberResponse,
   ProjectResponse,
   UpdateOrganizationRequest,
 } from './workspace.models';
@@ -39,6 +40,23 @@ export class WorkspaceApiService {
 
   getProject(orgId: string, projectId: string): Observable<ProjectResponse> {
     return this.http.get<ProjectResponse>(`/api/organizations/${orgId}/projects/${projectId}`);
+  }
+
+  updateProject(
+    orgId: string,
+    projectId: string,
+    request: CreateProjectRequest,
+  ): Observable<ProjectResponse> {
+    return this.http.put<ProjectResponse>(
+      `/api/organizations/${orgId}/projects/${projectId}`,
+      request,
+    );
+  }
+
+  listProjectMembers(orgId: string, projectId: string): Observable<ProjectMemberResponse[]> {
+    return this.http.get<ProjectMemberResponse[]>(
+      `/api/organizations/${orgId}/projects/${projectId}/members`,
+    );
   }
 
   getOrganization(orgId: string): Observable<OrganizationResponse> {

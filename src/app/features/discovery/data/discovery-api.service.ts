@@ -59,4 +59,9 @@ export class DiscoveryApiService {
   listSessionStories(sessionId: string): Observable<PageResponse<UserStoryResponse>> {
     return this.http.get<PageResponse<UserStoryResponse>>(`/api/sessions/${sessionId}/stories`);
   }
+
+  /** The project's whole backlog (AI-generated across sessions + manual stories). */
+  listProjectStories(projectId: string): Observable<PageResponse<UserStoryResponse>> {
+    return this.http.get<PageResponse<UserStoryResponse>>(`/api/projects/${projectId}/stories`);
+  }
 }

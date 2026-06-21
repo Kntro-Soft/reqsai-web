@@ -85,3 +85,13 @@ export interface CreateMemberRequest {
   displayName: string;
   role: 'ADMIN' | 'MEMBER';
 }
+
+/** A project ↔ member assignment (the names are resolved client-side from the org members). */
+export interface ProjectMemberResponse {
+  id: string;
+  projectId: string;
+  memberId: string;
+  roleId: string;
+  assignedBy: string | null;
+  assignedAt: string | null;
+}
