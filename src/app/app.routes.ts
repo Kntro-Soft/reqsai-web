@@ -4,6 +4,7 @@ import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
 import { AppShell } from './layout/app-shell/app-shell';
+import { ProjectShell } from './layout/project-shell/project-shell';
 
 export const routes: Routes = [
   // Default landing: the launch dispatcher routes by organization count.
@@ -35,6 +36,48 @@ export const routes: Routes = [
     canActivate: [authGuard, termsGuard],
     loadComponent: () =>
       import('./features/workspace/pages/organizations/organizations').then((m) => m.Organizations),
+  },
+
+  // Project workspace: its own shell + nav (sessions / stories / members / settings).
+  {
+    path: 'projects/:projectId',
+    component: ProjectShell,
+    canActivate: [authGuard, termsGuard, orgGuard],
+    children: [
+      { path: '', redirectTo: 'sessions', pathMatch: 'full' },
+      {
+        path: 'sessions',
+        title: 'Sesiones · Reqs-AI',
+        loadComponent: () =>
+          import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
+      },
+      {
+        path: 'sessions/:sessionId',
+        title: 'Sesión · Reqs-AI',
+        loadComponent: () =>
+          import('./features/discovery/pages/session-detail/session-detail').then(
+            (m) => m.SessionDetail,
+          ),
+      },
+      {
+        path: 'stories',
+        title: 'Historias · Reqs-AI',
+        loadComponent: () =>
+          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+      },
+      {
+        path: 'members',
+        title: 'Miembros del proyecto · Reqs-AI',
+        loadComponent: () =>
+          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+      },
+      {
+        path: 'settings',
+        title: 'Ajustes del proyecto · Reqs-AI',
+        loadComponent: () =>
+          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+      },
+    ],
   },
 
   {
@@ -76,22 +119,6 @@ export const routes: Routes = [
         canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
-      },
-      {
-        path: 'projects/:projectId/sessions',
-        title: 'Sesiones · Reqs-AI',
-        canActivate: [orgGuard],
-        loadComponent: () =>
-          import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
-      },
-      {
-        path: 'projects/:projectId/sessions/:sessionId',
-        title: 'Sesión · Reqs-AI',
-        canActivate: [orgGuard],
-        loadComponent: () =>
-          import('./features/discovery/pages/session-detail/session-detail').then(
-            (m) => m.SessionDetail,
-          ),
       },
     ],
   },

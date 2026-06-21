@@ -37,6 +37,10 @@ export class WorkspaceApiService {
     return this.http.post<ProjectResponse>(`/api/organizations/${orgId}/projects`, request);
   }
 
+  getProject(orgId: string, projectId: string): Observable<ProjectResponse> {
+    return this.http.get<ProjectResponse>(`/api/organizations/${orgId}/projects/${projectId}`);
+  }
+
   getOrganization(orgId: string): Observable<OrganizationResponse> {
     return this.http.get<OrganizationResponse>(`/api/organizations/${orgId}`);
   }
