@@ -2,11 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import {
+  CreateMemberRequest,
   CreateOrganizationRequest,
   CreateProjectRequest,
+  MemberResponse,
   OrganizationResponse,
   PageResponse,
   ProjectResponse,
+  UpdateOrganizationRequest,
 } from './workspace.models';
 
 /** Thin HTTP client for the workspace endpoints. The active tenant is resolved
@@ -32,5 +35,28 @@ export class WorkspaceApiService {
 
   createProject(orgId: string, request: CreateProjectRequest): Observable<ProjectResponse> {
     return this.http.post<ProjectResponse>(`/api/organizations/${orgId}/projects`, request);
+  }
+
+  getOrganization(orgId: string): Observable<OrganizationResponse> {
+    return this.http.get<OrganizationResponse>(`/api/organizations/${orgId}`);
+  }
+
+  updateOrganization(
+    orgId: string,
+    request: UpdateOrganizationRequest,
+  ): Observable<OrganizationResponse> {
+    return this.http.put<OrganizationResponse>(`/api/organizations/${orgId}`, request);
+  }
+
+  listMembers(orgId: string): Observable<MemberResponse[]> {
+    return this.http.get<MemberResponse[]>(`/api/organizations/${orgId}/members`);
+  }
+
+  inviteMember(orgId: string, request: CreateMemberRequest): Observable<MemberResponse> {
+    return this.http.post<MemberResponse>(`/api/organizations/${orgId}/members`, request);
+  }
+
+  removeMember(orgId: string, memberId: string): Observable<void> {
+    return this.http.delete<void>(`/api/organizations/${orgId}/members/${memberId}`);
   }
 }

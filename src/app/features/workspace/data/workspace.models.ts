@@ -55,3 +55,33 @@ export interface PageResponse<T> {
     totalPages: number;
   };
 }
+
+export interface UpdateOrganizationRequest {
+  name: string;
+  meetingLanguage?: string;
+  audioRetentionDays?: number;
+}
+
+type MemberRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+type MemberStatus = 'ACTIVE' | 'PENDING' | 'INACTIVE';
+
+export interface MemberResponse {
+  id: string;
+  organizationId: string;
+  userId: string | null;
+  email: string;
+  displayName: string;
+  role: MemberRole;
+  status: MemberStatus;
+  invitedBy: string | null;
+  invitedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Invite payload; the backend only allows ADMIN or MEMBER (OWNER is the creator). */
+export interface CreateMemberRequest {
+  email: string;
+  displayName: string;
+  role: 'ADMIN' | 'MEMBER';
+}

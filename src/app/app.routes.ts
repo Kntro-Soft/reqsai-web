@@ -64,6 +64,20 @@ export const routes: Routes = [
           import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
       },
       {
+        path: 'members',
+        title: 'Miembros · Reqs-AI',
+        canActivate: [orgGuard],
+        loadComponent: () =>
+          import('./features/workspace/pages/members/members').then((m) => m.Members),
+      },
+      {
+        path: 'settings',
+        title: 'Ajustes · Reqs-AI',
+        canActivate: [orgGuard],
+        loadComponent: () =>
+          import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
+      },
+      {
         path: 'projects/:projectId/sessions',
         title: 'Sesiones · Reqs-AI',
         canActivate: [orgGuard],
