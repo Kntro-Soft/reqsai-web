@@ -22,7 +22,15 @@ const toList = (value: string): string[] =>
 @Component({
   selector: 'app-project-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmButton, HlmCard, HlmCardContent, HlmInput, HlmLabel, HlmSpinner],
+  imports: [
+    ReactiveFormsModule,
+    HlmButton,
+    HlmCard,
+    HlmCardContent,
+    HlmInput,
+    HlmLabel,
+    HlmSpinner,
+  ],
   template: `
     <div class="flex max-w-2xl flex-col gap-6">
       <div>
@@ -47,7 +55,11 @@ const toList = (value: string): string[] =>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="flex flex-col gap-2">
                   <label hlmLabel for="programmingLanguages">Lenguajes (coma)</label>
-                  <input hlmInput id="programmingLanguages" formControlName="programmingLanguages" />
+                  <input
+                    hlmInput
+                    id="programmingLanguages"
+                    formControlName="programmingLanguages"
+                  />
                 </div>
                 <div class="flex flex-col gap-2">
                   <label hlmLabel for="frameworks">Frameworks (coma)</label>
@@ -72,7 +84,9 @@ const toList = (value: string): string[] =>
               </div>
 
               @if (errorMessage()) {
-                <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
+                <p class="text-sm text-destructive" data-testid="form-error">
+                  {{ errorMessage() }}
+                </p>
               }
               @if (saved()) {
                 <p class="text-sm text-emerald-500" data-testid="settings-saved">

@@ -84,17 +84,16 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 {{ personaInitials(segment.speakerLabel) }}
               </span>
               <div class="min-w-0">
-                <p class="text-xs text-muted-foreground">{{ personaLabel(segment.speakerLabel) }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ personaLabel(segment.speakerLabel) }}
+                </p>
                 <p class="text-sm leading-relaxed">{{ segment.text }}</p>
               </div>
             </div>
           }
 
           @for (story of store.stories(); track story.id) {
-            <div
-              class="rounded-2xl border border-border bg-card/60 p-4"
-              data-testid="story-row"
-            >
+            <div class="rounded-2xl border border-border bg-card/60 p-4" data-testid="story-row">
               <div class="mb-1.5 flex items-center gap-2">
                 <span
                   class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
@@ -110,7 +109,9 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <path d="M12 3v2m0 14v2M5 12H3m18 0h-2M6.3 6.3 4.9 4.9m14.2 14.2-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4" />
+                    <path
+                      d="M12 3v2m0 14v2M5 12H3m18 0h-2M6.3 6.3 4.9 4.9m14.2 14.2-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"
+                    />
                   </svg>
                   Historia generada
                 </span>
@@ -121,7 +122,9 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                   {{ priorityLabel(story.priority) }}
                 </span>
                 @if (story.storyPoints !== null) {
-                  <span class="ml-auto text-[11px] text-muted-foreground">{{ story.storyPoints }} pts</span>
+                  <span class="ml-auto text-[11px] text-muted-foreground"
+                    >{{ story.storyPoints }} pts</span
+                  >
                 }
               </div>
               <p class="text-sm font-medium">{{ story.title }}</p>
@@ -132,17 +135,39 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 >.
               </p>
               @if (approved().has(story.id)) {
-                <p class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                <p
+                  class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
                   Aprobada
                 </p>
               } @else {
                 <div class="mt-3 flex flex-wrap gap-2">
-                  <button hlmBtn size="sm" variant="outline" type="button" (click)="approve(story.id)">
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    (click)="approve(story.id)"
+                  >
                     Aprobar
                   </button>
                   <button hlmBtn size="sm" variant="outline" type="button" disabled>Editar</button>
-                  <button hlmBtn size="sm" variant="outline" type="button" disabled>Duplicar</button>
+                  <button hlmBtn size="sm" variant="outline" type="button" disabled>
+                    Duplicar
+                  </button>
                 </div>
               }
             </div>
@@ -173,35 +198,123 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 aria-label="Iniciar grabación"
                 class="h-12 w-12 rounded-full p-0"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3ZM19 10v2a7 7 0 0 1-14 0v-2M12 19v4" /></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3ZM19 10v2a7 7 0 0 1-14 0v-2M12 19v4"
+                  />
+                </svg>
               </button>
             }
             @case ('RECORDING') {
-              <button hlmBtn variant="destructive" type="button" [disabled]="busy()" (click)="run('stop')" aria-label="Detener" class="h-12 w-12 rounded-full p-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+              <button
+                hlmBtn
+                variant="destructive"
+                type="button"
+                [disabled]="busy()"
+                (click)="run('stop')"
+                aria-label="Detener"
+                class="h-12 w-12 rounded-full p-0"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
               </button>
-              <button hlmBtn variant="secondary" size="sm" type="button" [disabled]="busy()" (click)="run('pause')">Pausar</button>
+              <button
+                hlmBtn
+                variant="secondary"
+                size="sm"
+                type="button"
+                [disabled]="busy()"
+                (click)="run('pause')"
+              >
+                Pausar
+              </button>
             }
             @case ('PAUSED') {
-              <button hlmBtn type="button" [disabled]="busy()" (click)="run('resume')" aria-label="Reanudar" class="h-12 w-12 rounded-full p-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              <button
+                hlmBtn
+                type="button"
+                [disabled]="busy()"
+                (click)="run('resume')"
+                aria-label="Reanudar"
+                class="h-12 w-12 rounded-full p-0"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
               </button>
-              <button hlmBtn variant="destructive" size="sm" type="button" [disabled]="busy()" (click)="run('stop')">Detener</button>
+              <button
+                hlmBtn
+                variant="destructive"
+                size="sm"
+                type="button"
+                [disabled]="busy()"
+                (click)="run('stop')"
+              >
+                Detener
+              </button>
             }
             @case ('STOPPED') {
-              <button hlmBtn type="button" [disabled]="busy()" (click)="process()" data-testid="process-btn">
+              <button
+                hlmBtn
+                type="button"
+                [disabled]="busy()"
+                (click)="process()"
+                data-testid="process-btn"
+              >
                 @if (busy()) {
                   <hlm-spinner class="mr-1.5 h-4 w-4" />
                 }
                 Generar historias
               </button>
-              <button hlmBtn variant="outline" size="sm" type="button" [disabled]="busy()" (click)="run('reset')">Reiniciar</button>
+              <button
+                hlmBtn
+                variant="outline"
+                size="sm"
+                type="button"
+                [disabled]="busy()"
+                (click)="run('reset')"
+              >
+                Reiniciar
+              </button>
             }
             @case ('PROCESSING') {
-              <span class="inline-flex items-center gap-2 text-sm text-muted-foreground"><hlm-spinner class="h-4 w-4" /> Generando historias…</span>
+              <span class="inline-flex items-center gap-2 text-sm text-muted-foreground"
+                ><hlm-spinner class="h-4 w-4" /> Generando historias…</span
+              >
             }
             @default {
-              <button hlmBtn variant="outline" type="button" [disabled]="busy()" (click)="run('reset')">Nueva grabación</button>
+              <button
+                hlmBtn
+                variant="outline"
+                type="button"
+                [disabled]="busy()"
+                (click)="run('reset')"
+              >
+                Nueva grabación
+              </button>
             }
           }
 
@@ -216,17 +329,39 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
             }
           </div>
 
-          <button hlmBtn variant="outline" type="button" [disabled]="uploading()" (click)="picker.click()" data-testid="upload-btn">
+          <button
+            hlmBtn
+            variant="outline"
+            type="button"
+            [disabled]="uploading()"
+            (click)="picker.click()"
+            data-testid="upload-btn"
+          >
             @if (uploading()) {
               <hlm-spinner class="mr-1.5 h-4 w-4" />
             }
-            <svg class="mr-1.5" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
+            <svg
+              class="mr-1.5"
+              xmlns="http://www.w3.org/2000/svg"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
             Subir audio
           </button>
           <input #picker type="file" accept="audio/*" class="hidden" (change)="upload($event)" />
         </div>
         @if (session.processingError) {
-          <p class="mx-auto mt-2 max-w-5xl text-sm text-destructive">{{ session.processingError }}</p>
+          <p class="mx-auto mt-2 max-w-5xl text-sm text-destructive">
+            {{ session.processingError }}
+          </p>
         }
       </div>
     } @else {

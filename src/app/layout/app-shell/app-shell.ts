@@ -16,7 +16,16 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, OrgSwitcher, NavIcon],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ThemeToggle,
+    Logo,
+    UserMenu,
+    OrgSwitcher,
+    NavIcon,
+  ],
   template: `
     <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <!-- Top bar -->

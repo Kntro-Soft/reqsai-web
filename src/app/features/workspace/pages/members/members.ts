@@ -18,7 +18,15 @@ import {
 @Component({
   selector: 'app-members',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmButton, HlmCard, HlmCardContent, HlmInput, HlmLabel, HlmSpinner],
+  imports: [
+    ReactiveFormsModule,
+    HlmButton,
+    HlmCard,
+    HlmCardContent,
+    HlmInput,
+    HlmLabel,
+    HlmSpinner,
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-start justify-between gap-3">
@@ -36,14 +44,29 @@ import {
       @if (showInvite()) {
         <div hlmCard>
           <div hlmCardContent class="pt-6">
-            <form [formGroup]="form" (ngSubmit)="invite()" class="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <form
+              [formGroup]="form"
+              (ngSubmit)="invite()"
+              class="flex flex-col gap-4 sm:flex-row sm:items-end"
+            >
               <div class="flex flex-1 flex-col gap-2">
                 <label hlmLabel for="email">Correo</label>
-                <input hlmInput id="email" type="email" formControlName="email" placeholder="persona@empresa.com" />
+                <input
+                  hlmInput
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="persona@empresa.com"
+                />
               </div>
               <div class="flex flex-1 flex-col gap-2">
                 <label hlmLabel for="displayName">Nombre</label>
-                <input hlmInput id="displayName" formControlName="displayName" placeholder="Nombre visible" />
+                <input
+                  hlmInput
+                  id="displayName"
+                  formControlName="displayName"
+                  placeholder="Nombre visible"
+                />
               </div>
               <div class="flex flex-col gap-2">
                 <label hlmLabel for="role">Rol</label>
@@ -56,7 +79,12 @@ import {
                   <option value="ADMIN">Administrador</option>
                 </select>
               </div>
-              <button hlmBtn type="submit" [disabled]="form.invalid || submitting()" data-testid="invite-submit">
+              <button
+                hlmBtn
+                type="submit"
+                [disabled]="form.invalid || submitting()"
+                data-testid="invite-submit"
+              >
                 @if (submitting()) {
                   <hlm-spinner class="h-4 w-4" />
                 }
@@ -64,7 +92,9 @@ import {
               </button>
             </form>
             @if (errorMessage()) {
-              <p class="mt-3 text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
+              <p class="mt-3 text-sm text-destructive" data-testid="form-error">
+                {{ errorMessage() }}
+              </p>
             }
           </div>
         </div>
@@ -76,7 +106,9 @@ import {
             class="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
             data-testid="member-row"
           >
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+            <span
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary"
+            >
               {{ myInitials() }}
             </span>
             <div class="min-w-0 flex-1">
@@ -90,18 +122,28 @@ import {
         }
 
         @for (m of members(); track m.id) {
-          <div class="flex items-center gap-3 rounded-xl border border-border bg-card p-4" data-testid="member-row">
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-muted-foreground">
+          <div
+            class="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
+            data-testid="member-row"
+          >
+            <span
+              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-muted-foreground"
+            >
               {{ initials(m.displayName || m.email) }}
             </span>
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium">{{ m.displayName || m.email }}</p>
               <p class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
             </div>
-            <span class="rounded-full px-2.5 py-0.5 text-xs font-medium" [class]="statusClass(m.status)">
+            <span
+              class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+              [class]="statusClass(m.status)"
+            >
               {{ statusLabel(m.status) }}
             </span>
-            <span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            <span
+              class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+            >
               {{ roleLabel(m.role) }}
             </span>
             <button
@@ -110,17 +152,34 @@ import {
               aria-label="Quitar miembro"
               class="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+                />
               </svg>
             </button>
           </div>
         }
 
         @if (state() === 'ready' && members().length === 0) {
-          <div class="rounded-xl border border-dashed border-border p-8 text-center" data-testid="members-empty">
+          <div
+            class="rounded-xl border border-dashed border-border p-8 text-center"
+            data-testid="members-empty"
+          >
             <p class="text-sm font-medium">Aún no has invitado a nadie</p>
-            <p class="mt-1 text-sm text-muted-foreground">Invita a tu equipo para colaborar en esta organización.</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+              Invita a tu equipo para colaborar en esta organización.
+            </p>
           </div>
         }
       </div>

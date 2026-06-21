@@ -16,7 +16,15 @@ import {
 @Component({
   selector: 'app-org-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmButton, HlmCard, HlmCardContent, HlmInput, HlmLabel, HlmSpinner],
+  imports: [
+    ReactiveFormsModule,
+    HlmButton,
+    HlmCard,
+    HlmCardContent,
+    HlmInput,
+    HlmLabel,
+    HlmSpinner,
+  ],
   template: `
     <div class="flex max-w-2xl flex-col gap-6">
       <div>
@@ -40,7 +48,12 @@ import {
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="flex flex-col gap-2">
                   <label hlmLabel for="meetingLanguage">Idioma de reuniones</label>
-                  <input hlmInput id="meetingLanguage" formControlName="meetingLanguage" placeholder="es-PE" />
+                  <input
+                    hlmInput
+                    id="meetingLanguage"
+                    formControlName="meetingLanguage"
+                    placeholder="es-PE"
+                  />
                 </div>
                 <div class="flex flex-col gap-2">
                   <label hlmLabel for="audioRetentionDays">Retención de audio (días)</label>
@@ -55,14 +68,23 @@ import {
               </div>
 
               @if (errorMessage()) {
-                <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
+                <p class="text-sm text-destructive" data-testid="form-error">
+                  {{ errorMessage() }}
+                </p>
               }
               @if (saved()) {
-                <p class="text-sm text-emerald-500" data-testid="settings-saved">Cambios guardados.</p>
+                <p class="text-sm text-emerald-500" data-testid="settings-saved">
+                  Cambios guardados.
+                </p>
               }
 
               <div class="mt-2 flex justify-end">
-                <button hlmBtn type="submit" [disabled]="form.invalid || saving()" data-testid="settings-save">
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="form.invalid || saving()"
+                  data-testid="settings-save"
+                >
                   @if (saving()) {
                     <hlm-spinner class="h-4 w-4" />
                   }
@@ -116,7 +138,11 @@ export class OrgSettings {
     this.errorMessage.set(null);
     const { name, meetingLanguage, audioRetentionDays } = this.form.getRawValue();
     this.api
-      .updateOrganization(orgId, { name, meetingLanguage: meetingLanguage || undefined, audioRetentionDays })
+      .updateOrganization(orgId, {
+        name,
+        meetingLanguage: meetingLanguage || undefined,
+        audioRetentionDays,
+      })
       .subscribe({
         next: () => {
           this.saving.set(false);

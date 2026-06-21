@@ -79,9 +79,7 @@ export class ProjectMembers implements OnInit {
   protected readonly assignments = signal<ProjectMemberResponse[]>([]);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   private readonly orgMembers = signal<MemberResponse[]>([]);
-  private readonly byId = computed(
-    () => new Map(this.orgMembers().map((m) => [m.id, m] as const)),
-  );
+  private readonly byId = computed(() => new Map(this.orgMembers().map((m) => [m.id, m] as const)));
 
   ngOnInit(): void {
     const orgId = this.store.organizationId();
