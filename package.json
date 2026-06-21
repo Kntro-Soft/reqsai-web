@@ -18,6 +18,7 @@
     "shots:responsive": "node scripts/responsive-shots.mjs",
     "shots:flows": "node scripts/flow-shots.mjs",
     "shots:org": "node scripts/seed-shots.mjs",
+    "seed:rich": "node scripts/seed-rich.mjs",
     "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,
