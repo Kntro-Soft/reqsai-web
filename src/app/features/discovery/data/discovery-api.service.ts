@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  AcceptSuggestionRequest,
   CreateDiscoverySessionRequest,
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
+  SuggestionResponse,
   UserStoryResponse,
 } from './discovery.models';
 
@@ -63,5 +65,30 @@ export class DiscoveryApiService {
   /** The project's whole backlog (AI-generated across sessions + manual stories). */
   listProjectStories(projectId: string): Observable<PageResponse<UserStoryResponse>> {
     return this.http.get<PageResponse<UserStoryResponse>>(`/api/projects/${projectId}/stories`);
+  }
+
+  // ---- AI suggestion review ----
+
+  /** Pending suggestions for a session (accepted/dismissed are not returned). */
+  listSuggestions(sessionId: string): Observable<SuggestionResponse[]> {
+    return this.http.get<SuggestionResponse[]>(`/api/sessions/${sessionId}/suggestions`);
+  }
+
+  acceptSuggestion(
+    sessionId: string,
+    suggestionId: string,
+    request: AcceptSuggestionRequest,
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/sessions/${sessionId}/suggestions/${suggestionId}/accept`,
+      request,
+    );
+  }
+
+  dismissSuggestion(sessionId: string, suggestionId: string): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/sessions/${sessionId}/suggestions/${suggestionId}/dismiss`,
+      {},
+    );
   }
 }

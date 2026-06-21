@@ -11,8 +11,14 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RealtimeService } from '../../../../core/realtime/realtime.service';
 import { DiscoveryStore } from '../../data/discovery.store';
-import { SessionRealtimeMessage } from '../../data/discovery.models';
+import {
+  AcceptSuggestionRequest,
+  DisplayStory,
+  SessionRealtimeMessage,
+  SuggestionResponse,
+} from '../../data/discovery.models';
 import { EVENT_LABEL, statusLabel } from '../../data/session-ui';
+import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
 import { HlmButton, HlmSpinner } from '../../../../shared/ui';
 
 type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
@@ -24,7 +30,7 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
 @Component({
   selector: 'app-session-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmButton, HlmSpinner],
+  imports: [HlmButton, HlmSpinner, SuggestionCard],
   template: `
     @if (store.current(); as session) {
       <div class="flex flex-col gap-4">
@@ -89,6 +95,22 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 </p>
                 <p class="text-sm leading-relaxed">{{ segment.text }}</p>
               </div>
+            </div>
+          }
+
+          @if (store.suggestions().length) {
+            <div class="flex flex-col gap-3">
+              <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Sugerencias de la IA · {{ store.suggestions().length }}
+              </p>
+              @for (sg of store.suggestions(); track sg.id) {
+                <app-suggestion-card
+                  [suggestion]="sg"
+                  [targetStory]="targetStory(sg)"
+                  (accept)="acceptSuggestion(sg, $event)"
+                  (dismiss)="dismissSuggestion(sg)"
+                />
+              }
             </div>
           }
 
@@ -173,7 +195,11 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
             </div>
           }
 
-          @if (store.transcript().length === 0 && store.stories().length === 0) {
+          @if (
+            store.transcript().length === 0 &&
+            store.stories().length === 0 &&
+            store.suggestions().length === 0
+          ) {
             <div class="rounded-2xl border border-dashed border-border p-12 text-center">
               <p class="text-sm text-muted-foreground">
                 Inicia la grabación o sube un audio para empezar a capturar la conversación.
@@ -400,6 +426,18 @@ export class SessionDetail implements OnInit {
 
   protected label(type: SessionRealtimeMessage['type']): string {
     return EVENT_LABEL[type];
+  }
+
+  protected acceptSuggestion(s: SuggestionResponse, body: AcceptSuggestionRequest): void {
+    this.store.acceptSuggestion(this.sessionId(), s.id, body).subscribe();
+  }
+
+  protected dismissSuggestion(s: SuggestionResponse): void {
+    this.store.dismissSuggestion(this.sessionId(), s.id).subscribe();
+  }
+
+  protected targetStory(s: SuggestionResponse): DisplayStory | undefined {
+    return s.targetStoryId ? this.store.stories().find((x) => x.id === s.targetStoryId) : undefined;
   }
 
   protected approve(id: string): void {

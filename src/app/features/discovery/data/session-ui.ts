@@ -42,4 +42,7 @@ export const EVENT_LABEL: Record<SessionEventType, string> = {
   COMPLETED: 'Procesamiento completado',
   FAILED: 'Procesamiento fallido',
   STORY_GENERATED: 'Historia generada',
+  SUGGESTION_GENERATED: 'Sugerencia generada',
+  SUGGESTION_ACCEPTED: 'Sugerencia aceptada',
+  SUGGESTION_DISMISSED: 'Sugerencia descartada',
 };
