@@ -25,7 +25,9 @@ export const launchGuard: CanActivateFn = () => {
       if (activeId && orgs.some((o) => o.id === activeId)) {
         return of(router.createUrlTree(['/projects']));
       }
-      return auth.switchOrganization(orgs[0].id).pipe(map(() => router.createUrlTree(['/projects'])));
+      return auth
+        .switchOrganization(orgs[0].id)
+        .pipe(map(() => router.createUrlTree(['/projects'])));
     }),
   );
 };
