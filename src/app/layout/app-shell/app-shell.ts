@@ -6,190 +6,78 @@ import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../shared/components/logo/logo';
 import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
+import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 
+/**
+ * Organization workspace shell: a flat top bar (logo + org switcher + user
+ * menu) and a labelled side nav (projects / members / settings), matching the
+ * project workspace's app-window styling.
+ */
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, OrgSwitcher],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, OrgSwitcher, NavIcon],
   template: `
     <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <!-- Floating header -->
+      <!-- Top bar -->
       <header
-        class="z-20 mx-3 mt-3 flex h-16 shrink-0 items-center justify-between gap-3 rounded-2xl border border-border bg-card/80 px-4 shadow-sm backdrop-blur md:mx-4 md:mt-4"
+        class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4"
       >
-        <div class="flex min-w-0 items-center gap-3">
-          <app-logo [size]="28" />
+        <div class="flex min-w-0 items-center gap-2.5">
+          <app-logo [size]="26" />
           @if (workspace.organizations().length) {
-            <span class="hidden h-6 w-px bg-border sm:block"></span>
+            <span class="hidden h-5 w-px bg-border sm:block"></span>
             <app-org-switcher class="hidden sm:block" />
           }
         </div>
-
         <div class="flex items-center gap-1.5">
           <app-theme-toggle />
           <app-user-menu />
         </div>
       </header>
 
-      <!-- Floating icon sidebar (desktop) -->
-      <aside class="fixed left-3 top-1/2 z-30 hidden -translate-y-1/2 md:block">
-        <nav
-          class="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card/80 p-2 shadow-lg backdrop-blur"
+      <div class="flex flex-1 overflow-hidden">
+        <!-- Side nav (desktop) -->
+        <aside
+          class="hidden w-56 shrink-0 flex-col border-r border-border p-3 md:flex"
+          aria-label="Navegación de la organización"
         >
-          <a
-            [routerLink]="['/projects']"
-            routerLinkActive="bg-primary/15 text-primary"
-            title="Proyectos"
-            aria-label="Proyectos"
-            class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
-              />
-            </svg>
-          </a>
-          <a
-            [routerLink]="['/members']"
-            routerLinkActive="bg-primary/15 text-primary"
-            title="Miembros"
-            aria-label="Miembros"
-            class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-              />
-            </svg>
-          </a>
-          <a
-            [routerLink]="['/settings']"
-            routerLinkActive="bg-primary/15 text-primary"
-            title="Ajustes"
-            aria-label="Ajustes"
-            class="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-              />
-            </svg>
-          </a>
-        </nav>
-      </aside>
+          <nav class="flex flex-col gap-1">
+            @for (item of nav; track item.path) {
+              <a
+                [routerLink]="['/' + item.path]"
+                routerLinkActive="bg-primary/15 text-primary"
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <app-nav-icon [name]="item.path" [size]="18" />
+                {{ item.label }}
+              </a>
+            }
+          </nav>
+        </aside>
 
-      <!-- Content — only this region scrolls, never the whole page -->
-      <main class="flex-1 overflow-y-auto px-3 pb-24 md:pb-8 md:pl-24 md:pr-6">
-        <div class="mx-auto w-full max-w-6xl pt-6">
-          <router-outlet />
-        </div>
-      </main>
+        <main class="flex-1 overflow-y-auto px-4 pb-24 pt-5 md:px-6 md:pb-6">
+          <div class="mx-auto w-full max-w-6xl">
+            <router-outlet />
+          </div>
+        </main>
+      </div>
 
-      <!-- Bottom nav (mobile) — full width like the header -->
+      <!-- Bottom nav (mobile) -->
       <nav
-        class="fixed inset-x-3 bottom-3 z-30 flex items-center gap-1 rounded-2xl border border-border bg-card/90 p-1.5 shadow-lg backdrop-blur md:hidden"
+        class="flex shrink-0 items-center gap-1 border-t border-border bg-background p-1.5 md:hidden"
       >
-        <a
-          [routerLink]="['/projects']"
-          routerLinkActive="bg-primary/15 text-primary"
-          aria-label="Proyectos"
-          class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+        @for (item of nav; track item.path) {
+          <a
+            [routerLink]="['/' + item.path]"
+            routerLinkActive="bg-primary/15 text-primary"
+            [attr.aria-label]="item.label"
+            class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-muted-foreground"
           >
-            <path
-              d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
-            />
-          </svg>
-          Proyectos
-        </a>
-        <a
-          [routerLink]="['/members']"
-          routerLinkActive="bg-primary/15 text-primary"
-          aria-label="Miembros"
-          class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-            />
-          </svg>
-          Miembros
-        </a>
-        <a
-          [routerLink]="['/settings']"
-          routerLinkActive="bg-primary/15 text-primary"
-          aria-label="Ajustes"
-          class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-medium text-muted-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path
-              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-            />
-          </svg>
-          Ajustes
-        </a>
+            <app-nav-icon [name]="item.path" [size]="20" />
+            {{ item.label }}
+          </a>
+        }
       </nav>
     </div>
   `,
@@ -197,6 +85,12 @@ import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
 export class AppShell {
   protected readonly store = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
+
+  protected readonly nav = [
+    { path: 'projects', label: 'Proyectos' },
+    { path: 'members', label: 'Miembros' },
+    { path: 'settings', label: 'Ajustes' },
+  ];
 
   constructor() {
     effect(() => {

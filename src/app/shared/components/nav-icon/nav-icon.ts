@@ -18,6 +18,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       stroke-linejoin="round"
     >
       @switch (name()) {
+        @case ('projects') {
+          <path d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
+        }
         @case ('sessions') {
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
           <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" />
