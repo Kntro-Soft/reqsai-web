@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { AuthService } from '../../core/auth/auth.service';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../shared/components/logo/logo';
 import { UserMenu } from '../../shared/components/user-menu/user-menu';
+import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
 
 @Component({
   selector: 'app-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, OrgSwitcher],
   template: `
     <div class="relative min-h-dvh bg-background text-foreground">
       <!-- Floating header -->
@@ -21,54 +21,7 @@ import { UserMenu } from '../../shared/components/user-menu/user-menu';
           <app-logo [size]="28" />
           @if (workspace.organizations().length) {
             <span class="hidden h-6 w-px bg-border sm:block"></span>
-            <div class="relative hidden sm:block">
-              <span
-                class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01" />
-                </svg>
-              </span>
-              <select
-                data-testid="org-switcher"
-                aria-label="Cambiar organización"
-                class="w-44 appearance-none truncate rounded-lg border border-border bg-secondary/60 py-1.5 pl-8 pr-7 text-sm font-medium transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                (change)="onSwitch(asValue($event))"
-              >
-                @for (org of workspace.organizations(); track org.id) {
-                  <option [value]="org.id" [selected]="org.id === store.organizationId()">
-                    {{ org.name }}
-                  </option>
-                }
-              </select>
-              <span
-                class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="m7 15 5 5 5-5M7 9l5-5 5 5" />
-                </svg>
-              </span>
-            </div>
+            <app-org-switcher class="hidden sm:block" />
           }
         </div>
 
@@ -192,26 +145,12 @@ import { UserMenu } from '../../shared/components/user-menu/user-menu';
 export class AppShell {
   protected readonly store = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   constructor() {
     effect(() => {
       if (this.store.isAuthenticated() && this.workspace.orgsState() === 'idle') {
         this.workspace.loadOrganizations();
       }
-    });
-  }
-
-  protected asValue(event: Event): string {
-    return (event.target as HTMLSelectElement).value;
-  }
-
-  protected onSwitch(orgId: string): void {
-    if (!orgId || orgId === this.store.organizationId()) return;
-    this.auth.switchOrganization(orgId).subscribe(() => {
-      this.workspace.loadProjects(orgId);
-      void this.router.navigate(['/projects']);
     });
   }
 }

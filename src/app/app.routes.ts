@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
 import { AppShell } from './layout/app-shell/app-shell';
 
 export const routes: Routes = [
-  // Default landing: the active organization's workspace (orgGuard bounces
-  // users without an org to onboarding).
-  { path: '', redirectTo: 'projects', pathMatch: 'full' },
+  // Default landing: the launch dispatcher routes by organization count.
+  { path: '', redirectTo: 'launch', pathMatch: 'full' },
 
   {
     path: 'auth',
@@ -19,6 +19,22 @@ export const routes: Routes = [
     title: 'Términos y Condiciones · Reqs-AI',
     canActivate: [authGuard, termsAcceptedGuard],
     loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
+  },
+
+  // Post-login dispatcher: none → onboarding, one → workspace, several → picker.
+  {
+    path: 'launch',
+    canActivate: [authGuard, termsGuard, launchGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/launcher/launcher').then((m) => m.Launcher),
+  },
+
+  {
+    path: 'organizations',
+    title: 'Tus organizaciones · Reqs-AI',
+    canActivate: [authGuard, termsGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/organizations/organizations').then((m) => m.Organizations),
   },
 
   {

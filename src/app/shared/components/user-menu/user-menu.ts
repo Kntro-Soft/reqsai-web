@@ -98,6 +98,27 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
                   }
                 </button>
               }
+              <button
+                type="button"
+                data-testid="create-org-mobile"
+                (click)="createOrg()"
+                class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Crear organización
+              </button>
               <div class="my-1 h-px bg-border"></div>
             </div>
           }
@@ -157,6 +178,11 @@ export class UserMenu {
       this.workspace.loadProjects(orgId);
       void this.router.navigate(['/projects']);
     });
+  }
+
+  protected createOrg(): void {
+    this.close();
+    void this.router.navigate(['/onboarding']);
   }
 
   protected logout(): void {

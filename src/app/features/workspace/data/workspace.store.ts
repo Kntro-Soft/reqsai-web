@@ -28,14 +28,22 @@ export class WorkspaceStore {
   readonly hasMultipleOrgs = computed(() => this._organizations().length > 1);
 
   loadOrganizations(): void {
+    this.loadOrganizations$().subscribe();
+  }
+
+  /** Loads the user's organizations and returns them, so callers like the
+   * launch dispatcher can route by count without a second request. */
+  loadOrganizations$(): Observable<OrganizationResponse[]> {
     this._orgsState.set('loading');
-    this.api.listOrganizations().subscribe({
-      next: (orgs) => {
-        this._organizations.set(orgs);
-        this._orgsState.set('ready');
-      },
-      error: () => this._orgsState.set('error'),
-    });
+    return this.api.listOrganizations().pipe(
+      tap({
+        next: (orgs) => {
+          this._organizations.set(orgs);
+          this._orgsState.set('ready');
+        },
+        error: () => this._orgsState.set('error'),
+      }),
+    );
   }
 
   createOrganization(request: CreateOrganizationRequest): Observable<OrganizationResponse> {

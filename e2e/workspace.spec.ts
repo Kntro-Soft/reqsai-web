@@ -57,17 +57,21 @@ test.describe('Workspace', () => {
     await apiAcceptTerms(request, token);
     const suffix = Date.now();
     const orgOne = await apiCreateOrganization(request, token, `Org One ${suffix}`);
-    const orgTwo = await apiCreateOrganization(request, token, `Org Two ${suffix}`);
+    await apiCreateOrganization(request, token, `Org Two ${suffix}`);
     await apiSetActiveOrganization(request, token, orgOne);
 
+    // Two orgs → the launch dispatcher lands on the picker.
     await uiLogin(page, email, PASSWORD);
-
-    const switcher = page.getByTestId('org-switcher');
-    await expect(switcher).toBeVisible();
-    await expect(switcher).toHaveValue(orgOne);
-
-    await switcher.selectOption(orgTwo);
-    await expect(switcher).toHaveValue(orgTwo);
+    await expect(page).toHaveURL(/\/organizations/);
+    await page.getByTestId('org-card').filter({ hasText: 'Org One' }).click();
     await expect(page).toHaveURL(/\/projects/);
+
+    // The header switcher reflects the active org and switches to the other.
+    const switcher = page.getByTestId('org-switcher');
+    await expect(switcher).toContainText('Org One');
+    await switcher.click();
+    await page.getByTestId('org-option').filter({ hasText: 'Org Two' }).click();
+    await expect(page).toHaveURL(/\/projects/);
+    await expect(switcher).toContainText('Org Two');
   });
 });
