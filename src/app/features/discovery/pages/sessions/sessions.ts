@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, signal } fro
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { DatePipe } from '@angular/common';
 import { provideIcons } from '@ng-icons/core';
 import { lucideMic } from '@ng-icons/lucide';
 import { DiscoveryStore } from '../../data/discovery.store';
 import { statusLabel, statusVariant } from '../../data/session-ui';
+import { FromNowPipe } from '../../../../shared/pipes/from-now.pipe';
 import {
   HlmBadge,
   HlmButton,
@@ -35,6 +37,8 @@ import {
     HlmLabel,
     HlmSpinner,
     HlmIcon,
+    DatePipe,
+    FromNowPipe,
   ],
   viewProviders: [provideIcons({ lucideMic })],
   template: `
@@ -133,9 +137,12 @@ import {
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate font-medium">{{ session.title }}</span>
-                      <span class="block truncate text-sm text-muted-foreground">{{
-                        session.language
-                      }}</span>
+                      <span
+                        class="block truncate text-sm text-muted-foreground"
+                        [title]="session.createdAt | date: 'medium'"
+                      >
+                        {{ session.language }} · creada {{ session.createdAt | fromNow }}
+                      </span>
                     </span>
                     <span hlmBadge [variant]="statusVariant(session.status)">
                       {{ statusLabel(session.status) }}

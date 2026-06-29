@@ -1,0 +1,64 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Spanish"
+  },
+  "nav": {
+    "projects": "Projects",
+    "sessions": "Sessions",
+    "stories": "Stories",
+    "members": "Members",
+    "settings": "Settings",
+    "newSession": "New session"
+  },
+  "userMenu": {
+    "ariaLabel": "User menu",
+    "personalAccount": "Personal account",
+    "organization": "Organization",
+    "createOrganization": "Create organization",
+    "signOut": "Sign out"
+  },
+  "orgSwitcher": {
+    "ariaLabel": "Switch organization",
+    "organizations": "Organizations",
+    "createOrganization": "Create organization",
+    "fallbackName": "Organization"
+  },
+  "auth": {
+    "fields": {
+      "email": "Email",
+      "password": "Password"
+    },
+    "errors": {
+      "invalidCredentials": "Incorrect email or password.",
+      "unverified": "Verify your email before signing in.",
+      "generic": "Could not sign in. Please try again."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Access your Reqs-AI workspace",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Create account"
+    }
+  },
+  "sessions": {
+    "title": "Discovery sessions",
+    "subtitle": "Capture meetings and generate user stories with AI in real time.",
+    "new": "New session",
+    "formTitle": "New session",
+    "fieldTitle": "Title",
+    "fieldLanguage": "Language",
+    "loadError": "Could not load the sessions.",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Create a session to start capturing requirements.",
+    "createCta": "Create session",
+    "createdRelative": "created"
+  }
+}

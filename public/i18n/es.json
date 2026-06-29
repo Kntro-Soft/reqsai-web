@@ -1,0 +1,64 @@
+{
+  "common": {
+    "cancel": "Cancelar",
+    "create": "Crear"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "Inglés",
+    "es": "Español"
+  },
+  "nav": {
+    "projects": "Proyectos",
+    "sessions": "Sesiones",
+    "stories": "Historias",
+    "members": "Miembros",
+    "settings": "Ajustes",
+    "newSession": "Nueva sesión"
+  },
+  "userMenu": {
+    "ariaLabel": "Menú de usuario",
+    "personalAccount": "Cuenta personal",
+    "organization": "Organización",
+    "createOrganization": "Crear organización",
+    "signOut": "Cerrar sesión"
+  },
+  "orgSwitcher": {
+    "ariaLabel": "Cambiar organización",
+    "organizations": "Organizaciones",
+    "createOrganization": "Crear organización",
+    "fallbackName": "Organización"
+  },
+  "auth": {
+    "fields": {
+      "email": "Correo electrónico",
+      "password": "Contraseña"
+    },
+    "errors": {
+      "invalidCredentials": "Correo o contraseña incorrectos.",
+      "unverified": "Verifica tu correo antes de iniciar sesión.",
+      "generic": "No se pudo iniciar sesión. Intenta de nuevo."
+    },
+    "signIn": {
+      "title": "Iniciar sesión",
+      "subtitle": "Accede a tu espacio de trabajo de Reqs-AI",
+      "submit": "Entrar",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes cuenta?",
+      "signUp": "Crear cuenta"
+    }
+  },
+  "sessions": {
+    "title": "Sesiones de descubrimiento",
+    "subtitle": "Captura reuniones y genera historias de usuario con IA en tiempo real.",
+    "new": "Nueva sesión",
+    "formTitle": "Nueva sesión",
+    "fieldTitle": "Título",
+    "fieldLanguage": "Idioma",
+    "loadError": "No se pudieron cargar las sesiones.",
+    "emptyTitle": "Aún no hay sesiones",
+    "emptyBody": "Crea una sesión para empezar a capturar requisitos.",
+    "createCta": "Crear sesión",
+    "createdRelative": "creada"
+  }
+}
