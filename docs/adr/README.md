@@ -24,6 +24,8 @@ one (and update the old one's status).
 | [0012](0012-jwt-rs256-authentication.md)           | JWT RS256 authentication and token storage         | Accepted |
 | [0013](0013-npm-audit-dependency-security.md)      | Dependency security scanning with audit-ci         | Accepted |
 | [0014](0014-icon-library-ng-icons-lucide.md)       | Icon library: @ng-icons + Lucide via HlmIcon       | Accepted |
+| [0015](0015-i18n-transloco.md)                     | Internationalization (i18n) with Transloco         | Accepted |
+| [0016](0016-datetime-number-localization.md)       | Date / time / number localization                  | Accepted |
 
 ## Template
 
