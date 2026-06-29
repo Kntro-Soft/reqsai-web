@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideChevronDown, lucideLogOut, lucidePlus } from '@ng-icons/lucide';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
+import { HlmIcon } from '../../ui';
 
 /**
  * Avatar button that opens a user menu (account, organization switch on phones,
@@ -14,6 +17,8 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
   selector: 'app-user-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'close()' },
+  imports: [HlmIcon],
+  viewProviders: [provideIcons({ lucideChevronDown, lucideCheck, lucidePlus, lucideLogOut })],
   template: `
     <div class="relative">
       <button
@@ -32,21 +37,12 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
         <span class="hidden max-w-[10rem] truncate text-sm text-muted-foreground sm:inline">
           {{ store.user()?.fullName }}
         </span>
-        <svg
+        <hlm-icon
+          name="lucideChevronDown"
+          size="14px"
           class="hidden text-muted-foreground transition-transform sm:block"
           [class.rotate-180]="open()"
-          xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        />
       </button>
 
       @if (open()) {
@@ -81,20 +77,7 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
                 >
                   <span class="truncate">{{ org.name }}</span>
                   @if (org.id === store.organizationId()) {
-                    <svg
-                      class="shrink-0 text-primary"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
+                    <hlm-icon name="lucideCheck" size="16px" class="shrink-0 text-primary" />
                   }
                 </button>
               }
@@ -104,19 +87,7 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
                 (click)="createOrg()"
                 class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
+                <hlm-icon name="lucidePlus" size="16px" />
                 Crear organización
               </button>
               <div class="my-1 h-px bg-border"></div>
@@ -130,19 +101,7 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
             (click)="logout()"
             class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
+            <hlm-icon name="lucideLogOut" size="16px" />
             Cerrar sesión
           </button>
         </div>

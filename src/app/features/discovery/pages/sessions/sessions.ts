@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, signal } fro
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideIcons } from '@ng-icons/core';
+import { lucideMic } from '@ng-icons/lucide';
 import { DiscoveryStore } from '../../data/discovery.store';
 import { statusLabel, statusVariant } from '../../data/session-ui';
 import {
@@ -11,6 +13,7 @@ import {
   HlmCardContent,
   HlmCardHeader,
   HlmCardTitle,
+  HlmIcon,
   HlmInput,
   HlmLabel,
   HlmSpinner,
@@ -31,7 +34,9 @@ import {
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    HlmIcon,
   ],
+  viewProviders: [provideIcons({ lucideMic })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
@@ -99,20 +104,7 @@ import {
               data-testid="sessions-empty"
             >
               <span class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" />
-                </svg>
+                <hlm-icon name="lucideMic" size="22px" />
               </span>
               <div>
                 <p class="font-medium">Aún no hay sesiones</p>
@@ -137,20 +129,7 @@ import {
                     <span
                       class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" />
-                      </svg>
+                      <hlm-icon name="lucideMic" size="18px" />
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate font-medium">{{ session.title }}</span>

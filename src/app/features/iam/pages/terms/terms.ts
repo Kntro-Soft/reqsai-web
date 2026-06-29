@@ -3,9 +3,11 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CURRENT_TERMS_VERSION } from '../../../../core/auth/terms';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFileText } from '@ng-icons/lucide';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../../../shared/components/logo/logo';
-import { HlmButton, HlmCard, HlmCardContent, HlmSpinner } from '../../../../shared/ui';
+import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
  * Terms-of-service gate shown to authenticated users who have not accepted the
@@ -14,7 +16,8 @@ import { HlmButton, HlmCard, HlmCardContent, HlmSpinner } from '../../../../shar
 @Component({
   selector: 'app-terms',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ThemeToggle, Logo, HlmButton, HlmCard, HlmCardContent, HlmSpinner],
+  imports: [ThemeToggle, Logo, HlmButton, HlmCard, HlmCardContent, HlmSpinner, HlmIcon],
+  viewProviders: [provideIcons({ lucideFileText })],
   template: `
     <div class="flex min-h-dvh flex-col bg-background text-foreground">
       <header
@@ -37,20 +40,7 @@ import { HlmButton, HlmCard, HlmCardContent, HlmSpinner } from '../../../../shar
         <div class="flex w-full max-w-2xl flex-col gap-6">
           <div class="flex flex-col items-center gap-3 text-center">
             <span class="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-                <path d="M14 2v6h6M9 13h6M9 17h6" />
-              </svg>
+              <hlm-icon name="lucideFileText" size="26px" />
             </span>
             <div>
               <h1 class="text-2xl font-bold tracking-tight">Términos y Condiciones</h1>

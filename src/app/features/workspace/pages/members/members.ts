@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideIcons } from '@ng-icons/core';
+import { lucideTrash2 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
@@ -9,6 +11,7 @@ import {
   HlmButton,
   HlmCard,
   HlmCardContent,
+  HlmIcon,
   HlmInput,
   HlmLabel,
   HlmSpinner,
@@ -26,7 +29,9 @@ import {
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    HlmIcon,
   ],
+  viewProviders: [provideIcons({ lucideTrash2 })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-start justify-between gap-3">
@@ -152,21 +157,7 @@ import {
               aria-label="Quitar miembro"
               class="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
-                />
-              </svg>
+              <hlm-icon name="lucideTrash2" size="16px" />
             </button>
           </div>
         }

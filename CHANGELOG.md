@@ -13,6 +13,14 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **UI — Lucide icon library** (`feature/ui-icon-library`): replaced hand-pasted inline SVG icon
+  paths with [`@ng-icons/lucide`](https://github.com/ng-icons/ng-icons), wrapped in a vendored
+  `HlmIcon` (`shared/ui/icon`, Spartan-style, `cn`-based, `currentColor`). `NavIcon` becomes a thin
+  semantic wrapper (`projects → lucideFolder`, …) so the shells are untouched; icons are registered
+  per component with `provideIcons(...)` and are tree-shaken. Migrated: nav-icon, theme-toggle,
+  user-menu, org-switcher, project-shell, sessions, projects, organizations, create-organization,
+  members, terms. The recorder's filled record/stop/play controls and `hlm-spinner` are kept as
+  bespoke SVG (Lucide equivalents are outline-only).
 - **IAM — HttpOnly cookie auth** (`feature/iam-cookie-auth`): `AuthService` stores the access
   token in a memory signal only; the refresh token is an `HttpOnly` cookie set by the server.
   `withCredentials: true` on all auth requests. No `localStorage` usage anywhere in the auth flow.
