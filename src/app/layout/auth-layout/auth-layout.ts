@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../shared/components/language-switcher/language-switcher';
 import { Logo } from '../../shared/components/logo/logo';
 
 /**
@@ -11,7 +13,7 @@ import { Logo } from '../../shared/components/logo/logo';
 @Component({
   selector: 'app-auth-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ThemeToggle, Logo],
+  imports: [RouterOutlet, ThemeToggle, LanguageSwitcher, Logo, TranslocoPipe],
   template: `
     <div class="min-h-dvh grid place-items-center bg-background text-foreground lg:p-8">
       <div
@@ -37,27 +39,26 @@ import { Logo } from '../../shared/components/logo/logo';
 
           <div class="relative flex flex-1 flex-col justify-center py-10">
             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              Elicitación con IA
+              {{ 'auth.brand.eyebrow' | transloco }}
             </p>
             <h1 class="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight">
-              Transforma reuniones en backlogs perfectos.
+              {{ 'auth.brand.headline' | transloco }}
             </h1>
             <p class="mt-4 max-w-sm text-base text-muted-foreground">
-              Captura sesiones de descubrimiento y deja que la IA genere historias de usuario y
-              criterios de aceptación en vivo.
+              {{ 'auth.brand.subtitle' | transloco }}
             </p>
             <ul class="mt-8 flex flex-col gap-3 text-sm text-secondary-foreground">
               <li class="flex items-center gap-3">
                 <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                Transcripción y sugerencias en tiempo real
+                {{ 'auth.brand.bullet1' | transloco }}
               </li>
               <li class="flex items-center gap-3">
                 <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                Multi-organización con aislamiento por tenant
+                {{ 'auth.brand.bullet2' | transloco }}
               </li>
               <li class="flex items-center gap-3">
                 <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
-                Backlog listo para exportar
+                {{ 'auth.brand.bullet3' | transloco }}
               </li>
             </ul>
           </div>
@@ -69,7 +70,10 @@ import { Logo } from '../../shared/components/logo/logo';
         <main class="relative flex flex-col bg-background">
           <header class="flex items-center justify-between px-6 py-4 lg:justify-end">
             <app-logo class="lg:hidden" [size]="30" />
-            <app-theme-toggle />
+            <div class="flex items-center gap-1">
+              <app-language-switcher />
+              <app-theme-toggle />
+            </div>
           </header>
 
           <div class="grid flex-1 place-items-center px-6 py-8">

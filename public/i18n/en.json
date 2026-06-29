@@ -30,6 +30,14 @@
     "fallbackName": "Organization"
   },
   "auth": {
+    "brand": {
+      "eyebrow": "AI elicitation",
+      "headline": "Turn meetings into perfect backlogs.",
+      "subtitle": "Capture discovery sessions and let AI generate user stories and acceptance criteria live.",
+      "bullet1": "Real-time transcription and suggestions",
+      "bullet2": "Multi-organization with tenant isolation",
+      "bullet3": "Export-ready backlog"
+    },
     "fields": {
       "email": "Email",
       "password": "Password"
@@ -60,5 +68,14 @@
     "emptyBody": "Create a session to start capturing requirements.",
     "createCta": "Create session",
     "createdRelative": "created"
+  },
+  "createOrg": {
+    "title": "Create your organization",
+    "subtitle": "Your organization is your workspace: inside it you create projects and discovery sessions.",
+    "name": "Organization name",
+    "language": "Meeting language",
+    "submit": "Create and continue",
+    "errorNameInUse": "That name is already in use. Try another.",
+    "errorGeneric": "Could not create the organization. Please try again."
   }
 }

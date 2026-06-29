@@ -30,6 +30,14 @@
     "fallbackName": "Organización"
   },
   "auth": {
+    "brand": {
+      "eyebrow": "Elicitación con IA",
+      "headline": "Transforma reuniones en backlogs perfectos.",
+      "subtitle": "Captura sesiones de descubrimiento y deja que la IA genere historias de usuario y criterios de aceptación en vivo.",
+      "bullet1": "Transcripción y sugerencias en tiempo real",
+      "bullet2": "Multi-organización con aislamiento por tenant",
+      "bullet3": "Backlog listo para exportar"
+    },
     "fields": {
       "email": "Correo electrónico",
       "password": "Contraseña"
@@ -60,5 +68,14 @@
     "emptyBody": "Crea una sesión para empezar a capturar requisitos.",
     "createCta": "Crear sesión",
     "createdRelative": "creada"
+  },
+  "createOrg": {
+    "title": "Crea tu organización",
+    "subtitle": "Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de descubrimiento.",
+    "name": "Nombre de la organización",
+    "language": "Idioma de reuniones",
+    "submit": "Crear y continuar",
+    "errorNameInUse": "Ese nombre ya está en uso. Prueba con otro.",
+    "errorGeneric": "No se pudo crear la organización. Intenta de nuevo."
   }
 }
