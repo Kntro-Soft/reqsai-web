@@ -15,7 +15,9 @@ import {
   SuggestionPriority,
   SuggestionResponse,
 } from '../../data/discovery.models';
-import { HlmButton, HlmInput } from '../../../../shared/ui';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSparkles } from '@ng-icons/lucide';
+import { HlmButton, HlmIcon, HlmInput } from '../../../../shared/ui';
 
 const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
@@ -23,28 +25,15 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 @Component({
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput],
+  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon],
+  viewProviders: [provideIcons({ lucideSparkles })],
   template: `
     <div class="rounded-2xl border border-primary/30 bg-card/60 p-4" data-testid="suggestion-card">
       <div class="mb-2 flex flex-wrap items-center gap-2">
         <span
           class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path
-              d="M12 3v2m0 14v2M5 12H3m18 0h-2M6.3 6.3 4.9 4.9m14.2 14.2-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"
-            />
-          </svg>
+          <hlm-icon name="lucideSparkles" size="12px" />
           {{ typeLabel() }}
         </span>
         @if (suggestion().type !== 'CLARIFYING_QUESTION') {

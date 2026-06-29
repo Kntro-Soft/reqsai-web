@@ -18,8 +18,10 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { EVENT_LABEL, statusLabel } from '../../data/session-ui';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideSparkles, lucideUpload } from '@ng-icons/lucide';
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
-import { HlmButton, HlmSpinner } from '../../../../shared/ui';
+import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
 
@@ -30,7 +32,8 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
 @Component({
   selector: 'app-session-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmButton, HlmSpinner, SuggestionCard],
+  imports: [HlmButton, HlmSpinner, SuggestionCard, HlmIcon],
+  viewProviders: [provideIcons({ lucideSparkles, lucideCheck, lucideUpload })],
   template: `
     @if (store.current(); as session) {
       <div class="flex flex-col gap-4">
@@ -120,21 +123,7 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 <span
                   class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M12 3v2m0 14v2M5 12H3m18 0h-2M6.3 6.3 4.9 4.9m14.2 14.2-1.4-1.4M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"
-                    />
-                  </svg>
+                  <hlm-icon name="lucideSparkles" size="12px" />
                   Historia generada
                 </span>
                 <span
@@ -160,19 +149,7 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
                 <p
                   class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
+                  <hlm-icon name="lucideCheck" size="14px" />
                   Aprobada
                 </p>
               } @else {
@@ -366,20 +343,7 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
             @if (uploading()) {
               <hlm-spinner class="mr-1.5 h-4 w-4" />
             }
-            <svg
-              class="mr-1.5"
-              xmlns="http://www.w3.org/2000/svg"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-            </svg>
+            <hlm-icon name="lucideUpload" size="15px" class="mr-1.5" />
             Subir audio
           </button>
           <input #picker type="file" accept="audio/*" class="hidden" (change)="upload($event)" />
