@@ -26,8 +26,11 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Capture a trace + screenshot for every test so the HTML report shows each
+     * page visually (open it with `bunx playwright show-report`). Or watch tests
+     * run live with `bunx playwright test --ui`. */
+    trace: 'on',
+    screenshot: 'on',
   },
 
   /* Configure projects for major browsers */
@@ -37,15 +40,17 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+    // Firefox/WebKit are enabled once their browser binaries are installed
+    // (`npx playwright install firefox webkit`). Chromium is the default gate.
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
 
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
 
     /* Test against mobile viewports. */
     // {

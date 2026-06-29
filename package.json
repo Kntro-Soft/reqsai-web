@@ -11,7 +11,16 @@
     "lint": "ng lint",
     "knip": "knip",
     "format": "prettier --write \"src/**/*.{ts,html,css}\"",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
+    "shots": "node scripts/shots.mjs",
+    "shots:responsive": "node scripts/responsive-shots.mjs",
+    "shots:flows": "node scripts/flow-shots.mjs",
+    "shots:org": "node scripts/seed-shots.mjs",
+    "seed:rich": "node scripts/seed-rich.mjs",
+    "shots:themes": "node scripts/theme-shots.mjs",
+    "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,
   "packageManager": "bun@1.3.14",
@@ -24,6 +33,7 @@
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
     "@spartan-ng/brain": "^0.0.1-alpha.713",
+    "@stomp/rx-stomp": "^2.4.0",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.5.0",
     "tslib": "^2.3.0"
@@ -48,6 +58,7 @@
     "knip": "^6.16.1",
     "lefthook": "^2.1.9",
     "lint-staged": "^17.0.7",
+    "playwright-ng-schematics": "^22.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.1.12",

@@ -25,7 +25,8 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css"]
+            "styles": ["src/styles.css"],
+            "allowedCommonJsDependencies": ["@stomp/stompjs"]
           },
           "configurations": {
             "production": {
@@ -60,7 +61,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.js"
           },
           "configurations": {
             "production": {
