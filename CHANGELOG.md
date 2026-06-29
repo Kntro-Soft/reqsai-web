@@ -20,7 +20,8 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   per component with `provideIcons(...)` and are tree-shaken. Migrated: nav-icon, theme-toggle,
   user-menu, org-switcher, project-shell, sessions, projects, organizations, create-organization,
   members, terms. The recorder's filled record/stop/play controls and `hlm-spinner` are kept as
-  bespoke SVG (Lucide equivalents are outline-only).
+  bespoke SVG (Lucide equivalents are outline-only). See
+  [ADR-0014](docs/ADR/0014-icon-library-ng-icons-lucide.md).
 - **IAM — HttpOnly cookie auth** (`feature/iam-cookie-auth`): `AuthService` stores the access
   token in a memory signal only; the refresh token is an `HttpOnly` cookie set by the server.
   `withCredentials: true` on all auth requests. No `localStorage` usage anywhere in the auth flow.
