@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronRight, lucidePlus } from '@ng-icons/lucide';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../features/workspace/data/workspace-api.service';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../shared/components/logo/logo';
 import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
+import { HlmIcon } from '../../shared/ui';
 
 /**
  * Workspace shell for a single project: a top bar with the org/project
@@ -15,7 +18,17 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 @Component({
   selector: 'app-project-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggle, Logo, UserMenu, NavIcon],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ThemeToggle,
+    Logo,
+    UserMenu,
+    NavIcon,
+    HlmIcon,
+  ],
+  viewProviders: [provideIcons({ lucideChevronRight, lucidePlus })],
   template: `
     <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <!-- Top bar -->
@@ -31,20 +44,11 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
           >
             Proyectos
           </a>
-          <svg
+          <hlm-icon
+            name="lucideChevronRight"
+            size="14px"
             class="hidden shrink-0 text-muted-foreground sm:block"
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="m9 18 6-6-6-6" />
-          </svg>
+          />
           <span class="truncate text-sm font-semibold">{{ projectName() ?? 'Proyecto' }}</span>
         </div>
         <div class="flex items-center gap-1.5">
@@ -75,19 +79,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
             [routerLink]="['/projects', projectId(), 'sessions']"
             class="mt-auto flex items-center gap-2 border-t border-border px-3 pt-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <hlm-icon name="lucidePlus" size="16px" />
             Nueva sesión
           </a>
         </aside>

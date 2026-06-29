@@ -7,7 +7,9 @@ import { OrganizationResponse } from '../../data/workspace.models';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
 import { Logo } from '../../../../shared/components/logo/logo';
 import { UserMenu } from '../../../../shared/components/user-menu/user-menu';
-import { HlmSpinner } from '../../../../shared/ui';
+import { provideIcons } from '@ng-icons/core';
+import { lucideBuilding2, lucideChevronRight, lucidePlus } from '@ng-icons/lucide';
+import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
  * Organization picker shown to users in more than one organization (see
@@ -17,7 +19,8 @@ import { HlmSpinner } from '../../../../shared/ui';
 @Component({
   selector: 'app-organizations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ThemeToggle, Logo, UserMenu, HlmSpinner],
+  imports: [ThemeToggle, Logo, UserMenu, HlmSpinner, HlmIcon],
+  viewProviders: [provideIcons({ lucideBuilding2, lucideChevronRight, lucidePlus })],
   template: `
     <div class="flex min-h-dvh flex-col bg-background text-foreground">
       <header
@@ -51,19 +54,7 @@ import { HlmSpinner } from '../../../../shared/ui';
                 <span
                   class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01" />
-                  </svg>
+                  <hlm-icon name="lucideBuilding2" size="22px" />
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="flex items-center gap-2">
@@ -83,20 +74,11 @@ import { HlmSpinner } from '../../../../shared/ui';
                 @if (switching() === org.id) {
                   <hlm-spinner class="h-4 w-4" />
                 } @else {
-                  <svg
+                  <hlm-icon
+                    name="lucideChevronRight"
+                    size="18px"
                     class="text-muted-foreground transition-transform group-hover:translate-x-0.5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
+                  />
                 }
               </button>
             }
@@ -109,19 +91,7 @@ import { HlmSpinner } from '../../../../shared/ui';
               class="flex items-center gap-3 rounded-2xl border border-dashed border-border p-4 text-left text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-60"
             >
               <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-secondary/60">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
+                <hlm-icon name="lucidePlus" size="22px" />
               </span>
               <span class="min-w-0 flex-1">
                 <span class="block font-semibold text-foreground">Crear organización</span>

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideIcons } from '@ng-icons/core';
+import { lucideChevronRight, lucideFolder } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import {
@@ -11,6 +13,7 @@ import {
   HlmCardDescription,
   HlmCardHeader,
   HlmCardTitle,
+  HlmIcon,
   HlmInput,
   HlmLabel,
   HlmSpinner,
@@ -38,7 +41,9 @@ function toList(csv: string): string[] {
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    HlmIcon,
   ],
+  viewProviders: [provideIcons({ lucideFolder, lucideChevronRight })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
@@ -156,21 +161,7 @@ function toList(csv: string): string[] {
               data-testid="projects-empty"
             >
               <span class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
-                  />
-                </svg>
+                <hlm-icon name="lucideFolder" size="22px" />
               </span>
               <div>
                 <p class="font-medium">Aún no hay proyectos</p>
@@ -195,21 +186,7 @@ function toList(csv: string): string[] {
                     <span
                       class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M4 7V5a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"
-                        />
-                      </svg>
+                      <hlm-icon name="lucideFolder" size="18px" />
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate font-medium">{{ project.name }}</span>
@@ -217,20 +194,11 @@ function toList(csv: string): string[] {
                         {{ project.architecture }} · {{ project.domain }}
                       </span>
                     </span>
-                    <svg
+                    <hlm-icon
+                      name="lucideChevronRight"
+                      size="18px"
                       class="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="m9 18 6-6-6-6" />
-                    </svg>
+                    />
                   </a>
                 </li>
               }

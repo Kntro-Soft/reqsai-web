@@ -3,12 +3,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs';
+import { provideIcons } from '@ng-icons/core';
+import { lucideBuilding2 } from '@ng-icons/lucide';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { WorkspaceStore } from '../../data/workspace.store';
 import {
   HlmButton,
   HlmCard,
   HlmCardContent,
+  HlmIcon,
   HlmInput,
   HlmLabel,
   HlmSpinner,
@@ -25,24 +28,14 @@ import {
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    HlmIcon,
   ],
+  viewProviders: [provideIcons({ lucideBuilding2 })],
   template: `
     <div class="mx-auto flex max-w-lg flex-col gap-6 py-6">
       <div class="flex flex-col items-center gap-3 text-center">
         <span class="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01" />
-          </svg>
+          <hlm-icon name="lucideBuilding2" size="26px" />
         </span>
         <div>
           <h1 class="text-2xl font-bold tracking-tight">Crea tu organización</h1>
