@@ -8,6 +8,7 @@ export {
   HlmCardContent,
   HlmCardFooter,
 } from './card/hlm-card';
+export { HlmIcon } from './icon/hlm-icon';
 export { HlmInput } from './input/hlm-input';
 export { HlmLabel } from './label/hlm-label';
 export { HlmBadge } from './badge/hlm-badge';
