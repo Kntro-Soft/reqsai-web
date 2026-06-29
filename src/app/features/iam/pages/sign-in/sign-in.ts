@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   HlmButton,
@@ -21,6 +22,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoPipe,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -34,25 +36,25 @@ import {
   template: `
     <div hlmCard>
       <div hlmCardHeader>
-        <h1 hlmCardTitle>Iniciar sesión</h1>
-        <p hlmCardDescription>Accede a tu espacio de trabajo de Reqs-AI</p>
+        <h1 hlmCardTitle>{{ 'auth.signIn.title' | transloco }}</h1>
+        <p hlmCardDescription>{{ 'auth.signIn.subtitle' | transloco }}</p>
       </div>
       <div hlmCardContent>
         <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <label hlmLabel for="email">Correo electrónico</label>
+            <label hlmLabel for="email">{{ 'auth.fields.email' | transloco }}</label>
             <input
               hlmInput
               id="email"
               type="email"
               formControlName="email"
-              placeholder="tu@empresa.com"
+              placeholder="you@company.com"
               autocomplete="email"
             />
           </div>
 
           <div class="flex flex-col gap-2">
-            <label hlmLabel for="password">Contraseña</label>
+            <label hlmLabel for="password">{{ 'auth.fields.password' | transloco }}</label>
             <input
               hlmInput
               id="password"
@@ -71,20 +73,20 @@ import {
             @if (loading()) {
               <hlm-spinner class="h-4 w-4" />
             }
-            Entrar
+            {{ 'auth.signIn.submit' | transloco }}
           </button>
         </form>
 
         <p class="mt-4 text-center text-sm">
           <a routerLink="/auth/forgot-password" class="text-muted-foreground hover:underline">
-            ¿Olvidaste tu contraseña?
+            {{ 'auth.signIn.forgot' | transloco }}
           </a>
         </p>
 
         <p class="mt-6 text-center text-sm text-muted-foreground">
-          ¿No tienes cuenta?
+          {{ 'auth.signIn.noAccount' | transloco }}
           <a routerLink="/auth/sign-up" class="text-primary font-medium hover:underline">
-            Crear cuenta
+            {{ 'auth.signIn.signUp' | transloco }}
           </a>
         </p>
       </div>
@@ -95,6 +97,7 @@ export class SignIn {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -120,9 +123,9 @@ export class SignIn {
   }
 
   private messageFor(err: HttpErrorResponse): string {
-    if (err.status === 401) return 'Correo o contraseña incorrectos.';
+    if (err.status === 401) return this.transloco.translate('auth.errors.invalidCredentials');
     // Backend returns 403 ACCOUNT_NOT_ACTIVE when the email is unverified.
-    if (err.status === 403) return 'Verifica tu correo antes de iniciar sesión.';
-    return 'No se pudo iniciar sesión. Intenta de nuevo.';
+    if (err.status === 403) return this.transloco.translate('auth.errors.unverified');
+    return this.transloco.translate('auth.errors.generic');
   }
 }

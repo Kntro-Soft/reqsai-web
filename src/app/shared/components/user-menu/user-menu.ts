@@ -1,24 +1,35 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronDown, lucideLogOut, lucidePlus } from '@ng-icons/lucide';
+import {
+  lucideCheck,
+  lucideChevronDown,
+  lucideLanguages,
+  lucideLogOut,
+  lucidePlus,
+} from '@ng-icons/lucide';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
+import { Lang, SUPPORTED_LANGS, saveLang } from '../../../core/i18n/language';
 import { HlmIcon } from '../../ui';
 
 /**
- * Avatar button that opens a user menu (account, organization switch on phones,
- * sign out). Consolidating these under the user — instead of stray buttons —
- * matches the consistency/standards heuristic. The org list only shows below
- * `sm`, where the header switcher is hidden. Closes on outside click or Escape.
+ * Avatar button that opens a user menu (account, language, organization switch on
+ * phones, sign out). Consolidating these under the user — instead of stray buttons —
+ * matches the consistency/standards heuristic. The org list only shows below `sm`,
+ * where the header switcher is hidden. Closes on outside click or Escape.
  */
 @Component({
   selector: 'app-user-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'close()' },
-  imports: [HlmIcon],
-  viewProviders: [provideIcons({ lucideChevronDown, lucideCheck, lucidePlus, lucideLogOut })],
+  imports: [HlmIcon, TranslocoPipe],
+  viewProviders: [
+    provideIcons({ lucideChevronDown, lucideCheck, lucidePlus, lucideLogOut, lucideLanguages }),
+  ],
   template: `
     <div class="relative">
       <button
@@ -26,7 +37,7 @@ import { HlmIcon } from '../../ui';
         (click)="toggle()"
         [attr.aria-expanded]="open()"
         aria-haspopup="menu"
-        aria-label="Menú de usuario"
+        [attr.aria-label]="'userMenu.ariaLabel' | transloco"
         class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span
@@ -59,14 +70,41 @@ import { HlmIcon } from '../../ui';
             </span>
             <div class="min-w-0">
               <p class="truncate text-sm font-medium">{{ store.user()?.fullName }}</p>
-              <p class="truncate text-xs text-muted-foreground">Cuenta personal</p>
+              <p class="truncate text-xs text-muted-foreground">
+                {{ 'userMenu.personalAccount' | transloco }}
+              </p>
             </div>
           </div>
           <div class="my-1 h-px bg-border"></div>
 
+          <!-- Language -->
+          <p
+            class="flex items-center gap-1.5 px-3 pb-1 pt-1 text-xs font-medium text-muted-foreground"
+          >
+            <hlm-icon name="lucideLanguages" size="13px" />
+            {{ 'language.label' | transloco }}
+          </p>
+          @for (lang of langs; track lang) {
+            <button
+              role="menuitemradio"
+              type="button"
+              [attr.aria-checked]="lang === activeLang()"
+              (click)="setLang(lang)"
+              class="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+            >
+              <span>{{ 'language.' + lang | transloco }}</span>
+              @if (lang === activeLang()) {
+                <hlm-icon name="lucideCheck" size="16px" class="shrink-0 text-primary" />
+              }
+            </button>
+          }
+          <div class="my-1 h-px bg-border"></div>
+
           @if (workspace.organizations().length) {
             <div class="sm:hidden">
-              <p class="px-3 pb-1 pt-1 text-xs font-medium text-muted-foreground">Organización</p>
+              <p class="px-3 pb-1 pt-1 text-xs font-medium text-muted-foreground">
+                {{ 'userMenu.organization' | transloco }}
+              </p>
               @for (org of workspace.organizations(); track org.id) {
                 <button
                   role="menuitemradio"
@@ -88,7 +126,7 @@ import { HlmIcon } from '../../ui';
                 class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
               >
                 <hlm-icon name="lucidePlus" size="16px" />
-                Crear organización
+                {{ 'userMenu.createOrganization' | transloco }}
               </button>
               <div class="my-1 h-px bg-border"></div>
             </div>
@@ -102,7 +140,7 @@ import { HlmIcon } from '../../ui';
             class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
           >
             <hlm-icon name="lucideLogOut" size="16px" />
-            Cerrar sesión
+            {{ 'userMenu.signOut' | transloco }}
           </button>
         </div>
       }
@@ -114,6 +152,12 @@ export class UserMenu {
   protected readonly workspace = inject(WorkspaceStore);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
+
+  protected readonly langs = SUPPORTED_LANGS;
+  protected readonly activeLang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
 
   protected readonly open = signal(false);
   protected readonly initials = computed(() => {
@@ -128,6 +172,11 @@ export class UserMenu {
 
   protected close(): void {
     this.open.set(false);
+  }
+
+  protected setLang(lang: Lang): void {
+    this.transloco.setActiveLang(lang);
+    saveLang(lang);
   }
 
   protected switchOrg(orgId: string): void {
