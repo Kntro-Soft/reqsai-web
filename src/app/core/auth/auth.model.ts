@@ -45,6 +45,7 @@ interface UserPreferences {
 /** Response of POST /api/auth/register and GET /api/users/me. */
 export interface UserResponse {
   id: string;
+  email: string;
   firstName: string;
   lastName: string;
   fullName: string;

@@ -26,23 +26,39 @@ import { HlmIcon } from '../../ui';
   imports: [OverlayModule, FormsModule, Avatar, HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideChevronsUpDown, lucideCheck, lucidePlus, lucideSearch })],
   template: `
-    <button
-      type="button"
+    <!-- Split control (Vercel): the name navigates to projects; only the chevron opens the menu. -->
+    <div
       cdkOverlayOrigin
       #origin="cdkOverlayOrigin"
-      (click)="toggle()"
-      [attr.aria-expanded]="open()"
-      aria-haspopup="dialog"
-      [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
-      data-testid="org-switcher"
-      class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="flex w-full items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-accent"
     >
-      <app-avatar [name]="activeName()" [seed]="store.organizationId() ?? ''" [size]="22" />
-      <span class="min-w-0 flex-1 truncate">{{
-        activeName() || ('orgSwitcher.fallbackName' | transloco)
-      }}</span>
-      <hlm-icon name="lucideChevronsUpDown" size="14px" class="shrink-0 text-muted-foreground" />
-    </button>
+      <button
+        type="button"
+        (click)="goToProjects()"
+        class="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <app-avatar
+          [name]="activeName()"
+          [seed]="store.organizationId() ?? ''"
+          [imageUrl]="activeOrg()?.avatarUrl ?? null"
+          [size]="22"
+        />
+        <span class="min-w-0 flex-1 truncate">{{
+          activeName() || ('orgSwitcher.fallbackName' | transloco)
+        }}</span>
+      </button>
+      <button
+        type="button"
+        (click)="toggle()"
+        [attr.aria-expanded]="open()"
+        aria-haspopup="dialog"
+        [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
+        data-testid="org-switcher"
+        class="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <hlm-icon name="lucideChevronsUpDown" size="14px" />
+      </button>
+    </div>
 
     <ng-template
       cdkConnectedOverlay
@@ -84,7 +100,7 @@ import { HlmIcon } from '../../ui';
               (click)="select(org)"
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
             >
-              <app-avatar [name]="org.name" [seed]="org.id" [size]="22" />
+              <app-avatar [name]="org.name" [seed]="org.id" [imageUrl]="org.avatarUrl" [size]="22" />
               <span class="min-w-0 flex-1 truncate">{{ org.name }}</span>
               @if (org.id === store.organizationId()) {
                 <hlm-icon name="lucideCheck" size="16px" class="shrink-0 text-primary" />
@@ -122,10 +138,11 @@ export class OrgSwitcher {
   protected readonly open = signal(false);
   protected readonly query = signal('');
 
-  protected readonly activeName = computed(() => {
+  protected readonly activeOrg = computed(() => {
     const id = this.store.organizationId();
-    return this.workspace.organizations().find((o) => o.id === id)?.name ?? '';
+    return this.workspace.organizations().find((o) => o.id === id) ?? null;
   });
+  protected readonly activeName = computed(() => this.activeOrg()?.name ?? '');
 
   protected readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -158,5 +175,10 @@ export class OrgSwitcher {
   protected create(): void {
     this.close();
     void this.router.navigate(['/onboarding']);
+  }
+
+  protected goToProjects(): void {
+    this.close();
+    void this.router.navigate(['/projects']);
   }
 }

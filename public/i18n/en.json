@@ -52,7 +52,9 @@
     "theme": "Theme",
     "organization": "Organization",
     "createOrganization": "Create organization",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "upgrade": "Upgrade",
+    "accountSettings": "Account settings"
   },
   "orgSwitcher": {
     "ariaLabel": "Switch organization",

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -7,6 +8,8 @@ import {
   lucideLogOut,
   lucideMonitor,
   lucideMoon,
+  lucideSettings,
+  lucideSparkles,
   lucideSun,
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -29,7 +32,15 @@ import { HlmIcon } from '../../ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [OverlayModule, Avatar, HlmIcon, TranslocoPipe],
   viewProviders: [
-    provideIcons({ lucideEllipsisVertical, lucideLogOut, lucideMonitor, lucideSun, lucideMoon }),
+    provideIcons({
+      lucideEllipsisVertical,
+      lucideLogOut,
+      lucideMonitor,
+      lucideSun,
+      lucideMoon,
+      lucideSettings,
+      lucideSparkles,
+    }),
   ],
   template: `
     <button
@@ -74,12 +85,19 @@ import { HlmIcon } from '../../ui';
             [size]="36"
             [circle]="true"
           />
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium">{{ store.user()?.fullName }}</p>
-            <p class="truncate text-xs text-muted-foreground">
-              {{ 'userMenu.personalAccount' | transloco }}
-            </p>
+            <p class="truncate text-xs text-muted-foreground">{{ store.user()?.email }}</p>
           </div>
+          <button
+            type="button"
+            (click)="openAccount()"
+            [attr.aria-label]="'userMenu.accountSettings' | transloco"
+            [attr.title]="'userMenu.accountSettings' | transloco"
+            class="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <hlm-icon name="lucideSettings" size="16px" />
+          </button>
         </div>
         <div class="my-1 h-px bg-border"></div>
 
@@ -135,11 +153,23 @@ import { HlmIcon } from '../../ui';
           type="button"
           data-testid="logout"
           (click)="logout()"
-          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
         >
-          <hlm-icon name="lucideLogOut" size="16px" />
+          <hlm-icon name="lucideLogOut" size="16px" class="text-muted-foreground" />
           {{ 'userMenu.signOut' | transloco }}
         </button>
+
+        <div class="mt-1 px-1 pb-1">
+          <button
+            type="button"
+            (click)="upgrade()"
+            data-testid="upgrade"
+            class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <hlm-icon name="lucideSparkles" size="15px" />
+            {{ 'userMenu.upgrade' | transloco }}
+          </button>
+        </div>
       </div>
     </ng-template>
   `,
@@ -149,6 +179,7 @@ export class UserMenu {
   protected readonly theme = inject(ThemeService);
   private readonly auth = inject(AuthService);
   private readonly transloco = inject(TranslocoService);
+  private readonly router = inject(Router);
 
   protected readonly langs = SUPPORTED_LANGS;
   protected readonly themes: { mode: ThemeMode; icon: string }[] = [
@@ -178,6 +209,16 @@ export class UserMenu {
   protected setLang(lang: Lang): void {
     this.transloco.setActiveLang(lang);
     saveLang(lang);
+  }
+
+  protected openAccount(): void {
+    this.close();
+    void this.router.navigate(['/account']);
+  }
+
+  /** Placeholder — billing/upgrade flow is not wired yet. */
+  protected upgrade(): void {
+    this.close();
   }
 
   protected logout(): void {

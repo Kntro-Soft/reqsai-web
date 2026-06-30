@@ -8,6 +8,7 @@ export interface OrganizationResponse {
   ownerId: string;
   meetingLanguage: string;
   audioRetentionDays: number;
+  avatarUrl: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -30,6 +31,7 @@ export interface ProjectResponse {
   architecture: string;
   domain: string;
   status: string;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
