@@ -194,20 +194,55 @@
     "createTitle": "Create organization",
     "createSubtitle": "Start a new workspace"
   },
-  "terms": {
-    "title": "Terms and Conditions",
-    "subtitle": "To continue, review and accept our terms of service.",
-    "p1": "By using Reqs-AI you accept these terms. The platform processes meeting transcripts and generates AI-assisted requirement artifacts; you are responsible for the content you upload and for having the necessary permissions.",
-    "p2Label": "Data privacy.",
-    "p2": "Your information is isolated per organization (tenant) and is not shared with third parties without your consent. You can request the deletion of your data at any time.",
-    "p3Label": "Acceptable use.",
-    "p3": "You must not use the service for illegal purposes or upload information that infringes third-party rights. AI-generated content is a suggestion and must be reviewed before use.",
-    "p4Label": "Availability.",
-    "p4": "We make reasonable efforts to keep the service available, but it is provided \"as is\". These terms may be updated; we'll ask you to accept them again when they change.",
-    "accept": "I have read and accept Reqs-AI's Terms and Conditions and Privacy Policy.",
+  "legal": {
+    "title": "Terms & Privacy",
+    "subtitle": "Please review our Terms of Service and Privacy Policy. You can accept once you have read both.",
+    "draftNotice": "Draft for legal review — these documents are templates and are not yet final legal advice.",
+    "tabTerms": "Terms of Service",
+    "tabPrivacy": "Privacy Policy",
+    "lastUpdated": "Last updated {{date}}",
+    "read": "Read",
+    "scrollHint": "Scroll to the end of both documents to enable acceptance.",
+    "accept": "I have read and accept the Terms of Service and Privacy Policy of {{name}}.",
     "submit": "Accept and continue",
+    "signOut": "Sign out",
     "errorSessionExpired": "Your session expired. Sign in again.",
-    "errorGeneric": "Could not record acceptance. Please try again."
+    "errorGeneric": "Could not record acceptance. Please try again.",
+    "terms": {
+      "sections": [
+        { "heading": "1. Acceptance & eligibility", "body": "By creating an account or using {{tradeName}} you agree to these Terms. You must be at least 18 years old, and if you accept on behalf of an organization you confirm you are authorized to bind it." },
+        { "heading": "2. Definitions", "body": "\"Service\" means the {{tradeName}} platform; \"Organization\" the workspace you belong to; \"Content\" the data you submit, including meeting audio and transcripts; \"Meeting Data\" any recording or transcription processed by the Service." },
+        { "heading": "3. The service & licence", "body": "{{tradeName}} grants you a limited, revocable, non-exclusive licence to use the Service to capture meetings and generate requirement artifacts. You may not reverse engineer, resell, abuse, or use it for unlawful purposes." },
+        { "heading": "4. Accounts & organizations", "body": "You are responsible for the accuracy of your account information, for safeguarding your credentials, and for the actions of the members you invite to your Organization." },
+        { "heading": "5. Meeting recording & consent", "body": "You represent and warrant that, before recording or transcribing any meeting, you have obtained every consent required by law from all participants — some jurisdictions require the consent of all parties. {{tradeName}} provides a recording indicator, but your Organization is solely responsible for lawful capture and will indemnify {{name}} against claims arising from a breach of this section." },
+        { "heading": "6. AI-generated output", "body": "User stories, suggestions and other AI output are generated automatically, may be inaccurate or incomplete, and are provided for your review. They are not professional, legal or business advice; review them before relying on them." },
+        { "heading": "7. Your content & intellectual property", "body": "You retain ownership of your Content and grant {{tradeName}} a limited licence to process it solely to provide the Service. {{name}} retains all rights in the platform, software and trademarks." },
+        { "heading": "8. Third-party AI sub-processors", "body": "To deliver the Service we rely on third-party AI providers — Deepgram (speech-to-text), Google Gemini (generation) and OpenAI (embeddings). Details are in our Privacy Policy." },
+        { "heading": "9. Model training", "body": "We do not use your Content, or data derived from it, to train {{tradeName}}'s or our sub-processors' machine-learning models." },
+        { "heading": "10. Fees & subscription", "body": "Paid plans, where offered, are billed on a recurring basis and renew until cancelled. We may change pricing with prior notice; the Service may be offered free of charge in whole or in part." },
+        { "heading": "11. Termination & data export", "body": "You may stop using the Service at any time. On termination you will have a reasonable window to export your data before it is deleted, subject to the retention rules in the Privacy Policy." },
+        { "heading": "12. Warranties & limitation of liability", "body": "The Service is provided \"as is\" without warranties of any kind. To the maximum extent permitted by law, {{name}} is not liable for indirect or consequential damages, and its total liability is limited to the amounts you paid in the previous twelve months." },
+        { "heading": "13. Changes to these Terms", "body": "We may update these Terms; when the substance changes we will ask you to accept the new version. Continued use after an update constitutes acceptance." },
+        { "heading": "14. Governing law", "body": "These Terms are governed by the laws of {{jurisdiction}}, and any dispute is subject to the competent courts of {{jurisdiction}}." },
+        { "heading": "15. Contact", "body": "Questions about these Terms can be sent to {{email}}." }
+      ]
+    },
+    "privacy": {
+      "sections": [
+        { "heading": "1. Who we are", "body": "{{name}} ({{address}}) is the controller of the personal data processed through {{tradeName}}. You can reach us about privacy at {{email}}." },
+        { "heading": "2. Data we collect", "body": "Account data (name, email), the meeting audio and transcripts you submit, the requirement artifacts and embeddings generated from them, and technical data such as IP address, device and usage logs." },
+        { "heading": "3. Purposes & lawful bases", "body": "We process data to provide the Service (performance of a contract), to keep it secure (legitimate interest), to comply with the law, and — where third parties are recorded — on the basis of the consent you are responsible for obtaining." },
+        { "heading": "4. AI processing & sub-processors", "body": "Audio and text are processed by Deepgram (speech-to-text), Google Gemini (generation) and OpenAI (embeddings) strictly to provide the Service. Neither they nor {{tradeName}} use your data to train models." },
+        { "heading": "5. International transfers", "body": "Some sub-processors operate outside your country, so your data may be processed abroad under appropriate safeguards." },
+        { "heading": "6. Retention", "body": "Audio and transcript retention is configurable per Organization (audio-retention days; -1 keeps them until you delete them). Other data is kept while your account is active and as required by law." },
+        { "heading": "7. Your rights", "body": "Subject to applicable law you may access, rectify, erase, port, or object to the processing of your data, and withdraw consent. Write to {{email}} to exercise these rights; you may also complain to your data-protection authority." },
+        { "heading": "8. Security", "body": "We protect data with encryption in transit and at rest, access controls, and strict per-Organization isolation (a separate database schema per tenant). We will notify you of a breach as required by law." },
+        { "heading": "9. Cookies & local storage", "body": "We store only what the app needs to work — session handling and your theme and language preferences. We do not use advertising cookies." },
+        { "heading": "10. Children", "body": "The Service is not directed to children and is intended for users aged 18 or older." },
+        { "heading": "11. Changes to this Policy", "body": "We may update this Policy; we will post the new effective date and, where the change is material, notify you." },
+        { "heading": "12. Data Processing Agreement", "body": "Organizations acting as data controllers can request a Data Processing Agreement (DPA) by contacting {{email}}." }
+      ]
+    }
   },
   "home": {
     "greetingNamed": "Hi, {{name}}",

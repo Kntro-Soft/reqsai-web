@@ -194,20 +194,55 @@
     "createTitle": "Crear organización",
     "createSubtitle": "Empieza un nuevo espacio de trabajo"
   },
-  "terms": {
-    "title": "Términos y Condiciones",
-    "subtitle": "Para continuar, revisa y acepta nuestros términos de servicio.",
-    "p1": "Al usar Reqs-AI aceptas estos términos. La plataforma procesa transcripciones de reuniones y genera artefactos de requisitos asistidos por IA; eres responsable del contenido que subes y de contar con los permisos necesarios.",
-    "p2Label": "Privacidad de datos.",
-    "p2": "Tu información se aísla por organización (tenant) y no se comparte con terceros sin tu consentimiento. Puedes solicitar la eliminación de tus datos en cualquier momento.",
-    "p3Label": "Uso aceptable.",
-    "p3": "No debes usar el servicio para fines ilegales ni cargar información que infrinja derechos de terceros. El contenido generado por IA es una sugerencia y debe revisarse antes de usarse.",
-    "p4Label": "Disponibilidad.",
-    "p4": "Hacemos esfuerzos razonables por mantener el servicio disponible, pero se ofrece «tal cual». Estos términos pueden actualizarse; te pediremos aceptarlos de nuevo cuando cambien.",
-    "accept": "He leído y acepto los Términos y Condiciones y la Política de Privacidad de Reqs-AI.",
+  "legal": {
+    "title": "Términos y Privacidad",
+    "subtitle": "Revisa nuestros Términos de Servicio y la Política de Privacidad. Podrás aceptar cuando hayas leído ambos.",
+    "draftNotice": "Borrador para revisión legal — estos documentos son plantillas y aún no constituyen asesoría legal definitiva.",
+    "tabTerms": "Términos de Servicio",
+    "tabPrivacy": "Política de Privacidad",
+    "lastUpdated": "Última actualización: {{date}}",
+    "read": "Leído",
+    "scrollHint": "Desplázate hasta el final de ambos documentos para poder aceptar.",
+    "accept": "He leído y acepto los Términos de Servicio y la Política de Privacidad de {{name}}.",
     "submit": "Aceptar y continuar",
+    "signOut": "Cerrar sesión",
     "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
-    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
+    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo.",
+    "terms": {
+      "sections": [
+        { "heading": "1. Aceptación y elegibilidad", "body": "Al crear una cuenta o usar {{tradeName}} aceptas estos Términos. Debes tener al menos 18 años y, si aceptas en nombre de una organización, confirmas que estás autorizado para obligarla." },
+        { "heading": "2. Definiciones", "body": "«Servicio» es la plataforma {{tradeName}}; «Organización» el espacio de trabajo al que perteneces; «Contenido» los datos que envías, incluidos el audio y las transcripciones de reuniones; «Datos de Reunión» cualquier grabación o transcripción procesada por el Servicio." },
+        { "heading": "3. El servicio y la licencia", "body": "{{tradeName}} te concede una licencia limitada, revocable y no exclusiva para usar el Servicio para capturar reuniones y generar artefactos de requisitos. No puedes hacer ingeniería inversa, revenderlo, abusar de él ni usarlo con fines ilícitos." },
+        { "heading": "4. Cuentas y organizaciones", "body": "Eres responsable de la exactitud de los datos de tu cuenta, de proteger tus credenciales y de las acciones de los miembros que invites a tu Organización." },
+        { "heading": "5. Grabación de reuniones y consentimiento", "body": "Declaras y garantizas que, antes de grabar o transcribir cualquier reunión, has obtenido todos los consentimientos exigidos por la ley de cada participante — algunas jurisdicciones requieren el consentimiento de todas las partes. {{tradeName}} ofrece un indicador de grabación, pero tu Organización es la única responsable de la captura lícita e indemnizará a {{name}} por reclamaciones derivadas del incumplimiento de esta sección." },
+        { "heading": "6. Resultados generados por IA", "body": "Las historias de usuario, sugerencias y demás resultados de IA se generan automáticamente, pueden ser inexactos o incompletos y se proporcionan para tu revisión. No son asesoría profesional, legal ni de negocio; revísalos antes de confiar en ellos." },
+        { "heading": "7. Tu contenido y propiedad intelectual", "body": "Conservas la propiedad de tu Contenido y concedes a {{tradeName}} una licencia limitada para procesarlo únicamente para prestar el Servicio. {{name}} conserva todos los derechos sobre la plataforma, el software y las marcas." },
+        { "heading": "8. Subprocesadores de IA de terceros", "body": "Para prestar el Servicio usamos proveedores de IA de terceros — Deepgram (voz a texto), Google Gemini (generación) y OpenAI (embeddings). Los detalles están en nuestra Política de Privacidad." },
+        { "heading": "9. Entrenamiento de modelos", "body": "No usamos tu Contenido, ni los datos derivados de él, para entrenar los modelos de aprendizaje automático de {{tradeName}} ni de nuestros subprocesadores." },
+        { "heading": "10. Tarifas y suscripción", "body": "Los planes de pago, cuando se ofrezcan, se facturan de forma recurrente y se renuevan hasta su cancelación. Podemos cambiar los precios con aviso previo; el Servicio puede ofrecerse de forma gratuita total o parcialmente." },
+        { "heading": "11. Terminación y exportación de datos", "body": "Puedes dejar de usar el Servicio en cualquier momento. Al terminar, dispondrás de un plazo razonable para exportar tus datos antes de su eliminación, sujeto a las reglas de retención de la Política de Privacidad." },
+        { "heading": "12. Garantías y limitación de responsabilidad", "body": "El Servicio se ofrece «tal cual», sin garantías de ningún tipo. En la máxima medida permitida por la ley, {{name}} no se responsabiliza por daños indirectos o consecuentes, y su responsabilidad total se limita a los importes que hayas pagado en los doce meses previos." },
+        { "heading": "13. Cambios en estos Términos", "body": "Podemos actualizar estos Términos; cuando cambie su contenido sustancial te pediremos aceptar la nueva versión. El uso continuado tras una actualización constituye aceptación." },
+        { "heading": "14. Ley aplicable", "body": "Estos Términos se rigen por las leyes de {{jurisdiction}}, y cualquier disputa se somete a los tribunales competentes de {{jurisdiction}}." },
+        { "heading": "15. Contacto", "body": "Las preguntas sobre estos Términos pueden enviarse a {{email}}." }
+      ]
+    },
+    "privacy": {
+      "sections": [
+        { "heading": "1. Quiénes somos", "body": "{{name}} ({{address}}) es el responsable de los datos personales tratados a través de {{tradeName}}. Puedes contactarnos sobre privacidad en {{email}}." },
+        { "heading": "2. Datos que recopilamos", "body": "Datos de la cuenta (nombre, correo), el audio y las transcripciones de reuniones que envías, los artefactos de requisitos y embeddings generados a partir de ellos, y datos técnicos como dirección IP, dispositivo y registros de uso." },
+        { "heading": "3. Finalidades y bases legales", "body": "Tratamos los datos para prestar el Servicio (ejecución de un contrato), mantenerlo seguro (interés legítimo), cumplir la ley y — cuando se graba a terceros — sobre la base del consentimiento que eres responsable de obtener." },
+        { "heading": "4. Procesamiento de IA y subprocesadores", "body": "El audio y el texto son procesados por Deepgram (voz a texto), Google Gemini (generación) y OpenAI (embeddings) estrictamente para prestar el Servicio. Ni ellos ni {{tradeName}} usan tus datos para entrenar modelos." },
+        { "heading": "5. Transferencias internacionales", "body": "Algunos subprocesadores operan fuera de tu país, por lo que tus datos pueden tratarse en el extranjero con las garantías adecuadas." },
+        { "heading": "6. Retención", "body": "La retención de audio y transcripciones es configurable por Organización (días de retención de audio; -1 los conserva hasta que los elimines). Los demás datos se conservan mientras tu cuenta esté activa y según lo exija la ley." },
+        { "heading": "7. Tus derechos", "body": "Conforme a la ley aplicable puedes acceder, rectificar, eliminar, portar u oponerte al tratamiento de tus datos y retirar tu consentimiento. Escribe a {{email}} para ejercerlos; también puedes reclamar ante tu autoridad de protección de datos." },
+        { "heading": "8. Seguridad", "body": "Protegemos los datos con cifrado en tránsito y en reposo, controles de acceso y un aislamiento estricto por Organización (un esquema de base de datos separado por inquilino). Te notificaremos cualquier brecha según lo exija la ley." },
+        { "heading": "9. Cookies y almacenamiento local", "body": "Solo guardamos lo que la app necesita para funcionar — la gestión de sesión y tus preferencias de tema e idioma. No usamos cookies publicitarias." },
+        { "heading": "10. Menores", "body": "El Servicio no está dirigido a menores y está destinado a usuarios de 18 años o más." },
+        { "heading": "11. Cambios en esta Política", "body": "Podemos actualizar esta Política; publicaremos la nueva fecha de vigencia y, cuando el cambio sea relevante, te lo notificaremos." },
+        { "heading": "12. Acuerdo de Tratamiento de Datos", "body": "Las Organizaciones que actúan como responsables del tratamiento pueden solicitar un Acuerdo de Tratamiento de Datos (DPA) escribiendo a {{email}}." }
+      ]
+    }
   },
   "home": {
     "greetingNamed": "Hola, {{name}}",
