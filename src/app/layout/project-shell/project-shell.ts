@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, signal } fro
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucideChevronRight, lucidePlus } from '@ng-icons/lucide';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../features/workspace/data/workspace-api.service';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
@@ -27,6 +28,7 @@ import { HlmIcon } from '../../shared/ui';
     UserMenu,
     NavIcon,
     HlmIcon,
+    TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideChevronRight, lucidePlus })],
   template: `
@@ -42,14 +44,16 @@ import { HlmIcon } from '../../shared/ui';
             routerLink="/projects"
             class="hidden shrink-0 text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
           >
-            Proyectos
+            {{ 'nav.projects' | transloco }}
           </a>
           <hlm-icon
             name="lucideChevronRight"
             size="14px"
             class="hidden shrink-0 text-muted-foreground sm:block"
           />
-          <span class="truncate text-sm font-semibold">{{ projectName() ?? 'Proyecto' }}</span>
+          <span class="truncate text-sm font-semibold">{{
+            projectName() ?? ('nav.projectFallback' | transloco)
+          }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <app-theme-toggle />
@@ -71,7 +75,7 @@ import { HlmIcon } from '../../shared/ui';
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <app-nav-icon [name]="item.path" [size]="18" />
-                {{ item.label }}
+                {{ 'nav.' + item.path | transloco }}
               </a>
             }
           </nav>
@@ -80,7 +84,7 @@ import { HlmIcon } from '../../shared/ui';
             class="mt-auto flex items-center gap-2 border-t border-border px-3 pt-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <hlm-icon name="lucidePlus" size="16px" />
-            Nueva sesión
+            {{ 'nav.newSession' | transloco }}
           </a>
         </aside>
 
@@ -99,11 +103,11 @@ import { HlmIcon } from '../../shared/ui';
           <a
             [routerLink]="['/projects', projectId(), item.path]"
             routerLinkActive="bg-primary/15 text-primary"
-            [attr.aria-label]="item.label"
+            [attr.aria-label]="'nav.' + item.path | transloco"
             class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-muted-foreground"
           >
             <app-nav-icon [name]="item.path" [size]="20" />
-            {{ item.label }}
+            {{ 'nav.' + item.path | transloco }}
           </a>
         }
       </nav>
@@ -118,10 +122,10 @@ export class ProjectShell {
   protected readonly projectName = signal<string | null>(null);
 
   protected readonly nav = [
-    { path: 'sessions', label: 'Sesiones' },
-    { path: 'stories', label: 'Historias' },
-    { path: 'members', label: 'Miembros' },
-    { path: 'settings', label: 'Ajustes' },
+    { path: 'sessions' },
+    { path: 'stories' },
+    { path: 'members' },
+    { path: 'settings' },
   ];
 
   constructor() {

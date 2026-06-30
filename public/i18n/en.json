@@ -14,7 +14,8 @@
     "stories": "Stories",
     "members": "Members",
     "settings": "Settings",
-    "newSession": "New session"
+    "newSession": "New session",
+    "projectFallback": "Project"
   },
   "userMenu": {
     "ariaLabel": "User menu",

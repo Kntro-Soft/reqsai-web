@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucideBuilding2, lucideCheck, lucideChevronsUpDown, lucidePlus } from '@ng-icons/lucide';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
@@ -18,7 +19,7 @@ import { HlmIcon } from '../../ui';
   selector: 'app-org-switcher',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'close()' },
-  imports: [HlmIcon],
+  imports: [HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideBuilding2, lucideChevronsUpDown, lucideCheck, lucidePlus })],
   template: `
     <div class="relative">
@@ -27,12 +28,14 @@ import { HlmIcon } from '../../ui';
         (click)="toggle()"
         [attr.aria-expanded]="open()"
         aria-haspopup="menu"
-        aria-label="Cambiar organización"
+        [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
         data-testid="org-switcher"
         class="flex items-center gap-2 rounded-lg border border-border bg-secondary/60 py-1.5 pl-2.5 pr-2 text-sm font-medium transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <hlm-icon name="lucideBuilding2" size="15px" class="shrink-0 text-muted-foreground" />
-        <span class="max-w-[9rem] truncate">{{ activeName() }}</span>
+        <span class="max-w-[9rem] truncate">{{
+          activeName() || ('orgSwitcher.fallbackName' | transloco)
+        }}</span>
         <hlm-icon name="lucideChevronsUpDown" size="13px" class="shrink-0 text-muted-foreground" />
       </button>
 
@@ -42,7 +45,9 @@ import { HlmIcon } from '../../ui';
           role="menu"
           class="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl"
         >
-          <p class="px-3 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">Organizaciones</p>
+          <p class="px-3 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">
+            {{ 'orgSwitcher.organizations' | transloco }}
+          </p>
           @for (org of workspace.organizations(); track org.id) {
             <button
               role="menuitemradio"
@@ -66,7 +71,7 @@ import { HlmIcon } from '../../ui';
             class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
           >
             <hlm-icon name="lucidePlus" size="16px" />
-            Crear organización
+            {{ 'orgSwitcher.createOrganization' | transloco }}
           </button>
         </div>
       }
@@ -82,7 +87,7 @@ export class OrgSwitcher {
   protected readonly open = signal(false);
   protected readonly activeName = computed(() => {
     const id = this.store.organizationId();
-    return this.workspace.organizations().find((o) => o.id === id)?.name ?? 'Organización';
+    return this.workspace.organizations().find((o) => o.id === id)?.name ?? '';
   });
 
   protected toggle(): void {
