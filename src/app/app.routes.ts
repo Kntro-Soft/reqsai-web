@@ -22,6 +22,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
   },
 
+  // Create organization: standalone full-screen page, outside the app shell (no sidebar/header).
+  {
+    path: 'onboarding',
+    title: 'titles.onboarding',
+    canActivate: [authGuard, termsGuard, onboardingGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/create-organization/create-organization').then(
+        (m) => m.CreateOrganization,
+      ),
+  },
+
   // Post-login dispatcher: none → onboarding, one → workspace, several → picker.
   {
     path: 'launch',
@@ -93,15 +104,6 @@ export const routes: Routes = [
         path: 'home',
         title: 'titles.home',
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
-      },
-      {
-        path: 'onboarding',
-        title: 'titles.onboarding',
-        canActivate: [onboardingGuard],
-        loadComponent: () =>
-          import('./features/workspace/pages/create-organization/create-organization').then(
-            (m) => m.CreateOrganization,
-          ),
       },
       {
         path: 'projects',
