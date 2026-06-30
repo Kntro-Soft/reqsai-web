@@ -139,6 +139,35 @@
     "errorNameInUse": "Ese nombre ya está en uso. Prueba con otro.",
     "errorGeneric": "No se pudo crear la organización. Intenta de nuevo."
   },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.",
+    "new": "Nuevo proyecto",
+    "formTitle": "Nuevo proyecto",
+    "formSubtitle": "Define el stack para afinar las sugerencias de la IA.",
+    "name": "Nombre",
+    "description": "Descripción",
+    "programmingLanguages": "Lenguajes (coma)",
+    "frameworks": "Frameworks (coma)",
+    "clientPlatforms": "Plataformas (coma)",
+    "databases": "Bases de datos (coma)",
+    "architecture": "Arquitectura",
+    "domain": "Dominio",
+    "createCta": "Crear proyecto",
+    "loadError": "No se pudieron cargar los proyectos.",
+    "emptyTitle": "Aún no hay proyectos",
+    "emptyBody": "Crea tu primer proyecto para empezar a descubrir requisitos.",
+    "errorNameInUse": "Revisa los datos: el nombre podría estar repetido.",
+    "errorGeneric": "No se pudo crear el proyecto. Intenta de nuevo."
+  },
+  "orgPicker": {
+    "title": "Elige una organización",
+    "subtitle": "Tienes acceso a varias. Selecciona con cuál quieres continuar.",
+    "current": "Actual",
+    "meetingsIn": "Reuniones en {{lang}}",
+    "createTitle": "Crear organización",
+    "createSubtitle": "Empieza un nuevo espacio de trabajo"
+  },
   "terms": {
     "title": "Términos y Condiciones",
     "subtitle": "Para continuar, revisa y acepta nuestros términos de servicio.",

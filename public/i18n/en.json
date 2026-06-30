@@ -139,6 +139,35 @@
     "errorNameInUse": "That name is already in use. Try another.",
     "errorGeneric": "Could not create the organization. Please try again."
   },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage your organization's projects and their discovery sessions.",
+    "new": "New project",
+    "formTitle": "New project",
+    "formSubtitle": "Define the stack to fine-tune AI suggestions.",
+    "name": "Name",
+    "description": "Description",
+    "programmingLanguages": "Languages (comma-separated)",
+    "frameworks": "Frameworks (comma-separated)",
+    "clientPlatforms": "Platforms (comma-separated)",
+    "databases": "Databases (comma-separated)",
+    "architecture": "Architecture",
+    "domain": "Domain",
+    "createCta": "Create project",
+    "loadError": "Could not load the projects.",
+    "emptyTitle": "No projects yet",
+    "emptyBody": "Create your first project to start discovering requirements.",
+    "errorNameInUse": "Check the data: the name might be taken.",
+    "errorGeneric": "Could not create the project. Please try again."
+  },
+  "orgPicker": {
+    "title": "Choose an organization",
+    "subtitle": "You have access to several. Pick which one to continue with.",
+    "current": "Current",
+    "meetingsIn": "Meetings in {{lang}}",
+    "createTitle": "Create organization",
+    "createSubtitle": "Start a new workspace"
+  },
   "terms": {
     "title": "Terms and Conditions",
     "subtitle": "To continue, review and accept our terms of service.",
