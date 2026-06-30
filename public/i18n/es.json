@@ -182,5 +182,83 @@
     "submit": "Aceptar y continuar",
     "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
     "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
+  },
+  "members": {
+    "title": "Miembros",
+    "subtitle": "Gestiona quién tiene acceso a esta organización y con qué rol.",
+    "invite": "Invitar miembro",
+    "fieldEmail": "Correo",
+    "fieldName": "Nombre",
+    "fieldRole": "Rol",
+    "placeholderEmail": "persona@empresa.com",
+    "placeholderName": "Nombre visible",
+    "inviteSubmit": "Invitar",
+    "you": "Tú",
+    "removeAria": "Quitar miembro",
+    "emptyTitle": "Aún no has invitado a nadie",
+    "emptyBody": "Invita a tu equipo para colaborar en esta organización.",
+    "errorAlreadyInvited": "Esa persona ya está invitada.",
+    "errorInvite": "No se pudo enviar la invitación. Intenta de nuevo.",
+    "role": {
+      "OWNER": "Propietario",
+      "ADMIN": "Administrador",
+      "MEMBER": "Miembro"
+    },
+    "status": {
+      "ACTIVE": "Activo",
+      "PENDING": "Pendiente",
+      "INACTIVE": "Inactivo"
+    }
+  },
+  "orgSettings": {
+    "title": "Ajustes",
+    "subtitle": "Configura tu organización y los valores por defecto de las reuniones.",
+    "name": "Nombre de la organización",
+    "meetingLanguage": "Idioma de reuniones",
+    "audioRetention": "Retención de audio (días)",
+    "audioRetentionHint": "Usa -1 para conservar sin límite.",
+    "saved": "Cambios guardados.",
+    "save": "Guardar cambios",
+    "errorValidation": "Revisa los datos e intenta de nuevo.",
+    "errorGeneric": "No se pudieron guardar los cambios."
+  },
+  "projectSettings": {
+    "title": "Ajustes",
+    "subtitle": "Configura el proyecto y su stack técnico.",
+    "saved": "Cambios guardados.",
+    "save": "Guardar cambios",
+    "errorValidation": "Revisa los datos e intenta de nuevo.",
+    "errorGeneric": "No se pudieron guardar los cambios."
+  },
+  "projectMembers": {
+    "title": "Miembros",
+    "subtitle": "Quién de la organización trabaja en este proyecto.",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar los miembros.",
+    "emptyTitle": "Sin miembros asignados",
+    "emptyBody": "Asigna personas de tu organización para que colaboren en este proyecto.",
+    "fallbackName": "Miembro"
+  },
+  "stories": {
+    "title": "Historias",
+    "subtitle": "El backlog de historias de usuario del proyecto.",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar las historias.",
+    "emptyTitle": "Aún no hay historias",
+    "emptyBody": "Graba una sesión y genera historias con la IA, o créalas manualmente.",
+    "points": "pts",
+    "as": "Como",
+    "want": ", quiero",
+    "benefit": ", para",
+    "priority": {
+      "HIGH": "Alta",
+      "MEDIUM": "Media",
+      "LOW": "Baja"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "APPROVED": "Aprobada",
+      "REJECTED": "Rechazada"
+    }
   }
 }

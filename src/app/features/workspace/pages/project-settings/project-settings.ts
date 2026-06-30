@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import {
@@ -30,12 +31,15 @@ const toList = (value: string): string[] =>
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    TranslocoPipe,
   ],
   template: `
     <div class="flex max-w-2xl flex-col gap-6">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">Ajustes</h1>
-        <p class="mt-1 text-sm text-muted-foreground">Configura el proyecto y su stack técnico.</p>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'projectSettings.title' | transloco }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">
+          {{ 'projectSettings.subtitle' | transloco }}
+        </p>
       </div>
 
       <div hlmCard>
@@ -45,16 +49,18 @@ const toList = (value: string): string[] =>
           } @else {
             <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-4">
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="name">Nombre</label>
+                <label hlmLabel for="name">{{ 'projects.name' | transloco }}</label>
                 <input hlmInput id="name" formControlName="name" />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="description">Descripción</label>
+                <label hlmLabel for="description">{{ 'projects.description' | transloco }}</label>
                 <input hlmInput id="description" formControlName="description" />
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="programmingLanguages">Lenguajes (coma)</label>
+                  <label hlmLabel for="programmingLanguages">{{
+                    'projects.programmingLanguages' | transloco
+                  }}</label>
                   <input
                     hlmInput
                     id="programmingLanguages"
@@ -62,23 +68,27 @@ const toList = (value: string): string[] =>
                   />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="frameworks">Frameworks (coma)</label>
+                  <label hlmLabel for="frameworks">{{ 'projects.frameworks' | transloco }}</label>
                   <input hlmInput id="frameworks" formControlName="frameworks" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="clientPlatforms">Plataformas (coma)</label>
+                  <label hlmLabel for="clientPlatforms">{{
+                    'projects.clientPlatforms' | transloco
+                  }}</label>
                   <input hlmInput id="clientPlatforms" formControlName="clientPlatforms" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="databases">Bases de datos (coma)</label>
+                  <label hlmLabel for="databases">{{ 'projects.databases' | transloco }}</label>
                   <input hlmInput id="databases" formControlName="databases" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="architecture">Arquitectura</label>
+                  <label hlmLabel for="architecture">{{
+                    'projects.architecture' | transloco
+                  }}</label>
                   <input hlmInput id="architecture" formControlName="architecture" />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="domain">Dominio</label>
+                  <label hlmLabel for="domain">{{ 'projects.domain' | transloco }}</label>
                   <input hlmInput id="domain" formControlName="domain" />
                 </div>
               </div>
@@ -90,7 +100,7 @@ const toList = (value: string): string[] =>
               }
               @if (saved()) {
                 <p class="text-sm text-emerald-500" data-testid="settings-saved">
-                  Cambios guardados.
+                  {{ 'projectSettings.saved' | transloco }}
                 </p>
               }
 
@@ -104,7 +114,7 @@ const toList = (value: string): string[] =>
                   @if (saving()) {
                     <hlm-spinner class="h-4 w-4" />
                   }
-                  Guardar cambios
+                  {{ 'projectSettings.save' | transloco }}
                 </button>
               </div>
             </form>
@@ -118,6 +128,7 @@ export class ProjectSettings implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
+  private readonly transloco = inject(TranslocoService);
 
   readonly projectId = input.required<string>();
 
@@ -184,9 +195,11 @@ export class ProjectSettings implements OnInit {
         error: (err: HttpErrorResponse) => {
           this.saving.set(false);
           this.errorMessage.set(
-            err.status === 400
-              ? 'Revisa los datos e intenta de nuevo.'
-              : 'No se pudieron guardar los cambios.',
+            this.transloco.translate(
+              err.status === 400
+                ? 'projectSettings.errorValidation'
+                : 'projectSettings.errorGeneric',
+            ),
           );
         },
       });

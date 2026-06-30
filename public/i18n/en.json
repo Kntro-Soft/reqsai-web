@@ -182,5 +182,83 @@
     "submit": "Accept and continue",
     "errorSessionExpired": "Your session expired. Sign in again.",
     "errorGeneric": "Could not record acceptance. Please try again."
+  },
+  "members": {
+    "title": "Members",
+    "subtitle": "Manage who has access to this organization and with what role.",
+    "invite": "Invite member",
+    "fieldEmail": "Email",
+    "fieldName": "Name",
+    "fieldRole": "Role",
+    "placeholderEmail": "person@company.com",
+    "placeholderName": "Display name",
+    "inviteSubmit": "Invite",
+    "you": "You",
+    "removeAria": "Remove member",
+    "emptyTitle": "You haven't invited anyone yet",
+    "emptyBody": "Invite your team to collaborate in this organization.",
+    "errorAlreadyInvited": "That person is already invited.",
+    "errorInvite": "Could not send the invitation. Please try again.",
+    "role": {
+      "OWNER": "Owner",
+      "ADMIN": "Administrator",
+      "MEMBER": "Member"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "INACTIVE": "Inactive"
+    }
+  },
+  "orgSettings": {
+    "title": "Settings",
+    "subtitle": "Configure your organization and the default meeting values.",
+    "name": "Organization name",
+    "meetingLanguage": "Meeting language",
+    "audioRetention": "Audio retention (days)",
+    "audioRetentionHint": "Use -1 to keep indefinitely.",
+    "saved": "Changes saved.",
+    "save": "Save changes",
+    "errorValidation": "Check the data and try again.",
+    "errorGeneric": "Could not save the changes."
+  },
+  "projectSettings": {
+    "title": "Settings",
+    "subtitle": "Configure the project and its tech stack.",
+    "saved": "Changes saved.",
+    "save": "Save changes",
+    "errorValidation": "Check the data and try again.",
+    "errorGeneric": "Could not save the changes."
+  },
+  "projectMembers": {
+    "title": "Members",
+    "subtitle": "Who from the organization works on this project.",
+    "loading": "Loading…",
+    "loadError": "Could not load the members.",
+    "emptyTitle": "No members assigned",
+    "emptyBody": "Assign people from your organization to collaborate on this project.",
+    "fallbackName": "Member"
+  },
+  "stories": {
+    "title": "Stories",
+    "subtitle": "The project's user-story backlog.",
+    "loading": "Loading…",
+    "loadError": "Could not load the stories.",
+    "emptyTitle": "No stories yet",
+    "emptyBody": "Record a session and generate stories with AI, or create them manually.",
+    "points": "pts",
+    "as": "As",
+    "want": ", I want",
+    "benefit": ", so that",
+    "priority": {
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    }
   }
 }

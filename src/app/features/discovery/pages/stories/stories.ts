@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { UserStoryResponse } from '../../data/discovery.models';
 
@@ -6,21 +7,20 @@ import { UserStoryResponse } from '../../data/discovery.models';
 @Component({
   selector: 'app-project-stories',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslocoPipe],
   template: `
     <div class="flex flex-col gap-6">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">Historias</h1>
-        <p class="mt-1 text-sm text-muted-foreground">
-          El backlog de historias de usuario del proyecto.
-        </p>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
       </div>
 
       @switch (state()) {
         @case ('loading') {
-          <p class="text-sm text-muted-foreground">Cargando…</p>
+          <p class="text-sm text-muted-foreground">{{ 'stories.loading' | transloco }}</p>
         }
         @case ('error') {
-          <p class="text-sm text-destructive">No se pudieron cargar las historias.</p>
+          <p class="text-sm text-destructive">{{ 'stories.loadError' | transloco }}</p>
         }
         @default {
           @if (stories().length === 0) {
@@ -28,9 +28,9 @@ import { UserStoryResponse } from '../../data/discovery.models';
               class="rounded-2xl border border-dashed border-border p-12 text-center"
               data-testid="stories-empty"
             >
-              <p class="text-sm font-medium">Aún no hay historias</p>
+              <p class="text-sm font-medium">{{ 'stories.emptyTitle' | transloco }}</p>
               <p class="mt-1 text-sm text-muted-foreground">
-                Graba una sesión y genera historias con la IA, o créalas manualmente.
+                {{ 'stories.emptyBody' | transloco }}
               </p>
             </div>
           } @else {
@@ -42,25 +42,28 @@ import { UserStoryResponse } from '../../data/discovery.models';
                       class="rounded-full px-2 py-0.5 text-[11px] font-medium"
                       [class]="priorityClass(story.priority)"
                     >
-                      {{ priorityLabel(story.priority) }}
+                      {{ 'stories.priority.' + story.priority | transloco }}
                     </span>
                     <span
                       class="rounded-full px-2 py-0.5 text-[11px] font-medium"
                       [class]="statusClass(story.status)"
                     >
-                      {{ statusLabel(story.status) }}
+                      {{ 'stories.status.' + story.status | transloco }}
                     </span>
                     @if (story.storyPoints !== null) {
                       <span class="ml-auto text-[11px] text-muted-foreground"
-                        >{{ story.storyPoints }} pts</span
+                        >{{ story.storyPoints }} {{ 'stories.points' | transloco }}</span
                       >
                     }
                   </div>
                   <p class="text-sm font-medium">{{ story.title }}</p>
                   <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Como <span class="text-foreground">{{ story.role }}</span
-                    >, quiero <span class="text-foreground">{{ story.action }}</span
-                    >, para <span class="text-foreground">{{ story.benefit }}</span
+                    {{ 'stories.as' | transloco }}
+                    <span class="text-foreground">{{ story.role }}</span
+                    >{{ 'stories.want' | transloco }}
+                    <span class="text-foreground">{{ story.action }}</span
+                    >{{ 'stories.benefit' | transloco }}
+                    <span class="text-foreground">{{ story.benefit }}</span
                     >.
                   </p>
                 </div>
@@ -90,11 +93,6 @@ export class ProjectStories implements OnInit {
     });
   }
 
-  protected priorityLabel(priority: string): string {
-    const labels: Record<string, string> = { HIGH: 'Alta', MEDIUM: 'Media', LOW: 'Baja' };
-    return labels[priority] ?? priority;
-  }
-
   protected priorityClass(priority: string): string {
     const classes: Record<string, string> = {
       HIGH: 'bg-destructive/15 text-destructive',
@@ -102,15 +100,6 @@ export class ProjectStories implements OnInit {
       LOW: 'bg-secondary text-muted-foreground',
     };
     return classes[priority] ?? 'bg-secondary text-muted-foreground';
-  }
-
-  protected statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      DRAFT: 'Borrador',
-      APPROVED: 'Aprobada',
-      REJECTED: 'Rechazada',
-    };
-    return labels[status] ?? status;
   }
 
   protected statusClass(status: string): string {

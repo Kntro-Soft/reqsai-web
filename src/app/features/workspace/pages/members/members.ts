@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
@@ -30,19 +31,18 @@ import {
     HlmLabel,
     HlmSpinner,
     HlmIcon,
+    TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideTrash2 })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">Miembros</h1>
-          <p class="mt-1 text-sm text-muted-foreground">
-            Gestiona quién tiene acceso a esta organización y con qué rol.
-          </p>
+          <h1 class="text-2xl font-bold tracking-tight">{{ 'members.title' | transloco }}</h1>
+          <p class="mt-1 text-sm text-muted-foreground">{{ 'members.subtitle' | transloco }}</p>
         </div>
         <button hlmBtn type="button" (click)="toggleInvite()" data-testid="invite-toggle">
-          {{ showInvite() ? 'Cancelar' : 'Invitar miembro' }}
+          {{ (showInvite() ? 'common.cancel' : 'members.invite') | transloco }}
         </button>
       </div>
 
@@ -55,33 +55,33 @@ import {
               class="flex flex-col gap-4 sm:flex-row sm:items-end"
             >
               <div class="flex flex-1 flex-col gap-2">
-                <label hlmLabel for="email">Correo</label>
+                <label hlmLabel for="email">{{ 'members.fieldEmail' | transloco }}</label>
                 <input
                   hlmInput
                   id="email"
                   type="email"
                   formControlName="email"
-                  placeholder="persona@empresa.com"
+                  [placeholder]="'members.placeholderEmail' | transloco"
                 />
               </div>
               <div class="flex flex-1 flex-col gap-2">
-                <label hlmLabel for="displayName">Nombre</label>
+                <label hlmLabel for="displayName">{{ 'members.fieldName' | transloco }}</label>
                 <input
                   hlmInput
                   id="displayName"
                   formControlName="displayName"
-                  placeholder="Nombre visible"
+                  [placeholder]="'members.placeholderName' | transloco"
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="role">Rol</label>
+                <label hlmLabel for="role">{{ 'members.fieldRole' | transloco }}</label>
                 <select
                   id="role"
                   formControlName="role"
                   class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="MEMBER">Miembro</option>
-                  <option value="ADMIN">Administrador</option>
+                  <option value="MEMBER">{{ 'members.role.MEMBER' | transloco }}</option>
+                  <option value="ADMIN">{{ 'members.role.ADMIN' | transloco }}</option>
                 </select>
               </div>
               <button
@@ -93,7 +93,7 @@ import {
                 @if (submitting()) {
                   <hlm-spinner class="h-4 w-4" />
                 }
-                Invitar
+                {{ 'members.inviteSubmit' | transloco }}
               </button>
             </form>
             @if (errorMessage()) {
@@ -118,10 +118,10 @@ import {
             </span>
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium">{{ store.user()?.fullName }}</p>
-              <p class="truncate text-xs text-muted-foreground">Tú</p>
+              <p class="truncate text-xs text-muted-foreground">{{ 'members.you' | transloco }}</p>
             </div>
             <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary">
-              Propietario
+              {{ 'members.role.OWNER' | transloco }}
             </span>
           </div>
         }
@@ -144,17 +144,17 @@ import {
               class="rounded-full px-2.5 py-0.5 text-xs font-medium"
               [class]="statusClass(m.status)"
             >
-              {{ statusLabel(m.status) }}
+              {{ 'members.status.' + m.status | transloco }}
             </span>
             <span
               class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
             >
-              {{ roleLabel(m.role) }}
+              {{ 'members.role.' + m.role | transloco }}
             </span>
             <button
               type="button"
               (click)="remove(m)"
-              aria-label="Quitar miembro"
+              [attr.aria-label]="'members.removeAria' | transloco"
               class="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
               <hlm-icon name="lucideTrash2" size="16px" />
@@ -167,10 +167,8 @@ import {
             class="rounded-xl border border-dashed border-border p-8 text-center"
             data-testid="members-empty"
           >
-            <p class="text-sm font-medium">Aún no has invitado a nadie</p>
-            <p class="mt-1 text-sm text-muted-foreground">
-              Invita a tu equipo para colaborar en esta organización.
-            </p>
+            <p class="text-sm font-medium">{{ 'members.emptyTitle' | transloco }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">{{ 'members.emptyBody' | transloco }}</p>
           </div>
         }
       </div>
@@ -180,6 +178,7 @@ import {
 export class Members {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
+  private readonly transloco = inject(TranslocoService);
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
 
@@ -242,9 +241,9 @@ export class Members {
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
         this.errorMessage.set(
-          err.status === 409
-            ? 'Esa persona ya está invitada.'
-            : 'No se pudo enviar la invitación. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 409 ? 'members.errorAlreadyInvited' : 'members.errorInvite',
+          ),
         );
       },
     });
@@ -261,24 +260,6 @@ export class Members {
   protected initials(name: string): string {
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.charAt(0) ?? '') + (parts[1]?.charAt(0) ?? '')).toUpperCase() || '?';
-  }
-
-  protected roleLabel(role: string): string {
-    const labels: Record<string, string> = {
-      OWNER: 'Propietario',
-      ADMIN: 'Administrador',
-      MEMBER: 'Miembro',
-    };
-    return labels[role] ?? role;
-  }
-
-  protected statusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      ACTIVE: 'Activo',
-      PENDING: 'Pendiente',
-      INACTIVE: 'Inactivo',
-    };
-    return labels[status] ?? status;
   }
 
   protected statusClass(status: string): string {

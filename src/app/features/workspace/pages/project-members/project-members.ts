@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, ProjectMemberResponse } from '../../data/workspace.models';
@@ -16,21 +17,22 @@ import { MemberResponse, ProjectMemberResponse } from '../../data/workspace.mode
 @Component({
   selector: 'app-project-members',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslocoPipe],
   template: `
     <div class="flex flex-col gap-6">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">Miembros</h1>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'projectMembers.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">
-          Quién de la organización trabaja en este proyecto.
+          {{ 'projectMembers.subtitle' | transloco }}
         </p>
       </div>
 
       @switch (state()) {
         @case ('loading') {
-          <p class="text-sm text-muted-foreground">Cargando…</p>
+          <p class="text-sm text-muted-foreground">{{ 'projectMembers.loading' | transloco }}</p>
         }
         @case ('error') {
-          <p class="text-sm text-destructive">No se pudieron cargar los miembros.</p>
+          <p class="text-sm text-destructive">{{ 'projectMembers.loadError' | transloco }}</p>
         }
         @default {
           @if (assignments().length === 0) {
@@ -38,9 +40,9 @@ import { MemberResponse, ProjectMemberResponse } from '../../data/workspace.mode
               class="rounded-2xl border border-dashed border-border p-12 text-center"
               data-testid="project-members-empty"
             >
-              <p class="text-sm font-medium">Sin miembros asignados</p>
+              <p class="text-sm font-medium">{{ 'projectMembers.emptyTitle' | transloco }}</p>
               <p class="mt-1 text-sm text-muted-foreground">
-                Asigna personas de tu organización para que colaboren en este proyecto.
+                {{ 'projectMembers.emptyBody' | transloco }}
               </p>
             </div>
           } @else {
@@ -73,6 +75,7 @@ import { MemberResponse, ProjectMemberResponse } from '../../data/workspace.mode
 export class ProjectMembers implements OnInit {
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
+  private readonly transloco = inject(TranslocoService);
 
   readonly projectId = input.required<string>();
 
@@ -98,7 +101,10 @@ export class ProjectMembers implements OnInit {
   }
 
   protected name(memberId: string): string {
-    return this.byId().get(memberId)?.displayName ?? 'Miembro';
+    return (
+      this.byId().get(memberId)?.displayName ??
+      this.transloco.translate('projectMembers.fallbackName')
+    );
   }
 
   protected email(memberId: string): string {
