@@ -28,12 +28,13 @@ async function registerVerified() {
   for (let i = 0; i < 20 && !token; i++) {
     const data = await (await api.get(`${MP}/api/v1/messages?limit=50`)).json();
     const hit = data.messages.find(
-      (m) =>
-        m.Subject.includes('Verifica') && m.To.some((t) => t.Address.toLowerCase() === email),
+      (m) => m.Subject.includes('Verifica') && m.To.some((t) => t.Address.toLowerCase() === email),
     );
     if (hit) {
       const msg = await (await api.get(`${MP}/api/v1/message/${hit.ID}`)).json();
-      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(/verify-email\?token=([A-Za-z0-9._~-]+)/);
+      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(
+        /verify-email\?token=([A-Za-z0-9._~-]+)/,
+      );
       if (mt) token = mt[1];
     }
     if (!token) await new Promise((r) => setTimeout(r, 500));
@@ -45,7 +46,10 @@ async function registerVerified() {
 const browser = await chromium.launch();
 
 for (const vp of VIEWPORTS) {
-  const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+  const ctx = await browser.newContext({
+    viewport: { width: vp.width, height: vp.height },
+    locale: 'es-PE',
+  });
   const page = await ctx.newPage();
   const shot = async (name) => {
     await page.waitForTimeout(450);

@@ -18,7 +18,12 @@ async function registerVerified(prefix) {
   const email = `${prefix}.${Date.now()}@reqsai.test`;
   await api.post('/api/auth/register', {
     headers: V1,
-    data: { email, password: PASSWORD, firstName: prefix === 'solo' ? 'Sara' : 'Marco', lastName: 'Demo' },
+    data: {
+      email,
+      password: PASSWORD,
+      firstName: prefix === 'solo' ? 'Sara' : 'Marco',
+      lastName: 'Demo',
+    },
   });
   let token = null;
   for (let i = 0; i < 20 && !token; i++) {
@@ -28,7 +33,9 @@ async function registerVerified(prefix) {
     );
     if (hit) {
       const msg = await (await api.get(`${MP}/api/v1/message/${hit.ID}`)).json();
-      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(/verify-email\?token=([A-Za-z0-9._~-]+)/);
+      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(
+        /verify-email\?token=([A-Za-z0-9._~-]+)/,
+      );
       if (mt) token = mt[1];
     }
     if (!token) await new Promise((r) => setTimeout(r, 500));
@@ -38,7 +45,10 @@ async function registerVerified(prefix) {
 }
 
 async function login(email) {
-  const res = await api.post('/api/auth/login', { headers: V1, data: { email, password: PASSWORD } });
+  const res = await api.post('/api/auth/login', {
+    headers: V1,
+    data: { email, password: PASSWORD },
+  });
   return (await res.json()).accessToken;
 }
 async function acceptTerms(token) {
@@ -46,7 +56,10 @@ async function acceptTerms(token) {
 }
 const uniq = Date.now().toString(36);
 const slugify = (name, i) =>
-  `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${uniq}${i}`;
+  `${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}-${uniq}${i}`;
 async function createOrg(token, name, i) {
   const res = await api.post('/api/organizations', {
     ...auth(token),
@@ -55,14 +68,20 @@ async function createOrg(token, name, i) {
   return (await res.json()).id;
 }
 async function setActive(token, orgId) {
-  await api.patch('/api/users/me/preferences', { ...auth(token), data: { lastVisitedOrgId: orgId } });
+  await api.patch('/api/users/me/preferences', {
+    ...auth(token),
+    data: { lastVisitedOrgId: orgId },
+  });
 }
 async function refresh() {
   const res = await api.post('/api/auth/refresh', { headers: V1 });
   return (await res.json()).accessToken;
 }
 async function createProject(token, orgId, spec) {
-  const res = await api.post(`/api/organizations/${orgId}/projects`, { ...auth(token), data: spec });
+  const res = await api.post(`/api/organizations/${orgId}/projects`, {
+    ...auth(token),
+    data: spec,
+  });
   return (await res.json()).id;
 }
 async function createSession(token, projectId, title) {
@@ -77,12 +96,60 @@ async function transition(token, projectId, sessionId, action) {
 }
 
 const PROJECTS = [
-  { name: 'Plataforma de Pagos', programmingLanguages: ['Java'], frameworks: ['Spring Boot'], clientPlatforms: ['Web'], databases: ['PostgreSQL'], architecture: 'Hexagonal', domain: 'Fintech' },
-  { name: 'App Móvil Banca', programmingLanguages: ['Kotlin'], frameworks: ['Android'], clientPlatforms: ['Mobile'], databases: ['SQLite'], architecture: 'MVVM', domain: 'Fintech' },
-  { name: 'Portal de Clientes', programmingLanguages: ['TypeScript'], frameworks: ['Angular'], clientPlatforms: ['Web'], databases: ['PostgreSQL'], architecture: 'Hexagonal', domain: 'SaaS' },
-  { name: 'Motor de Riesgos', programmingLanguages: ['Python'], frameworks: ['FastAPI'], clientPlatforms: ['API'], databases: ['Redis'], architecture: 'Event-Driven', domain: 'Riesgos' },
-  { name: 'Data Pipeline', programmingLanguages: ['Scala'], frameworks: ['Spark'], clientPlatforms: ['Batch'], databases: ['Kafka'], architecture: 'Streaming', domain: 'Datos' },
-  { name: 'API Gateway', programmingLanguages: ['Go'], frameworks: ['gRPC'], clientPlatforms: ['API'], databases: ['etcd'], architecture: 'Microservicios', domain: 'Infraestructura' },
+  {
+    name: 'Plataforma de Pagos',
+    programmingLanguages: ['Java'],
+    frameworks: ['Spring Boot'],
+    clientPlatforms: ['Web'],
+    databases: ['PostgreSQL'],
+    architecture: 'Hexagonal',
+    domain: 'Fintech',
+  },
+  {
+    name: 'App Móvil Banca',
+    programmingLanguages: ['Kotlin'],
+    frameworks: ['Android'],
+    clientPlatforms: ['Mobile'],
+    databases: ['SQLite'],
+    architecture: 'MVVM',
+    domain: 'Fintech',
+  },
+  {
+    name: 'Portal de Clientes',
+    programmingLanguages: ['TypeScript'],
+    frameworks: ['Angular'],
+    clientPlatforms: ['Web'],
+    databases: ['PostgreSQL'],
+    architecture: 'Hexagonal',
+    domain: 'SaaS',
+  },
+  {
+    name: 'Motor de Riesgos',
+    programmingLanguages: ['Python'],
+    frameworks: ['FastAPI'],
+    clientPlatforms: ['API'],
+    databases: ['Redis'],
+    architecture: 'Event-Driven',
+    domain: 'Riesgos',
+  },
+  {
+    name: 'Data Pipeline',
+    programmingLanguages: ['Scala'],
+    frameworks: ['Spark'],
+    clientPlatforms: ['Batch'],
+    databases: ['Kafka'],
+    architecture: 'Streaming',
+    domain: 'Datos',
+  },
+  {
+    name: 'API Gateway',
+    programmingLanguages: ['Go'],
+    frameworks: ['gRPC'],
+    clientPlatforms: ['API'],
+    databases: ['etcd'],
+    architecture: 'Microservicios',
+    domain: 'Infraestructura',
+  },
 ];
 
 const SESSIONS = [
@@ -136,7 +203,7 @@ async function uiLogin(page, email) {
 }
 
 for (const theme of ['dark', 'light']) {
-  const ctx = await browser.newContext({ viewport: VP });
+  const ctx = await browser.newContext({ viewport: VP, locale: 'es-PE' });
   await ctx.addInitScript((t) => localStorage.setItem('theme', t), theme);
   const page = await ctx.newPage();
   const shot = async (name, full = true) => {

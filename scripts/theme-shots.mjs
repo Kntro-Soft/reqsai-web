@@ -26,7 +26,7 @@ const PAGES = [
 const browser = await chromium.launch();
 
 async function capture(theme) {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-PE' });
   await ctx.addInitScript((t) => localStorage.setItem('theme', t), theme);
   const page = await ctx.newPage();
   const shot = async (name) => {

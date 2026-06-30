@@ -26,6 +26,13 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200',
 
+    /* Pin the UI language and timezone so the suite is deterministic regardless of
+     * the host/CI locale. The app resolves its language from navigator.language
+     * (Playwright's `locale`), so es-PE boots the Spanish UI the specs assert
+     * against; the fixed timezone keeps locale-aware date output stable too. */
+    locale: 'es-PE',
+    timezoneId: 'America/Lima',
+
     /* Capture a trace + screenshot for every test so the HTML report shows each
      * page visually (open it with `bunx playwright show-report`). Or watch tests
      * run live with `bunx playwright test --ui`. */

@@ -43,7 +43,9 @@ async function registerVerified() {
     );
     if (hit) {
       const msg = await (await api.get(`${MP}/api/v1/message/${hit.ID}`)).json();
-      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(/verify-email\?token=([A-Za-z0-9._~-]+)/);
+      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(
+        /verify-email\?token=([A-Za-z0-9._~-]+)/,
+      );
       if (mt) token = mt[1];
     }
     if (!token) await new Promise((r) => setTimeout(r, 500));
@@ -84,7 +86,10 @@ function contactSheet(theme, vp) {
 
 for (const theme of THEMES) {
   for (const vp of VIEWPORTS) {
-    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    const ctx = await browser.newContext({
+      viewport: { width: vp.width, height: vp.height },
+      locale: 'es-PE',
+    });
     await ctx.addInitScript((t) => localStorage.setItem('theme', t), theme);
     const page = await ctx.newPage();
     const tag = `${theme}-${vp.name}`;
@@ -138,7 +143,9 @@ for (const theme of THEMES) {
     await ctx.close();
 
     // Build the contact sheet for this theme + viewport.
-    const sheet = await browser.newContext({ viewport: { width: vp.cols * 560 + 80, height: 1000 } });
+    const sheet = await browser.newContext({
+      viewport: { width: vp.cols * 560 + 80, height: 1000 },
+    });
     const sheetPage = await sheet.newPage();
     await sheetPage.setContent(contactSheet(theme, vp), { waitUntil: 'load' });
     await sheetPage.waitForTimeout(300);
