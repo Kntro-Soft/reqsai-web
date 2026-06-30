@@ -78,6 +78,16 @@ export class WorkspaceApiService {
     return this.http.post<MemberResponse>(`/api/organizations/${orgId}/members`, request);
   }
 
+  changeMemberRole(
+    orgId: string,
+    memberId: string,
+    role: 'ADMIN' | 'MEMBER',
+  ): Observable<MemberResponse> {
+    return this.http.patch<MemberResponse>(`/api/organizations/${orgId}/members/${memberId}`, {
+      role,
+    });
+  }
+
   removeMember(orgId: string, memberId: string): Observable<void> {
     return this.http.delete<void>(`/api/organizations/${orgId}/members/${memberId}`);
   }

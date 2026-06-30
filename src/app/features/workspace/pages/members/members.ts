@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
@@ -8,170 +8,179 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse } from '../../data/workspace.models';
-import {
-  HlmButton,
-  HlmCard,
-  HlmCardContent,
-  HlmIcon,
-  HlmInput,
-  HlmLabel,
-  HlmSpinner,
-} from '../../../../shared/ui';
+import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
-/** Organization members: the owner, plus invited people with their role and status. */
+type MemberTab = 'active' | 'pending';
+
+/** Organization members (Vercel-style): an always-visible invite card, Active / Pending tabs and a
+ * single-column member table with inline role change (PATCH) and remove. */
 @Component({
   selector: 'app-members',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    FormsModule,
+    Avatar,
     HlmButton,
-    HlmCard,
-    HlmCardContent,
+    HlmIcon,
     HlmInput,
     HlmLabel,
     HlmSpinner,
-    HlmIcon,
     TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideTrash2 })],
   template: `
-    <div class="flex flex-col gap-6">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight">{{ 'members.title' | transloco }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground">{{ 'members.subtitle' | transloco }}</p>
-        </div>
-        <button hlmBtn type="button" (click)="toggleInvite()" data-testid="invite-toggle">
-          {{ (showInvite() ? 'common.cancel' : 'members.invite') | transloco }}
-        </button>
+    <div class="mx-auto flex max-w-4xl flex-col gap-6">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'members.title' | transloco }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ 'members.subtitle' | transloco }}</p>
       </div>
 
-      @if (showInvite()) {
-        <div hlmCard>
-          <div hlmCardContent class="pt-6">
-            <form
-              [formGroup]="form"
-              (ngSubmit)="invite()"
-              class="flex flex-col gap-4 sm:flex-row sm:items-end"
+      <!-- Invite (always visible) -->
+      <section class="overflow-hidden rounded-2xl border border-border">
+        <div class="flex flex-col gap-1 p-5">
+          <h2 class="text-base font-semibold">{{ 'members.inviteTitle' | transloco }}</h2>
+          <p class="text-sm text-muted-foreground">{{ 'members.inviteDesc' | transloco }}</p>
+        </div>
+        <form
+          [formGroup]="form"
+          (ngSubmit)="invite()"
+          class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5 sm:flex-row sm:items-end"
+        >
+          <div class="flex flex-1 flex-col gap-1.5">
+            <label hlmLabel for="email">{{ 'members.fieldEmail' | transloco }}</label>
+            <input
+              hlmInput
+              id="email"
+              type="email"
+              formControlName="email"
+              [placeholder]="'members.placeholderEmail' | transloco"
+            />
+          </div>
+          <div class="flex flex-1 flex-col gap-1.5">
+            <label hlmLabel for="displayName">{{ 'members.fieldName' | transloco }}</label>
+            <input
+              hlmInput
+              id="displayName"
+              formControlName="displayName"
+              [placeholder]="'members.placeholderName' | transloco"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label hlmLabel for="role">{{ 'members.fieldRole' | transloco }}</label>
+            <select
+              id="role"
+              formControlName="role"
+              class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div class="flex flex-1 flex-col gap-2">
-                <label hlmLabel for="email">{{ 'members.fieldEmail' | transloco }}</label>
-                <input
-                  hlmInput
-                  id="email"
-                  type="email"
-                  formControlName="email"
-                  [placeholder]="'members.placeholderEmail' | transloco"
-                />
+              <option value="MEMBER">{{ 'members.role.MEMBER' | transloco }}</option>
+              <option value="ADMIN">{{ 'members.role.ADMIN' | transloco }}</option>
+            </select>
+          </div>
+          <button hlmBtn type="submit" [disabled]="form.invalid || submitting()" data-testid="invite-submit">
+            @if (submitting()) {
+              <hlm-spinner class="h-4 w-4" />
+            }
+            {{ 'members.inviteSubmit' | transloco }}
+          </button>
+        </form>
+        @if (errorMessage()) {
+          <p class="px-5 pb-4 text-sm text-destructive" data-testid="form-error">
+            {{ errorMessage() }}
+          </p>
+        }
+      </section>
+
+      <!-- Tabs -->
+      <div class="flex gap-4 border-b border-border text-sm">
+        @for (t of tabs; track t) {
+          <button
+            type="button"
+            (click)="tab.set(t)"
+            class="-mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 font-medium transition-colors"
+            [class]="
+              tab() === t
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            "
+          >
+            {{ (t === 'active' ? 'members.tabActive' : 'members.tabPending') | transloco }}
+            <span class="rounded-full bg-secondary px-1.5 text-xs text-muted-foreground">
+              {{ t === 'active' ? activeRows().length : pending().length }}
+            </span>
+          </button>
+        }
+      </div>
+
+      @if (state() === 'loading') {
+        <div class="flex justify-center py-10"><hlm-spinner class="h-6 w-6" /></div>
+      } @else if (state() === 'error') {
+        <p class="text-sm text-destructive">{{ 'members.loadError' | transloco }}</p>
+      } @else {
+        <div class="overflow-hidden rounded-2xl border border-border">
+          @for (m of rows(); track m.id) {
+            <div
+              class="flex items-center gap-3 border-b border-border p-4 last:border-0"
+              data-testid="member-row"
+            >
+              <app-avatar [name]="m.displayName || m.email" [seed]="m.id" [size]="36" [circle]="true" />
+              <div class="min-w-0 flex-1">
+                <p class="flex items-center gap-2 truncate text-sm font-medium">
+                  {{ m.displayName || m.email }}
+                  @if (m.isOwnerSelf) {
+                    <span class="rounded bg-secondary px-1.5 text-[11px] text-muted-foreground">
+                      {{ 'members.you' | transloco }}
+                    </span>
+                  }
+                </p>
+                <p class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
               </div>
-              <div class="flex flex-1 flex-col gap-2">
-                <label hlmLabel for="displayName">{{ 'members.fieldName' | transloco }}</label>
-                <input
-                  hlmInput
-                  id="displayName"
-                  formControlName="displayName"
-                  [placeholder]="'members.placeholderName' | transloco"
-                />
-              </div>
-              <div class="flex flex-col gap-2">
-                <label hlmLabel for="role">{{ 'members.fieldRole' | transloco }}</label>
+
+              @if (tab() === 'pending') {
+                <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600">
+                  {{ 'members.status.PENDING' | transloco }}
+                </span>
+              }
+
+              @if (m.role === 'OWNER' || tab() === 'pending') {
+                <span
+                  class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                >
+                  {{ 'members.role.' + m.role | transloco }}
+                </span>
+              } @else {
                 <select
-                  id="role"
-                  formControlName="role"
-                  class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  [ngModel]="m.role"
+                  (ngModelChange)="changeRole(m, $event)"
+                  [attr.aria-label]="'members.fieldRole' | transloco"
+                  class="h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="MEMBER">{{ 'members.role.MEMBER' | transloco }}</option>
                   <option value="ADMIN">{{ 'members.role.ADMIN' | transloco }}</option>
                 </select>
-              </div>
-              <button
-                hlmBtn
-                type="submit"
-                [disabled]="form.invalid || submitting()"
-                data-testid="invite-submit"
-              >
-                @if (submitting()) {
-                  <hlm-spinner class="h-4 w-4" />
-                }
-                {{ 'members.inviteSubmit' | transloco }}
-              </button>
-            </form>
-            @if (errorMessage()) {
-              <p class="mt-3 text-sm text-destructive" data-testid="form-error">
-                {{ errorMessage() }}
-              </p>
-            }
-          </div>
+              }
+
+              @if (!m.isOwnerSelf) {
+                <button
+                  type="button"
+                  (click)="remove(m)"
+                  [attr.aria-label]="'members.removeAria' | transloco"
+                  class="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <hlm-icon name="lucideTrash2" size="16px" />
+                </button>
+              } @else {
+                <span class="w-8 shrink-0"></span>
+              }
+            </div>
+          } @empty {
+            <p class="p-8 text-center text-sm text-muted-foreground">
+              {{ (tab() === 'active' ? 'members.emptyBody' : 'members.emptyPending') | transloco }}
+            </p>
+          }
         </div>
       }
-
-      <div class="flex flex-col gap-2">
-        @if (ownerIsMe()) {
-          <div
-            class="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-            data-testid="member-row"
-          >
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-semibold text-primary"
-            >
-              {{ myInitials() }}
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ store.user()?.fullName }}</p>
-              <p class="truncate text-xs text-muted-foreground">{{ 'members.you' | transloco }}</p>
-            </div>
-            <span class="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary">
-              {{ 'members.role.OWNER' | transloco }}
-            </span>
-          </div>
-        }
-
-        @for (m of members(); track m.id) {
-          <div
-            class="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-            data-testid="member-row"
-          >
-            <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold text-muted-foreground"
-            >
-              {{ initials(m.displayName || m.email) }}
-            </span>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ m.displayName || m.email }}</p>
-              <p class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
-            </div>
-            <span
-              class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-              [class]="statusClass(m.status)"
-            >
-              {{ 'members.status.' + m.status | transloco }}
-            </span>
-            <span
-              class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
-            >
-              {{ 'members.role.' + m.role | transloco }}
-            </span>
-            <button
-              type="button"
-              (click)="remove(m)"
-              [attr.aria-label]="'members.removeAria' | transloco"
-              class="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            >
-              <hlm-icon name="lucideTrash2" size="16px" />
-            </button>
-          </div>
-        }
-
-        @if (state() === 'ready' && members().length === 0) {
-          <div
-            class="rounded-xl border border-dashed border-border p-8 text-center"
-            data-testid="members-empty"
-          >
-            <p class="text-sm font-medium">{{ 'members.emptyTitle' | transloco }}</p>
-            <p class="mt-1 text-sm text-muted-foreground">{{ 'members.emptyBody' | transloco }}</p>
-          </div>
-        }
-      </div>
     </div>
   `,
 })
@@ -182,21 +191,44 @@ export class Members {
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
 
+  protected readonly tabs: readonly MemberTab[] = ['active', 'pending'];
+  protected readonly tab = signal<MemberTab>('active');
   protected readonly members = signal<MemberResponse[]>([]);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
-  protected readonly showInvite = signal(false);
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
-  protected readonly ownerIsMe = computed(() => {
+  private readonly ownerRow = computed(() => {
     const orgId = this.store.organizationId();
     const org = this.workspace.organizations().find((o) => o.id === orgId);
-    return !!org && org.ownerId === this.store.user()?.id;
+    const user = this.store.user();
+    if (!org || !user || org.ownerId !== user.id) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.fullName,
+      role: 'OWNER' as const,
+      status: 'ACTIVE',
+      isOwnerSelf: true,
+    };
   });
-  protected readonly myInitials = computed(() => {
-    const u = this.store.user();
-    return u ? `${u.firstName.charAt(0)}${u.lastName.charAt(0)}`.toUpperCase() : '';
+
+  /** Active tab rows = the owner (if me) followed by ACTIVE members. */
+  protected readonly activeRows = computed(() => {
+    const owner = this.ownerRow();
+    const active = this.members()
+      .filter((m) => m.status === 'ACTIVE')
+      .map((m) => ({ ...m, isOwnerSelf: false }));
+    return owner ? [owner, ...active] : active;
   });
+  protected readonly pending = computed(() =>
+    this.members()
+      .filter((m) => m.status === 'PENDING')
+      .map((m) => ({ ...m, isOwnerSelf: false })),
+  );
+  protected readonly rows = computed(() =>
+    this.tab() === 'active' ? this.activeRows() : this.pending(),
+  );
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -221,11 +253,6 @@ export class Members {
     });
   }
 
-  protected toggleInvite(): void {
-    this.showInvite.update((v) => !v);
-    this.errorMessage.set(null);
-  }
-
   protected invite(): void {
     const orgId = this.store.organizationId();
     if (!orgId || this.form.invalid || this.submitting()) return;
@@ -235,7 +262,7 @@ export class Members {
       next: (member) => {
         this.members.update((list) => [member, ...list]);
         this.submitting.set(false);
-        this.showInvite.set(false);
+        this.tab.set(member.status === 'PENDING' ? 'pending' : 'active');
         this.form.reset({ email: '', displayName: '', role: 'MEMBER' });
       },
       error: (err: HttpErrorResponse) => {
@@ -249,25 +276,21 @@ export class Members {
     });
   }
 
-  protected remove(member: MemberResponse): void {
+  protected changeRole(member: { id: string; role: string }, role: 'ADMIN' | 'MEMBER'): void {
+    const orgId = this.store.organizationId();
+    if (!orgId || role === member.role) return;
+    this.api.changeMemberRole(orgId, member.id, role).subscribe({
+      next: (updated) =>
+        this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m))),
+      error: () => this.errorMessage.set(this.transloco.translate('members.errorInvite')),
+    });
+  }
+
+  protected remove(member: { id: string }): void {
     const orgId = this.store.organizationId();
     if (!orgId) return;
     this.api.removeMember(orgId, member.id).subscribe({
       next: () => this.members.update((list) => list.filter((m) => m.id !== member.id)),
     });
-  }
-
-  protected initials(name: string): string {
-    const parts = name.trim().split(/\s+/);
-    return ((parts[0]?.charAt(0) ?? '') + (parts[1]?.charAt(0) ?? '')).toUpperCase() || '?';
-  }
-
-  protected statusClass(status: string): string {
-    const classes: Record<string, string> = {
-      ACTIVE: 'bg-emerald-500/15 text-emerald-500',
-      PENDING: 'bg-amber-500/15 text-amber-600',
-      INACTIVE: 'bg-secondary text-muted-foreground',
-    };
-    return classes[status] ?? 'bg-secondary text-muted-foreground';
   }
 }

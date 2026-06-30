@@ -387,6 +387,12 @@
   "members": {
     "title": "Miembros",
     "subtitle": "Gestiona quién tiene acceso a esta organización y con qué rol.",
+    "inviteTitle": "Invitar miembros",
+    "inviteDesc": "Agrega personas por correo y elige su rol.",
+    "tabActive": "Miembros",
+    "tabPending": "Invitaciones pendientes",
+    "emptyPending": "No hay invitaciones pendientes.",
+    "loadError": "No se pudieron cargar los miembros.",
     "invite": "Invitar miembro",
     "fieldEmail": "Correo",
     "fieldName": "Nombre",

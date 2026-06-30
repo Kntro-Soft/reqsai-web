@@ -387,6 +387,12 @@
   "members": {
     "title": "Members",
     "subtitle": "Manage who has access to this organization and with what role.",
+    "inviteTitle": "Invite members",
+    "inviteDesc": "Add people by email and choose their role.",
+    "tabActive": "Members",
+    "tabPending": "Pending invitations",
+    "emptyPending": "No pending invitations.",
+    "loadError": "Could not load the members.",
     "invite": "Invite member",
     "fieldEmail": "Email",
     "fieldName": "Name",
