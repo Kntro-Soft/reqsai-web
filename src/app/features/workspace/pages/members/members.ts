@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { provideIcons } from '@ng-icons/core';
 import { lucideTrash2 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -9,19 +10,20 @@ import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 type MemberTab = 'active' | 'pending';
 
 /** Organization members (Vercel-style): an always-visible invite card, Active / Pending tabs and a
- * single-column member table with inline role change (PATCH) and remove. */
+ * compact member table with a styled inline role select (PATCH) and remove. */
 @Component({
   selector: 'app-members',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    FormsModule,
     Avatar,
+    Select,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -68,15 +70,13 @@ type MemberTab = 'active' | 'pending';
             />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="role">{{ 'members.fieldRole' | transloco }}</label>
-            <select
-              id="role"
-              formControlName="role"
-              class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="MEMBER">{{ 'members.role.MEMBER' | transloco }}</option>
-              <option value="ADMIN">{{ 'members.role.ADMIN' | transloco }}</option>
-            </select>
+            <span hlmLabel>{{ 'members.fieldRole' | transloco }}</span>
+            <app-select
+              [options]="roleOptions()"
+              [value]="form.controls.role.value"
+              (valueChange)="form.controls.role.setValue($any($event))"
+              [ariaLabel]="'members.fieldRole' | transloco"
+            />
           </div>
           <button hlmBtn type="submit" [disabled]="form.invalid || submitting()" data-testid="invite-submit">
             @if (submitting()) {
@@ -98,7 +98,7 @@ type MemberTab = 'active' | 'pending';
           <button
             type="button"
             (click)="tab.set(t)"
-            class="-mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 font-medium transition-colors"
+            class="-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-1 pb-2.5 font-medium transition-colors"
             [class]="
               tab() === t
                 ? 'border-primary text-foreground'
@@ -117,68 +117,70 @@ type MemberTab = 'active' | 'pending';
         <div class="flex justify-center py-10"><hlm-spinner class="h-6 w-6" /></div>
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'members.loadError' | transloco }}</p>
+      } @else if (rows().length === 0) {
+        <p class="rounded-2xl border border-border py-10 text-center text-sm text-muted-foreground">
+          {{ (tab() === 'active' ? 'members.emptyBody' : 'members.emptyPending') | transloco }}
+        </p>
       } @else {
         <div class="overflow-hidden rounded-2xl border border-border">
-          @for (m of rows(); track m.id) {
-            <div
-              class="flex items-center gap-3 border-b border-border p-4 last:border-0"
-              data-testid="member-row"
-            >
-              <app-avatar [name]="m.displayName || m.email" [seed]="m.id" [size]="36" [circle]="true" />
-              <div class="min-w-0 flex-1">
-                <p class="flex items-center gap-2 truncate text-sm font-medium">
-                  {{ m.displayName || m.email }}
-                  @if (m.isOwnerSelf) {
-                    <span class="rounded bg-secondary px-1.5 text-[11px] text-muted-foreground">
-                      {{ 'members.you' | transloco }}
-                    </span>
+          <table class="w-full text-sm">
+            <tbody>
+              @for (m of rows(); track m.id) {
+                <tr class="border-b border-border last:border-0" data-testid="member-row">
+                  <td class="py-3 pl-4 pr-3">
+                    <div class="flex min-w-0 items-center gap-3">
+                      <app-avatar [name]="m.displayName || m.email" [seed]="m.id" [size]="34" [circle]="true" />
+                      <div class="min-w-0">
+                        <p class="flex items-center gap-2 truncate font-medium">
+                          {{ m.displayName || m.email }}
+                          @if (m.isOwnerSelf) {
+                            <span class="rounded bg-secondary px-1.5 text-[11px] text-muted-foreground">
+                              {{ 'members.you' | transloco }}
+                            </span>
+                          }
+                        </p>
+                        <p class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  @if (tab() === 'pending') {
+                    <td class="px-3 text-right whitespace-nowrap">
+                      <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600">
+                        {{ 'members.status.PENDING' | transloco }}
+                      </span>
+                    </td>
                   }
-                </p>
-                <p class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
-              </div>
-
-              @if (tab() === 'pending') {
-                <span class="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600">
-                  {{ 'members.status.PENDING' | transloco }}
-                </span>
+                  <td class="px-3 text-right whitespace-nowrap">
+                    @if (m.role === 'OWNER' || tab() === 'pending') {
+                      <span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                        {{ 'members.role.' + m.role | transloco }}
+                      </span>
+                    } @else {
+                      <app-select
+                        size="sm"
+                        [options]="roleOptions()"
+                        [value]="m.role"
+                        (valueChange)="changeRole(m, $any($event))"
+                        [ariaLabel]="'members.fieldRole' | transloco"
+                      />
+                    }
+                  </td>
+                  <td class="w-12 py-3 pl-1 pr-3 text-right">
+                    @if (!m.isOwnerSelf) {
+                      <button
+                        type="button"
+                        (click)="remove(m)"
+                        [attr.aria-label]="'members.removeAria' | transloco"
+                        class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <hlm-icon name="lucideTrash2" size="16px" />
+                      </button>
+                    }
+                  </td>
+                </tr>
               }
-
-              @if (m.role === 'OWNER' || tab() === 'pending') {
-                <span
-                  class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
-                >
-                  {{ 'members.role.' + m.role | transloco }}
-                </span>
-              } @else {
-                <select
-                  [ngModel]="m.role"
-                  (ngModelChange)="changeRole(m, $event)"
-                  [attr.aria-label]="'members.fieldRole' | transloco"
-                  class="h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="MEMBER">{{ 'members.role.MEMBER' | transloco }}</option>
-                  <option value="ADMIN">{{ 'members.role.ADMIN' | transloco }}</option>
-                </select>
-              }
-
-              @if (!m.isOwnerSelf) {
-                <button
-                  type="button"
-                  (click)="remove(m)"
-                  [attr.aria-label]="'members.removeAria' | transloco"
-                  class="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <hlm-icon name="lucideTrash2" size="16px" />
-                </button>
-              } @else {
-                <span class="w-8 shrink-0"></span>
-              }
-            </div>
-          } @empty {
-            <p class="p-8 text-center text-sm text-muted-foreground">
-              {{ (tab() === 'active' ? 'members.emptyBody' : 'members.emptyPending') | transloco }}
-            </p>
-          }
+            </tbody>
+          </table>
         </div>
       }
     </div>
@@ -198,6 +200,17 @@ export class Members {
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  private readonly activeLang = toSignal(this.transloco.langChanges$, {
+    initialValue: this.transloco.getActiveLang(),
+  });
+  protected readonly roleOptions = computed<SelectOption[]>(() => {
+    this.activeLang();
+    return [
+      { value: 'MEMBER', label: this.transloco.translate('members.role.MEMBER') },
+      { value: 'ADMIN', label: this.transloco.translate('members.role.ADMIN') },
+    ];
+  });
+
   private readonly ownerRow = computed(() => {
     const orgId = this.store.organizationId();
     const org = this.workspace.organizations().find((o) => o.id === orgId);
@@ -213,7 +226,6 @@ export class Members {
     };
   });
 
-  /** Active tab rows = the owner (if me) followed by ACTIVE members. */
   protected readonly activeRows = computed(() => {
     const owner = this.ownerRow();
     const active = this.members()
