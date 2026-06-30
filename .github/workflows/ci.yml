@@ -29,6 +29,9 @@ jobs:
       - name: Lint (ESLint + angular-eslint)
         run: bun run lint
 
+      - name: Check i18n key parity (en/es in sync)
+        run: bun run i18n:check
+
       - name: Unit tests (Vitest)
         run: bun run test:ci
         env:
