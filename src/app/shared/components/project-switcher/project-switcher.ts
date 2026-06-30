@@ -1,30 +1,28 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideChevronsUpDown, lucidePlus, lucideSearch } from '@ng-icons/lucide';
+import { lucideChevronsUpDown, lucidePlus, lucideSearch } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
-import { OrganizationResponse } from '../../../features/workspace/data/workspace.models';
+import { ProjectResponse } from '../../../features/workspace/data/workspace.models';
 import { Avatar } from '../avatar/avatar';
-import { ABOVE_START } from '../popover/popover-positions';
+import { BELOW_START } from '../popover/popover-positions';
 import { HlmIcon } from '../../ui';
 
 /**
- * Sidebar-top organization switcher (Vercel "team" switcher). A full-width pill
- * showing the active org; clicking opens a searchable popover (rendered through
- * a CDK overlay so it escapes the sidebar's clipping) listing the user's orgs
- * with the active one checked, plus a create action. Closes on outside click or
- * Escape.
+ * Top-bar project switcher (Vercel "All Projects ⌄"). Shows the active project's
+ * name when inside one, otherwise "All Projects"; the popover (CDK overlay) lets
+ * the user search and jump to any project or create a new one. Picking "All
+ * Projects" via the breadcrumb returns to the org overview.
  */
 @Component({
-  selector: 'app-org-switcher',
+  selector: 'app-project-switcher',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [OverlayModule, FormsModule, Avatar, HlmIcon, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideChevronsUpDown, lucideCheck, lucidePlus, lucideSearch })],
+  viewProviders: [provideIcons({ lucideChevronsUpDown, lucidePlus, lucideSearch })],
   template: `
     <button
       type="button"
@@ -33,13 +31,15 @@ import { HlmIcon } from '../../ui';
       (click)="toggle()"
       [attr.aria-expanded]="open()"
       aria-haspopup="dialog"
-      [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
-      data-testid="org-switcher"
-      class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      [attr.aria-label]="'projectSwitcher.ariaLabel' | transloco"
+      data-testid="project-switcher"
+      class="flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <app-avatar [name]="activeName()" [seed]="store.organizationId() ?? ''" [size]="22" />
-      <span class="min-w-0 flex-1 truncate">{{
-        activeName() || ('orgSwitcher.fallbackName' | transloco)
+      @if (activeProject(); as p) {
+        <app-avatar [name]="p.name" [seed]="p.id" [size]="20" />
+      }
+      <span class="max-w-[12rem] truncate">{{
+        activeProject()?.name ?? ('nav.allProjects' | transloco)
       }}</span>
       <hlm-icon name="lucideChevronsUpDown" size="14px" class="shrink-0 text-muted-foreground" />
     </button>
@@ -63,9 +63,9 @@ import { HlmIcon } from '../../ui';
             type="text"
             [ngModel]="query()"
             (ngModelChange)="query.set($event)"
-            [placeholder]="'orgSwitcher.search' | transloco"
+            [placeholder]="'projectSwitcher.search' | transloco"
             class="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            data-testid="org-search"
+            data-testid="project-search"
           />
           <kbd
             class="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground"
@@ -75,24 +75,20 @@ import { HlmIcon } from '../../ui';
         </div>
 
         <div class="max-h-64 overflow-y-auto p-1">
-          @for (org of filtered(); track org.id) {
+          @for (project of filtered(); track project.id) {
             <button
-              role="menuitemradio"
               type="button"
-              data-testid="org-option"
-              [attr.aria-checked]="org.id === store.organizationId()"
-              (click)="select(org)"
+              data-testid="project-option"
+              [attr.aria-current]="project.id === currentProjectId()"
+              (click)="select(project)"
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
             >
-              <app-avatar [name]="org.name" [seed]="org.id" [size]="22" />
-              <span class="min-w-0 flex-1 truncate">{{ org.name }}</span>
-              @if (org.id === store.organizationId()) {
-                <hlm-icon name="lucideCheck" size="16px" class="shrink-0 text-primary" />
-              }
+              <app-avatar [name]="project.name" [seed]="project.id" [size]="22" />
+              <span class="min-w-0 flex-1 truncate">{{ project.name }}</span>
             </button>
           } @empty {
             <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">
-              {{ 'orgSwitcher.empty' | transloco }}
+              {{ 'projectSwitcher.empty' | transloco }}
             </p>
           }
         </div>
@@ -100,42 +96,46 @@ import { HlmIcon } from '../../ui';
         <div class="border-t border-border p-1">
           <button
             type="button"
-            data-testid="create-org"
+            data-testid="create-project"
             (click)="create()"
             class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
           >
             <hlm-icon name="lucidePlus" size="16px" />
-            {{ 'orgSwitcher.createOrganization' | transloco }}
+            {{ 'projectSwitcher.createProject' | transloco }}
           </button>
         </div>
       </div>
     </ng-template>
   `,
 })
-export class OrgSwitcher {
+export class ProjectSwitcher {
   protected readonly workspace = inject(WorkspaceStore);
-  protected readonly store = inject(AuthStore);
-  private readonly auth = inject(AuthService);
+  private readonly store = inject(AuthStore);
   private readonly router = inject(Router);
 
-  protected readonly positions = ABOVE_START;
+  /** The project currently open, or null in the org ("All Projects") context. */
+  readonly currentProjectId = input<string | null>(null);
+
+  protected readonly positions = BELOW_START;
   protected readonly open = signal(false);
   protected readonly query = signal('');
 
-  protected readonly activeName = computed(() => {
-    const id = this.store.organizationId();
-    return this.workspace.organizations().find((o) => o.id === id)?.name ?? '';
-  });
+  protected readonly activeProject = computed(
+    () => this.workspace.projects().find((p) => p.id === this.currentProjectId()) ?? null,
+  );
 
   protected readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
-    const orgs = this.workspace.organizations();
-    return q ? orgs.filter((o) => o.name.toLowerCase().includes(q)) : orgs;
+    const projects = this.workspace.projects();
+    return q ? projects.filter((p) => p.name.toLowerCase().includes(q)) : projects;
   });
 
   protected toggle(): void {
     this.open.update((v) => !v);
-    if (this.open()) this.query.set('');
+    if (this.open()) {
+      this.query.set('');
+      this.ensureProjectsLoaded();
+    }
   }
 
   protected close(): void {
@@ -146,17 +146,18 @@ export class OrgSwitcher {
     if (event.key === 'Escape') this.close();
   }
 
-  protected select(org: OrganizationResponse): void {
+  protected select(project: ProjectResponse): void {
     this.close();
-    if (org.id === this.store.organizationId()) return;
-    this.auth.switchOrganization(org.id).subscribe(() => {
-      this.workspace.loadProjects(org.id);
-      void this.router.navigate(['/projects']);
-    });
+    void this.router.navigate(['/projects', project.id]);
   }
 
   protected create(): void {
     this.close();
-    void this.router.navigate(['/onboarding']);
+    void this.router.navigate(['/projects']);
+  }
+
+  private ensureProjectsLoaded(): void {
+    const orgId = this.store.organizationId();
+    if (orgId && this.workspace.projectsState() !== 'ready') this.workspace.loadProjects(orgId);
   }
 }

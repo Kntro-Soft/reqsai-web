@@ -20,6 +20,7 @@
     "stories": "Stories",
     "projectMembers": "Project members",
     "projectSettings": "Project settings",
+    "overview": "Overview",
     "onboarding": "Create organization",
     "projects": "Projects",
     "members": "Members",
@@ -39,11 +40,16 @@
     "newSession": "New session",
     "projectFallback": "Project",
     "projectAria": "Project navigation",
-    "orgAria": "Organization navigation"
+    "orgAria": "Organization navigation",
+    "overview": "Overview",
+    "allProjects": "All Projects",
+    "find": "Find…",
+    "openMenu": "Open menu"
   },
   "userMenu": {
     "ariaLabel": "User menu",
     "personalAccount": "Personal account",
+    "theme": "Theme",
     "organization": "Organization",
     "createOrganization": "Create organization",
     "signOut": "Sign out"
@@ -52,7 +58,23 @@
     "ariaLabel": "Switch organization",
     "organizations": "Organizations",
     "createOrganization": "Create organization",
-    "fallbackName": "Organization"
+    "fallbackName": "Organization",
+    "search": "Find organization…",
+    "empty": "No organizations found."
+  },
+  "projectSwitcher": {
+    "ariaLabel": "Switch project",
+    "search": "Find project…",
+    "empty": "No projects found.",
+    "createProject": "Create project"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "overview": {
+    "subtitle": "A quick view of this project and shortcuts to its sections."
   },
   "auth": {
     "brand": {

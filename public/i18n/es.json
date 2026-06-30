@@ -20,6 +20,7 @@
     "stories": "Historias",
     "projectMembers": "Miembros del proyecto",
     "projectSettings": "Ajustes del proyecto",
+    "overview": "Resumen",
     "onboarding": "Crear organización",
     "projects": "Proyectos",
     "members": "Miembros",
@@ -39,11 +40,16 @@
     "newSession": "Nueva sesión",
     "projectFallback": "Proyecto",
     "projectAria": "Navegación del proyecto",
-    "orgAria": "Navegación de la organización"
+    "orgAria": "Navegación de la organización",
+    "overview": "Resumen",
+    "allProjects": "Todos los proyectos",
+    "find": "Buscar…",
+    "openMenu": "Abrir menú"
   },
   "userMenu": {
     "ariaLabel": "Menú de usuario",
     "personalAccount": "Cuenta personal",
+    "theme": "Tema",
     "organization": "Organización",
     "createOrganization": "Crear organización",
     "signOut": "Cerrar sesión"
@@ -52,7 +58,23 @@
     "ariaLabel": "Cambiar organización",
     "organizations": "Organizaciones",
     "createOrganization": "Crear organización",
-    "fallbackName": "Organización"
+    "fallbackName": "Organización",
+    "search": "Buscar organización…",
+    "empty": "No se encontraron organizaciones."
+  },
+  "projectSwitcher": {
+    "ariaLabel": "Cambiar proyecto",
+    "search": "Buscar proyecto…",
+    "empty": "No se encontraron proyectos.",
+    "createProject": "Crear proyecto"
+  },
+  "theme": {
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "overview": {
+    "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
   },
   "auth": {
     "brand": {

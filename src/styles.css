@@ -5,6 +5,10 @@
 
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
+/* CDK Overlay structural styles — required so connected popovers (org/project
+ * switchers, user menu) position correctly and escape sidebar clipping. */
+@import '@angular/cdk/overlay-prebuilt.css';
+
 /*
  * ReqsAI design system — dark-first, navy canvas with a single assertive red
  * accent (see DESIGN.md). Light mode is supported but dark is the default.

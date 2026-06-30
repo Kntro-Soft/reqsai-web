@@ -3,8 +3,6 @@ import { authGuard } from './core/guards/auth.guard';
 import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
-import { AppShell } from './layout/app-shell/app-shell';
-import { ProjectShell } from './layout/project-shell/project-shell';
 
 export const routes: Routes = [
   // Default landing: the launch dispatcher routes by organization count.
@@ -49,55 +47,11 @@ export const routes: Routes = [
       import('./features/workspace/pages/organizations/organizations').then((m) => m.Organizations),
   },
 
-  // Project workspace: its own shell + nav (sessions / stories / members / settings).
-  {
-    path: 'projects/:projectId',
-    component: ProjectShell,
-    canActivate: [authGuard, termsGuard, orgGuard],
-    children: [
-      { path: '', redirectTo: 'sessions', pathMatch: 'full' },
-      {
-        path: 'sessions',
-        title: 'titles.sessions',
-        loadComponent: () =>
-          import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
-      },
-      {
-        path: 'sessions/:sessionId',
-        title: 'titles.session',
-        loadComponent: () =>
-          import('./features/discovery/pages/session-detail/session-detail').then(
-            (m) => m.SessionDetail,
-          ),
-      },
-      {
-        path: 'stories',
-        title: 'titles.stories',
-        loadComponent: () =>
-          import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
-      },
-      {
-        path: 'members',
-        title: 'titles.projectMembers',
-        loadComponent: () =>
-          import('./features/workspace/pages/project-members/project-members').then(
-            (m) => m.ProjectMembers,
-          ),
-      },
-      {
-        path: 'settings',
-        title: 'titles.projectSettings',
-        loadComponent: () =>
-          import('./features/workspace/pages/project-settings/project-settings').then(
-            (m) => m.ProjectSettings,
-          ),
-      },
-    ],
-  },
-
+  // Unified workspace shell: one contextual sidebar for both the organization
+  // context (projects / members / settings) and a single project's context.
   {
     path: '',
-    component: AppShell,
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     canActivate: [authGuard, termsGuard],
     children: [
       {
@@ -120,6 +74,57 @@ export const routes: Routes = [
         canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
+      },
+      {
+        path: 'projects/:projectId',
+        canActivate: [orgGuard],
+        children: [
+          { path: '', redirectTo: 'overview', pathMatch: 'full' },
+          {
+            path: 'overview',
+            title: 'titles.overview',
+            loadComponent: () =>
+              import('./features/workspace/pages/project-overview/project-overview').then(
+                (m) => m.ProjectOverview,
+              ),
+          },
+          {
+            path: 'sessions',
+            title: 'titles.sessions',
+            loadComponent: () =>
+              import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
+          },
+          {
+            path: 'sessions/:sessionId',
+            title: 'titles.session',
+            loadComponent: () =>
+              import('./features/discovery/pages/session-detail/session-detail').then(
+                (m) => m.SessionDetail,
+              ),
+          },
+          {
+            path: 'stories',
+            title: 'titles.stories',
+            loadComponent: () =>
+              import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
+          },
+          {
+            path: 'members',
+            title: 'titles.projectMembers',
+            loadComponent: () =>
+              import('./features/workspace/pages/project-members/project-members').then(
+                (m) => m.ProjectMembers,
+              ),
+          },
+          {
+            path: 'settings',
+            title: 'titles.projectSettings',
+            loadComponent: () =>
+              import('./features/workspace/pages/project-settings/project-settings').then(
+                (m) => m.ProjectSettings,
+              ),
+          },
+        ],
       },
     ],
   },
