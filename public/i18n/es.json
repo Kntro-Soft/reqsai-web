@@ -117,7 +117,18 @@
     "emptyTitle": "Aún no hay sesiones",
     "emptyBody": "Crea una sesión para empezar a capturar requisitos.",
     "createCta": "Crear sesión",
-    "createdRelative": "creada"
+    "createdRelative": "creada",
+    "errorValidation": "Revisa los datos de la sesión.",
+    "errorCreate": "No se pudo crear la sesión. Intenta de nuevo.",
+    "status": {
+      "DRAFT": "Borrador",
+      "RECORDING": "Grabando",
+      "PAUSED": "Pausada",
+      "STOPPED": "Detenida",
+      "PROCESSING": "Procesando",
+      "COMPLETED": "Completada",
+      "FAILED": "Fallida"
+    }
   },
   "createOrg": {
     "title": "Crea tu organización",

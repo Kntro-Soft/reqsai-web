@@ -117,7 +117,18 @@
     "emptyTitle": "No sessions yet",
     "emptyBody": "Create a session to start capturing requirements.",
     "createCta": "Create session",
-    "createdRelative": "created"
+    "createdRelative": "created",
+    "errorValidation": "Check the session details.",
+    "errorCreate": "Could not create the session. Please try again.",
+    "status": {
+      "DRAFT": "Draft",
+      "RECORDING": "Recording",
+      "PAUSED": "Paused",
+      "STOPPED": "Stopped",
+      "PROCESSING": "Processing",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed"
+    }
   },
   "createOrg": {
     "title": "Create your organization",
