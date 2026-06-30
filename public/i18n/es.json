@@ -29,7 +29,8 @@
     "signUp": "Crear cuenta",
     "verifyEmail": "Verificar correo",
     "forgotPassword": "Recuperar contraseña",
-    "resetPassword": "Nueva contraseña"
+    "resetPassword": "Nueva contraseña",
+    "account": "Cuenta"
   },
   "nav": {
     "projects": "Proyectos",
@@ -77,6 +78,24 @@
   },
   "overview": {
     "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
+  },
+  "account": {
+    "title": "Cuenta",
+    "subtitle": "Gestiona tu perfil, contraseña y preferencias.",
+    "avatarDesc": "PNG, JPG, WEBP o SVG, hasta 1 MB.",
+    "changeAvatar": "Cambiar avatar",
+    "avatarTooLarge": "La imagen es muy grande (máx. 1 MB).",
+    "password": "Contraseña",
+    "passwordDesc": "Cambia la contraseña con la que inicias sesión.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "passwordSaved": "Contraseña actualizada.",
+    "passwordWrong": "Tu contraseña actual es incorrecta.",
+    "appearance": "Apariencia",
+    "appearanceDesc": "Tema e idioma para este dispositivo.",
+    "save": "Guardar",
+    "saved": "Guardado.",
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo."
   },
   "auth": {
     "brand": {

@@ -76,6 +76,11 @@ export const routes: Routes = [
           import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
       },
       {
+        path: 'account',
+        title: 'titles.account',
+        loadComponent: () => import('./features/iam/pages/account/account').then((m) => m.Account),
+      },
+      {
         path: 'projects/:projectId',
         canActivate: [orgGuard],
         children: [

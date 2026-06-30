@@ -95,6 +95,27 @@ export class AuthService {
     );
   }
 
+  /** Partial profile update (name) — PATCH /api/users/me; refreshes the stored user. */
+  updateProfile(firstName: string, lastName: string): Observable<UserResponse> {
+    return this.http
+      .patch<UserResponse>('/api/users/me', { firstName, lastName })
+      .pipe(tap((user) => this.store.setUser(user)));
+  }
+
+  /** Changes the password — PUT /api/users/me/password (204). */
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>('/api/users/me/password', { currentPassword, newPassword });
+  }
+
+  /** Uploads a new avatar image (multipart) — PUT /api/users/me/avatar; refreshes the stored user. */
+  uploadAvatar(file: File): Observable<UserResponse> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .put<UserResponse>('/api/users/me/avatar', form)
+      .pipe(tap((user) => this.store.setUser(user)));
+  }
+
   /**
    * Activates an organization: persists it as the user's preference, then
    * rotates the session so the new orgId is embedded in the access token and

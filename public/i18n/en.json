@@ -29,7 +29,8 @@
     "signUp": "Create account",
     "verifyEmail": "Verify email",
     "forgotPassword": "Recover password",
-    "resetPassword": "New password"
+    "resetPassword": "New password",
+    "account": "Account"
   },
   "nav": {
     "projects": "Projects",
@@ -77,6 +78,24 @@
   },
   "overview": {
     "subtitle": "A quick view of this project and shortcuts to its sections."
+  },
+  "account": {
+    "title": "Account",
+    "subtitle": "Manage your profile, password and preferences.",
+    "avatarDesc": "PNG, JPG, WEBP or SVG, up to 1 MB.",
+    "changeAvatar": "Change avatar",
+    "avatarTooLarge": "The image is too large (max 1 MB).",
+    "password": "Password",
+    "passwordDesc": "Change the password you use to sign in.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "passwordSaved": "Password updated.",
+    "passwordWrong": "Your current password is incorrect.",
+    "appearance": "Appearance",
+    "appearanceDesc": "Theme and language for this device.",
+    "save": "Save",
+    "saved": "Saved.",
+    "errorGeneric": "Something went wrong. Please try again."
   },
   "auth": {
     "brand": {
