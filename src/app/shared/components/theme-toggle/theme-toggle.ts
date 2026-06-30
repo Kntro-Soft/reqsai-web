@@ -16,9 +16,9 @@ import { HlmButton, HlmIcon } from '../../ui';
       size="icon"
       type="button"
       (click)="theme.toggle()"
-      [attr.aria-label]="theme.mode() === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'"
+      [attr.aria-label]="theme.resolved() === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'"
     >
-      @if (theme.mode() === 'dark') {
+      @if (theme.resolved() === 'dark') {
         <hlm-icon name="lucideSun" size="18px" />
       } @else {
         <hlm-icon name="lucideMoon" size="18px" />

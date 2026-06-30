@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { AuthLayout } from '../../layout/auth-layout/auth-layout';
+import { guestGuard } from '../../core/guards/guest.guard';
 
 export const IAM_ROUTES: Routes = [
   {
     path: '',
     component: AuthLayout,
+    canActivate: [guestGuard],
     children: [
       { path: '', redirectTo: 'sign-in', pathMatch: 'full' },
       {
