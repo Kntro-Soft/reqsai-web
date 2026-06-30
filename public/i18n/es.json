@@ -1,12 +1,35 @@
 {
+  "app": {
+    "title": "Reqs-AI"
+  },
   "common": {
     "cancel": "Cancelar",
-    "create": "Crear"
+    "create": "Crear",
+    "loading": "Cargando"
   },
   "language": {
     "label": "Idioma",
     "en": "Inglés",
     "es": "Español"
+  },
+  "titles": {
+    "terms": "Términos y Condiciones",
+    "organizations": "Tus organizaciones",
+    "sessions": "Sesiones",
+    "session": "Sesión",
+    "stories": "Historias",
+    "projectMembers": "Miembros del proyecto",
+    "projectSettings": "Ajustes del proyecto",
+    "home": "Inicio",
+    "onboarding": "Crear organización",
+    "projects": "Proyectos",
+    "members": "Miembros",
+    "settings": "Ajustes",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "verifyEmail": "Verificar correo",
+    "forgotPassword": "Recuperar contraseña",
+    "resetPassword": "Nueva contraseña"
   },
   "nav": {
     "projects": "Proyectos",
@@ -182,6 +205,19 @@
     "submit": "Aceptar y continuar",
     "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
     "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
+  },
+  "home": {
+    "greetingNamed": "Hola, {{name}}",
+    "greetingAnon": "Hola, bienvenido",
+    "sessionActive": "Tu sesión está activa.",
+    "onboardTitle": "Crea tu organización",
+    "workspaceTitle": "Espacio de trabajo",
+    "onboardDesc": "Aún no perteneces a ninguna organización. Crea una para empezar.",
+    "workspaceDesc": "Ya tienes una organización activa. Gestiona tus proyectos.",
+    "userLabel": "Usuario",
+    "orgLabel": "Organización",
+    "createOrg": "Crear organización",
+    "viewProjects": "Ver proyectos"
   },
   "members": {
     "title": "Miembros",

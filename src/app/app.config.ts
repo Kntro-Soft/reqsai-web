@@ -9,7 +9,12 @@ import {
 } from '@angular/core';
 import { registerLocaleData } from '@angular/common';
 import localeEsPe from '@angular/common/locales/es-PE';
-import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
+import {
+  TitleStrategy,
+  provideRouter,
+  withComponentInputBinding,
+  withRouterConfig,
+} from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideTranslocoLocale } from '@jsverse/transloco-locale';
@@ -20,6 +25,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { GlobalErrorHandler } from './core/errors/global-error-handler';
 import { SilentRefreshService } from './core/auth/silent-refresh.service';
 import { TranslocoHttpLoader } from './core/i18n/transloco-loader';
+import { TranslocoTitleStrategy } from './core/i18n/transloco-title.strategy';
 import {
   DEFAULT_LANG,
   LANG_TO_LOCALE,
@@ -51,6 +57,8 @@ export const appConfig: ApplicationConfig = {
       loader: TranslocoHttpLoader,
     }),
     provideTranslocoLocale({ langToLocaleMapping: LANG_TO_LOCALE }),
+    // Translate route titles (browser tab) from a key and follow the active language.
+    { provide: TitleStrategy, useClass: TranslocoTitleStrategy },
     provideBrowserGlobalErrorListeners(),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     // 'always' so a project's child routes inherit :projectId for input binding.

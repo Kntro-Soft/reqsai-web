@@ -1,12 +1,35 @@
 {
+  "app": {
+    "title": "Reqs-AI"
+  },
   "common": {
     "cancel": "Cancel",
-    "create": "Create"
+    "create": "Create",
+    "loading": "Loading"
   },
   "language": {
     "label": "Language",
     "en": "English",
     "es": "Spanish"
+  },
+  "titles": {
+    "terms": "Terms and Conditions",
+    "organizations": "Your organizations",
+    "sessions": "Sessions",
+    "session": "Session",
+    "stories": "Stories",
+    "projectMembers": "Project members",
+    "projectSettings": "Project settings",
+    "home": "Home",
+    "onboarding": "Create organization",
+    "projects": "Projects",
+    "members": "Members",
+    "settings": "Settings",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "verifyEmail": "Verify email",
+    "forgotPassword": "Recover password",
+    "resetPassword": "New password"
   },
   "nav": {
     "projects": "Projects",
@@ -182,6 +205,19 @@
     "submit": "Accept and continue",
     "errorSessionExpired": "Your session expired. Sign in again.",
     "errorGeneric": "Could not record acceptance. Please try again."
+  },
+  "home": {
+    "greetingNamed": "Hi, {{name}}",
+    "greetingAnon": "Hi, welcome",
+    "sessionActive": "Your session is active.",
+    "onboardTitle": "Create your organization",
+    "workspaceTitle": "Workspace",
+    "onboardDesc": "You don't belong to any organization yet. Create one to get started.",
+    "workspaceDesc": "You already have an active organization. Manage your projects.",
+    "userLabel": "User",
+    "orgLabel": "Organization",
+    "createOrg": "Create organization",
+    "viewProjects": "View projects"
   },
   "members": {
     "title": "Members",

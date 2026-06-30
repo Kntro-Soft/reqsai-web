@@ -17,7 +17,7 @@ export const routes: Routes = [
 
   {
     path: 'terms',
-    title: 'Términos y Condiciones · Reqs-AI',
+    title: 'titles.terms',
     canActivate: [authGuard, termsAcceptedGuard],
     loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
   },
@@ -32,7 +32,7 @@ export const routes: Routes = [
 
   {
     path: 'organizations',
-    title: 'Tus organizaciones · Reqs-AI',
+    title: 'titles.organizations',
     canActivate: [authGuard, termsGuard],
     loadComponent: () =>
       import('./features/workspace/pages/organizations/organizations').then((m) => m.Organizations),
@@ -47,13 +47,13 @@ export const routes: Routes = [
       { path: '', redirectTo: 'sessions', pathMatch: 'full' },
       {
         path: 'sessions',
-        title: 'Sesiones · Reqs-AI',
+        title: 'titles.sessions',
         loadComponent: () =>
           import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
       },
       {
         path: 'sessions/:sessionId',
-        title: 'Sesión · Reqs-AI',
+        title: 'titles.session',
         loadComponent: () =>
           import('./features/discovery/pages/session-detail/session-detail').then(
             (m) => m.SessionDetail,
@@ -61,13 +61,13 @@ export const routes: Routes = [
       },
       {
         path: 'stories',
-        title: 'Historias · Reqs-AI',
+        title: 'titles.stories',
         loadComponent: () =>
           import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
       },
       {
         path: 'members',
-        title: 'Miembros del proyecto · Reqs-AI',
+        title: 'titles.projectMembers',
         loadComponent: () =>
           import('./features/workspace/pages/project-members/project-members').then(
             (m) => m.ProjectMembers,
@@ -75,7 +75,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        title: 'Ajustes del proyecto · Reqs-AI',
+        title: 'titles.projectSettings',
         loadComponent: () =>
           import('./features/workspace/pages/project-settings/project-settings').then(
             (m) => m.ProjectSettings,
@@ -91,12 +91,12 @@ export const routes: Routes = [
     children: [
       {
         path: 'home',
-        title: 'Inicio · Reqs-AI',
+        title: 'titles.home',
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
       {
         path: 'onboarding',
-        title: 'Crear organización · Reqs-AI',
+        title: 'titles.onboarding',
         canActivate: [onboardingGuard],
         loadComponent: () =>
           import('./features/workspace/pages/create-organization/create-organization').then(
@@ -105,21 +105,21 @@ export const routes: Routes = [
       },
       {
         path: 'projects',
-        title: 'Proyectos · Reqs-AI',
+        title: 'titles.projects',
         canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
       },
       {
         path: 'members',
-        title: 'Miembros · Reqs-AI',
+        title: 'titles.members',
         canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/members/members').then((m) => m.Members),
       },
       {
         path: 'settings',
-        title: 'Ajustes · Reqs-AI',
+        title: 'titles.settings',
         canActivate: [orgGuard],
         loadComponent: () =>
           import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
