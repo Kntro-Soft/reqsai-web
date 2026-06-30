@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 
 /** Deterministic 32-bit hash of a string, for stable per-entity colors. */
 function hashString(value: string): number {
@@ -25,12 +25,17 @@ function hashString(value: string): number {
       [style.width.px]="size()"
       [style.height.px]="size()"
       [style.fontSize.px]="size() * 0.42"
-      [style.background]="imageUrl() ? null : gradient()"
+      [style.background]="showImage() ? null : gradient()"
       [attr.title]="name()"
       [attr.aria-label]="name()"
     >
-      @if (imageUrl(); as url) {
-        <img [src]="url" [alt]="name()" class="h-full w-full object-cover" />
+      @if (showImage()) {
+        <img
+          [src]="imageUrl()"
+          [alt]="name()"
+          (error)="failed.set(true)"
+          class="h-full w-full object-cover"
+        />
       } @else {
         {{ initial() }}
       }
@@ -48,6 +53,13 @@ export class Avatar {
   readonly circle = input<boolean>(false);
   /** When set, the image is shown instead of the monogram. */
   readonly imageUrl = input<string | null>(null);
+
+  // Falls back to the monogram if the image fails to load; resets when the URL changes.
+  protected readonly failed = linkedSignal<boolean>(() => {
+    this.imageUrl();
+    return false;
+  });
+  protected readonly showImage = computed(() => !!this.imageUrl() && !this.failed());
 
   private readonly key = computed(() => this.seed() || this.name() || '?');
 
