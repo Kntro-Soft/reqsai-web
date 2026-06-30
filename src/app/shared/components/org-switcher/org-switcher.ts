@@ -27,15 +27,11 @@ import { HlmIcon } from '../../ui';
   viewProviders: [provideIcons({ lucideChevronsUpDown, lucideCheck, lucidePlus, lucideSearch })],
   template: `
     <!-- Split control (Vercel): the name navigates to projects; only the chevron opens the menu. -->
-    <div
-      cdkOverlayOrigin
-      #origin="cdkOverlayOrigin"
-      class="flex w-full items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-accent"
-    >
+    <div cdkOverlayOrigin #origin="cdkOverlayOrigin" class="flex w-full items-center gap-0.5">
       <button
         type="button"
         (click)="goToProjects()"
-        class="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <app-avatar
           [name]="activeName()"
@@ -54,7 +50,7 @@ import { HlmIcon } from '../../ui';
         aria-haspopup="dialog"
         [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
         data-testid="org-switcher"
-        class="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="shrink-0 cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <hlm-icon name="lucideChevronsUpDown" size="14px" />
       </button>
