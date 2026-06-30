@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   effect,
   inject,
@@ -10,10 +11,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideMenu, lucideSearch, lucideX } from '@ng-icons/lucide';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { PageTitleService } from '../../core/layout/page-title.service';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
@@ -21,6 +21,7 @@ import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
 import { ProjectSwitcher } from '../../shared/components/project-switcher/project-switcher';
 import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
+import { CommandPalette } from '../../shared/components/command-palette/command-palette';
 import { HlmIcon } from '../../shared/ui';
 
 interface NavItem {
@@ -44,11 +45,11 @@ interface NavItem {
     RouterLink,
     RouterLinkActive,
     NgTemplateOutlet,
-    FormsModule,
     OrgSwitcher,
     ProjectSwitcher,
     UserMenu,
     NavIcon,
+    CommandPalette,
     HlmIcon,
     TranslocoPipe,
   ],
@@ -59,16 +60,23 @@ interface NavItem {
       <div class="flex h-full flex-col gap-3 p-3">
         <app-org-switcher />
 
-        <div class="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-2.5">
+        <button
+          type="button"
+          (click)="paletteOpen.set(true)"
+          [attr.aria-label]="'commandPalette.open' | transloco"
+          data-testid="open-command-palette"
+          class="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-2.5 transition-colors hover:bg-accent"
+        >
           <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
-          <input
-            type="text"
-            [ngModel]="query()"
-            (ngModelChange)="query.set($event)"
-            [placeholder]="'nav.find' | transloco"
-            class="h-9 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
-        </div>
+          <span class="h-9 flex-1 content-center text-left text-sm text-muted-foreground">{{
+            'nav.find' | transloco
+          }}</span>
+          <kbd
+            class="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground"
+            aria-hidden="true"
+            >⌘K</kbd
+          >
+        </button>
 
         <nav
           class="flex flex-1 flex-col gap-0.5 overflow-y-auto"
@@ -165,6 +173,8 @@ interface NavItem {
         </main>
       </div>
     </div>
+
+    <app-command-palette [(open)]="paletteOpen" />
   `,
 })
 export class Shell {
@@ -172,11 +182,19 @@ export class Shell {
   protected readonly workspace = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly pageTitle = inject(PageTitleService);
-  private readonly transloco = inject(TranslocoService);
 
   protected readonly titleKey = this.pageTitle.titleKey;
-  protected readonly query = signal('');
   protected readonly mobileOpen = signal(false);
+  protected readonly paletteOpen = signal(false);
+
+  /** Open the command palette on Cmd/Ctrl+K from anywhere in the shell. */
+  @HostListener('document:keydown', ['$event'])
+  protected onDocumentKeydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.paletteOpen.update((v) => !v);
+    }
+  }
 
   private readonly orgNav: NavItem[] = [
     { seg: 'projects' },
@@ -199,28 +217,15 @@ export class Shell {
     { initialValue: this.router.url },
   );
 
-  private readonly activeLang = toSignal(this.transloco.langChanges$, {
-    initialValue: this.transloco.getActiveLang(),
-  });
-
   /** The open project's id, or null in the organization ("All Projects") context. */
   protected readonly projectId = computed(() => {
     const match = /\/projects\/([^/?#]+)/.exec(this.url());
     return match ? decodeURIComponent(match[1]) : null;
   });
 
-  protected readonly filteredNav = computed(() => {
-    const nav = this.projectId() ? this.projectNav : this.orgNav;
-    const q = this.query().trim().toLowerCase();
-    this.activeLang(); // re-evaluate on language change so the labels filter correctly
-    if (!q) return nav;
-    return nav.filter((item) =>
-      this.transloco
-        .translate('nav.' + item.seg)
-        .toLowerCase()
-        .includes(q),
-    );
-  });
+  protected readonly filteredNav = computed(() =>
+    this.projectId() ? this.projectNav : this.orgNav,
+  );
 
   constructor() {
     // Org list powers the org switcher; project list powers the project switcher label.

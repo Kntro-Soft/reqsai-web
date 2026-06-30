@@ -74,6 +74,23 @@
     "empty": "No se encontraron proyectos.",
     "createProject": "Crear proyecto"
   },
+  "commandPalette": {
+    "open": "Abrir paleta de comandos",
+    "placeholder": "Buscar o ir a…",
+    "empty": "No se encontraron resultados.",
+    "groups": {
+      "actions": "Acción",
+      "organizations": "Organización",
+      "projects": "Proyecto"
+    },
+    "actions": {
+      "newProject": "Nuevo proyecto",
+      "members": "Miembros",
+      "settings": "Ajustes",
+      "account": "Cuenta",
+      "toggleTheme": "Cambiar tema"
+    }
+  },
   "theme": {
     "system": "Sistema",
     "light": "Claro",

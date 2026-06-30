@@ -74,6 +74,23 @@
     "empty": "No projects found.",
     "createProject": "Create project"
   },
+  "commandPalette": {
+    "open": "Open command palette",
+    "placeholder": "Search or jump to…",
+    "empty": "No results found.",
+    "groups": {
+      "actions": "Action",
+      "organizations": "Organization",
+      "projects": "Project"
+    },
+    "actions": {
+      "newProject": "New project",
+      "members": "Members",
+      "settings": "Settings",
+      "account": "Account",
+      "toggleTheme": "Toggle theme"
+    }
+  },
   "theme": {
     "system": "System",
     "light": "Light",
