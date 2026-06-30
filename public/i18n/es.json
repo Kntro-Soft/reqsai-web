@@ -195,15 +195,12 @@
     "createSubtitle": "Empieza un nuevo espacio de trabajo"
   },
   "legal": {
-    "title": "Términos y Privacidad",
-    "subtitle": "Revisa nuestros Términos de Servicio y la Política de Privacidad. Podrás aceptar cuando hayas leído ambos.",
-    "draftNotice": "Borrador para revisión legal — estos documentos son plantillas y aún no constituyen asesoría legal definitiva.",
     "tabTerms": "Términos de Servicio",
     "tabPrivacy": "Política de Privacidad",
     "lastUpdated": "Última actualización: {{date}}",
-    "read": "Leído",
-    "scrollHint": "Desplázate hasta el final de ambos documentos para poder aceptar.",
-    "accept": "He leído y acepto los Términos de Servicio y la Política de Privacidad de {{name}}.",
+    "step": "{{current}} de {{total}}",
+    "next": "Siguiente: Política de Privacidad",
+    "back": "Volver a Términos",
     "submit": "Aceptar y continuar",
     "signOut": "Cerrar sesión",
     "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",

@@ -195,15 +195,12 @@
     "createSubtitle": "Start a new workspace"
   },
   "legal": {
-    "title": "Terms & Privacy",
-    "subtitle": "Please review our Terms of Service and Privacy Policy. You can accept once you have read both.",
-    "draftNotice": "Draft for legal review — these documents are templates and are not yet final legal advice.",
     "tabTerms": "Terms of Service",
     "tabPrivacy": "Privacy Policy",
     "lastUpdated": "Last updated {{date}}",
-    "read": "Read",
-    "scrollHint": "Scroll to the end of both documents to enable acceptance.",
-    "accept": "I have read and accept the Terms of Service and Privacy Policy of {{name}}.",
+    "step": "{{current}} of {{total}}",
+    "next": "Next: Privacy Policy",
+    "back": "Back to Terms",
     "submit": "Accept and continue",
     "signOut": "Sign out",
     "errorSessionExpired": "Your session expired. Sign in again.",

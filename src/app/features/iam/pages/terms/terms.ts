@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowDown, lucideCheck } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideArrowRight } from '@ng-icons/lucide';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CURRENT_TERMS_VERSION } from '../../../../core/auth/terms';
 import { LEGAL_CONFIG } from '../../../../core/legal/legal-config';
@@ -27,23 +27,56 @@ interface LegalSection {
   body: string;
 }
 
-type LegalTab = 'terms' | 'privacy';
+type LegalStep = 'terms' | 'privacy';
 
 /**
- * Terms & Privacy gate. Shows the Terms of Service and Privacy Policy as two tabs; the single
- * acceptance checkbox unlocks only after the user has scrolled to the end of BOTH documents
- * (clickwrap evidence, see backend ADR-0020). Accepting records the current version and rotates
- * the session. Reached only by authenticated users on an outdated terms version (termsGuard).
+ * Terms & Privacy gate, read as a full-page document (Vercel-style). The two documents are read in
+ * sequence: the user scrolls the Terms to the end to reveal "Next", then the Privacy Policy to the
+ * end to reveal "Accept and continue". This sequential gate is itself the clickwrap evidence that
+ * both documents were reached (see backend ADR-0020) — no separate checkbox. Reached only by
+ * authenticated users on an outdated terms version (termsGuard).
  */
 @Component({
   selector: 'app-terms',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ThemeToggle, LanguageSwitcher, Logo, HlmButton, HlmIcon, HlmSpinner, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideCheck, lucideArrowDown })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideArrowRight })],
+  styles: [
+    `
+      .legal-grid {
+        background-image:
+          linear-gradient(to right, var(--border) 1px, transparent 1px),
+          linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+        background-size: 44px 44px;
+        -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent 78%);
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black, transparent 78%);
+      }
+
+      @keyframes legalFooterUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .footer-enter {
+        animation: legalFooterUp 0.25s ease-out;
+      }
+    `,
+  ],
   template: `
-    <div class="flex min-h-dvh flex-col bg-background text-foreground">
+    <div class="relative flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+      <!-- Decorative Vercel-style background: faint grid + the two framing column lines -->
+      <div class="legal-grid pointer-events-none absolute inset-0 z-0 opacity-60"></div>
+      <div class="pointer-events-none absolute inset-0 z-0 flex justify-center">
+        <div class="h-full w-full max-w-3xl border-x border-border/50"></div>
+      </div>
+
       <header
-        class="sticky top-0 z-10 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur md:px-6"
+        class="relative z-10 flex h-14 shrink-0 items-center justify-between gap-3 px-4 md:px-6"
       >
         <app-logo [size]="28" />
         <div class="flex items-center gap-1">
@@ -59,102 +92,100 @@ type LegalTab = 'terms' | 'privacy';
         </div>
       </header>
 
-      <main class="flex flex-1 flex-col">
-        <div class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 px-4 py-8">
-          <div class="flex flex-col items-center gap-2 text-center">
-            <h1 class="text-2xl font-bold tracking-tight">{{ 'legal.title' | transloco }}</h1>
-            <p class="max-w-xl text-sm text-muted-foreground">{{ 'legal.subtitle' | transloco }}</p>
-            <p
-              class="mt-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-600 dark:text-amber-400"
-            >
-              {{ 'legal.draftNotice' | transloco }}
-            </p>
-          </div>
+      <main
+        #scroller
+        tabindex="0"
+        (scroll)="onScroll()"
+        class="relative z-[1] min-h-0 flex-1 overflow-y-auto outline-none [overflow-anchor:none]"
+      >
+        <article class="mx-auto max-w-3xl px-6 py-12 sm:px-10">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            {{ cfg.tradeName }}
+          </p>
+          <h1 class="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">
+            {{ (step() === 'terms' ? 'legal.tabTerms' : 'legal.tabPrivacy') | transloco }}
+          </h1>
+          <p class="mt-3 text-sm text-muted-foreground">
+            {{ 'legal.lastUpdated' | transloco: { date: cfg.effectiveDate } }}
+          </p>
 
-          <div
-            role="tablist"
-            class="mx-auto inline-flex rounded-full border border-border bg-card p-1 text-sm"
-          >
-            @for (tab of tabs; track tab) {
-              <button
-                role="tab"
-                type="button"
-                (click)="setTab(tab)"
-                [attr.aria-selected]="activeTab() === tab"
-                [class]="
-                  activeTab() === tab
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                "
-                class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-medium transition-colors"
-              >
-                {{ (tab === 'terms' ? 'legal.tabTerms' : 'legal.tabPrivacy') | transloco }}
-                @if (tab === 'terms' ? termsRead() : privacyRead()) {
-                  <hlm-icon name="lucideCheck" size="14px" />
-                }
-              </button>
+          <div class="mt-10 flex flex-col gap-7">
+            @for (section of activeSections(); track section.heading) {
+              <section>
+                <h2 class="text-base font-semibold text-foreground">{{ section.heading }}</h2>
+                <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ section.body }}</p>
+              </section>
             }
           </div>
+        </article>
+      </main>
 
-          <div class="flex min-h-0 flex-1 flex-col rounded-2xl border border-border bg-card">
-            <div
-              #scroller
-              (scroll)="onScroll()"
-              class="max-h-[58vh] flex-1 overflow-y-auto px-5 py-5 sm:px-6"
-            >
-              <p class="mb-4 text-xs uppercase tracking-wide text-muted-foreground">
-                {{ 'legal.lastUpdated' | transloco: { date: cfg.effectiveDate } }}
-              </p>
-              @for (section of activeSections(); track section.heading) {
-                <section class="mb-5">
-                  <h2 class="mb-1.5 text-sm font-semibold text-foreground">{{ section.heading }}</h2>
-                  <p class="text-sm leading-relaxed text-muted-foreground">{{ section.body }}</p>
-                </section>
+      <!-- While the current document is not yet fully read: only a thin reading-progress bar. -->
+      @if (!canContinue()) {
+        <div class="relative z-10 h-0.5 w-full shrink-0 bg-border/40">
+          <div
+            class="h-full bg-primary/70 transition-[width] duration-150 ease-out"
+            [style.width.%]="progress() * 100"
+          ></div>
+        </div>
+      }
+
+      <!-- The footer appears only once the current document has been read to the end. Read state is
+           sticky, so it stays (and reappears when returning to an already-read document). -->
+      @if (canContinue()) {
+        <div class="pointer-events-none relative z-10 flex shrink-0 justify-center px-4 pb-4">
+          <footer
+            class="footer-enter pointer-events-auto flex w-full max-w-3xl items-center gap-2 rounded-2xl border border-border bg-card/90 px-4 py-2.5 shadow-lg backdrop-blur sm:gap-3 sm:px-5 sm:py-3"
+          >
+            <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+              @if (step() === 'privacy') {
+                <button hlmBtn variant="ghost" size="sm" type="button" (click)="back()">
+                  <hlm-icon name="lucideArrowLeft" size="15px" />
+                  <span class="hidden sm:inline">{{ 'legal.back' | transloco }}</span>
+                </button>
+              }
+              <span class="text-xs text-muted-foreground pr-2">
+                {{ 'legal.step' | transloco: { current: step() === 'terms' ? 1 : 2, total: 2 } }}
+              </span>
+            </div>
+
+            <div class="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+              @if (errorMessage()) {
+                <span class="truncate text-sm text-destructive" data-testid="form-error">
+                  {{ errorMessage() }}
+                </span>
+              }
+
+              @if (step() === 'terms') {
+                <button
+                  hlmBtn
+                  type="button"
+                  (click)="next()"
+                  class="flex-1 sm:flex-none"
+                  data-testid="next-document"
+                >
+                  {{ 'legal.next' | transloco }}
+                  <hlm-icon name="lucideArrowRight" size="16px" />
+                </button>
+              } @else {
+                <button
+                  hlmBtn
+                  type="button"
+                  (click)="accept()"
+                  [disabled]="loading()"
+                  class="flex-1 sm:flex-none"
+                  data-testid="accept-terms"
+                >
+                  @if (loading()) {
+                    <hlm-spinner class="h-4 w-4" />
+                  }
+                  {{ 'legal.submit' | transloco }}
+                </button>
               }
             </div>
-          </div>
+          </footer>
         </div>
-
-        <div class="sticky bottom-0 z-10 border-t border-border bg-card/90 backdrop-blur">
-          <div class="mx-auto flex w-full max-w-3xl flex-col gap-2.5 px-4 py-3.5">
-            @if (!bothRead()) {
-              <p class="flex items-center gap-2 text-sm text-muted-foreground">
-                <hlm-icon name="lucideArrowDown" size="15px" />
-                {{ 'legal.scrollHint' | transloco }}
-              </p>
-            } @else {
-              <label class="flex items-start gap-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  data-testid="accept-checkbox"
-                  class="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-                  [checked]="accepted()"
-                  (change)="onToggle($event)"
-                />
-                <span>{{ 'legal.accept' | transloco: { name: cfg.legalName } }}</span>
-              </label>
-            }
-
-            @if (errorMessage()) {
-              <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
-            }
-
-            <button
-              hlmBtn
-              type="button"
-              data-testid="accept-terms"
-              class="w-full sm:w-auto sm:self-end"
-              [disabled]="!accepted() || !bothRead() || loading()"
-              (click)="accept()"
-            >
-              @if (loading()) {
-                <hlm-spinner class="h-4 w-4" />
-              }
-              {{ 'legal.submit' | transloco }}
-            </button>
-          </div>
-        </div>
-      </main>
+      }
     </div>
   `,
 })
@@ -164,10 +195,8 @@ export class Terms {
   private readonly transloco = inject(TranslocoService);
 
   protected readonly cfg = LEGAL_CONFIG;
-  protected readonly tabs: readonly LegalTab[] = ['terms', 'privacy'];
 
   private readonly params = {
-    date: this.cfg.effectiveDate,
     name: this.cfg.legalName,
     tradeName: this.cfg.tradeName,
     jurisdiction: this.cfg.jurisdiction,
@@ -192,66 +221,73 @@ export class Terms {
   private readonly termsSections = computed(() => this.interpolateAll(this.rawTerms()));
   private readonly privacySections = computed(() => this.interpolateAll(this.rawPrivacy()));
 
-  protected readonly activeTab = signal<LegalTab>('terms');
-  protected readonly termsRead = signal(false);
-  protected readonly privacyRead = signal(false);
-  protected readonly accepted = signal(false);
+  protected readonly step = signal<LegalStep>('terms');
+  protected readonly progress = signal(0);
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
-  protected readonly bothRead = computed(() => this.termsRead() && this.privacyRead());
+  private readonly termsRead = signal(false);
+  private readonly privacyRead = signal(false);
+
   protected readonly activeSections = computed(() =>
-    this.activeTab() === 'terms' ? this.termsSections() : this.privacySections(),
+    this.step() === 'terms' ? this.termsSections() : this.privacySections(),
+  );
+  protected readonly canContinue = computed(() =>
+    this.step() === 'terms' ? this.termsRead() : this.privacyRead(),
   );
 
   constructor() {
-    // When the active tab's content (re)loads — initial render, tab switch, or language change —
-    // mark it read if it already fits without scrolling.
+    // When the active document (re)loads — initial render or language change — sync the progress
+    // bar and mark it read if it already fits without scrolling.
     effect(() => {
       this.activeSections();
-      requestAnimationFrame(() => {
-        const el = this.scroller()?.nativeElement;
-        if (el && el.scrollHeight - el.clientHeight < 24) this.markActiveRead();
-      });
+      requestAnimationFrame(() => this.syncFromScroller());
     });
   }
 
-  protected setTab(tab: LegalTab): void {
-    this.activeTab.set(tab);
-    const el = this.scroller()?.nativeElement;
-    if (el) el.scrollTop = 0;
-  }
-
   protected onScroll(): void {
-    const el = this.scroller()?.nativeElement;
-    if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 24) this.markActiveRead();
+    this.syncFromScroller();
   }
 
-  private markActiveRead(): void {
-    if (this.activeTab() === 'terms') this.termsRead.set(true);
+  private syncFromScroller(): void {
+    const el = this.scroller()?.nativeElement;
+    if (!el) return;
+    // The document hasn't rendered its content yet (i18n still loading): an empty document would
+    // otherwise measure as "it fits" and be wrongly marked read before the user can scroll it.
+    if (this.activeSections().length === 0) return;
+    const max = el.scrollHeight - el.clientHeight;
+    const pct = max <= 1 ? 1 : Math.min(1, el.scrollTop / max);
+    this.progress.set(pct);
+    if (pct >= 0.99) this.markRead();
+  }
+
+  private markRead(): void {
+    if (this.step() === 'terms') this.termsRead.set(true);
     else this.privacyRead.set(true);
   }
 
-  private interpolateAll(sections: readonly LegalSection[]): LegalSection[] {
-    return sections.map((s) => ({
-      heading: this.interpolate(s.heading),
-      body: this.interpolate(s.body),
-    }));
+  protected next(): void {
+    this.goTo('privacy');
   }
 
-  private interpolate(text: string): string {
-    return text.replace(
-      /\{\{\s*(\w+)\s*\}\}/g,
-      (_, key) => this.params[key as keyof typeof this.params] ?? `{{${key}}}`,
-    );
+  protected back(): void {
+    this.goTo('terms');
   }
 
-  protected onToggle(event: Event): void {
-    this.accepted.set((event.target as HTMLInputElement).checked);
+  private goTo(step: LegalStep): void {
+    this.step.set(step);
+    this.progress.set(0);
+    // Reset the scroll AFTER the new document has rendered, so the position lands at the top
+    // (resetting before the swap is overridden by the new, taller content).
+    requestAnimationFrame(() => {
+      const el = this.scroller()?.nativeElement;
+      if (el) el.scrollTop = 0;
+      this.syncFromScroller();
+    });
   }
 
   protected accept(): void {
-    if (!this.accepted() || !this.bothRead() || this.loading()) return;
+    if (!this.privacyRead() || this.loading()) return;
     this.loading.set(true);
     this.errorMessage.set(null);
     this.auth.acceptTerms(CURRENT_TERMS_VERSION).subscribe({
@@ -269,5 +305,19 @@ export class Terms {
 
   protected signOut(): void {
     this.auth.logout();
+  }
+
+  private interpolateAll(sections: readonly LegalSection[]): LegalSection[] {
+    return sections.map((s) => ({
+      heading: this.interpolate(s.heading),
+      body: this.interpolate(s.body),
+    }));
+  }
+
+  private interpolate(text: string): string {
+    return text.replace(
+      /\{\{\s*(\w+)\s*\}\}/g,
+      (_, key) => this.params[key as keyof typeof this.params] ?? `{{${key}}}`,
+    );
   }
 }
