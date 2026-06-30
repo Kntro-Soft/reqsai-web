@@ -70,7 +70,10 @@ interface NavItem {
           />
         </div>
 
-        <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto" [attr.aria-label]="navAria()">
+        <nav
+          class="flex flex-1 flex-col gap-0.5 overflow-y-auto"
+          [attr.aria-label]="(projectId() ? 'nav.projectAria' : 'nav.orgAria') | transloco"
+        >
           @if (projectId(); as pid) {
             <a
               routerLink="/projects"
@@ -132,25 +135,26 @@ interface NavItem {
 
       <div class="flex min-w-0 flex-1 flex-col">
         <!-- Top bar -->
-        <header class="flex h-14 shrink-0 items-center gap-3 border-b border-border px-3 md:px-4">
-          <button
-            type="button"
-            (click)="mobileOpen.set(true)"
-            [attr.aria-label]="'nav.openMenu' | transloco"
-            class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
-          >
-            <hlm-icon name="lucideMenu" size="18px" />
-          </button>
+        <header
+          class="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-border px-3 md:px-4"
+        >
+          <div class="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              (click)="mobileOpen.set(true)"
+              [attr.aria-label]="'nav.openMenu' | transloco"
+              class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
+            >
+              <hlm-icon name="lucideMenu" size="18px" />
+            </button>
 
-          <app-project-switcher [currentProjectId]="projectId()" />
+            <app-project-switcher [currentProjectId]="projectId()" />
+          </div>
 
           @if (titleKey(); as key) {
-            <span class="mx-auto hidden truncate text-sm font-medium sm:block">{{
+            <span class="col-start-2 hidden max-w-full truncate text-sm font-medium sm:block">{{
               key | transloco
             }}</span>
-            <span class="flex-1 sm:hidden"></span>
-          } @else {
-            <span class="flex-1"></span>
           }
         </header>
 
@@ -204,10 +208,6 @@ export class Shell {
     const match = /\/projects\/([^/?#]+)/.exec(this.url());
     return match ? decodeURIComponent(match[1]) : null;
   });
-
-  protected readonly navAria = computed(() =>
-    this.transloco.translate(this.projectId() ? 'nav.projectAria' : 'nav.orgAria'),
-  );
 
   protected readonly filteredNav = computed(() => {
     const nav = this.projectId() ? this.projectNav : this.orgNav;
