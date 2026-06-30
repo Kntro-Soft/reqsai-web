@@ -72,7 +72,7 @@ import {
                   hlmInput
                   id="title"
                   formControlName="title"
-                  placeholder="Sprint 24 — Elicitación"
+                  [placeholder]="'sessions.titlePlaceholder' | transloco"
                 />
               </div>
               <div class="flex flex-col gap-2">

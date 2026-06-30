@@ -51,7 +51,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
         <!-- Side nav (desktop) -->
         <aside
           class="hidden w-56 shrink-0 flex-col border-r border-border p-3 md:flex"
-          aria-label="Navegación de la organización"
+          [attr.aria-label]="'nav.orgAria' | transloco"
         >
           <nav class="flex flex-col gap-1">
             @for (item of nav; track item.path) {

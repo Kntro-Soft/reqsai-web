@@ -38,7 +38,9 @@
     "members": "Miembros",
     "settings": "Ajustes",
     "newSession": "Nueva sesión",
-    "projectFallback": "Proyecto"
+    "projectFallback": "Proyecto",
+    "projectAria": "Navegación del proyecto",
+    "orgAria": "Navegación de la organización"
   },
   "userMenu": {
     "ariaLabel": "Menú de usuario",
@@ -135,6 +137,7 @@
     "new": "Nueva sesión",
     "formTitle": "Nueva sesión",
     "fieldTitle": "Título",
+    "titlePlaceholder": "Sprint 24 — Elicitación",
     "fieldLanguage": "Idioma",
     "loadError": "No se pudieron cargar las sesiones.",
     "emptyTitle": "Aún no hay sesiones",

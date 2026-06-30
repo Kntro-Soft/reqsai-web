@@ -38,7 +38,9 @@
     "members": "Members",
     "settings": "Settings",
     "newSession": "New session",
-    "projectFallback": "Project"
+    "projectFallback": "Project",
+    "projectAria": "Project navigation",
+    "orgAria": "Organization navigation"
   },
   "userMenu": {
     "ariaLabel": "User menu",
@@ -135,6 +137,7 @@
     "new": "New session",
     "formTitle": "New session",
     "fieldTitle": "Title",
+    "titlePlaceholder": "Sprint 24 — Elicitation",
     "fieldLanguage": "Language",
     "loadError": "Could not load the sessions.",
     "emptyTitle": "No sessions yet",
