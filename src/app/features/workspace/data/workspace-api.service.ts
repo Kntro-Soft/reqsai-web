@@ -97,4 +97,13 @@ export class WorkspaceApiService {
     form.append('file', file);
     return this.http.put<OrganizationResponse>(`/api/organizations/${orgId}/avatar`, form);
   }
+
+  uploadProjectAvatar(orgId: string, projectId: string, file: File): Observable<ProjectResponse> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.put<ProjectResponse>(
+      `/api/organizations/${orgId}/projects/${projectId}/avatar`,
+      form,
+    );
+  }
 }
