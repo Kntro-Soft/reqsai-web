@@ -1,13 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideChevronDown, lucideX } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideChevronDown } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Logo } from '../../../../shared/components/logo/logo';
+import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -22,6 +23,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     ReactiveFormsModule,
     RouterLink,
     Logo,
+    ChipInput,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -29,7 +31,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideChevronDown, lucideX })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideChevronDown })],
   template: `
     <div class="relative flex min-h-dvh flex-col bg-background text-foreground">
       <header
@@ -91,33 +93,11 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
                 @for (f of chipFields; track f.key) {
                   <div class="flex flex-col gap-2">
                     <span hlmLabel>{{ f.labelKey | transloco }}</span>
-                    <div
-                      class="flex flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5"
-                    >
-                      @for (tag of f.list(); track tag; let i = $index) {
-                        <span
-                          class="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-                        >
-                          {{ tag }}
-                          <button
-                            type="button"
-                            (click)="removeChip(f.list, i)"
-                            class="text-muted-foreground hover:text-foreground"
-                            [attr.aria-label]="'common.remove' | transloco"
-                          >
-                            <hlm-icon name="lucideX" size="12px" />
-                          </button>
-                        </span>
-                      }
-                      <input
-                        #chipInput
-                        type="text"
-                        (keydown)="onChipKey($event, f.list, chipInput)"
-                        (blur)="addChip(f.list, chipInput)"
-                        [placeholder]="f.placeholder"
-                        class="min-w-[6rem] flex-1 bg-transparent py-0.5 text-sm outline-none placeholder:text-muted-foreground"
-                      />
-                    </div>
+                    <app-chip-input
+                      [value]="f.list()"
+                      (valueChange)="f.list.set($event)"
+                      [placeholder]="f.placeholder"
+                    />
                   </div>
                 }
 
@@ -196,27 +176,6 @@ export class ProjectCreate {
     architecture: ['', [Validators.maxLength(100)]],
     domain: ['', [Validators.maxLength(100)]],
   });
-
-  protected onChipKey(
-    event: KeyboardEvent,
-    list: WritableSignal<string[]>,
-    input: HTMLInputElement,
-  ): void {
-    if (event.key === 'Enter' || event.key === ',') {
-      event.preventDefault();
-      this.addChip(list, input);
-    }
-  }
-
-  protected addChip(list: WritableSignal<string[]>, input: HTMLInputElement): void {
-    const value = input.value.trim();
-    if (value && !list().includes(value)) list.update((tags) => [...tags, value]);
-    input.value = '';
-  }
-
-  protected removeChip(list: WritableSignal<string[]>, index: number): void {
-    list.update((tags) => tags.filter((_, i) => i !== index));
-  }
 
   protected submit(): void {
     const orgId = this.authStore.organizationId();
