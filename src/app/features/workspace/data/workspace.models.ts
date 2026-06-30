@@ -58,8 +58,9 @@ export interface PageResponse<T> {
   };
 }
 
+/** Partial update — only the provided fields are changed (backend PATCH). */
 export interface UpdateOrganizationRequest {
-  name: string;
+  name?: string;
   meetingLanguage?: string;
   audioRetentionDays?: number;
 }

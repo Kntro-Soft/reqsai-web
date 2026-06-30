@@ -67,7 +67,7 @@ export class WorkspaceApiService {
     orgId: string,
     request: UpdateOrganizationRequest,
   ): Observable<OrganizationResponse> {
-    return this.http.put<OrganizationResponse>(`/api/organizations/${orgId}`, request);
+    return this.http.patch<OrganizationResponse>(`/api/organizations/${orgId}`, request);
   }
 
   listMembers(orgId: string): Observable<MemberResponse[]> {
