@@ -91,4 +91,10 @@ export class WorkspaceApiService {
   removeMember(orgId: string, memberId: string): Observable<void> {
     return this.http.delete<void>(`/api/organizations/${orgId}/members/${memberId}`);
   }
+
+  uploadOrganizationAvatar(orgId: string, file: File): Observable<OrganizationResponse> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.put<OrganizationResponse>(`/api/organizations/${orgId}/avatar`, form);
+  }
 }
