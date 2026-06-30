@@ -39,12 +39,12 @@ export interface ProjectResponse {
 export interface CreateProjectRequest {
   name: string;
   description?: string;
-  programmingLanguages: string[];
-  frameworks: string[];
-  clientPlatforms: string[];
-  databases: string[];
-  architecture: string;
-  domain: string;
+  programmingLanguages?: string[];
+  frameworks?: string[];
+  clientPlatforms?: string[];
+  databases?: string[];
+  architecture?: string;
+  domain?: string;
 }
 
 /** Spring Data page envelope returned by the paginated list endpoints. */

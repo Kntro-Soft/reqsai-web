@@ -5,7 +5,9 @@
   "common": {
     "cancel": "Cancelar",
     "create": "Crear",
-    "loading": "Cargando"
+    "loading": "Cargando",
+    "back": "Volver",
+    "remove": "Quitar"
   },
   "language": {
     "label": "Idioma",
@@ -30,7 +32,8 @@
     "verifyEmail": "Verificar correo",
     "forgotPassword": "Recuperar contraseña",
     "resetPassword": "Nueva contraseña",
-    "account": "Cuenta"
+    "account": "Cuenta",
+    "newProject": "Nuevo proyecto"
   },
   "nav": {
     "projects": "Proyectos",
@@ -212,6 +215,15 @@
   "projects": {
     "title": "Proyectos",
     "subtitle": "Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.",
+    "searchPlaceholder": "Buscar proyectos…",
+    "addNew": "Añadir",
+    "viewCards": "Vista de tarjetas",
+    "viewTable": "Vista de tabla",
+    "noMatches": "Ningún proyecto coincide con tu búsqueda.",
+    "noDomain": "Sin dominio",
+    "colName": "Nombre",
+    "colTech": "Arquitectura",
+    "colDomain": "Dominio",
     "new": "Nuevo proyecto",
     "formTitle": "Nuevo proyecto",
     "formSubtitle": "Define el stack para afinar las sugerencias de la IA.",
@@ -229,6 +241,12 @@
     "emptyBody": "Crea tu primer proyecto para empezar a descubrir requisitos.",
     "errorNameInUse": "Revisa los datos: el nombre podría estar repetido.",
     "errorGeneric": "No se pudo crear el proyecto. Intenta de nuevo."
+  },
+  "projectCreate": {
+    "title": "Nuevo proyecto",
+    "subtitle": "Dale un nombre. Puedes agregar el perfil técnico luego — ayuda a la IA pero es opcional.",
+    "advanced": "Opciones avanzadas",
+    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias."
   },
   "orgPicker": {
     "title": "Elige una organización",

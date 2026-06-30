@@ -91,7 +91,9 @@ const MAX_AVATAR_BYTES = 1_000_000;
             </div>
           </form>
         </div>
-        <div class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+        <div
+          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+        >
           @if (profileSaved()) {
             <span class="text-xs text-emerald-500">{{ 'account.saved' | transloco }}</span>
           }
@@ -115,7 +117,9 @@ const MAX_AVATAR_BYTES = 1_000_000;
         <form [formGroup]="passwordForm" class="flex flex-col gap-4 p-6">
           <div>
             <h2 class="text-base font-semibold">{{ 'account.password' | transloco }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{{ 'account.passwordDesc' | transloco }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ 'account.passwordDesc' | transloco }}
+            </p>
           </div>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
@@ -146,7 +150,9 @@ const MAX_AVATAR_BYTES = 1_000_000;
             <p class="text-sm text-destructive">{{ passwordError() }}</p>
           }
         </form>
-        <div class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+        <div
+          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+        >
           @if (passwordSaved()) {
             <span class="text-xs text-emerald-500">{{ 'account.passwordSaved' | transloco }}</span>
           }
@@ -170,7 +176,9 @@ const MAX_AVATAR_BYTES = 1_000_000;
         <div class="flex flex-col gap-4 p-6">
           <div>
             <h2 class="text-base font-semibold">{{ 'account.appearance' | transloco }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{{ 'account.appearanceDesc' | transloco }}</p>
+            <p class="mt-1 text-sm text-muted-foreground">
+              {{ 'account.appearanceDesc' | transloco }}
+            </p>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-3">
             <span class="text-sm">{{ 'userMenu.theme' | transloco }}</span>
@@ -253,7 +261,10 @@ export class Account {
   protected readonly avatarError = signal<string | null>(null);
 
   protected readonly profileForm = this.fb.nonNullable.group({
-    firstName: [this.store.user()?.firstName ?? '', [Validators.required, Validators.maxLength(100)]],
+    firstName: [
+      this.store.user()?.firstName ?? '',
+      [Validators.required, Validators.maxLength(100)],
+    ],
     lastName: [this.store.user()?.lastName ?? '', [Validators.required, Validators.maxLength(100)]],
   });
 

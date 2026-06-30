@@ -47,6 +47,17 @@ export const routes: Routes = [
       import('./features/workspace/pages/organizations/organizations').then((m) => m.Organizations),
   },
 
+  // Create project: standalone full-screen page (no app shell).
+  {
+    path: 'projects/new',
+    title: 'titles.newProject',
+    canActivate: [authGuard, termsGuard, orgGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/project-create/project-create').then(
+        (m) => m.ProjectCreate,
+      ),
+  },
+
   // Unified workspace shell: one contextual sidebar for both the organization
   // context (projects / members / settings) and a single project's context.
   {

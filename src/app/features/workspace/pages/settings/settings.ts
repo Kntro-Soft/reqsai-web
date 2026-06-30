@@ -48,7 +48,9 @@ type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
             <div
               class="flex items-center justify-between gap-3 border-t border-border bg-muted/30 px-6 py-3"
             >
-              <span class="text-xs text-muted-foreground">{{ 'orgSettings.nameHint' | transloco }}</span>
+              <span class="text-xs text-muted-foreground">{{
+                'orgSettings.nameHint' | transloco
+              }}</span>
               <div class="flex items-center gap-2">
                 @if (savedField() === 'name') {
                   <span class="text-xs text-emerald-500" data-testid="settings-saved">
@@ -90,7 +92,9 @@ type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
                 class="max-w-xs"
               />
             </div>
-            <div class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+            <div
+              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+            >
               @if (savedField() === 'meetingLanguage') {
                 <span class="text-xs text-emerald-500">{{ 'orgSettings.saved' | transloco }}</span>
               }
@@ -128,7 +132,9 @@ type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
                 class="max-w-[10rem]"
               />
             </div>
-            <div class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3">
+            <div
+              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+            >
               @if (savedField() === 'audioRetentionDays') {
                 <span class="text-xs text-emerald-500">{{ 'orgSettings.saved' | transloco }}</span>
               }
@@ -137,7 +143,9 @@ type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
                 size="sm"
                 type="button"
                 (click)="saveField('audioRetentionDays')"
-                [disabled]="saving() === 'audioRetentionDays' || form.controls.audioRetentionDays.invalid"
+                [disabled]="
+                  saving() === 'audioRetentionDays' || form.controls.audioRetentionDays.invalid
+                "
               >
                 @if (saving() === 'audioRetentionDays') {
                   <hlm-spinner class="h-4 w-4" />

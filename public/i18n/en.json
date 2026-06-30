@@ -5,7 +5,9 @@
   "common": {
     "cancel": "Cancel",
     "create": "Create",
-    "loading": "Loading"
+    "loading": "Loading",
+    "back": "Back",
+    "remove": "Remove"
   },
   "language": {
     "label": "Language",
@@ -30,7 +32,8 @@
     "verifyEmail": "Verify email",
     "forgotPassword": "Recover password",
     "resetPassword": "New password",
-    "account": "Account"
+    "account": "Account",
+    "newProject": "New project"
   },
   "nav": {
     "projects": "Projects",
@@ -212,6 +215,15 @@
   "projects": {
     "title": "Projects",
     "subtitle": "Manage your organization's projects and their discovery sessions.",
+    "searchPlaceholder": "Search projects…",
+    "addNew": "Add New",
+    "viewCards": "Card view",
+    "viewTable": "Table view",
+    "noMatches": "No projects match your search.",
+    "noDomain": "No domain",
+    "colName": "Name",
+    "colTech": "Architecture",
+    "colDomain": "Domain",
     "new": "New project",
     "formTitle": "New project",
     "formSubtitle": "Define the stack to fine-tune AI suggestions.",
@@ -229,6 +241,12 @@
     "emptyBody": "Create your first project to start discovering requirements.",
     "errorNameInUse": "Check the data: the name might be taken.",
     "errorGeneric": "Could not create the project. Please try again."
+  },
+  "projectCreate": {
+    "title": "New project",
+    "subtitle": "Give it a name. You can add the tech profile later — it helps the AI but is optional.",
+    "advanced": "Advanced options",
+    "advancedHint": "Optional context the AI uses to tailor its suggestions."
   },
   "orgPicker": {
     "title": "Choose an organization",
