@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   HlmButton,
@@ -20,6 +21,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoPipe,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -33,31 +35,30 @@ import {
   template: `
     <div hlmCard>
       <div hlmCardHeader>
-        <h1 hlmCardTitle>Recupera tu contraseña</h1>
-        <p hlmCardDescription>Te enviaremos un enlace para restablecerla</p>
+        <h1 hlmCardTitle>{{ 'auth.forgot.title' | transloco }}</h1>
+        <p hlmCardDescription>{{ 'auth.forgot.subtitle' | transloco }}</p>
       </div>
       <div hlmCardContent>
         @if (sent()) {
           <p class="text-sm text-emerald-600 dark:text-emerald-400" data-testid="forgot-sent">
-            Si existe una cuenta con ese correo, te enviamos instrucciones para restablecer tu
-            contraseña.
+            {{ 'auth.forgot.sent' | transloco }}
           </p>
           <a
             routerLink="/auth/sign-in"
             class="mt-6 block text-center text-sm text-primary font-medium hover:underline"
           >
-            Volver a iniciar sesión
+            {{ 'auth.forgot.backToSignIn' | transloco }}
           </a>
         } @else {
           <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
-              <label hlmLabel for="email">Correo electrónico</label>
+              <label hlmLabel for="email">{{ 'auth.fields.email' | transloco }}</label>
               <input
                 hlmInput
                 id="email"
                 type="email"
                 formControlName="email"
-                placeholder="tu@empresa.com"
+                placeholder="you@company.com"
                 autocomplete="email"
               />
             </div>
@@ -66,7 +67,7 @@ import {
               @if (loading()) {
                 <hlm-spinner class="h-4 w-4" />
               }
-              Enviar enlace
+              {{ 'auth.forgot.submit' | transloco }}
             </button>
           </form>
 
@@ -74,7 +75,7 @@ import {
             routerLink="/auth/sign-in"
             class="mt-6 block text-center text-sm text-primary font-medium hover:underline"
           >
-            Volver a iniciar sesión
+            {{ 'auth.forgot.backToSignIn' | transloco }}
           </a>
         }
       </div>

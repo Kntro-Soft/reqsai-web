@@ -39,13 +39,22 @@
       "bullet3": "Export-ready backlog"
     },
     "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
       "email": "Email",
       "password": "Password"
     },
     "errors": {
       "invalidCredentials": "Incorrect email or password.",
       "unverified": "Verify your email before signing in.",
-      "generic": "Could not sign in. Please try again."
+      "generic": "Could not sign in. Please try again.",
+      "emailExists": "An account with that email already exists.",
+      "signUpGeneric": "Could not create the account. Please try again.",
+      "passwordMismatch": "Passwords don't match.",
+      "resetLinkInvalid": "The link is invalid or expired. Request a new one.",
+      "resetGeneric": "Could not update the password. Please try again.",
+      "verifyLinkInvalid": "The link is invalid or expired. Resend the verification email.",
+      "verifyGeneric": "Could not verify. Please try again."
     },
     "signIn": {
       "title": "Sign in",
@@ -54,6 +63,46 @@
       "forgot": "Forgot your password?",
       "noAccount": "Don't have an account?",
       "signUp": "Create account"
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Start discovering requirements with AI",
+      "passwordPlaceholder": "At least 8 characters",
+      "passwordHint": "Password must be at least 8 characters.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgot": {
+      "title": "Recover your password",
+      "subtitle": "We'll send you a link to reset it",
+      "sent": "If an account exists for that email, we've sent instructions to reset your password.",
+      "submit": "Send link",
+      "backToSignIn": "Back to sign in"
+    },
+    "reset": {
+      "title": "New password",
+      "subtitle": "Choose a password for your account",
+      "invalidLink": "The reset link is invalid. Request a new one.",
+      "requestLink": "Request link",
+      "success": "Your password was updated. You can sign in now.",
+      "goToSignIn": "Go to sign in",
+      "confirm": "Repeat password",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Save password"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "verifying": "Confirming your account…",
+      "successDesc": "Done! Your account is verified.",
+      "sentTo": "We sent a verification link to",
+      "yourEmail": "your email",
+      "successBody": "Account verified successfully.",
+      "goToSignIn": "Go to sign in",
+      "openLink": "Open the link in the email to activate your account. Didn't get it?",
+      "resent": "We resent the verification email.",
+      "resend": "Resend email",
+      "backToSignIn": "Back to sign in"
     }
   },
   "sessions": {
@@ -77,5 +126,20 @@
     "submit": "Create and continue",
     "errorNameInUse": "That name is already in use. Try another.",
     "errorGeneric": "Could not create the organization. Please try again."
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "subtitle": "To continue, review and accept our terms of service.",
+    "p1": "By using Reqs-AI you accept these terms. The platform processes meeting transcripts and generates AI-assisted requirement artifacts; you are responsible for the content you upload and for having the necessary permissions.",
+    "p2Label": "Data privacy.",
+    "p2": "Your information is isolated per organization (tenant) and is not shared with third parties without your consent. You can request the deletion of your data at any time.",
+    "p3Label": "Acceptable use.",
+    "p3": "You must not use the service for illegal purposes or upload information that infringes third-party rights. AI-generated content is a suggestion and must be reviewed before use.",
+    "p4Label": "Availability.",
+    "p4": "We make reasonable efforts to keep the service available, but it is provided \"as is\". These terms may be updated; we'll ask you to accept them again when they change.",
+    "accept": "I have read and accept Reqs-AI's Terms and Conditions and Privacy Policy.",
+    "submit": "Accept and continue",
+    "errorSessionExpired": "Your session expired. Sign in again.",
+    "errorGeneric": "Could not record acceptance. Please try again."
   }
 }

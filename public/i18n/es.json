@@ -39,13 +39,22 @@
       "bullet3": "Backlog listo para exportar"
     },
     "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
       "email": "Correo electrónico",
       "password": "Contraseña"
     },
     "errors": {
       "invalidCredentials": "Correo o contraseña incorrectos.",
       "unverified": "Verifica tu correo antes de iniciar sesión.",
-      "generic": "No se pudo iniciar sesión. Intenta de nuevo."
+      "generic": "No se pudo iniciar sesión. Intenta de nuevo.",
+      "emailExists": "Ya existe una cuenta con ese correo.",
+      "signUpGeneric": "No se pudo crear la cuenta. Intenta de nuevo.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "resetLinkInvalid": "El enlace es inválido o expiró. Solicita uno nuevo.",
+      "resetGeneric": "No se pudo actualizar la contraseña. Intenta de nuevo.",
+      "verifyLinkInvalid": "El enlace es inválido o expiró. Reenvía el correo de verificación.",
+      "verifyGeneric": "No se pudo verificar. Intenta de nuevo."
     },
     "signIn": {
       "title": "Iniciar sesión",
@@ -54,6 +63,46 @@
       "forgot": "¿Olvidaste tu contraseña?",
       "noAccount": "¿No tienes cuenta?",
       "signUp": "Crear cuenta"
+    },
+    "signUp": {
+      "title": "Crear cuenta",
+      "subtitle": "Empieza a descubrir requisitos con IA",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "passwordHint": "La contraseña debe tener al menos 8 caracteres.",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión"
+    },
+    "forgot": {
+      "title": "Recupera tu contraseña",
+      "subtitle": "Te enviaremos un enlace para restablecerla",
+      "sent": "Si existe una cuenta con ese correo, te enviamos instrucciones para restablecer tu contraseña.",
+      "submit": "Enviar enlace",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "reset": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña para tu cuenta",
+      "invalidLink": "El enlace de restablecimiento es inválido. Solicita uno nuevo.",
+      "requestLink": "Solicitar enlace",
+      "success": "Tu contraseña se actualizó. Ya puedes iniciar sesión.",
+      "goToSignIn": "Ir a iniciar sesión",
+      "confirm": "Repite la contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "submit": "Guardar contraseña"
+    },
+    "verify": {
+      "title": "Verifica tu correo",
+      "verifying": "Confirmando tu cuenta…",
+      "successDesc": "¡Listo! Tu cuenta está verificada.",
+      "sentTo": "Te enviamos un enlace de verificación a",
+      "yourEmail": "tu correo",
+      "successBody": "Cuenta verificada correctamente.",
+      "goToSignIn": "Ir a iniciar sesión",
+      "openLink": "Abre el enlace del correo para activar tu cuenta. ¿No lo recibiste?",
+      "resent": "Te reenviamos el correo de verificación.",
+      "resend": "Reenviar correo",
+      "backToSignIn": "Volver a iniciar sesión"
     }
   },
   "sessions": {
@@ -77,5 +126,20 @@
     "submit": "Crear y continuar",
     "errorNameInUse": "Ese nombre ya está en uso. Prueba con otro.",
     "errorGeneric": "No se pudo crear la organización. Intenta de nuevo."
+  },
+  "terms": {
+    "title": "Términos y Condiciones",
+    "subtitle": "Para continuar, revisa y acepta nuestros términos de servicio.",
+    "p1": "Al usar Reqs-AI aceptas estos términos. La plataforma procesa transcripciones de reuniones y genera artefactos de requisitos asistidos por IA; eres responsable del contenido que subes y de contar con los permisos necesarios.",
+    "p2Label": "Privacidad de datos.",
+    "p2": "Tu información se aísla por organización (tenant) y no se comparte con terceros sin tu consentimiento. Puedes solicitar la eliminación de tus datos en cualquier momento.",
+    "p3Label": "Uso aceptable.",
+    "p3": "No debes usar el servicio para fines ilegales ni cargar información que infrinja derechos de terceros. El contenido generado por IA es una sugerencia y debe revisarse antes de usarse.",
+    "p4Label": "Disponibilidad.",
+    "p4": "Hacemos esfuerzos razonables por mantener el servicio disponible, pero se ofrece «tal cual». Estos términos pueden actualizarse; te pediremos aceptarlos de nuevo cuando cambien.",
+    "accept": "He leído y acepto los Términos y Condiciones y la Política de Privacidad de Reqs-AI.",
+    "submit": "Aceptar y continuar",
+    "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
   }
 }

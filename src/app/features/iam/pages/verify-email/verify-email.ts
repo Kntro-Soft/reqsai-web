@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   HlmButton,
@@ -25,6 +26,7 @@ type VerifyState = 'idle' | 'verifying' | 'success' | 'error';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
+    TranslocoPipe,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -36,18 +38,20 @@ type VerifyState = 'idle' | 'verifying' | 'success' | 'error';
   template: `
     <div hlmCard>
       <div hlmCardHeader>
-        <h1 hlmCardTitle>Verifica tu correo</h1>
+        <h1 hlmCardTitle>{{ 'auth.verify.title' | transloco }}</h1>
         <p hlmCardDescription>
           @switch (state()) {
             @case ('verifying') {
-              Confirmando tu cuenta…
+              {{ 'auth.verify.verifying' | transloco }}
             }
             @case ('success') {
-              ¡Listo! Tu cuenta está verificada.
+              {{ 'auth.verify.successDesc' | transloco }}
             }
             @default {
-              Te enviamos un enlace de verificación a
-              <span class="font-medium text-foreground">{{ email() || 'tu correo' }}</span>
+              {{ 'auth.verify.sentTo' | transloco }}
+              <span class="font-medium text-foreground">{{
+                email() || ('auth.verify.yourEmail' | transloco)
+              }}</span>
             }
           }
         </p>
@@ -62,22 +66,24 @@ type VerifyState = 'idle' | 'verifying' | 'success' | 'error';
           }
           @case ('success') {
             <p class="text-sm text-emerald-600 dark:text-emerald-400" data-testid="verify-success">
-              Cuenta verificada correctamente.
+              {{ 'auth.verify.successBody' | transloco }}
             </p>
-            <a hlmBtn routerLink="/auth/sign-in" class="w-full">Ir a iniciar sesión</a>
+            <a hlmBtn routerLink="/auth/sign-in" class="w-full">
+              {{ 'auth.verify.goToSignIn' | transloco }}
+            </a>
           }
           @default {
             @if (state() === 'error') {
               <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
             } @else {
               <p class="text-sm text-muted-foreground">
-                Abre el enlace del correo para activar tu cuenta. ¿No lo recibiste?
+                {{ 'auth.verify.openLink' | transloco }}
               </p>
             }
 
             @if (resent()) {
               <p class="text-sm text-emerald-600 dark:text-emerald-400" data-testid="resend-ok">
-                Te reenviamos el correo de verificación.
+                {{ 'auth.verify.resent' | transloco }}
               </p>
             }
 
@@ -92,14 +98,14 @@ type VerifyState = 'idle' | 'verifying' | 'success' | 'error';
               @if (resending()) {
                 <hlm-spinner class="h-4 w-4" />
               }
-              Reenviar correo
+              {{ 'auth.verify.resend' | transloco }}
             </button>
 
             <a
               routerLink="/auth/sign-in"
               class="text-center text-sm text-primary font-medium hover:underline"
             >
-              Volver a iniciar sesión
+              {{ 'auth.verify.backToSignIn' | transloco }}
             </a>
           }
         }
@@ -109,6 +115,7 @@ type VerifyState = 'idle' | 'verifying' | 'success' | 'error';
 })
 export class VerifyEmail implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly transloco = inject(TranslocoService);
 
   /** Bound from the query string via withComponentInputBinding(). */
   readonly token = input<string>('');
@@ -131,9 +138,11 @@ export class VerifyEmail implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.state.set('error');
         this.errorMessage.set(
-          err.status === 400 || err.status === 401
-            ? 'El enlace es inválido o expiró. Reenvía el correo de verificación.'
-            : 'No se pudo verificar. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 400 || err.status === 401
+              ? 'auth.errors.verifyLinkInvalid'
+              : 'auth.errors.verifyGeneric',
+          ),
         );
       },
     });
