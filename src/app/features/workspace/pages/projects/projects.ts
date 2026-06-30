@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
 import { lucideChevronRight, lucideFolder } from '@ng-icons/lucide';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import {
@@ -42,40 +43,41 @@ function toList(csv: string): string[] {
     HlmLabel,
     HlmSpinner,
     HlmIcon,
+    TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideFolder, lucideChevronRight })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">Proyectos</h1>
-          <p class="text-sm text-muted-foreground">
-            Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.
-          </p>
+          <h1 class="text-2xl font-bold tracking-tight">{{ 'projects.title' | transloco }}</h1>
+          <p class="text-sm text-muted-foreground">{{ 'projects.subtitle' | transloco }}</p>
         </div>
         <button hlmBtn type="button" (click)="showForm.set(!showForm())">
-          {{ showForm() ? 'Cancelar' : 'Nuevo proyecto' }}
+          {{ (showForm() ? 'common.cancel' : 'projects.new') | transloco }}
         </button>
       </div>
 
       @if (showForm()) {
         <div hlmCard>
           <div hlmCardHeader>
-            <h2 hlmCardTitle>Nuevo proyecto</h2>
-            <p hlmCardDescription>Define el stack para afinar las sugerencias de la IA.</p>
+            <h2 hlmCardTitle>{{ 'projects.formTitle' | transloco }}</h2>
+            <p hlmCardDescription>{{ 'projects.formSubtitle' | transloco }}</p>
           </div>
           <div hlmCardContent>
             <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 md:grid-cols-2">
               <div class="flex flex-col gap-2 md:col-span-2">
-                <label hlmLabel for="name">Nombre</label>
+                <label hlmLabel for="name">{{ 'projects.name' | transloco }}</label>
                 <input hlmInput id="name" formControlName="name" placeholder="Mobile App" />
               </div>
               <div class="flex flex-col gap-2 md:col-span-2">
-                <label hlmLabel for="description">Descripción</label>
+                <label hlmLabel for="description">{{ 'projects.description' | transloco }}</label>
                 <input hlmInput id="description" formControlName="description" />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="programmingLanguages">Lenguajes (coma)</label>
+                <label hlmLabel for="programmingLanguages">{{
+                  'projects.programmingLanguages' | transloco
+                }}</label>
                 <input
                   hlmInput
                   id="programmingLanguages"
@@ -84,7 +86,7 @@ function toList(csv: string): string[] {
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="frameworks">Frameworks (coma)</label>
+                <label hlmLabel for="frameworks">{{ 'projects.frameworks' | transloco }}</label>
                 <input
                   hlmInput
                   id="frameworks"
@@ -93,7 +95,9 @@ function toList(csv: string): string[] {
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="clientPlatforms">Plataformas (coma)</label>
+                <label hlmLabel for="clientPlatforms">{{
+                  'projects.clientPlatforms' | transloco
+                }}</label>
                 <input
                   hlmInput
                   id="clientPlatforms"
@@ -102,7 +106,7 @@ function toList(csv: string): string[] {
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="databases">Bases de datos (coma)</label>
+                <label hlmLabel for="databases">{{ 'projects.databases' | transloco }}</label>
                 <input
                   hlmInput
                   id="databases"
@@ -111,7 +115,7 @@ function toList(csv: string): string[] {
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="architecture">Arquitectura</label>
+                <label hlmLabel for="architecture">{{ 'projects.architecture' | transloco }}</label>
                 <input
                   hlmInput
                   id="architecture"
@@ -120,7 +124,7 @@ function toList(csv: string): string[] {
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="domain">Dominio</label>
+                <label hlmLabel for="domain">{{ 'projects.domain' | transloco }}</label>
                 <input hlmInput id="domain" formControlName="domain" placeholder="Fintech" />
               </div>
 
@@ -139,7 +143,7 @@ function toList(csv: string): string[] {
                 @if (loading()) {
                   <hlm-spinner class="h-4 w-4" />
                 }
-                Crear proyecto
+                {{ 'projects.createCta' | transloco }}
               </button>
             </form>
           </div>
@@ -151,7 +155,7 @@ function toList(csv: string): string[] {
           <div class="flex justify-center py-10"><hlm-spinner class="h-6 w-6" /></div>
         }
         @case ('error') {
-          <p class="text-sm text-destructive">No se pudieron cargar los proyectos.</p>
+          <p class="text-sm text-destructive">{{ 'projects.loadError' | transloco }}</p>
         }
         @default {
           @if (store.projects().length === 0 && !showForm()) {
@@ -164,13 +168,11 @@ function toList(csv: string): string[] {
                 <hlm-icon name="lucideFolder" size="22px" />
               </span>
               <div>
-                <p class="font-medium">Aún no hay proyectos</p>
-                <p class="text-sm text-muted-foreground">
-                  Crea tu primer proyecto para empezar a descubrir requisitos.
-                </p>
+                <p class="font-medium">{{ 'projects.emptyTitle' | transloco }}</p>
+                <p class="text-sm text-muted-foreground">{{ 'projects.emptyBody' | transloco }}</p>
               </div>
               <button hlmBtn size="sm" type="button" (click)="showForm.set(true)">
-                Crear proyecto
+                {{ 'projects.createCta' | transloco }}
               </button>
             </div>
           } @else {
@@ -212,6 +214,7 @@ function toList(csv: string): string[] {
 export class Projects {
   private readonly fb = inject(FormBuilder);
   private readonly authStore = inject(AuthStore);
+  private readonly transloco = inject(TranslocoService);
   protected readonly store = inject(WorkspaceStore);
 
   protected readonly showForm = signal(false);
@@ -264,9 +267,9 @@ export class Projects {
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);
           this.errorMessage.set(
-            err.status === 400
-              ? 'Revisa los datos: el nombre podría estar repetido.'
-              : 'No se pudo crear el proyecto. Intenta de nuevo.',
+            this.transloco.translate(
+              err.status === 400 ? 'projects.errorNameInUse' : 'projects.errorGeneric',
+            ),
           );
         },
       });

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import {
   HlmButton,
@@ -26,41 +27,44 @@ import {
     HlmCardTitle,
     HlmCardDescription,
     HlmCardContent,
+    TranslocoPipe,
   ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-2xl font-semibold tracking-tight">
-          Hola, {{ store.user()?.firstName || 'bienvenido' }}
+          @if (store.user()?.firstName; as name) {
+            {{ 'home.greetingNamed' | transloco: { name } }}
+          } @else {
+            {{ 'home.greetingAnon' | transloco }}
+          }
         </h1>
-        <p class="text-muted-foreground">Tu sesión está activa.</p>
+        <p class="text-muted-foreground">{{ 'home.sessionActive' | transloco }}</p>
       </div>
 
       <div hlmCard class="max-w-xl">
         <div hlmCardHeader>
           <h2 hlmCardTitle>
-            {{ store.needsOnboarding() ? 'Crea tu organización' : 'Espacio de trabajo' }}
+            {{
+              (store.needsOnboarding() ? 'home.onboardTitle' : 'home.workspaceTitle') | transloco
+            }}
           </h2>
           <p hlmCardDescription>
-            {{
-              store.needsOnboarding()
-                ? 'Aún no perteneces a ninguna organización. Crea una para empezar.'
-                : 'Ya tienes una organización activa. Gestiona tus proyectos.'
-            }}
+            {{ (store.needsOnboarding() ? 'home.onboardDesc' : 'home.workspaceDesc') | transloco }}
           </p>
         </div>
         <div hlmCardContent class="flex flex-col gap-4">
           <dl class="grid grid-cols-2 gap-3 text-sm">
-            <dt class="text-muted-foreground">Usuario</dt>
+            <dt class="text-muted-foreground">{{ 'home.userLabel' | transloco }}</dt>
             <dd>{{ store.user()?.fullName }}</dd>
-            <dt class="text-muted-foreground">Organización</dt>
+            <dt class="text-muted-foreground">{{ 'home.orgLabel' | transloco }}</dt>
             <dd>{{ store.organizationId() ?? '—' }}</dd>
           </dl>
 
           @if (store.needsOnboarding()) {
-            <a hlmBtn routerLink="/onboarding" class="w-fit">Crear organización</a>
+            <a hlmBtn routerLink="/onboarding" class="w-fit">{{ 'home.createOrg' | transloco }}</a>
           } @else {
-            <a hlmBtn routerLink="/projects" class="w-fit">Ver proyectos</a>
+            <a hlmBtn routerLink="/projects" class="w-fit">{{ 'home.viewProjects' | transloco }}</a>
           }
         </div>
       </div>

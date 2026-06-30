@@ -20,7 +20,10 @@ const browser = await chromium.launch();
 
 for (const theme of THEMES) {
   for (const vp of VIEWPORTS) {
-    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    const ctx = await browser.newContext({
+      viewport: { width: vp.width, height: vp.height },
+      locale: 'es-PE',
+    });
     await ctx.addInitScript((t) => localStorage.setItem('theme', t), theme);
     const page = await ctx.newPage();
     const tag = `${theme}-${vp.name}`;

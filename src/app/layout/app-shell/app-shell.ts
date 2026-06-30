@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
 import { ThemeToggle } from '../../shared/components/theme-toggle/theme-toggle';
@@ -25,6 +26,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
     UserMenu,
     OrgSwitcher,
     NavIcon,
+    TranslocoPipe,
   ],
   template: `
     <div class="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
@@ -49,7 +51,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
         <!-- Side nav (desktop) -->
         <aside
           class="hidden w-56 shrink-0 flex-col border-r border-border p-3 md:flex"
-          aria-label="Navegación de la organización"
+          [attr.aria-label]="'nav.orgAria' | transloco"
         >
           <nav class="flex flex-col gap-1">
             @for (item of nav; track item.path) {
@@ -59,7 +61,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <app-nav-icon [name]="item.path" [size]="18" />
-                {{ item.label }}
+                {{ 'nav.' + item.path | transloco }}
               </a>
             }
           </nav>
@@ -80,11 +82,11 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
           <a
             [routerLink]="['/' + item.path]"
             routerLinkActive="bg-primary/15 text-primary"
-            [attr.aria-label]="item.label"
+            [attr.aria-label]="'nav.' + item.path | transloco"
             class="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-muted-foreground"
           >
             <app-nav-icon [name]="item.path" [size]="20" />
-            {{ item.label }}
+            {{ 'nav.' + item.path | transloco }}
           </a>
         }
       </nav>
@@ -95,11 +97,7 @@ export class AppShell {
   protected readonly store = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
 
-  protected readonly nav = [
-    { path: 'projects', label: 'Proyectos' },
-    { path: 'members', label: 'Miembros' },
-    { path: 'settings', label: 'Ajustes' },
-  ];
+  protected readonly nav = [{ path: 'projects' }, { path: 'members' }, { path: 'settings' }];
 
   constructor() {
     effect(() => {

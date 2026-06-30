@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import {
@@ -24,14 +25,13 @@ import {
     HlmInput,
     HlmLabel,
     HlmSpinner,
+    TranslocoPipe,
   ],
   template: `
     <div class="flex max-w-2xl flex-col gap-6">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">Ajustes</h1>
-        <p class="mt-1 text-sm text-muted-foreground">
-          Configura tu organización y los valores por defecto de las reuniones.
-        </p>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'orgSettings.title' | transloco }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ 'orgSettings.subtitle' | transloco }}</p>
       </div>
 
       <div hlmCard>
@@ -41,13 +41,15 @@ import {
           } @else {
             <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-4">
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="name">Nombre de la organización</label>
+                <label hlmLabel for="name">{{ 'orgSettings.name' | transloco }}</label>
                 <input hlmInput id="name" formControlName="name" />
               </div>
 
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="meetingLanguage">Idioma de reuniones</label>
+                  <label hlmLabel for="meetingLanguage">{{
+                    'orgSettings.meetingLanguage' | transloco
+                  }}</label>
                   <input
                     hlmInput
                     id="meetingLanguage"
@@ -56,14 +58,18 @@ import {
                   />
                 </div>
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="audioRetentionDays">Retención de audio (días)</label>
+                  <label hlmLabel for="audioRetentionDays">{{
+                    'orgSettings.audioRetention' | transloco
+                  }}</label>
                   <input
                     hlmInput
                     id="audioRetentionDays"
                     type="number"
                     formControlName="audioRetentionDays"
                   />
-                  <p class="text-xs text-muted-foreground">Usa -1 para conservar sin límite.</p>
+                  <p class="text-xs text-muted-foreground">
+                    {{ 'orgSettings.audioRetentionHint' | transloco }}
+                  </p>
                 </div>
               </div>
 
@@ -74,7 +80,7 @@ import {
               }
               @if (saved()) {
                 <p class="text-sm text-emerald-500" data-testid="settings-saved">
-                  Cambios guardados.
+                  {{ 'orgSettings.saved' | transloco }}
                 </p>
               }
 
@@ -88,7 +94,7 @@ import {
                   @if (saving()) {
                     <hlm-spinner class="h-4 w-4" />
                   }
-                  Guardar cambios
+                  {{ 'orgSettings.save' | transloco }}
                 </button>
               </div>
             </form>
@@ -102,6 +108,7 @@ export class OrgSettings {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
@@ -151,9 +158,9 @@ export class OrgSettings {
         error: (err: HttpErrorResponse) => {
           this.saving.set(false);
           this.errorMessage.set(
-            err.status === 400
-              ? 'Revisa los datos e intenta de nuevo.'
-              : 'No se pudieron guardar los cambios.',
+            this.transloco.translate(
+              err.status === 400 ? 'orgSettings.errorValidation' : 'orgSettings.errorGeneric',
+            ),
           );
         },
       });

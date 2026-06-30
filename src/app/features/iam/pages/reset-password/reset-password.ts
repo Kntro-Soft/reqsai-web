@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   HlmButton,
@@ -21,6 +22,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoPipe,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -34,40 +36,42 @@ import {
   template: `
     <div hlmCard>
       <div hlmCardHeader>
-        <h1 hlmCardTitle>Nueva contraseña</h1>
-        <p hlmCardDescription>Elige una contraseña para tu cuenta</p>
+        <h1 hlmCardTitle>{{ 'auth.reset.title' | transloco }}</h1>
+        <p hlmCardDescription>{{ 'auth.reset.subtitle' | transloco }}</p>
       </div>
       <div hlmCardContent>
         @if (!token()) {
           <p class="text-sm text-destructive" data-testid="form-error">
-            El enlace de restablecimiento es inválido. Solicita uno nuevo.
+            {{ 'auth.reset.invalidLink' | transloco }}
           </p>
           <a
             routerLink="/auth/forgot-password"
             class="mt-6 block text-center text-sm text-primary font-medium hover:underline"
           >
-            Solicitar enlace
+            {{ 'auth.reset.requestLink' | transloco }}
           </a>
         } @else if (success()) {
           <p class="text-sm text-emerald-600 dark:text-emerald-400" data-testid="reset-success">
-            Tu contraseña se actualizó. Ya puedes iniciar sesión.
+            {{ 'auth.reset.success' | transloco }}
           </p>
-          <a hlmBtn routerLink="/auth/sign-in" class="mt-4 w-full">Ir a iniciar sesión</a>
+          <a hlmBtn routerLink="/auth/sign-in" class="mt-4 w-full">
+            {{ 'auth.reset.goToSignIn' | transloco }}
+          </a>
         } @else {
           <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
-              <label hlmLabel for="password">Contraseña</label>
+              <label hlmLabel for="password">{{ 'auth.fields.password' | transloco }}</label>
               <input
                 hlmInput
                 id="password"
                 type="password"
                 formControlName="password"
-                placeholder="Mínimo 8 caracteres"
+                [placeholder]="'auth.reset.passwordPlaceholder' | transloco"
                 autocomplete="new-password"
               />
             </div>
             <div class="flex flex-col gap-2">
-              <label hlmLabel for="confirm">Repite la contraseña</label>
+              <label hlmLabel for="confirm">{{ 'auth.reset.confirm' | transloco }}</label>
               <input
                 hlmInput
                 id="confirm"
@@ -85,7 +89,7 @@ import {
               @if (loading()) {
                 <hlm-spinner class="h-4 w-4" />
               }
-              Guardar contraseña
+              {{ 'auth.reset.submit' | transloco }}
             </button>
           </form>
         }
@@ -96,6 +100,7 @@ import {
 export class ResetPassword {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly transloco = inject(TranslocoService);
 
   /** Bound from the `?token=` of the reset link via withComponentInputBinding(). */
   readonly token = input<string>('');
@@ -113,7 +118,7 @@ export class ResetPassword {
     if (this.form.invalid || this.loading()) return;
     const { password, confirm } = this.form.getRawValue();
     if (password !== confirm) {
-      this.errorMessage.set('Las contraseñas no coinciden.');
+      this.errorMessage.set(this.transloco.translate('auth.errors.passwordMismatch'));
       return;
     }
     this.loading.set(true);
@@ -124,9 +129,11 @@ export class ResetPassword {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(
-          err.status === 400 || err.status === 401
-            ? 'El enlace es inválido o expiró. Solicita uno nuevo.'
-            : 'No se pudo actualizar la contraseña. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 400 || err.status === 401
+              ? 'auth.errors.resetLinkInvalid'
+              : 'auth.errors.resetGeneric',
+          ),
         );
       },
     });

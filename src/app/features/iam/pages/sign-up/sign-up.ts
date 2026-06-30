@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   HlmButton,
@@ -21,6 +22,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslocoPipe,
     HlmButton,
     HlmCard,
     HlmCardHeader,
@@ -34,14 +36,14 @@ import {
   template: `
     <div hlmCard>
       <div hlmCardHeader>
-        <h1 hlmCardTitle>Crear cuenta</h1>
-        <p hlmCardDescription>Empieza a descubrir requisitos con IA</p>
+        <h1 hlmCardTitle>{{ 'auth.signUp.title' | transloco }}</h1>
+        <p hlmCardDescription>{{ 'auth.signUp.subtitle' | transloco }}</p>
       </div>
       <div hlmCardContent>
         <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
           <div class="grid grid-cols-2 gap-3">
             <div class="flex flex-col gap-2">
-              <label hlmLabel for="firstName">Nombre</label>
+              <label hlmLabel for="firstName">{{ 'auth.fields.firstName' | transloco }}</label>
               <input
                 hlmInput
                 id="firstName"
@@ -50,36 +52,36 @@ import {
               />
             </div>
             <div class="flex flex-col gap-2">
-              <label hlmLabel for="lastName">Apellido</label>
+              <label hlmLabel for="lastName">{{ 'auth.fields.lastName' | transloco }}</label>
               <input hlmInput id="lastName" formControlName="lastName" autocomplete="family-name" />
             </div>
           </div>
 
           <div class="flex flex-col gap-2">
-            <label hlmLabel for="email">Correo electrónico</label>
+            <label hlmLabel for="email">{{ 'auth.fields.email' | transloco }}</label>
             <input
               hlmInput
               id="email"
               type="email"
               formControlName="email"
-              placeholder="tu@empresa.com"
+              placeholder="you@company.com"
               autocomplete="email"
             />
           </div>
 
           <div class="flex flex-col gap-2">
-            <label hlmLabel for="password">Contraseña</label>
+            <label hlmLabel for="password">{{ 'auth.fields.password' | transloco }}</label>
             <input
               hlmInput
               id="password"
               type="password"
               formControlName="password"
-              placeholder="Mínimo 8 caracteres"
+              [placeholder]="'auth.signUp.passwordPlaceholder' | transloco"
               autocomplete="new-password"
             />
             @if (form.controls.password.touched && form.controls.password.errors?.['minlength']) {
               <p class="text-xs text-muted-foreground">
-                La contraseña debe tener al menos 8 caracteres.
+                {{ 'auth.signUp.passwordHint' | transloco }}
               </p>
             }
           </div>
@@ -92,14 +94,14 @@ import {
             @if (loading()) {
               <hlm-spinner class="h-4 w-4" />
             }
-            Crear cuenta
+            {{ 'auth.signUp.submit' | transloco }}
           </button>
         </form>
 
         <p class="mt-6 text-center text-sm text-muted-foreground">
-          ¿Ya tienes cuenta?
+          {{ 'auth.signUp.haveAccount' | transloco }}
           <a routerLink="/auth/sign-in" class="text-primary font-medium hover:underline">
-            Iniciar sesión
+            {{ 'auth.signUp.signIn' | transloco }}
           </a>
         </p>
       </div>
@@ -110,6 +112,7 @@ export class SignUp {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -133,9 +136,9 @@ export class SignUp {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(
-          err.status === 409
-            ? 'Ya existe una cuenta con ese correo.'
-            : 'No se pudo crear la cuenta. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 409 ? 'auth.errors.emailExists' : 'auth.errors.signUpGeneric',
+          ),
         );
       },
     });

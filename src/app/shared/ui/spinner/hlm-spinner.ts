@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { cn } from '../../utils/cn';
 
 @Component({
   selector: 'hlm-spinner',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslocoPipe],
   template: `
     <svg
       [class]="_computedClass()"
@@ -11,7 +13,7 @@ import { cn } from '../../utils/cn';
       fill="none"
       viewBox="0 0 24 24"
       role="status"
-      aria-label="Cargando"
+      [attr.aria-label]="'common.loading' | transloco"
     >
       <circle
         class="opacity-25"

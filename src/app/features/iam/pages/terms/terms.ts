@@ -5,7 +5,9 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CURRENT_TERMS_VERSION } from '../../../../core/auth/terms';
 import { provideIcons } from '@ng-icons/core';
 import { lucideFileText } from '@ng-icons/lucide';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
 import { Logo } from '../../../../shared/components/logo/logo';
 import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
@@ -16,7 +18,17 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
 @Component({
   selector: 'app-terms',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ThemeToggle, Logo, HlmButton, HlmCard, HlmCardContent, HlmSpinner, HlmIcon],
+  imports: [
+    ThemeToggle,
+    LanguageSwitcher,
+    Logo,
+    HlmButton,
+    HlmCard,
+    HlmCardContent,
+    HlmSpinner,
+    HlmIcon,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideFileText })],
   template: `
     <div class="flex min-h-dvh flex-col bg-background text-foreground">
@@ -25,13 +37,14 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
       >
         <app-logo [size]="28" />
         <div class="flex items-center gap-2">
+          <app-language-switcher />
           <app-theme-toggle />
           <button
             type="button"
             (click)="signOut()"
             class="text-sm text-muted-foreground hover:text-foreground"
           >
-            Cerrar sesión
+            {{ 'userMenu.signOut' | transloco }}
           </button>
         </div>
       </header>
@@ -43,10 +56,8 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
               <hlm-icon name="lucideFileText" size="26px" />
             </span>
             <div>
-              <h1 class="text-2xl font-bold tracking-tight">Términos y Condiciones</h1>
-              <p class="mt-1 text-sm text-muted-foreground">
-                Para continuar, revisa y acepta nuestros términos de servicio.
-              </p>
+              <h1 class="text-2xl font-bold tracking-tight">{{ 'terms.title' | transloco }}</h1>
+              <p class="mt-1 text-sm text-muted-foreground">{{ 'terms.subtitle' | transloco }}</p>
             </div>
           </div>
 
@@ -55,28 +66,18 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
               <div
                 class="max-h-72 overflow-y-auto rounded-lg border border-border bg-secondary/30 p-4 text-sm leading-relaxed text-muted-foreground"
               >
+                <p class="mb-3">{{ 'terms.p1' | transloco }}</p>
                 <p class="mb-3">
-                  Al usar Reqs-AI aceptas estos términos. La plataforma procesa transcripciones de
-                  reuniones y genera artefactos de requisitos asistidos por IA; eres responsable del
-                  contenido que subes y de contar con los permisos necesarios.
+                  <span class="font-medium text-foreground">{{ 'terms.p2Label' | transloco }}</span>
+                  {{ 'terms.p2' | transloco }}
                 </p>
                 <p class="mb-3">
-                  <span class="font-medium text-foreground">Privacidad de datos.</span>
-                  Tu información se aísla por organización (tenant) y no se comparte con terceros
-                  sin tu consentimiento. Puedes solicitar la eliminación de tus datos en cualquier
-                  momento.
-                </p>
-                <p class="mb-3">
-                  <span class="font-medium text-foreground">Uso aceptable.</span>
-                  No debes usar el servicio para fines ilegales ni cargar información que infrinja
-                  derechos de terceros. El contenido generado por IA es una sugerencia y debe
-                  revisarse antes de usarse.
+                  <span class="font-medium text-foreground">{{ 'terms.p3Label' | transloco }}</span>
+                  {{ 'terms.p3' | transloco }}
                 </p>
                 <p>
-                  <span class="font-medium text-foreground">Disponibilidad.</span>
-                  Hacemos esfuerzos razonables por mantener el servicio disponible, pero se ofrece
-                  «tal cual». Estos términos pueden actualizarse; te pediremos aceptarlos de nuevo
-                  cuando cambien.
+                  <span class="font-medium text-foreground">{{ 'terms.p4Label' | transloco }}</span>
+                  {{ 'terms.p4' | transloco }}
                 </p>
               </div>
 
@@ -88,10 +89,7 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
                   [checked]="accepted()"
                   (change)="onToggle($event)"
                 />
-                <span>
-                  He leído y acepto los Términos y Condiciones y la Política de Privacidad de
-                  Reqs-AI.
-                </span>
+                <span>{{ 'terms.accept' | transloco }}</span>
               </label>
 
               @if (errorMessage()) {
@@ -110,7 +108,7 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
                 @if (loading()) {
                   <hlm-spinner class="h-4 w-4" />
                 }
-                Aceptar y continuar
+                {{ 'terms.submit' | transloco }}
               </button>
             </div>
           </div>
@@ -122,6 +120,7 @@ import { HlmButton, HlmCard, HlmCardContent, HlmIcon, HlmSpinner } from '../../.
 export class Terms {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly accepted = signal(false);
   protected readonly loading = signal(false);
@@ -140,9 +139,9 @@ export class Terms {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(
-          err.status === 401
-            ? 'Tu sesión expiró. Inicia sesión de nuevo.'
-            : 'No se pudo registrar la aceptación. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 401 ? 'terms.errorSessionExpired' : 'terms.errorGeneric',
+          ),
         );
       },
     });

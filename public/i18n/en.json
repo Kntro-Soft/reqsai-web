@@ -1,0 +1,303 @@
+{
+  "app": {
+    "title": "Reqs-AI"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "loading": "Loading"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "es": "Spanish"
+  },
+  "titles": {
+    "terms": "Terms and Conditions",
+    "organizations": "Your organizations",
+    "sessions": "Sessions",
+    "session": "Session",
+    "stories": "Stories",
+    "projectMembers": "Project members",
+    "projectSettings": "Project settings",
+    "home": "Home",
+    "onboarding": "Create organization",
+    "projects": "Projects",
+    "members": "Members",
+    "settings": "Settings",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "verifyEmail": "Verify email",
+    "forgotPassword": "Recover password",
+    "resetPassword": "New password"
+  },
+  "nav": {
+    "projects": "Projects",
+    "sessions": "Sessions",
+    "stories": "Stories",
+    "members": "Members",
+    "settings": "Settings",
+    "newSession": "New session",
+    "projectFallback": "Project",
+    "projectAria": "Project navigation",
+    "orgAria": "Organization navigation"
+  },
+  "userMenu": {
+    "ariaLabel": "User menu",
+    "personalAccount": "Personal account",
+    "organization": "Organization",
+    "createOrganization": "Create organization",
+    "signOut": "Sign out"
+  },
+  "orgSwitcher": {
+    "ariaLabel": "Switch organization",
+    "organizations": "Organizations",
+    "createOrganization": "Create organization",
+    "fallbackName": "Organization"
+  },
+  "auth": {
+    "brand": {
+      "eyebrow": "AI elicitation",
+      "headline": "Turn meetings into perfect backlogs.",
+      "subtitle": "Capture discovery sessions and let AI generate user stories and acceptance criteria live.",
+      "bullet1": "Real-time transcription and suggestions",
+      "bullet2": "Multi-organization with tenant isolation",
+      "bullet3": "Export-ready backlog"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password"
+    },
+    "errors": {
+      "invalidCredentials": "Incorrect email or password.",
+      "unverified": "Verify your email before signing in.",
+      "generic": "Could not sign in. Please try again.",
+      "emailExists": "An account with that email already exists.",
+      "signUpGeneric": "Could not create the account. Please try again.",
+      "passwordMismatch": "Passwords don't match.",
+      "resetLinkInvalid": "The link is invalid or expired. Request a new one.",
+      "resetGeneric": "Could not update the password. Please try again.",
+      "verifyLinkInvalid": "The link is invalid or expired. Resend the verification email.",
+      "verifyGeneric": "Could not verify. Please try again."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Access your Reqs-AI workspace",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Create account"
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Start discovering requirements with AI",
+      "passwordPlaceholder": "At least 8 characters",
+      "passwordHint": "Password must be at least 8 characters.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "forgot": {
+      "title": "Recover your password",
+      "subtitle": "We'll send you a link to reset it",
+      "sent": "If an account exists for that email, we've sent instructions to reset your password.",
+      "submit": "Send link",
+      "backToSignIn": "Back to sign in"
+    },
+    "reset": {
+      "title": "New password",
+      "subtitle": "Choose a password for your account",
+      "invalidLink": "The reset link is invalid. Request a new one.",
+      "requestLink": "Request link",
+      "success": "Your password was updated. You can sign in now.",
+      "goToSignIn": "Go to sign in",
+      "confirm": "Repeat password",
+      "passwordPlaceholder": "At least 8 characters",
+      "submit": "Save password"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "verifying": "Confirming your account…",
+      "successDesc": "Done! Your account is verified.",
+      "sentTo": "We sent a verification link to",
+      "yourEmail": "your email",
+      "successBody": "Account verified successfully.",
+      "goToSignIn": "Go to sign in",
+      "openLink": "Open the link in the email to activate your account. Didn't get it?",
+      "resent": "We resent the verification email.",
+      "resend": "Resend email",
+      "backToSignIn": "Back to sign in"
+    }
+  },
+  "sessions": {
+    "title": "Discovery sessions",
+    "subtitle": "Capture meetings and generate user stories with AI in real time.",
+    "new": "New session",
+    "formTitle": "New session",
+    "fieldTitle": "Title",
+    "titlePlaceholder": "Sprint 24 — Elicitation",
+    "fieldLanguage": "Language",
+    "loadError": "Could not load the sessions.",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Create a session to start capturing requirements.",
+    "createCta": "Create session",
+    "createdRelative": "created",
+    "errorValidation": "Check the session details.",
+    "errorCreate": "Could not create the session. Please try again.",
+    "status": {
+      "DRAFT": "Draft",
+      "RECORDING": "Recording",
+      "PAUSED": "Paused",
+      "STOPPED": "Stopped",
+      "PROCESSING": "Processing",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed"
+    }
+  },
+  "createOrg": {
+    "title": "Create your organization",
+    "subtitle": "Your organization is your workspace: inside it you create projects and discovery sessions.",
+    "name": "Organization name",
+    "language": "Meeting language",
+    "submit": "Create and continue",
+    "errorNameInUse": "That name is already in use. Try another.",
+    "errorGeneric": "Could not create the organization. Please try again."
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage your organization's projects and their discovery sessions.",
+    "new": "New project",
+    "formTitle": "New project",
+    "formSubtitle": "Define the stack to fine-tune AI suggestions.",
+    "name": "Name",
+    "description": "Description",
+    "programmingLanguages": "Languages (comma-separated)",
+    "frameworks": "Frameworks (comma-separated)",
+    "clientPlatforms": "Platforms (comma-separated)",
+    "databases": "Databases (comma-separated)",
+    "architecture": "Architecture",
+    "domain": "Domain",
+    "createCta": "Create project",
+    "loadError": "Could not load the projects.",
+    "emptyTitle": "No projects yet",
+    "emptyBody": "Create your first project to start discovering requirements.",
+    "errorNameInUse": "Check the data: the name might be taken.",
+    "errorGeneric": "Could not create the project. Please try again."
+  },
+  "orgPicker": {
+    "title": "Choose an organization",
+    "subtitle": "You have access to several. Pick which one to continue with.",
+    "current": "Current",
+    "meetingsIn": "Meetings in {{lang}}",
+    "createTitle": "Create organization",
+    "createSubtitle": "Start a new workspace"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "subtitle": "To continue, review and accept our terms of service.",
+    "p1": "By using Reqs-AI you accept these terms. The platform processes meeting transcripts and generates AI-assisted requirement artifacts; you are responsible for the content you upload and for having the necessary permissions.",
+    "p2Label": "Data privacy.",
+    "p2": "Your information is isolated per organization (tenant) and is not shared with third parties without your consent. You can request the deletion of your data at any time.",
+    "p3Label": "Acceptable use.",
+    "p3": "You must not use the service for illegal purposes or upload information that infringes third-party rights. AI-generated content is a suggestion and must be reviewed before use.",
+    "p4Label": "Availability.",
+    "p4": "We make reasonable efforts to keep the service available, but it is provided \"as is\". These terms may be updated; we'll ask you to accept them again when they change.",
+    "accept": "I have read and accept Reqs-AI's Terms and Conditions and Privacy Policy.",
+    "submit": "Accept and continue",
+    "errorSessionExpired": "Your session expired. Sign in again.",
+    "errorGeneric": "Could not record acceptance. Please try again."
+  },
+  "home": {
+    "greetingNamed": "Hi, {{name}}",
+    "greetingAnon": "Hi, welcome",
+    "sessionActive": "Your session is active.",
+    "onboardTitle": "Create your organization",
+    "workspaceTitle": "Workspace",
+    "onboardDesc": "You don't belong to any organization yet. Create one to get started.",
+    "workspaceDesc": "You already have an active organization. Manage your projects.",
+    "userLabel": "User",
+    "orgLabel": "Organization",
+    "createOrg": "Create organization",
+    "viewProjects": "View projects"
+  },
+  "members": {
+    "title": "Members",
+    "subtitle": "Manage who has access to this organization and with what role.",
+    "invite": "Invite member",
+    "fieldEmail": "Email",
+    "fieldName": "Name",
+    "fieldRole": "Role",
+    "placeholderEmail": "person@company.com",
+    "placeholderName": "Display name",
+    "inviteSubmit": "Invite",
+    "you": "You",
+    "removeAria": "Remove member",
+    "emptyTitle": "You haven't invited anyone yet",
+    "emptyBody": "Invite your team to collaborate in this organization.",
+    "errorAlreadyInvited": "That person is already invited.",
+    "errorInvite": "Could not send the invitation. Please try again.",
+    "role": {
+      "OWNER": "Owner",
+      "ADMIN": "Administrator",
+      "MEMBER": "Member"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "INACTIVE": "Inactive"
+    }
+  },
+  "orgSettings": {
+    "title": "Settings",
+    "subtitle": "Configure your organization and the default meeting values.",
+    "name": "Organization name",
+    "meetingLanguage": "Meeting language",
+    "audioRetention": "Audio retention (days)",
+    "audioRetentionHint": "Use -1 to keep indefinitely.",
+    "saved": "Changes saved.",
+    "save": "Save changes",
+    "errorValidation": "Check the data and try again.",
+    "errorGeneric": "Could not save the changes."
+  },
+  "projectSettings": {
+    "title": "Settings",
+    "subtitle": "Configure the project and its tech stack.",
+    "saved": "Changes saved.",
+    "save": "Save changes",
+    "errorValidation": "Check the data and try again.",
+    "errorGeneric": "Could not save the changes."
+  },
+  "projectMembers": {
+    "title": "Members",
+    "subtitle": "Who from the organization works on this project.",
+    "loading": "Loading…",
+    "loadError": "Could not load the members.",
+    "emptyTitle": "No members assigned",
+    "emptyBody": "Assign people from your organization to collaborate on this project.",
+    "fallbackName": "Member"
+  },
+  "stories": {
+    "title": "Stories",
+    "subtitle": "The project's user-story backlog.",
+    "loading": "Loading…",
+    "loadError": "Could not load the stories.",
+    "emptyTitle": "No stories yet",
+    "emptyBody": "Record a session and generate stories with AI, or create them manually.",
+    "points": "pts",
+    "as": "As",
+    "want": ", I want",
+    "benefit": ", so that",
+    "priority": {
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    }
+  }
+}

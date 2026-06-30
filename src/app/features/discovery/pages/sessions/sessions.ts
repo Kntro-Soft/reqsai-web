@@ -2,10 +2,13 @@ import { ChangeDetectionStrategy, Component, effect, inject, input, signal } fro
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { DatePipe } from '@angular/common';
 import { provideIcons } from '@ng-icons/core';
 import { lucideMic } from '@ng-icons/lucide';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryStore } from '../../data/discovery.store';
-import { statusLabel, statusVariant } from '../../data/session-ui';
+import { statusVariant } from '../../data/session-ui';
+import { FromNowPipe } from '../../../../shared/pipes/from-now.pipe';
 import {
   HlmBadge,
   HlmButton,
@@ -35,25 +38,28 @@ import {
     HlmLabel,
     HlmSpinner,
     HlmIcon,
+    DatePipe,
+    FromNowPipe,
+    TranslocoPipe,
   ],
   viewProviders: [provideIcons({ lucideMic })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">Sesiones de descubrimiento</h1>
-          <p class="text-sm text-muted-foreground">
-            Captura reuniones y genera historias de usuario con IA en tiempo real.
-          </p>
+          <h1 class="text-2xl font-bold tracking-tight">{{ 'sessions.title' | transloco }}</h1>
+          <p class="text-sm text-muted-foreground">{{ 'sessions.subtitle' | transloco }}</p>
         </div>
         <button hlmBtn type="button" (click)="showForm.set(!showForm())">
-          {{ showForm() ? 'Cancelar' : 'Nueva sesión' }}
+          {{ (showForm() ? 'common.cancel' : 'sessions.new') | transloco }}
         </button>
       </div>
 
       @if (showForm()) {
         <div hlmCard>
-          <div hlmCardHeader><h2 hlmCardTitle>Nueva sesión</h2></div>
+          <div hlmCardHeader>
+            <h2 hlmCardTitle>{{ 'sessions.formTitle' | transloco }}</h2>
+          </div>
           <div hlmCardContent>
             <form
               [formGroup]="form"
@@ -61,23 +67,23 @@ import {
               class="flex flex-col gap-4 sm:flex-row sm:items-end"
             >
               <div class="flex flex-1 flex-col gap-2">
-                <label hlmLabel for="title">Título</label>
+                <label hlmLabel for="title">{{ 'sessions.fieldTitle' | transloco }}</label>
                 <input
                   hlmInput
                   id="title"
                   formControlName="title"
-                  placeholder="Sprint 24 — Elicitación"
+                  [placeholder]="'sessions.titlePlaceholder' | transloco"
                 />
               </div>
               <div class="flex flex-col gap-2">
-                <label hlmLabel for="language">Idioma</label>
+                <label hlmLabel for="language">{{ 'sessions.fieldLanguage' | transloco }}</label>
                 <input hlmInput id="language" formControlName="language" placeholder="es-PE" />
               </div>
               <button hlmBtn type="submit" [disabled]="form.invalid || loading()">
                 @if (loading()) {
                   <hlm-spinner class="h-4 w-4" />
                 }
-                Crear
+                {{ 'common.create' | transloco }}
               </button>
             </form>
             @if (errorMessage()) {
@@ -94,7 +100,7 @@ import {
           <div class="flex justify-center py-10"><hlm-spinner class="h-6 w-6" /></div>
         }
         @case ('error') {
-          <p class="text-sm text-destructive">No se pudieron cargar las sesiones.</p>
+          <p class="text-sm text-destructive">{{ 'sessions.loadError' | transloco }}</p>
         }
         @default {
           @if (store.sessions().length === 0 && !showForm()) {
@@ -107,13 +113,11 @@ import {
                 <hlm-icon name="lucideMic" size="22px" />
               </span>
               <div>
-                <p class="font-medium">Aún no hay sesiones</p>
-                <p class="text-sm text-muted-foreground">
-                  Crea una sesión para empezar a capturar requisitos.
-                </p>
+                <p class="font-medium">{{ 'sessions.emptyTitle' | transloco }}</p>
+                <p class="text-sm text-muted-foreground">{{ 'sessions.emptyBody' | transloco }}</p>
               </div>
               <button hlmBtn size="sm" type="button" (click)="showForm.set(true)">
-                Crear sesión
+                {{ 'sessions.createCta' | transloco }}
               </button>
             </div>
           } @else {
@@ -133,12 +137,16 @@ import {
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate font-medium">{{ session.title }}</span>
-                      <span class="block truncate text-sm text-muted-foreground">{{
-                        session.language
-                      }}</span>
+                      <span
+                        class="block truncate text-sm text-muted-foreground"
+                        [title]="session.createdAt | date: 'medium'"
+                      >
+                        {{ session.language }} · {{ 'sessions.createdRelative' | transloco }}
+                        {{ session.createdAt | fromNow }}
+                      </span>
                     </span>
                     <span hlmBadge [variant]="statusVariant(session.status)">
-                      {{ statusLabel(session.status) }}
+                      {{ 'sessions.status.' + session.status | transloco }}
                     </span>
                   </a>
                 </li>
@@ -153,11 +161,11 @@ import {
 export class Sessions {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
   protected readonly store = inject(DiscoveryStore);
 
   readonly projectId = input.required<string>();
   protected readonly statusVariant = statusVariant;
-  protected readonly statusLabel = statusLabel;
 
   protected readonly showForm = signal(false);
   protected readonly loading = signal(false);
@@ -182,9 +190,9 @@ export class Sessions {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(
-          err.status === 400
-            ? 'Revisa los datos de la sesión.'
-            : 'No se pudo crear la sesión. Intenta de nuevo.',
+          this.transloco.translate(
+            err.status === 400 ? 'sessions.errorValidation' : 'sessions.errorCreate',
+          ),
         );
       },
     });

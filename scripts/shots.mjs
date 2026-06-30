@@ -18,7 +18,7 @@ async function cap(page, name) {
 }
 
 async function ctxAt(width, height) {
-  const ctx = await browser.newContext({ viewport: { width, height } });
+  const ctx = await browser.newContext({ viewport: { width, height }, locale: 'es-PE' });
   return { ctx, page: await ctx.newPage() };
 }
 

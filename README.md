@@ -29,7 +29,7 @@ bun start        # dev-server con HMR → http://localhost:4200
 |-------------------|-------------------------------------------------------|
 | `bun start`       | Dev-server (Vite, HMR, proxy al backend)              |
 | `bun run build`   | Build de producción (esbuild, tree-shaking, hashing)  |
-| `bun test`        | Unit tests con Vitest (Chromium headless)             |
+| `bun run test`    | Unit tests con Vitest (Chromium headless)             |
 | `bun run lint`    | ESLint + angular-eslint (TS + templates)              |
 | `bun run e2e`     | Tests e2e con Playwright                              |
 | `bun run knip`    | Detecta exports, archivos y deps sin uso              |

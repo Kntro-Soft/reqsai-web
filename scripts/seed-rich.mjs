@@ -15,7 +15,10 @@ const api = await pwRequest.newContext({ baseURL: BASE });
 const auth = (t) => ({ headers: { ...V1, Authorization: `Bearer ${t}` } });
 const uniq = Date.now().toString(36);
 const slug = (name, i) =>
-  `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${uniq}${i}`;
+  `${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}-${uniq}${i}`;
 
 async function user(prefix, first, last) {
   const email = `${prefix}.${uniq}@reqsai.test`;
@@ -31,34 +34,62 @@ async function user(prefix, first, last) {
     );
     if (hit) {
       const msg = await (await api.get(`${MP}/api/v1/message/${hit.ID}`)).json();
-      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(/verify-email\?token=([A-Za-z0-9._~-]+)/);
+      const mt = `${msg.Text ?? ''} ${msg.HTML ?? ''}`.match(
+        /verify-email\?token=([A-Za-z0-9._~-]+)/,
+      );
       if (mt) token = mt[1];
     }
     if (!token) await new Promise((r) => setTimeout(r, 500));
   }
   await api.post('/api/auth/verify-email', { headers: V1, data: { token } });
-  const res = await (await api.post('/api/auth/login', { headers: V1, data: { email, password: PASSWORD } })).json();
-  await api.post('/api/users/me/terms', { ...auth(res.accessToken), data: { termsVersion: '2026-01' } });
+  const res = await (
+    await api.post('/api/auth/login', { headers: V1, data: { email, password: PASSWORD } })
+  ).json();
+  await api.post('/api/users/me/terms', {
+    ...auth(res.accessToken),
+    data: { termsVersion: '2026-01' },
+  });
   return { email, token: res.accessToken, id: res.user.id };
 }
 async function createOrg(token, name, i) {
-  return (await (await api.post('/api/organizations', { ...auth(token), data: { name, slug: slug(name, i) } })).json()).id;
+  return (
+    await (
+      await api.post('/api/organizations', { ...auth(token), data: { name, slug: slug(name, i) } })
+    ).json()
+  ).id;
 }
 async function activate(u, orgId) {
   // Re-login (not the shared rt cookie) so the new token is for the right user.
-  await api.patch('/api/users/me/preferences', { ...auth(u.token), data: { lastVisitedOrgId: orgId } });
-  const res = await (await api.post('/api/auth/login', { headers: V1, data: { email: u.email, password: PASSWORD } })).json();
+  await api.patch('/api/users/me/preferences', {
+    ...auth(u.token),
+    data: { lastVisitedOrgId: orgId },
+  });
+  const res = await (
+    await api.post('/api/auth/login', { headers: V1, data: { email: u.email, password: PASSWORD } })
+  ).json();
   return res.accessToken;
 }
 async function createProject(token, orgId, spec) {
-  return (await (await api.post(`/api/organizations/${orgId}/projects`, { ...auth(token), data: spec })).json()).id;
+  return (
+    await (
+      await api.post(`/api/organizations/${orgId}/projects`, { ...auth(token), data: spec })
+    ).json()
+  ).id;
 }
 async function createStory(token, projectId, s) {
   await api.post(`/api/projects/${projectId}/stories`, { ...auth(token), data: s });
 }
 async function createSession(token, projectId, title, steps) {
-  const id = (await (await api.post(`/api/projects/${projectId}/sessions`, { ...auth(token), data: { title, language: 'es-PE' } })).json()).id;
-  for (const step of steps) await api.post(`/api/projects/${projectId}/sessions/${id}/${step}`, auth(token));
+  const id = (
+    await (
+      await api.post(`/api/projects/${projectId}/sessions`, {
+        ...auth(token),
+        data: { title, language: 'es-PE' },
+      })
+    ).json()
+  ).id;
+  for (const step of steps)
+    await api.post(`/api/projects/${projectId}/sessions/${id}/${step}`, auth(token));
 }
 async function invite(token, orgId, u, role) {
   await api.post(`/api/organizations/${orgId}/members`, {
@@ -68,19 +99,101 @@ async function invite(token, orgId, u, role) {
 }
 
 const PROJECTS = [
-  { name: 'Plataforma de Pagos', programmingLanguages: ['Java'], frameworks: ['Spring Boot'], clientPlatforms: ['Web'], databases: ['PostgreSQL'], architecture: 'Hexagonal', domain: 'Fintech' },
-  { name: 'App Móvil Banca', programmingLanguages: ['Kotlin'], frameworks: ['Android'], clientPlatforms: ['Mobile'], databases: ['SQLite'], architecture: 'MVVM', domain: 'Fintech' },
-  { name: 'Portal de Clientes', programmingLanguages: ['TypeScript'], frameworks: ['Angular'], clientPlatforms: ['Web'], databases: ['PostgreSQL'], architecture: 'Hexagonal', domain: 'SaaS' },
-  { name: 'Motor de Riesgos', programmingLanguages: ['Python'], frameworks: ['FastAPI'], clientPlatforms: ['API'], databases: ['Redis'], architecture: 'Event-Driven', domain: 'Riesgos' },
-  { name: 'Data Pipeline', programmingLanguages: ['Scala'], frameworks: ['Spark'], clientPlatforms: ['Batch'], databases: ['Kafka'], architecture: 'Streaming', domain: 'Datos' },
+  {
+    name: 'Plataforma de Pagos',
+    programmingLanguages: ['Java'],
+    frameworks: ['Spring Boot'],
+    clientPlatforms: ['Web'],
+    databases: ['PostgreSQL'],
+    architecture: 'Hexagonal',
+    domain: 'Fintech',
+  },
+  {
+    name: 'App Móvil Banca',
+    programmingLanguages: ['Kotlin'],
+    frameworks: ['Android'],
+    clientPlatforms: ['Mobile'],
+    databases: ['SQLite'],
+    architecture: 'MVVM',
+    domain: 'Fintech',
+  },
+  {
+    name: 'Portal de Clientes',
+    programmingLanguages: ['TypeScript'],
+    frameworks: ['Angular'],
+    clientPlatforms: ['Web'],
+    databases: ['PostgreSQL'],
+    architecture: 'Hexagonal',
+    domain: 'SaaS',
+  },
+  {
+    name: 'Motor de Riesgos',
+    programmingLanguages: ['Python'],
+    frameworks: ['FastAPI'],
+    clientPlatforms: ['API'],
+    databases: ['Redis'],
+    architecture: 'Event-Driven',
+    domain: 'Riesgos',
+  },
+  {
+    name: 'Data Pipeline',
+    programmingLanguages: ['Scala'],
+    frameworks: ['Spark'],
+    clientPlatforms: ['Batch'],
+    databases: ['Kafka'],
+    architecture: 'Streaming',
+    domain: 'Datos',
+  },
 ];
 const STORIES = [
-  { title: 'Gestionar tarjetas guardadas', role: 'cliente', action: 'guardar varias tarjetas y reutilizar la última', benefit: 'pagar más rápido', priority: 'HIGH', storyPoints: 3 },
-  { title: 'Notificaciones de pago', role: 'cliente', action: 'recibir un aviso cuando se procese un pago', benefit: 'estar al tanto en tiempo real', priority: 'MEDIUM', storyPoints: 2 },
-  { title: 'Reembolsos parciales', role: 'operador', action: 'emitir reembolsos parciales', benefit: 'corregir cobros erróneos', priority: 'HIGH', storyPoints: 5 },
-  { title: 'Panel de conciliación', role: 'contador', action: 'ver una conciliación diaria', benefit: 'cuadrar las cuentas', priority: 'MEDIUM', storyPoints: 8 },
-  { title: 'Pago en cuotas', role: 'cliente', action: 'pagar en cuotas', benefit: 'distribuir el gasto', priority: 'LOW', storyPoints: 5 },
-  { title: 'Detección de fraude', role: 'sistema', action: 'marcar transacciones sospechosas', benefit: 'reducir el fraude', priority: 'HIGH', storyPoints: 13 },
+  {
+    title: 'Gestionar tarjetas guardadas',
+    role: 'cliente',
+    action: 'guardar varias tarjetas y reutilizar la última',
+    benefit: 'pagar más rápido',
+    priority: 'HIGH',
+    storyPoints: 3,
+  },
+  {
+    title: 'Notificaciones de pago',
+    role: 'cliente',
+    action: 'recibir un aviso cuando se procese un pago',
+    benefit: 'estar al tanto en tiempo real',
+    priority: 'MEDIUM',
+    storyPoints: 2,
+  },
+  {
+    title: 'Reembolsos parciales',
+    role: 'operador',
+    action: 'emitir reembolsos parciales',
+    benefit: 'corregir cobros erróneos',
+    priority: 'HIGH',
+    storyPoints: 5,
+  },
+  {
+    title: 'Panel de conciliación',
+    role: 'contador',
+    action: 'ver una conciliación diaria',
+    benefit: 'cuadrar las cuentas',
+    priority: 'MEDIUM',
+    storyPoints: 8,
+  },
+  {
+    title: 'Pago en cuotas',
+    role: 'cliente',
+    action: 'pagar en cuotas',
+    benefit: 'distribuir el gasto',
+    priority: 'LOW',
+    storyPoints: 5,
+  },
+  {
+    title: 'Detección de fraude',
+    role: 'sistema',
+    action: 'marcar transacciones sospechosas',
+    benefit: 'reducir el fraude',
+    priority: 'HIGH',
+    storyPoints: 13,
+  },
 ];
 const SESSIONS = [
   ['Kickoff con stakeholders', ['start', 'stop']],
@@ -121,7 +234,7 @@ console.log('  Marco (miembro de Acme):', marco.email);
 
 // ---- Capture every flow (dark, desktop) ----
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-PE' });
 await ctx.addInitScript(() => localStorage.setItem('theme', 'dark'));
 const page = await ctx.newPage();
 const shots = [];

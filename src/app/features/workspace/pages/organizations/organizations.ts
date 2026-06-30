@@ -9,6 +9,7 @@ import { Logo } from '../../../../shared/components/logo/logo';
 import { UserMenu } from '../../../../shared/components/user-menu/user-menu';
 import { provideIcons } from '@ng-icons/core';
 import { lucideBuilding2, lucideChevronRight, lucidePlus } from '@ng-icons/lucide';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -19,7 +20,7 @@ import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
 @Component({
   selector: 'app-organizations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ThemeToggle, Logo, UserMenu, HlmSpinner, HlmIcon],
+  imports: [ThemeToggle, Logo, UserMenu, HlmSpinner, HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideBuilding2, lucideChevronRight, lucidePlus })],
   template: `
     <div class="flex min-h-dvh flex-col bg-background text-foreground">
@@ -36,10 +37,10 @@ import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
       <main class="flex flex-1 items-center justify-center px-4 py-10">
         <div class="flex w-full max-w-3xl flex-col gap-8">
           <div class="flex flex-col items-center gap-2 text-center">
-            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">Elige una organización</h1>
-            <p class="text-sm text-muted-foreground">
-              Tienes acceso a varias. Selecciona con cuál quieres continuar.
-            </p>
+            <h1 class="text-2xl font-bold tracking-tight md:text-3xl">
+              {{ 'orgPicker.title' | transloco }}
+            </h1>
+            <p class="text-sm text-muted-foreground">{{ 'orgPicker.subtitle' | transloco }}</p>
           </div>
 
           <div class="grid gap-3 sm:grid-cols-2">
@@ -63,12 +64,12 @@ import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       <span
                         class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary"
                       >
-                        Actual
+                        {{ 'orgPicker.current' | transloco }}
                       </span>
                     }
                   </span>
                   <span class="mt-0.5 block truncate text-xs text-muted-foreground">
-                    Reuniones en {{ org.meetingLanguage }}
+                    {{ 'orgPicker.meetingsIn' | transloco: { lang: org.meetingLanguage } }}
                   </span>
                 </span>
                 @if (switching() === org.id) {
@@ -94,8 +95,12 @@ import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 <hlm-icon name="lucidePlus" size="22px" />
               </span>
               <span class="min-w-0 flex-1">
-                <span class="block font-semibold text-foreground">Crear organización</span>
-                <span class="mt-0.5 block text-xs">Empieza un nuevo espacio de trabajo</span>
+                <span class="block font-semibold text-foreground">
+                  {{ 'orgPicker.createTitle' | transloco }}
+                </span>
+                <span class="mt-0.5 block text-xs">{{
+                  'orgPicker.createSubtitle' | transloco
+                }}</span>
               </span>
             </button>
           </div>

@@ -1,0 +1,303 @@
+{
+  "app": {
+    "title": "Reqs-AI"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "loading": "Cargando"
+  },
+  "language": {
+    "label": "Idioma",
+    "en": "Inglés",
+    "es": "Español"
+  },
+  "titles": {
+    "terms": "Términos y Condiciones",
+    "organizations": "Tus organizaciones",
+    "sessions": "Sesiones",
+    "session": "Sesión",
+    "stories": "Historias",
+    "projectMembers": "Miembros del proyecto",
+    "projectSettings": "Ajustes del proyecto",
+    "home": "Inicio",
+    "onboarding": "Crear organización",
+    "projects": "Proyectos",
+    "members": "Miembros",
+    "settings": "Ajustes",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "verifyEmail": "Verificar correo",
+    "forgotPassword": "Recuperar contraseña",
+    "resetPassword": "Nueva contraseña"
+  },
+  "nav": {
+    "projects": "Proyectos",
+    "sessions": "Sesiones",
+    "stories": "Historias",
+    "members": "Miembros",
+    "settings": "Ajustes",
+    "newSession": "Nueva sesión",
+    "projectFallback": "Proyecto",
+    "projectAria": "Navegación del proyecto",
+    "orgAria": "Navegación de la organización"
+  },
+  "userMenu": {
+    "ariaLabel": "Menú de usuario",
+    "personalAccount": "Cuenta personal",
+    "organization": "Organización",
+    "createOrganization": "Crear organización",
+    "signOut": "Cerrar sesión"
+  },
+  "orgSwitcher": {
+    "ariaLabel": "Cambiar organización",
+    "organizations": "Organizaciones",
+    "createOrganization": "Crear organización",
+    "fallbackName": "Organización"
+  },
+  "auth": {
+    "brand": {
+      "eyebrow": "Elicitación con IA",
+      "headline": "Transforma reuniones en backlogs perfectos.",
+      "subtitle": "Captura sesiones de descubrimiento y deja que la IA genere historias de usuario y criterios de aceptación en vivo.",
+      "bullet1": "Transcripción y sugerencias en tiempo real",
+      "bullet2": "Multi-organización con aislamiento por tenant",
+      "bullet3": "Backlog listo para exportar"
+    },
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo electrónico",
+      "password": "Contraseña"
+    },
+    "errors": {
+      "invalidCredentials": "Correo o contraseña incorrectos.",
+      "unverified": "Verifica tu correo antes de iniciar sesión.",
+      "generic": "No se pudo iniciar sesión. Intenta de nuevo.",
+      "emailExists": "Ya existe una cuenta con ese correo.",
+      "signUpGeneric": "No se pudo crear la cuenta. Intenta de nuevo.",
+      "passwordMismatch": "Las contraseñas no coinciden.",
+      "resetLinkInvalid": "El enlace es inválido o expiró. Solicita uno nuevo.",
+      "resetGeneric": "No se pudo actualizar la contraseña. Intenta de nuevo.",
+      "verifyLinkInvalid": "El enlace es inválido o expiró. Reenvía el correo de verificación.",
+      "verifyGeneric": "No se pudo verificar. Intenta de nuevo."
+    },
+    "signIn": {
+      "title": "Iniciar sesión",
+      "subtitle": "Accede a tu espacio de trabajo de Reqs-AI",
+      "submit": "Entrar",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes cuenta?",
+      "signUp": "Crear cuenta"
+    },
+    "signUp": {
+      "title": "Crear cuenta",
+      "subtitle": "Empieza a descubrir requisitos con IA",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "passwordHint": "La contraseña debe tener al menos 8 caracteres.",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Iniciar sesión"
+    },
+    "forgot": {
+      "title": "Recupera tu contraseña",
+      "subtitle": "Te enviaremos un enlace para restablecerla",
+      "sent": "Si existe una cuenta con ese correo, te enviamos instrucciones para restablecer tu contraseña.",
+      "submit": "Enviar enlace",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "reset": {
+      "title": "Nueva contraseña",
+      "subtitle": "Elige una contraseña para tu cuenta",
+      "invalidLink": "El enlace de restablecimiento es inválido. Solicita uno nuevo.",
+      "requestLink": "Solicitar enlace",
+      "success": "Tu contraseña se actualizó. Ya puedes iniciar sesión.",
+      "goToSignIn": "Ir a iniciar sesión",
+      "confirm": "Repite la contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "submit": "Guardar contraseña"
+    },
+    "verify": {
+      "title": "Verifica tu correo",
+      "verifying": "Confirmando tu cuenta…",
+      "successDesc": "¡Listo! Tu cuenta está verificada.",
+      "sentTo": "Te enviamos un enlace de verificación a",
+      "yourEmail": "tu correo",
+      "successBody": "Cuenta verificada correctamente.",
+      "goToSignIn": "Ir a iniciar sesión",
+      "openLink": "Abre el enlace del correo para activar tu cuenta. ¿No lo recibiste?",
+      "resent": "Te reenviamos el correo de verificación.",
+      "resend": "Reenviar correo",
+      "backToSignIn": "Volver a iniciar sesión"
+    }
+  },
+  "sessions": {
+    "title": "Sesiones de descubrimiento",
+    "subtitle": "Captura reuniones y genera historias de usuario con IA en tiempo real.",
+    "new": "Nueva sesión",
+    "formTitle": "Nueva sesión",
+    "fieldTitle": "Título",
+    "titlePlaceholder": "Sprint 24 — Elicitación",
+    "fieldLanguage": "Idioma",
+    "loadError": "No se pudieron cargar las sesiones.",
+    "emptyTitle": "Aún no hay sesiones",
+    "emptyBody": "Crea una sesión para empezar a capturar requisitos.",
+    "createCta": "Crear sesión",
+    "createdRelative": "creada",
+    "errorValidation": "Revisa los datos de la sesión.",
+    "errorCreate": "No se pudo crear la sesión. Intenta de nuevo.",
+    "status": {
+      "DRAFT": "Borrador",
+      "RECORDING": "Grabando",
+      "PAUSED": "Pausada",
+      "STOPPED": "Detenida",
+      "PROCESSING": "Procesando",
+      "COMPLETED": "Completada",
+      "FAILED": "Fallida"
+    }
+  },
+  "createOrg": {
+    "title": "Crea tu organización",
+    "subtitle": "Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de descubrimiento.",
+    "name": "Nombre de la organización",
+    "language": "Idioma de reuniones",
+    "submit": "Crear y continuar",
+    "errorNameInUse": "Ese nombre ya está en uso. Prueba con otro.",
+    "errorGeneric": "No se pudo crear la organización. Intenta de nuevo."
+  },
+  "projects": {
+    "title": "Proyectos",
+    "subtitle": "Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.",
+    "new": "Nuevo proyecto",
+    "formTitle": "Nuevo proyecto",
+    "formSubtitle": "Define el stack para afinar las sugerencias de la IA.",
+    "name": "Nombre",
+    "description": "Descripción",
+    "programmingLanguages": "Lenguajes (coma)",
+    "frameworks": "Frameworks (coma)",
+    "clientPlatforms": "Plataformas (coma)",
+    "databases": "Bases de datos (coma)",
+    "architecture": "Arquitectura",
+    "domain": "Dominio",
+    "createCta": "Crear proyecto",
+    "loadError": "No se pudieron cargar los proyectos.",
+    "emptyTitle": "Aún no hay proyectos",
+    "emptyBody": "Crea tu primer proyecto para empezar a descubrir requisitos.",
+    "errorNameInUse": "Revisa los datos: el nombre podría estar repetido.",
+    "errorGeneric": "No se pudo crear el proyecto. Intenta de nuevo."
+  },
+  "orgPicker": {
+    "title": "Elige una organización",
+    "subtitle": "Tienes acceso a varias. Selecciona con cuál quieres continuar.",
+    "current": "Actual",
+    "meetingsIn": "Reuniones en {{lang}}",
+    "createTitle": "Crear organización",
+    "createSubtitle": "Empieza un nuevo espacio de trabajo"
+  },
+  "terms": {
+    "title": "Términos y Condiciones",
+    "subtitle": "Para continuar, revisa y acepta nuestros términos de servicio.",
+    "p1": "Al usar Reqs-AI aceptas estos términos. La plataforma procesa transcripciones de reuniones y genera artefactos de requisitos asistidos por IA; eres responsable del contenido que subes y de contar con los permisos necesarios.",
+    "p2Label": "Privacidad de datos.",
+    "p2": "Tu información se aísla por organización (tenant) y no se comparte con terceros sin tu consentimiento. Puedes solicitar la eliminación de tus datos en cualquier momento.",
+    "p3Label": "Uso aceptable.",
+    "p3": "No debes usar el servicio para fines ilegales ni cargar información que infrinja derechos de terceros. El contenido generado por IA es una sugerencia y debe revisarse antes de usarse.",
+    "p4Label": "Disponibilidad.",
+    "p4": "Hacemos esfuerzos razonables por mantener el servicio disponible, pero se ofrece «tal cual». Estos términos pueden actualizarse; te pediremos aceptarlos de nuevo cuando cambien.",
+    "accept": "He leído y acepto los Términos y Condiciones y la Política de Privacidad de Reqs-AI.",
+    "submit": "Aceptar y continuar",
+    "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
+  },
+  "home": {
+    "greetingNamed": "Hola, {{name}}",
+    "greetingAnon": "Hola, bienvenido",
+    "sessionActive": "Tu sesión está activa.",
+    "onboardTitle": "Crea tu organización",
+    "workspaceTitle": "Espacio de trabajo",
+    "onboardDesc": "Aún no perteneces a ninguna organización. Crea una para empezar.",
+    "workspaceDesc": "Ya tienes una organización activa. Gestiona tus proyectos.",
+    "userLabel": "Usuario",
+    "orgLabel": "Organización",
+    "createOrg": "Crear organización",
+    "viewProjects": "Ver proyectos"
+  },
+  "members": {
+    "title": "Miembros",
+    "subtitle": "Gestiona quién tiene acceso a esta organización y con qué rol.",
+    "invite": "Invitar miembro",
+    "fieldEmail": "Correo",
+    "fieldName": "Nombre",
+    "fieldRole": "Rol",
+    "placeholderEmail": "persona@empresa.com",
+    "placeholderName": "Nombre visible",
+    "inviteSubmit": "Invitar",
+    "you": "Tú",
+    "removeAria": "Quitar miembro",
+    "emptyTitle": "Aún no has invitado a nadie",
+    "emptyBody": "Invita a tu equipo para colaborar en esta organización.",
+    "errorAlreadyInvited": "Esa persona ya está invitada.",
+    "errorInvite": "No se pudo enviar la invitación. Intenta de nuevo.",
+    "role": {
+      "OWNER": "Propietario",
+      "ADMIN": "Administrador",
+      "MEMBER": "Miembro"
+    },
+    "status": {
+      "ACTIVE": "Activo",
+      "PENDING": "Pendiente",
+      "INACTIVE": "Inactivo"
+    }
+  },
+  "orgSettings": {
+    "title": "Ajustes",
+    "subtitle": "Configura tu organización y los valores por defecto de las reuniones.",
+    "name": "Nombre de la organización",
+    "meetingLanguage": "Idioma de reuniones",
+    "audioRetention": "Retención de audio (días)",
+    "audioRetentionHint": "Usa -1 para conservar sin límite.",
+    "saved": "Cambios guardados.",
+    "save": "Guardar cambios",
+    "errorValidation": "Revisa los datos e intenta de nuevo.",
+    "errorGeneric": "No se pudieron guardar los cambios."
+  },
+  "projectSettings": {
+    "title": "Ajustes",
+    "subtitle": "Configura el proyecto y su stack técnico.",
+    "saved": "Cambios guardados.",
+    "save": "Guardar cambios",
+    "errorValidation": "Revisa los datos e intenta de nuevo.",
+    "errorGeneric": "No se pudieron guardar los cambios."
+  },
+  "projectMembers": {
+    "title": "Miembros",
+    "subtitle": "Quién de la organización trabaja en este proyecto.",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar los miembros.",
+    "emptyTitle": "Sin miembros asignados",
+    "emptyBody": "Asigna personas de tu organización para que colaboren en este proyecto.",
+    "fallbackName": "Miembro"
+  },
+  "stories": {
+    "title": "Historias",
+    "subtitle": "El backlog de historias de usuario del proyecto.",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar las historias.",
+    "emptyTitle": "Aún no hay historias",
+    "emptyBody": "Graba una sesión y genera historias con la IA, o créalas manualmente.",
+    "points": "pts",
+    "as": "Como",
+    "want": ", quiero",
+    "benefit": ", para",
+    "priority": {
+      "HIGH": "Alta",
+      "MEDIUM": "Media",
+      "LOW": "Baja"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "APPROVED": "Aprobada",
+      "REJECTED": "Rechazada"
+    }
+  }
+}
