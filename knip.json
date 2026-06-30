@@ -4,8 +4,7 @@
     "src/app/app.css",
     "src/styles.css",
     "src/app/shared/ui/index.ts",
-    "src/environments/environment.ts",
-    "transloco.config.ts"
+    "src/environments/environment.ts"
   ],
   "ignore": ["proxy.conf.js"],
   "ignoreDependencies": [

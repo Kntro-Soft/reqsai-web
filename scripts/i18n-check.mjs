@@ -5,10 +5,11 @@
  * added to one language but forgotten in another fails the build instead of
  * silently shipping a raw key to users.
  *
- * Deterministic on purpose: the transloco-keys-manager detective can't see this
- * app's dynamic keys (`'nav.' + seg`) or inline-template pipe usages reliably, so
- * a static key-parity check is the trustworthy guarantee. Use `bun run i18n:extract`
- * locally to scaffold new keys with the keys-manager.
+ * Deterministic on purpose: this app builds many keys dynamically (`'nav.' + seg`,
+ * route-title keys), which a usage-scanning tool can't follow without per-key
+ * markers. A static key-parity check needs no such annotations and reliably catches
+ * the common bug — a key added to one locale but not the others. When you add a key,
+ * add it to every file under public/i18n.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
