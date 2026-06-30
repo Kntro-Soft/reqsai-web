@@ -31,7 +31,7 @@ const MAX_AVATAR_BYTES = 1_000_000;
   ],
   viewProviders: [provideIcons({ lucideMonitor, lucideSun, lucideMoon, lucideUpload })],
   template: `
-    <div class="flex max-w-3xl flex-col gap-6">
+    <div class="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">{{ 'account.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">{{ 'account.subtitle' | transloco }}</p>

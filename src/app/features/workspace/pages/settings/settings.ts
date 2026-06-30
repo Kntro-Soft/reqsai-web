@@ -18,7 +18,7 @@ type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, HlmButton, HlmCard, HlmInput, HlmLabel, HlmSpinner, TranslocoPipe],
   template: `
-    <div class="flex max-w-3xl flex-col gap-6">
+    <div class="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">{{ 'orgSettings.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">{{ 'orgSettings.subtitle' | transloco }}</p>
