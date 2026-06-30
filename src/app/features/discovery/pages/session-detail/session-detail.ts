@@ -4,6 +4,7 @@ import {
   DestroyRef,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -11,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RealtimeService } from '../../../../core/realtime/realtime.service';
 import { DiscoveryStore } from '../../data/discovery.store';
+import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import {
   AcceptSuggestionRequest,
   DisplayStory,
@@ -348,9 +350,9 @@ type Action = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
           </button>
           <input #picker type="file" accept="audio/*" class="hidden" (change)="upload($event)" />
         </div>
-        @if (session.processingError) {
+        @if (session.processingError || audioRecorder.error()) {
           <p class="mx-auto mt-2 max-w-5xl text-sm text-destructive">
-            {{ session.processingError }}
+            {{ session.processingError || audioRecorder.error() }}
           </p>
         }
       </div>
@@ -363,6 +365,20 @@ export class SessionDetail implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly realtime = inject(RealtimeService);
   protected readonly store = inject(DiscoveryStore);
+  protected readonly audioRecorder = inject(AudioRecorderService);
+
+  constructor() {
+    effect(() => {
+      const isRecording = this.recording();
+      const sessionId = this.sessionId();
+
+      if (isRecording) {
+        void this.audioRecorder.startStreaming(sessionId);
+      } else {
+        this.audioRecorder.stopStreaming();
+      }
+    });
+  }
 
   readonly projectId = input.required<string>();
   readonly sessionId = input.required<string>();
@@ -386,6 +402,10 @@ export class SessionDetail implements OnInit {
       .watch<SessionRealtimeMessage>(`sessions/${this.sessionId()}`)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((message) => this.store.applyRealtime(message));
+
+    this.destroyRef.onDestroy(() => {
+      this.audioRecorder.stopStreaming();
+    });
   }
 
   protected label(type: SessionRealtimeMessage['type']): string {
@@ -408,8 +428,16 @@ export class SessionDetail implements OnInit {
     this.approved.update((set) => new Set(set).add(id));
   }
 
-  protected run(action: Action): void {
+  protected async run(action: Action): Promise<void> {
     if (this.busy()) return;
+
+    if (action === 'start' || action === 'resume') {
+      const hasPermission = await this.audioRecorder.requestPermission();
+      if (!hasPermission) {
+        return;
+      }
+    }
+
     this.busy.set(true);
     this.store.transition(this.projectId(), this.sessionId(), action).subscribe({
       next: () => this.busy.set(false),
