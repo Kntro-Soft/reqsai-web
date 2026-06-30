@@ -450,13 +450,68 @@
     "errorGeneric": "Could not save the changes."
   },
   "projectMembers": {
-    "title": "Members",
-    "subtitle": "Who from the organization works on this project.",
+    "title": "Members & roles",
+    "subtitle": "Define project roles and assign people from your organization.",
     "loading": "Loading…",
     "loadError": "Could not load the members.",
+    "rolesTitle": "Roles",
+    "rolesDesc": "Roles bundle the permissions a member has on this project.",
+    "rolesEmpty": "No roles yet. Create one to start assigning members.",
+    "addRole": "New role",
+    "roleName": "Role name",
+    "roleNamePlaceholder": "e.g. Lead analyst",
+    "permissionsLabel": "Permissions",
+    "noPermissions": "No permissions",
+    "editRoleAria": "Edit role",
+    "deleteRoleAria": "Delete role",
+    "errorRoleSave": "Could not save the role. Please try again.",
+    "errorRoleNameInUse": "A role with that name already exists.",
+    "errorRoleDelete": "Could not delete the role. Please try again.",
+    "errorRoleInUse": "This role is assigned to members. Reassign them first.",
+    "assignTitle": "Project members",
+    "assignDesc": "Assign organization members to a project role.",
+    "fieldMember": "Member",
+    "fieldRole": "Role",
+    "assign": "Assign",
+    "errorAssign": "Could not assign the member. Please try again.",
+    "removeAria": "Remove member",
     "emptyTitle": "No members assigned",
     "emptyBody": "Assign people from your organization to collaborate on this project.",
     "fallbackName": "Member"
+  },
+  "permissions": {
+    "READ_PROJECT": {
+      "label": "Read project",
+      "desc": "View the project, its sessions and stories."
+    },
+    "WRITE_PROJECT": {
+      "label": "Edit project",
+      "desc": "Edit project details and content."
+    },
+    "MANAGE_MEMBERS": {
+      "label": "Manage members",
+      "desc": "Assign and remove project members."
+    },
+    "MANAGE_ROLES": {
+      "label": "Manage roles",
+      "desc": "Create, edit and delete project roles."
+    },
+    "UPLOAD_DOCUMENTS": {
+      "label": "Upload documents",
+      "desc": "Upload reference documents to the project."
+    },
+    "MANAGE_GLOSSARY": {
+      "label": "Manage glossary",
+      "desc": "Maintain the project glossary."
+    },
+    "RUN_DISCOVERY": {
+      "label": "Run discovery",
+      "desc": "Start and run discovery sessions."
+    },
+    "MANAGE_INTEGRATIONS": {
+      "label": "Manage integrations",
+      "desc": "Configure the project's integrations."
+    }
   },
   "stories": {
     "title": "Stories",

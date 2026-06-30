@@ -450,13 +450,68 @@
     "errorGeneric": "No se pudieron guardar los cambios."
   },
   "projectMembers": {
-    "title": "Miembros",
-    "subtitle": "Quién de la organización trabaja en este proyecto.",
+    "title": "Miembros y roles",
+    "subtitle": "Define los roles del proyecto y asigna personas de tu organización.",
     "loading": "Cargando…",
     "loadError": "No se pudieron cargar los miembros.",
+    "rolesTitle": "Roles",
+    "rolesDesc": "Los roles agrupan los permisos que tiene un miembro en este proyecto.",
+    "rolesEmpty": "Aún no hay roles. Crea uno para empezar a asignar miembros.",
+    "addRole": "Nuevo rol",
+    "roleName": "Nombre del rol",
+    "roleNamePlaceholder": "p. ej. Analista líder",
+    "permissionsLabel": "Permisos",
+    "noPermissions": "Sin permisos",
+    "editRoleAria": "Editar rol",
+    "deleteRoleAria": "Eliminar rol",
+    "errorRoleSave": "No se pudo guardar el rol. Intenta de nuevo.",
+    "errorRoleNameInUse": "Ya existe un rol con ese nombre.",
+    "errorRoleDelete": "No se pudo eliminar el rol. Intenta de nuevo.",
+    "errorRoleInUse": "Este rol está asignado a miembros. Reasígnalos primero.",
+    "assignTitle": "Miembros del proyecto",
+    "assignDesc": "Asigna miembros de la organización a un rol del proyecto.",
+    "fieldMember": "Miembro",
+    "fieldRole": "Rol",
+    "assign": "Asignar",
+    "errorAssign": "No se pudo asignar al miembro. Intenta de nuevo.",
+    "removeAria": "Quitar miembro",
     "emptyTitle": "Sin miembros asignados",
     "emptyBody": "Asigna personas de tu organización para que colaboren en este proyecto.",
     "fallbackName": "Miembro"
+  },
+  "permissions": {
+    "READ_PROJECT": {
+      "label": "Ver proyecto",
+      "desc": "Ver el proyecto, sus sesiones e historias."
+    },
+    "WRITE_PROJECT": {
+      "label": "Editar proyecto",
+      "desc": "Editar los datos y el contenido del proyecto."
+    },
+    "MANAGE_MEMBERS": {
+      "label": "Gestionar miembros",
+      "desc": "Asignar y quitar miembros del proyecto."
+    },
+    "MANAGE_ROLES": {
+      "label": "Gestionar roles",
+      "desc": "Crear, editar y eliminar roles del proyecto."
+    },
+    "UPLOAD_DOCUMENTS": {
+      "label": "Subir documentos",
+      "desc": "Subir documentos de referencia al proyecto."
+    },
+    "MANAGE_GLOSSARY": {
+      "label": "Gestionar glosario",
+      "desc": "Mantener el glosario del proyecto."
+    },
+    "RUN_DISCOVERY": {
+      "label": "Ejecutar descubrimiento",
+      "desc": "Iniciar y ejecutar sesiones de descubrimiento."
+    },
+    "MANAGE_INTEGRATIONS": {
+      "label": "Gestionar integraciones",
+      "desc": "Configurar las integraciones del proyecto."
+    }
   },
   "stories": {
     "title": "Historias",

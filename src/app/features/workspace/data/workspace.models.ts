@@ -98,3 +98,53 @@ export interface ProjectMemberResponse {
   assignedBy: string | null;
   assignedAt: string | null;
 }
+
+/** Fine-grained capability a project role may grant. The backend enumerates exactly these. */
+export type Permission =
+  | 'READ_PROJECT'
+  | 'WRITE_PROJECT'
+  | 'MANAGE_MEMBERS'
+  | 'MANAGE_ROLES'
+  | 'UPLOAD_DOCUMENTS'
+  | 'MANAGE_GLOSSARY'
+  | 'RUN_DISCOVERY'
+  | 'MANAGE_INTEGRATIONS';
+
+/** All permissions, in display order. */
+export const PERMISSIONS: readonly Permission[] = [
+  'READ_PROJECT',
+  'WRITE_PROJECT',
+  'MANAGE_MEMBERS',
+  'MANAGE_ROLES',
+  'UPLOAD_DOCUMENTS',
+  'MANAGE_GLOSSARY',
+  'RUN_DISCOVERY',
+  'MANAGE_INTEGRATIONS',
+];
+
+/** A dynamic, per-project role bundling a set of permissions. */
+export interface ProjectRoleResponse {
+  id: string;
+  projectId: string;
+  name: string;
+  permissions: Permission[];
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/** Create/update payload for a project role. */
+export interface ProjectRoleRequest {
+  name: string;
+  permissions: Permission[];
+}
+
+/** Assign an org member to a project role. */
+export interface AssignProjectMemberRequest {
+  memberId: string;
+  roleId: string;
+}
+
+/** Change the role of an existing project member assignment. */
+export interface UpdateProjectMemberRoleRequest {
+  roleId: string;
+}
