@@ -20,7 +20,6 @@
     "stories": "Stories",
     "projectMembers": "Project members",
     "projectSettings": "Project settings",
-    "home": "Home",
     "onboarding": "Create organization",
     "projects": "Projects",
     "members": "Members",
@@ -323,19 +322,6 @@
         }
       ]
     }
-  },
-  "home": {
-    "greetingNamed": "Hi, {{name}}",
-    "greetingAnon": "Hi, welcome",
-    "sessionActive": "Your session is active.",
-    "onboardTitle": "Create your organization",
-    "workspaceTitle": "Workspace",
-    "onboardDesc": "You don't belong to any organization yet. Create one to get started.",
-    "workspaceDesc": "You already have an active organization. Manage your projects.",
-    "userLabel": "User",
-    "orgLabel": "Organization",
-    "createOrg": "Create organization",
-    "viewProjects": "View projects"
   },
   "members": {
     "title": "Members",

@@ -101,11 +101,6 @@ export const routes: Routes = [
     canActivate: [authGuard, termsGuard],
     children: [
       {
-        path: 'home',
-        title: 'titles.home',
-        loadComponent: () => import('./features/home/home').then((m) => m.Home),
-      },
-      {
         path: 'projects',
         title: 'titles.projects',
         canActivate: [orgGuard],
