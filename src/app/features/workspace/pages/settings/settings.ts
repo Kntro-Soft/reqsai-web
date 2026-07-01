@@ -12,7 +12,14 @@ import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
-import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
+import {
+  HlmButton,
+  HlmIcon,
+  HlmInput,
+  HlmLabel,
+  HlmSkeleton,
+  HlmSpinner,
+} from '../../../../shared/ui';
 
 type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
 
@@ -43,6 +50,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
     HlmIcon,
     HlmInput,
     HlmLabel,
+    HlmSkeleton,
     HlmSpinner,
     TranslocoPipe,
   ],
@@ -50,8 +58,19 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
   template: `
     <div class="flex flex-col gap-6">
       @if (state() === 'loading') {
-        <div class="flex justify-center rounded-2xl border border-border py-10">
-          <hlm-spinner class="h-5 w-5" />
+        <div class="flex flex-col gap-6" data-testid="org-settings-skeleton">
+          @for (i of skeletonCards; track i) {
+            <section class="overflow-hidden rounded-2xl border border-border">
+              <div class="flex flex-col gap-3 p-5">
+                <hlm-skeleton class="h-5 w-40" />
+                <hlm-skeleton class="h-3 w-64 max-w-full" />
+                <hlm-skeleton class="h-10 w-full max-w-md rounded-md" />
+              </div>
+              <div class="flex justify-end border-t border-border bg-muted/30 px-5 py-3">
+                <hlm-skeleton class="h-8 w-28 rounded-md" />
+              </div>
+            </section>
+          }
         </div>
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'orgSettings.errorGeneric' | transloco }}</p>
@@ -416,6 +435,7 @@ export class OrgSettings {
   private readonly toast = inject(ToastService);
 
   protected readonly languageOptions = LANGUAGE_OPTIONS;
+  protected readonly skeletonCards = [0, 1, 2];
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal<OrgField | null>(null);

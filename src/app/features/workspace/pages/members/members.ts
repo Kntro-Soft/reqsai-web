@@ -13,7 +13,14 @@ import { CreateMemberRequest, MemberResponse } from '../../data/workspace.models
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
-import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
+import {
+  HlmButton,
+  HlmIcon,
+  HlmInput,
+  HlmLabel,
+  HlmSkeleton,
+  HlmSpinner,
+} from '../../../../shared/ui';
 
 type MemberTab = 'active' | 'pending';
 
@@ -37,6 +44,7 @@ const MENU_POS: ConnectedPosition[] = [
     HlmIcon,
     HlmInput,
     HlmLabel,
+    HlmSkeleton,
     HlmSpinner,
     TranslocoPipe,
   ],
@@ -189,7 +197,18 @@ const MENU_POS: ConnectedPosition[] = [
       </div>
 
       @if (state() === 'loading') {
-        <div class="flex justify-center py-10"><hlm-spinner class="h-6 w-6" /></div>
+        <div class="overflow-hidden rounded-2xl border border-border" data-testid="members-skeleton">
+          @for (i of skeletonRows; track i) {
+            <div class="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
+              <hlm-skeleton class="h-[34px] w-[34px] shrink-0 rounded-full" />
+              <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                <hlm-skeleton class="h-4 w-40" />
+                <hlm-skeleton class="h-3 w-56 max-w-full" />
+              </div>
+              <hlm-skeleton class="h-7 w-24 shrink-0 rounded-md" />
+            </div>
+          }
+        </div>
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'members.loadError' | transloco }}</p>
       } @else if (rows().length === 0) {
@@ -305,6 +324,7 @@ export class Members {
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
 
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
   protected readonly tabs: readonly MemberTab[] = ['active', 'pending'];
   protected readonly tab = signal<MemberTab>('active');
   protected readonly members = signal<MemberResponse[]>([]);

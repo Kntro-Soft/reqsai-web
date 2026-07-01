@@ -14,7 +14,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
-import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
+import { HlmButton, HlmIcon, HlmSkeleton } from '../../../../shared/ui';
 
 type ProjectView = 'cards' | 'table';
 const VIEW_KEY = 'projects.view';
@@ -24,7 +24,7 @@ const VIEW_KEY = 'projects.view';
 @Component({
   selector: 'app-projects',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, Avatar, HlmButton, HlmIcon, HlmSpinner, TranslocoPipe],
+  imports: [RouterLink, FormsModule, Avatar, HlmButton, HlmIcon, HlmSkeleton, TranslocoPipe],
   viewProviders: [provideIcons({ lucideSearch, lucidePlus, lucideLayoutGrid, lucideRows3 })],
   template: `
     <div class="flex flex-col gap-5">
@@ -83,7 +83,40 @@ const VIEW_KEY = 'projects.view';
 
       @switch (store.projectsState()) {
         @case ('loading') {
-          <div class="flex justify-center py-12"><hlm-spinner class="h-6 w-6" /></div>
+          @if (view() === 'cards') {
+            <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="projects-skeleton">
+              @for (i of skeletonRows; track i) {
+                <li class="flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+                  <div class="flex items-center gap-3">
+                    <hlm-skeleton class="h-9 w-9 shrink-0 rounded-full" />
+                    <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <hlm-skeleton class="h-4 w-2/3" />
+                      <hlm-skeleton class="h-3 w-1/3" />
+                    </div>
+                  </div>
+                  <hlm-skeleton class="h-3 w-full" />
+                  <div class="mt-auto flex gap-1.5 pt-1">
+                    <hlm-skeleton class="h-5 w-14 rounded-full" />
+                    <hlm-skeleton class="h-5 w-14 rounded-full" />
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div
+              class="overflow-hidden rounded-2xl border border-border"
+              data-testid="projects-skeleton"
+            >
+              @for (i of skeletonRows; track i) {
+                <div
+                  class="flex items-center gap-2.5 border-b border-border px-4 py-3 last:border-0"
+                >
+                  <hlm-skeleton class="h-6 w-6 shrink-0 rounded-full" />
+                  <hlm-skeleton class="h-4 w-40" />
+                </div>
+              }
+            </div>
+          }
         }
         @case ('error') {
           <p class="text-sm text-destructive">{{ 'projects.loadError' | transloco }}</p>
@@ -206,6 +239,9 @@ const VIEW_KEY = 'projects.view';
 export class Projects {
   private readonly authStore = inject(AuthStore);
   protected readonly store = inject(WorkspaceStore);
+
+  /** Fixed count of placeholder rows/cards rendered while projects load. */
+  protected readonly skeletonRows = [0, 1, 2, 3, 4, 5];
 
   protected readonly query = signal('');
   protected readonly view = signal<ProjectView>(

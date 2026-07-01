@@ -114,6 +114,38 @@
     background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   }
 
+  /* Skeleton shimmer: a soft highlight sweep travelling across a muted block while
+   * content loads. Uses a masked gradient so it works on any --muted colour. Falls
+   * back to a plain static block when the user prefers reduced motion. */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--foreground) 8%, transparent),
+      transparent
+    );
+    animation: skeleton-sweep 1.5s ease-in-out infinite;
+  }
+  @keyframes skeleton-sweep {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer::after {
+      animation: none;
+      display: none;
+    }
+  }
+
   /* Card elevation: a whisper-soft float in light, a lit top edge in dark. */
   .card-elev {
     box-shadow:

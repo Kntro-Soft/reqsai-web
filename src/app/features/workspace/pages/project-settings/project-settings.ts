@@ -17,7 +17,14 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { ToastService } from '../../../../shared/toast/toast.service';
-import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
+import {
+  HlmButton,
+  HlmIcon,
+  HlmInput,
+  HlmLabel,
+  HlmSkeleton,
+  HlmSpinner,
+} from '../../../../shared/ui';
 
 /** Project settings: a logo card (immediate upload) plus an editable name, description and tech
  * stack. Tech lists use the chip input (no comma parsing). Vercel-style bordered cards. */
@@ -32,6 +39,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     HlmIcon,
     HlmInput,
     HlmLabel,
+    HlmSkeleton,
     HlmSpinner,
     TranslocoPipe,
   ],
@@ -46,8 +54,30 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
       </div>
 
       @if (state() === 'loading') {
-        <div class="flex justify-center rounded-2xl border border-border py-10">
-          <hlm-spinner class="h-5 w-5" />
+        <div class="flex flex-col gap-6" data-testid="project-settings-skeleton">
+          <section class="overflow-hidden rounded-2xl border border-border">
+            <div class="flex items-center justify-between gap-4 p-5">
+              <div class="flex flex-1 flex-col gap-2">
+                <hlm-skeleton class="h-5 w-32" />
+                <hlm-skeleton class="h-3 w-72 max-w-full" />
+              </div>
+              <hlm-skeleton class="h-16 w-16 shrink-0 rounded-xl" />
+            </div>
+            <div class="border-t border-border bg-muted/30 px-5 py-3">
+              <hlm-skeleton class="h-3 w-52" />
+            </div>
+          </section>
+          <section class="overflow-hidden rounded-2xl border border-border">
+            <div class="flex flex-col gap-4 p-5">
+              <hlm-skeleton class="h-10 w-full rounded-md" />
+              <hlm-skeleton class="h-10 w-full rounded-md" />
+              <div class="grid gap-4 sm:grid-cols-2">
+                @for (i of skeletonFields; track i) {
+                  <hlm-skeleton class="h-10 w-full rounded-md" />
+                }
+              </div>
+            </div>
+          </section>
         </div>
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'projectSettings.errorGeneric' | transloco }}</p>
@@ -178,6 +208,7 @@ export class ProjectSettings implements OnInit {
 
   readonly projectId = input.required<string>();
 
+  protected readonly skeletonFields = [0, 1, 2, 3, 4, 5];
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
   protected readonly saved = signal(false);

@@ -14,3 +14,4 @@ export { HlmLabel } from './label/hlm-label';
 export { HlmBadge } from './badge/hlm-badge';
 export type { BadgeVariant } from './badge/hlm-badge';
 export { HlmSpinner } from './spinner/hlm-spinner';
+export { HlmSkeleton } from './skeleton/hlm-skeleton';
