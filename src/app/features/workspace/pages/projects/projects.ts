@@ -170,8 +170,15 @@ const VIEW_KEY = 'projects.view';
                         {{ project.description }}
                       </p>
                     }
-                    @if (project.programmingLanguages.length || project.frameworks.length) {
-                      <div class="mt-auto flex flex-wrap gap-1.5 pt-1">
+                    @if (project.architecture || techTags(project).length) {
+                      <div class="mt-auto flex flex-wrap items-center gap-1.5 pt-1">
+                        @if (project.architecture) {
+                          <span
+                            class="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                          >
+                            {{ project.architecture }}
+                          </span>
+                        }
                         @for (tag of techTags(project); track tag) {
                           <span
                             class="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-secondary-foreground"
@@ -271,7 +278,17 @@ export class Projects {
     localStorage.setItem(VIEW_KEY, view);
   }
 
-  protected techTags(project: { programmingLanguages: string[]; frameworks: string[] }): string[] {
-    return [...project.programmingLanguages, ...project.frameworks].slice(0, 4);
+  protected techTags(project: {
+    programmingLanguages: string[];
+    frameworks: string[];
+    clientPlatforms: string[];
+    databases: string[];
+  }): string[] {
+    return [
+      ...project.programmingLanguages,
+      ...project.frameworks,
+      ...project.clientPlatforms,
+      ...project.databases,
+    ].slice(0, 6);
   }
 }
