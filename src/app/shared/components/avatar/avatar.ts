@@ -17,6 +17,7 @@ function hashString(value: string): number {
 @Component({
   selector: 'app-avatar',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'inline-flex' },
   template: `
     <span
       class="inline-grid shrink-0 place-items-center overflow-hidden font-semibold text-white select-none"

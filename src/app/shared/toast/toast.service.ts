@@ -7,7 +7,7 @@ export type ToastKind = 'success' | 'error' | 'info';
 export interface Toast {
   id: number;
   kind: ToastKind;
-  message: string;
+  message: string;  
 }
 
 /** How long a toast stays on screen before it auto-dismisses (ms). */

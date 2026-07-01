@@ -25,6 +25,7 @@ const NAV_ICONS: Record<string, string> = {
 @Component({
   selector: 'app-nav-icon',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'inline-flex items-center justify-center' },
   imports: [HlmIcon],
   viewProviders: [
     provideIcons({

@@ -48,7 +48,11 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
         <app-logo [size]="24" [showText]="false" />
       </header>
 
-      <main class="flex flex-1 justify-center px-4 py-10">
+      <main
+        class="flex flex-1 justify-center px-4 py-10"
+        [class.items-center]="!showAdvanced()"
+        [class.items-start]="showAdvanced()"
+      >
         <div class="w-full max-w-2xl">
           <div class="mb-6">
             <h1 class="text-2xl font-bold tracking-tight">
