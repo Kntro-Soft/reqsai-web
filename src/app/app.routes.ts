@@ -13,6 +13,16 @@ export const routes: Routes = [
     loadChildren: () => import('./features/iam/iam.routes').then((m) => m.IAM_ROUTES),
   },
 
+  // Invitation landing: chrome-less, no auth guard so logged-out invitees can view it.
+  {
+    path: 'invitations/accept',
+    title: 'titles.acceptInvitation',
+    loadComponent: () =>
+      import('./features/workspace/pages/accept-invitation/accept-invitation').then(
+        (m) => m.AcceptInvitation,
+      ),
+  },
+
   {
     path: 'terms',
     title: 'titles.terms',

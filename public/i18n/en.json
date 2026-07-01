@@ -15,6 +15,8 @@
     "saveError": "Could not save the changes.",
     "memberRemoved": "Member removed.",
     "invitesSent": "Invitations sent.",
+    "invitationResent": "Invitation resent.",
+    "invitationAccepted": "You joined {{org}}.",
     "orgDeleted": "Organization deleted.",
     "orgLeft": "You left the organization.",
     "ownershipTransferred": "Ownership transferred.",
@@ -40,6 +42,7 @@
     "settings": "Settings",
     "signIn": "Sign in",
     "signUp": "Create account",
+    "acceptInvitation": "Accept invitation",
     "verifyEmail": "Verify email",
     "forgotPassword": "Recover password",
     "resetPassword": "New password",
@@ -474,6 +477,7 @@
     "sortRecent": "Recent",
     "sortName": "Name",
     "menuAria": "Member actions",
+    "resendInvite": "Resend invitation",
     "removeFromOrg": "Remove from organization",
     "you": "You",
     "removeAria": "Remove member",
@@ -490,6 +494,43 @@
       "ACTIVE": "Active",
       "PENDING": "Pending",
       "INACTIVE": "Inactive"
+    }
+  },
+  "invitations": {
+    "valid": {
+      "title": "You've been invited",
+      "subtitle": "Join the team and start collaborating on Reqs-AI.",
+      "invitedTo": "You've been invited to join",
+      "asRole": "as",
+      "by": "invited by",
+      "forEmail": "This invitation is for",
+      "accept": "Accept invitation",
+      "acceptError": "Could not accept the invitation. Please try again.",
+      "signIn": "Sign in to accept",
+      "createAccount": "Create an account",
+      "signUpNote": "Sign up with that email and verify it — you'll be added to the organization automatically."
+    },
+    "wrongAccount": {
+      "title": "Wrong account",
+      "body": "You're signed in as {{yourEmail}}, but this invitation is for {{inviteEmail}}. Sign out and sign back in with the invited account.",
+      "signOut": "Sign out"
+    },
+    "accepted": {
+      "title": "Invitation already accepted",
+      "body": "You're already a member of this organization.",
+      "goToApp": "Go to the app"
+    },
+    "expired": {
+      "title": "This invitation has expired",
+      "body": "Ask an administrator to resend the invitation."
+    },
+    "invalid": {
+      "title": "This invitation is no longer valid",
+      "body": "It may have been revoked or replaced. Ask an administrator for a new one."
+    },
+    "notFound": {
+      "title": "Invitation not found",
+      "body": "This invitation link is invalid. Check the link or ask for a new one."
     }
   },
   "orgSettings": {

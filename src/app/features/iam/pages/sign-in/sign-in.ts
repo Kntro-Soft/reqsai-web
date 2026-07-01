@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -97,7 +97,11 @@ export class SignIn {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
+
+  /** Where to land after login: an internal `redirect` param (e.g. an invite) or the dispatcher. */
+  private readonly redirectTo = this.route.snapshot.queryParamMap.get('redirect');
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -113,13 +117,20 @@ export class SignIn {
     this.errorMessage.set(null);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      // The launch dispatcher routes by organization count.
-      next: () => void this.router.navigate(['/launch']),
+      // Honor an internal return URL (e.g. an invite); otherwise the launch
+      // dispatcher routes by organization count.
+      next: () => void this.router.navigateByUrl(this.safeRedirect() ?? '/launch'),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.errorMessage.set(this.messageFor(err));
       },
     });
+  }
+
+  /** Only allow same-app relative redirects (`/...`, not `//host`) — no open redirects. */
+  private safeRedirect(): string | null {
+    const r = this.redirectTo;
+    return r && r.startsWith('/') && !r.startsWith('//') ? r : null;
   }
 
   private messageFor(err: HttpErrorResponse): string {

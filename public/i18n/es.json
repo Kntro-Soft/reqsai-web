@@ -15,6 +15,8 @@
     "saveError": "No se pudieron guardar los cambios.",
     "memberRemoved": "Miembro eliminado.",
     "invitesSent": "Invitaciones enviadas.",
+    "invitationResent": "Invitación reenviada.",
+    "invitationAccepted": "Te has unido a {{org}}.",
     "orgDeleted": "Organización eliminada.",
     "orgLeft": "Has salido de la organización.",
     "ownershipTransferred": "Propiedad transferida.",
@@ -40,6 +42,7 @@
     "settings": "Ajustes",
     "signIn": "Iniciar sesión",
     "signUp": "Crear cuenta",
+    "acceptInvitation": "Aceptar invitación",
     "verifyEmail": "Verificar correo",
     "forgotPassword": "Recuperar contraseña",
     "resetPassword": "Nueva contraseña",
@@ -474,6 +477,7 @@
     "sortRecent": "Recientes",
     "sortName": "Nombre",
     "menuAria": "Acciones del miembro",
+    "resendInvite": "Reenviar invitación",
     "removeFromOrg": "Quitar de la organización",
     "you": "Tú",
     "removeAria": "Quitar miembro",
@@ -490,6 +494,43 @@
       "ACTIVE": "Activo",
       "PENDING": "Pendiente",
       "INACTIVE": "Inactivo"
+    }
+  },
+  "invitations": {
+    "valid": {
+      "title": "Has recibido una invitación",
+      "subtitle": "Únete al equipo y empieza a colaborar en Reqs-AI.",
+      "invitedTo": "Te han invitado a unirte a",
+      "asRole": "como",
+      "by": "invitado por",
+      "forEmail": "Esta invitación es para",
+      "accept": "Aceptar invitación",
+      "acceptError": "No se pudo aceptar la invitación. Inténtalo de nuevo.",
+      "signIn": "Inicia sesión para aceptar",
+      "createAccount": "Crear una cuenta",
+      "signUpNote": "Regístrate con ese correo y verifícalo: te añadiremos a la organización automáticamente."
+    },
+    "wrongAccount": {
+      "title": "Cuenta incorrecta",
+      "body": "Has iniciado sesión como {{yourEmail}}, pero esta invitación es para {{inviteEmail}}. Cierra sesión y vuelve a entrar con la cuenta invitada.",
+      "signOut": "Cerrar sesión"
+    },
+    "accepted": {
+      "title": "Invitación ya aceptada",
+      "body": "Ya eres miembro de esta organización.",
+      "goToApp": "Ir a la aplicación"
+    },
+    "expired": {
+      "title": "Esta invitación ha caducado",
+      "body": "Pide a un administrador que la reenvíe."
+    },
+    "invalid": {
+      "title": "Esta invitación ya no es válida",
+      "body": "Puede que se haya revocado o reemplazado. Pide una nueva a un administrador."
+    },
+    "notFound": {
+      "title": "Invitación no encontrada",
+      "body": "Este enlace de invitación no es válido. Revisa el enlace o solicita uno nuevo."
     }
   },
   "orgSettings": {

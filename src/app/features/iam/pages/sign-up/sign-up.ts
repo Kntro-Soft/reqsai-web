@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -112,6 +112,7 @@ export class SignUp {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly transloco = inject(TranslocoService);
 
   protected readonly loading = signal(false);
@@ -120,7 +121,8 @@ export class SignUp {
   protected readonly form = this.fb.nonNullable.group({
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
+    // Prefilled from an invite's `email` query param when present (see the accept page).
+    email: [this.route.snapshot.queryParamMap.get('email') ?? '', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
