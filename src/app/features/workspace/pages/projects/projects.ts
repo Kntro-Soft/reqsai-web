@@ -124,7 +124,7 @@ const VIEW_KEY = 'projects.view';
         @default {
           @if (store.projects().length === 0) {
             <div
-              class="flex min-h-[60vh] flex-col items-center justify-center gap-3 rounded-2xl border border-border py-16 text-center"
+              class="flex min-h-[calc(100dvh-11rem)] flex-col items-center justify-center gap-3 rounded-2xl border border-border py-16 text-center"
               data-testid="projects-empty"
             >
               <span class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary">
