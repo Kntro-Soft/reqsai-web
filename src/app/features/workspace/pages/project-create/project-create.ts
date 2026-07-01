@@ -36,7 +36,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
   viewProviders: [provideIcons({ lucideArrowLeft, lucideChevronDown })],
   template: `
     <div
-      class="relative flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
+      class="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
     >
       <!-- Decorative, interactive background matching the onboarding composition. -->
       <app-animated-backdrop />

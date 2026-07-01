@@ -49,7 +49,7 @@ function detectMeetingLanguage(): string {
   viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown })],
   template: `
     <div
-      class="relative grid min-h-dvh place-items-center overflow-hidden bg-background px-4 py-20 text-foreground"
+      class="relative isolate grid min-h-dvh place-items-center overflow-hidden bg-background px-4 py-20 text-foreground"
     >
       <!-- Decorative, interactive background: faint grid + soft brand/navy glows that
            parallax with the pointer and drift on their own when idle. -->
