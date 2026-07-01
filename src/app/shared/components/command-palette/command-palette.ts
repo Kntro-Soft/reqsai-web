@@ -30,20 +30,7 @@ import { ThemeService } from '../../../core/theme/theme.service';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
 import { Avatar } from '../avatar/avatar';
 import { HlmIcon } from '../../ui';
-
-interface PaletteItem {
-  id: string;
-  label: string;
-  /** i18n key for the group/category hint shown on the right. */
-  groupKey: string;
-  /** lucide icon name, or null to render an avatar instead. */
-  icon: string | null;
-  /** Avatar seed/name when icon is null. */
-  avatarName?: string;
-  avatarSeed?: string;
-  avatarUrl?: string | null;
-  run: () => void;
-}
+import { CommandRegistry, SearchItem } from '../../search/command-registry';
 
 /**
  * Global command palette (⌘K). A centered modal overlay (CDK global position +
@@ -137,7 +124,7 @@ interface PaletteItem {
                 }
                 <span class="min-w-0 flex-1 truncate font-medium">{{ item.label }}</span>
                 <span class="shrink-0 text-xs text-muted-foreground">{{
-                  item.groupKey | transloco
+                  item.group | transloco
                 }}</span>
               </button>
             } @empty {
@@ -158,6 +145,7 @@ export class CommandPalette {
   private readonly auth = inject(AuthService);
   private readonly theme = inject(ThemeService);
   private readonly transloco = inject(TranslocoService);
+  private readonly registry = inject(CommandRegistry);
 
   /** Two-way bound visibility — the shell flips this on ⌘K / search focus. */
   readonly open = model(false);
@@ -170,45 +158,46 @@ export class CommandPalette {
   /** Re-translate group hints / actions on language change. */
   private readonly lang = signal(this.transloco.getActiveLang());
 
-  private readonly allItems = computed<PaletteItem[]>(() => {
+  /** The app-specific search source: quick actions + organizations + projects. */
+  private buildItems(): SearchItem[] {
     this.lang();
     const t = (k: string) => this.transloco.translate(k);
-    const items: PaletteItem[] = [];
+    const items: SearchItem[] = [];
 
     // Quick actions.
     items.push(
       {
         id: 'action:new-project',
         label: t('commandPalette.actions.newProject'),
-        groupKey: 'commandPalette.groups.actions',
+        group: 'commandPalette.groups.actions',
         icon: 'lucidePlus',
         run: () => this.go(['/projects/new']),
       },
       {
         id: 'action:members',
         label: t('commandPalette.actions.members'),
-        groupKey: 'commandPalette.groups.actions',
+        group: 'commandPalette.groups.actions',
         icon: 'lucideUsers',
         run: () => this.go(['/members']),
       },
       {
         id: 'action:settings',
         label: t('commandPalette.actions.settings'),
-        groupKey: 'commandPalette.groups.actions',
+        group: 'commandPalette.groups.actions',
         icon: 'lucideSettings',
         run: () => this.go(['/settings']),
       },
       {
         id: 'action:account',
         label: t('commandPalette.actions.account'),
-        groupKey: 'commandPalette.groups.actions',
+        group: 'commandPalette.groups.actions',
         icon: 'lucideUser',
         run: () => this.go(['/account']),
       },
       {
         id: 'action:theme',
         label: t('commandPalette.actions.toggleTheme'),
-        groupKey: 'commandPalette.groups.actions',
+        group: 'commandPalette.groups.actions',
         icon: 'lucideSunMoon',
         run: () => {
           this.theme.toggle();
@@ -222,7 +211,7 @@ export class CommandPalette {
       items.push({
         id: 'org:' + org.id,
         label: org.name,
-        groupKey: 'commandPalette.groups.organizations',
+        group: 'commandPalette.groups.organizations',
         icon: null,
         avatarName: org.name,
         avatarSeed: org.id,
@@ -236,7 +225,7 @@ export class CommandPalette {
       items.push({
         id: 'project:' + project.id,
         label: project.name,
-        groupKey: 'commandPalette.groups.projects',
+        group: 'commandPalette.groups.projects',
         icon: null,
         avatarName: project.name,
         avatarSeed: project.id,
@@ -246,15 +235,13 @@ export class CommandPalette {
     }
 
     return items;
-  });
+  }
 
-  protected readonly items = computed<PaletteItem[]>(() => {
-    const q = this.query().trim().toLowerCase();
-    if (!q) return this.allItems();
-    return this.allItems().filter((i) => i.label.toLowerCase().includes(q));
-  });
+  /** The filtered, grouped results from every registered source. */
+  protected readonly items = computed<SearchItem[]>(() => this.registry.search(this.query()));
 
   constructor() {
+    this.registry.register(() => this.buildItems());
     this.transloco.langChanges$.subscribe((l) => this.lang.set(l));
     // On open: reset query/selection and focus the input.
     effect(() => {
@@ -305,7 +292,7 @@ export class CommandPalette {
     this.selected.update((i) => (i + delta + len) % len);
   }
 
-  protected activate(item: PaletteItem): void {
+  protected activate(item: SearchItem): void {
     item.run();
   }
 
