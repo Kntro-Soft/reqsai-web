@@ -257,6 +257,11 @@ export class Shell {
   /** Breadcrumb trail for the top bar: the org/project context (clickable) then the
    * current page title. */
   protected readonly crumbs = computed<Crumb[]>(() => {
+    const key = this.titleKey();
+    // Personal pages (the user's own account) aren't nested under an organization.
+    if (this.url().startsWith('/account')) {
+      return key ? [{ key, link: null }] : [];
+    }
     const items: Crumb[] = [];
     const pid = this.projectId();
     if (pid) {
@@ -271,7 +276,6 @@ export class Shell {
       const org = this.workspace.organizations().find((o) => o.id === orgId);
       items.push({ label: org?.name, key: 'orgSwitcher.fallbackName', link: ['/projects'] });
     }
-    const key = this.titleKey();
     if (key) items.push({ key, link: null });
     return items;
   });

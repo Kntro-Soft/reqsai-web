@@ -104,7 +104,7 @@ import { HlmIcon } from '../../ui';
         <!-- Theme: system / light / dark segmented control -->
         <div class="flex items-center justify-between gap-2 px-2.5 py-1.5">
           <span class="text-sm">{{ 'userMenu.theme' | transloco }}</span>
-          <div class="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+          <div class="flex items-center gap-0.5 rounded-full border border-border p-0.5">
             @for (opt of themes; track opt.mode) {
               <button
                 type="button"
@@ -112,7 +112,7 @@ import { HlmIcon } from '../../ui';
                 [attr.aria-pressed]="theme.mode() === opt.mode"
                 [attr.aria-label]="'theme.' + opt.mode | transloco"
                 [attr.title]="'theme.' + opt.mode | transloco"
-                class="grid h-7 w-7 place-items-center rounded-md transition-colors"
+                class="grid h-7 w-7 place-items-center rounded-full transition-colors"
                 [class]="
                   theme.mode() === opt.mode
                     ? 'bg-secondary text-foreground'
@@ -128,13 +128,13 @@ import { HlmIcon } from '../../ui';
         <!-- Language: EN / ES segmented control -->
         <div class="flex items-center justify-between gap-2 px-2.5 py-1.5">
           <span class="text-sm">{{ 'language.label' | transloco }}</span>
-          <div class="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+          <div class="flex items-center gap-0.5 rounded-full border border-border p-0.5">
             @for (lang of langs; track lang) {
               <button
                 type="button"
                 (click)="setLang(lang)"
                 [attr.aria-pressed]="lang === activeLang()"
-                class="rounded-md px-2.5 py-1 text-xs font-medium uppercase transition-colors"
+                class="rounded-full px-2.5 py-1 text-xs font-medium uppercase transition-colors"
                 [class]="
                   lang === activeLang()
                     ? 'bg-secondary text-foreground'
@@ -146,8 +146,6 @@ import { HlmIcon } from '../../ui';
             }
           </div>
         </div>
-        <div class="my-1 h-px bg-border"></div>
-
         <button
           role="menuitem"
           type="button"

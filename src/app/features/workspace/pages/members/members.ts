@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideEllipsis, lucidePlus, lucideTrash2, lucideUserPlus } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
@@ -39,7 +39,7 @@ const MENU_POS: ConnectedPosition[] = [
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideEllipsis, lucidePlus, lucideTrash2 })],
+  viewProviders: [provideIcons({ lucideEllipsis, lucidePlus, lucideTrash2, lucideUserPlus })],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -129,6 +129,8 @@ const MENU_POS: ConnectedPosition[] = [
             >
               @if (submitting()) {
                 <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideUserPlus" size="15px" />
               }
               {{ 'members.inviteSubmit' | transloco }}
             </button>
@@ -168,18 +170,16 @@ const MENU_POS: ConnectedPosition[] = [
           [value]="query()"
           (input)="query.set($any($event.target).value)"
           [placeholder]="'members.filterPlaceholder' | transloco"
-          class="h-9 min-w-0 flex-1 sm:max-w-xs"
+          class="min-w-0 flex-1"
           data-testid="members-filter"
         />
         <app-select
-          size="sm"
           [options]="roleFilterOptions()"
           [value]="roleFilter()"
           (valueChange)="roleFilter.set($event)"
           [ariaLabel]="'members.filterRoleAria' | transloco"
         />
         <app-select
-          size="sm"
           [options]="sortOptions()"
           [value]="sort()"
           (valueChange)="sort.set($event)"
