@@ -95,7 +95,9 @@
       "organizations": "Organization",
       "projects": "Project",
       "stories": "Story",
-      "members": "Member"
+      "members": "Member",
+      "glossary": "Glossary",
+      "document": "Document"
     },
     "actions": {
       "newProject": "New project",

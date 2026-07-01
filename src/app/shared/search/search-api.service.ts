@@ -3,7 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 /** The kinds of entity the global-search endpoint can return. */
-export type SearchHitType = 'PROJECT' | 'USER_STORY' | 'ORGANIZATION' | 'MEMBER';
+export type SearchHitType =
+  | 'PROJECT'
+  | 'USER_STORY'
+  | 'ORGANIZATION'
+  | 'MEMBER'
+  | 'GLOSSARY_TERM'
+  | 'DOCUMENT';
 
 /** A single hit from `GET /api/search`. `projectId` is set for PROJECT/USER_STORY, else null. */
 export interface SearchHitResponse {

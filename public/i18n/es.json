@@ -95,7 +95,9 @@
       "organizations": "Organización",
       "projects": "Proyecto",
       "stories": "Historia",
-      "members": "Miembro"
+      "members": "Miembro",
+      "glossary": "Glosario",
+      "document": "Documento"
     },
     "actions": {
       "newProject": "Nuevo proyecto",

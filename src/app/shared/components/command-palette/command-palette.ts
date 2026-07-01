@@ -14,7 +14,9 @@ import { Router } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowRight,
+  lucideBookOpen,
   lucideBuilding2,
+  lucideFile,
   lucideFileText,
   lucideFolder,
   lucidePlus,
@@ -77,6 +79,8 @@ interface PaletteGroup {
       lucideSunMoon,
       lucideArrowRight,
       lucideFileText,
+      lucideBookOpen,
+      lucideFile,
     }),
   ],
   template: `
@@ -498,6 +502,24 @@ export class CommandPalette {
           avatarSeed: hit.id,
           keywords: q,
           run: () => this.go(['/members']),
+        };
+      case 'GLOSSARY_TERM':
+        return {
+          id: 'glossary:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.glossary',
+          icon: 'lucideBookOpen',
+          keywords: q,
+          run: () => this.go(hit.projectId ? ['/projects', hit.projectId] : ['/projects']),
+        };
+      case 'DOCUMENT':
+        return {
+          id: 'document:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.document',
+          icon: 'lucideFile',
+          keywords: q,
+          run: () => this.go(hit.projectId ? ['/projects', hit.projectId] : ['/projects']),
         };
     }
   }
