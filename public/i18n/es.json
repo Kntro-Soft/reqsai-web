@@ -93,7 +93,9 @@
     "groups": {
       "actions": "Acción",
       "organizations": "Organización",
-      "projects": "Proyecto"
+      "projects": "Proyecto",
+      "stories": "Historia",
+      "members": "Miembro"
     },
     "actions": {
       "newProject": "Nuevo proyecto",

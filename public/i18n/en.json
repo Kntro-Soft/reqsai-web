@@ -93,7 +93,9 @@
     "groups": {
       "actions": "Action",
       "organizations": "Organization",
-      "projects": "Project"
+      "projects": "Project",
+      "stories": "Story",
+      "members": "Member"
     },
     "actions": {
       "newProject": "New project",

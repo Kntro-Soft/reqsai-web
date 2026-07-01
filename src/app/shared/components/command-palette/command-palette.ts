@@ -15,6 +15,7 @@ import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowRight,
   lucideBuilding2,
+  lucideFileText,
   lucideFolder,
   lucidePlus,
   lucideSearch,
@@ -23,6 +24,8 @@ import {
   lucideUser,
   lucideUsers,
 } from '@ng-icons/lucide';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
@@ -31,6 +34,7 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
 import { Avatar } from '../avatar/avatar';
 import { HlmIcon } from '../../ui';
 import { CommandRegistry, SearchItem } from '../../search/command-registry';
+import { SearchApiService, SearchHitResponse } from '../../search/search-api.service';
 import { translateFn } from '../../../core/i18n/translate-fn';
 
 /** localStorage key for the small most-recently-used list of activated item ids. */
@@ -72,6 +76,7 @@ interface PaletteGroup {
       lucideUser,
       lucideSunMoon,
       lucideArrowRight,
+      lucideFileText,
     }),
   ],
   template: `
@@ -169,6 +174,7 @@ export class CommandPalette {
   private readonly theme = inject(ThemeService);
   private readonly transloco = inject(TranslocoService);
   private readonly registry = inject(CommandRegistry);
+  private readonly searchApi = inject(SearchApiService);
 
   /** Two-way bound visibility — the shell flips this on ⌘K / search focus. */
   readonly open = model(false);
@@ -178,6 +184,9 @@ export class CommandPalette {
 
   /** Ids of recently activated items, most-recent first (persisted in localStorage). */
   private readonly recentIds = signal<string[]>(this.loadRecent());
+
+  /** Cross-context hits from the backend global-search endpoint for the current query. */
+  private readonly backendResults = signal<SearchItem[]>([]);
 
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly listEl = viewChild<ElementRef<HTMLElement>>('list');
@@ -316,6 +325,25 @@ export class CommandPalette {
 
   constructor() {
     this.registry.register(() => this.buildItems());
+    this.registry.register(() => this.backendResults());
+    // Debounced backend search across all contexts; failures fall back to an empty list so the
+    // local source keeps working even if the endpoint is unavailable.
+    toObservable(this.query)
+      .pipe(
+        map((q) => q.trim()),
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((q) =>
+          q.length < 2
+            ? of<[string, SearchHitResponse[]]>([q, []])
+            : this.searchApi.search(q).pipe(
+                map((hits) => [q, hits] as [string, SearchHitResponse[]]),
+                catchError(() => of<[string, SearchHitResponse[]]>([q, []])),
+              ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(([q, hits]) => this.backendResults.set(hits.map((h) => this.toItem(h, q))));
     // On open: reset query/selection and focus the input.
     effect(() => {
       if (this.open()) {
@@ -421,5 +449,56 @@ export class CommandPalette {
       this.workspace.loadProjects(orgId);
       void this.router.navigate(['/projects']);
     });
+  }
+
+  /** Map a backend search hit to a palette item. `keywords: q` guarantees it survives the client
+   * fuzzy filter (a backend match can be typo-tolerant and need not be a subsequence of the label).
+   * Project/organization ids mirror the local source ids so echoes de-dupe (the richer local wins). */
+  private toItem(hit: SearchHitResponse, q: string): SearchItem {
+    switch (hit.type) {
+      case 'PROJECT':
+        return {
+          id: 'project:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.projects',
+          icon: null,
+          avatarName: hit.title,
+          avatarSeed: hit.id,
+          keywords: q,
+          run: () => this.go(['/projects', hit.id]),
+        };
+      case 'USER_STORY':
+        return {
+          id: 'story:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.stories',
+          icon: 'lucideFileText',
+          keywords: q,
+          run: () =>
+            this.go(hit.projectId ? ['/projects', hit.projectId, 'stories'] : ['/projects']),
+        };
+      case 'ORGANIZATION':
+        return {
+          id: 'org:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.organizations',
+          icon: null,
+          avatarName: hit.title,
+          avatarSeed: hit.id,
+          keywords: q,
+          run: () => this.selectOrg(hit.id),
+        };
+      case 'MEMBER':
+        return {
+          id: 'member:' + hit.id,
+          label: hit.title,
+          group: 'commandPalette.groups.members',
+          icon: null,
+          avatarName: hit.title,
+          avatarSeed: hit.id,
+          keywords: q,
+          run: () => this.go(['/members']),
+        };
+    }
   }
 }

@@ -46,8 +46,21 @@ export class CommandRegistry {
     return () => this.sources.update((list) => list.filter((s) => s !== source));
   }
 
-  /** Every item from every registered source; reactive to the signals those sources read. */
-  readonly items = computed<SearchItem[]>(() => this.sources().flatMap((source) => source()));
+  /** Every item from every registered source, de-duplicated by id (the first source to yield an id
+   * wins, so a richer local item beats a backend echo of the same entity); reactive to the signals
+   * those sources read. */
+  readonly items = computed<SearchItem[]>(() => {
+    const seen = new Set<string>();
+    const out: SearchItem[] = [];
+    for (const source of this.sources()) {
+      for (const item of source()) {
+        if (seen.has(item.id)) continue;
+        seen.add(item.id);
+        out.push(item);
+      }
+    }
+    return out;
+  });
 
   /**
    * The items matching `query`, ranked by a fuzzy (subsequence) score against the label and
