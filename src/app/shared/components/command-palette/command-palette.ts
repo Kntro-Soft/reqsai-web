@@ -218,7 +218,7 @@ export class CommandPalette {
         label: t('commandPalette.actions.members'),
         group: 'commandPalette.groups.actions',
         icon: 'lucideUsers',
-        run: () => this.go(['/members']),
+        run: () => this.go(['/settings/members']),
       },
       {
         id: 'action:settings',
@@ -232,7 +232,7 @@ export class CommandPalette {
         label: t('commandPalette.actions.account'),
         group: 'commandPalette.groups.actions',
         icon: 'lucideUser',
-        run: () => this.go(['/account']),
+        run: () => this.go(['/account/profile']),
       },
       {
         id: 'action:theme',
@@ -501,7 +501,7 @@ export class CommandPalette {
           avatarName: hit.title,
           avatarSeed: hit.id,
           keywords: q,
-          run: () => this.go(['/members']),
+          run: () => this.go(['/settings/members']),
         };
       case 'GLOSSARY_TERM':
         return {

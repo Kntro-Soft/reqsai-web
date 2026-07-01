@@ -29,6 +29,22 @@ import { HlmIcon } from '../../shared/ui';
 interface NavItem {
   /** Route segment + i18n key (`nav.<seg>`) + nav-icon name. */
   seg: string;
+  /** Router link commands for this item (precomputed per active context). */
+  link: unknown[];
+  /** When true the item is a disabled placeholder rendered with a "Soon" badge. */
+  soon?: boolean;
+}
+
+/** The sidebar context derived from the URL: which nav list, back link and heading to show. */
+interface NavContext {
+  /** A back link shown above the list (e.g. "← All Projects"); null in the root contexts. */
+  back: { link: unknown[]; labelKey: string; label?: string } | null;
+  /** Optional heading shown under the back link (e.g. "Settings"). */
+  headingKey?: string;
+  /** i18n key for the nav's aria-label. */
+  ariaKey: string;
+  /** The nav items to render, links already resolved. */
+  items: NavItem[];
 }
 
 interface Crumb {
@@ -92,30 +108,38 @@ interface Crumb {
 
         <nav
           class="flex flex-1 flex-col gap-0.5 overflow-y-auto"
-          [attr.aria-label]="(projectId() ? 'nav.projectAria' : 'nav.orgAria') | transloco"
+          [attr.aria-label]="navContext().ariaKey | transloco"
         >
-          @if (projectId(); as pid) {
+          @if (navContext().back; as back) {
             <a
-              routerLink="/projects"
+              [routerLink]="back.link"
               class="mb-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <hlm-icon name="lucideChevronLeft" size="16px" />
-              {{ 'nav.allProjects' | transloco }}
+              <span class="truncate">{{ back.label ?? (back.labelKey | transloco) }}</span>
             </a>
-            @for (item of filteredNav(); track item.seg) {
-              <a
-                [routerLink]="['/projects', pid, item.seg]"
-                routerLinkActive="nav-link-active bg-primary/15 text-primary"
-                class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          }
+          @if (navContext().headingKey; as headingKey) {
+            <span
+              class="px-3 pt-1 pb-1.5 text-[11px] font-medium tracking-wide text-muted-foreground/70 uppercase"
+              >{{ headingKey | transloco }}</span
+            >
+          }
+          @for (item of navContext().items; track item.seg) {
+            @if (item.soon) {
+              <span
+                class="flex cursor-default items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/50"
               >
                 <app-nav-icon [name]="item.seg" [size]="18" />
-                {{ 'nav.' + item.seg | transloco }}
-              </a>
-            }
-          } @else {
-            @for (item of filteredNav(); track item.seg) {
+                <span class="flex-1">{{ 'nav.' + item.seg | transloco }}</span>
+                <span
+                  class="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70"
+                  >{{ 'nav.soon' | transloco }}</span
+                >
+              </span>
+            } @else {
               <a
-                [routerLink]="['/' + item.seg]"
+                [routerLink]="item.link"
                 routerLinkActive="nav-link-active bg-primary/15 text-primary"
                 [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
                 class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -255,17 +279,33 @@ export class Shell {
     }
   }
 
-  private readonly orgNav: NavItem[] = [
-    { seg: 'projects' },
+  // Nav item segments per context; links are resolved in `navContext()` where the
+  // active project id is known. `soon` marks disabled placeholder items.
+  private readonly orgRootSegs: { seg: string }[] = [{ seg: 'projects' }, { seg: 'settings' }];
+  private readonly orgSettingsSegs: { seg: string; soon?: boolean }[] = [
+    { seg: 'general' },
     { seg: 'members' },
-    { seg: 'settings' },
+    { seg: 'billing', soon: true },
+    { seg: 'integrations', soon: true },
+    { seg: 'usage', soon: true },
   ];
-  private readonly projectNav: NavItem[] = [
+  private readonly projectRootSegs: { seg: string }[] = [
     { seg: 'overview' },
     { seg: 'sessions' },
     { seg: 'stories' },
-    { seg: 'members' },
     { seg: 'settings' },
+  ];
+  private readonly projectSettingsSegs: { seg: string; soon?: boolean }[] = [
+    { seg: 'general' },
+    { seg: 'members' },
+    { seg: 'danger', soon: true },
+  ];
+  private readonly accountSegs: { seg: string; soon?: boolean }[] = [
+    { seg: 'profile' },
+    { seg: 'security' },
+    { seg: 'appearance' },
+    { seg: 'notifications', soon: true },
+    { seg: 'tokens', soon: true },
   ];
 
   private readonly url = toSignal(
@@ -282,31 +322,127 @@ export class Shell {
     return match ? decodeURIComponent(match[1]) : null;
   });
 
-  protected readonly filteredNav = computed(() =>
-    this.projectId() ? this.projectNav : this.orgNav,
-  );
+  /** True when the URL is within the settings sub-tree of the current context. */
+  private readonly inSettings = computed(() => {
+    const url = this.url();
+    const pid = this.projectId();
+    return pid ? /\/settings(\/|$|\?|#)/.test(url) : /^\/settings(\/|$|\?|#)/.test(url);
+  });
 
-  /** Breadcrumb trail for the top bar: the org/project context (clickable) then the
-   * current page title. */
+  /** True when the URL is within the personal account sub-tree. */
+  private readonly inAccount = computed(() => this.url().startsWith('/account'));
+
+  /** The open project's display name (falls back to a translated placeholder). */
+  private readonly projectName = computed(() => {
+    const pid = this.projectId();
+    if (!pid) return undefined;
+    return this.workspace.projects().find((p) => p.id === pid)?.name;
+  });
+
+  /**
+   * The sidebar context derived from the URL. One of five: account, org settings,
+   * org root, project settings, project root. Each supplies its back link, heading
+   * and the fully-resolved nav item links.
+   */
+  protected readonly navContext = computed<NavContext>(() => {
+    const pid = this.projectId();
+
+    // Personal account — standalone, not nested under an organization.
+    if (this.inAccount()) {
+      return {
+        back: { link: ['/projects'], labelKey: 'nav.allProjects' },
+        headingKey: 'nav.account',
+        ariaKey: 'nav.accountAria',
+        items: this.accountSegs.map((s) => ({
+          seg: s.seg,
+          link: ['/account', s.seg],
+          soon: s.soon,
+        })),
+      };
+    }
+
+    if (pid) {
+      // Project settings sub-nav.
+      if (this.inSettings()) {
+        return {
+          back: {
+            link: ['/projects', pid, 'overview'],
+            labelKey: 'nav.projectFallback',
+            label: this.projectName(),
+          },
+          headingKey: 'nav.settings',
+          ariaKey: 'nav.projectAria',
+          items: this.projectSettingsSegs.map((s) => ({
+            seg: s.seg,
+            link: ['/projects', pid, 'settings', s.seg],
+            soon: s.soon,
+          })),
+        };
+      }
+      // Project root.
+      return {
+        back: { link: ['/projects'], labelKey: 'nav.allProjects' },
+        ariaKey: 'nav.projectAria',
+        items: this.projectRootSegs.map((s) => ({
+          seg: s.seg,
+          link: ['/projects', pid, s.seg],
+        })),
+      };
+    }
+
+    // Org settings sub-nav.
+    if (this.inSettings()) {
+      return {
+        back: { link: ['/projects'], labelKey: 'nav.allProjects' },
+        headingKey: 'nav.settings',
+        ariaKey: 'nav.orgAria',
+        items: this.orgSettingsSegs.map((s) => ({
+          seg: s.seg,
+          link: ['/settings', s.seg],
+          soon: s.soon,
+        })),
+      };
+    }
+
+    // Org root.
+    return {
+      back: null,
+      ariaKey: 'nav.orgAria',
+      items: this.orgRootSegs.map((s) => ({ seg: s.seg, link: ['/' + s.seg] })),
+    };
+  });
+
+  /** Breadcrumb trail for the top bar: the context ancestors (clickable) then the
+   * current page title. Sub-nav pages (settings/account sections) get an extra
+   * "Settings"/"Account" crumb so the trail reads e.g. "<project> / Settings / General". */
   protected readonly crumbs = computed<Crumb[]>(() => {
     const key = this.titleKey();
-    // Personal pages (the user's own account) aren't nested under an organization.
-    if (this.url().startsWith('/account')) {
-      return key ? [{ key, link: null }] : [];
-    }
     const items: Crumb[] = [];
+
+    // Personal pages (the user's own account) aren't nested under an organization.
+    if (this.inAccount()) {
+      items.push({ key: 'nav.account', link: ['/account'] });
+      if (key) items.push({ key, link: null });
+      return items;
+    }
+
     const pid = this.projectId();
     if (pid) {
-      const project = this.workspace.projects().find((p) => p.id === pid);
       items.push({
-        label: project?.name,
+        label: this.projectName(),
         key: 'nav.projectFallback',
         link: ['/projects', pid, 'overview'],
       });
+      if (this.inSettings()) {
+        items.push({ key: 'nav.settings', link: ['/projects', pid, 'settings'] });
+      }
     } else {
       const orgId = this.auth.organizationId();
       const org = this.workspace.organizations().find((o) => o.id === orgId);
       items.push({ label: org?.name, key: 'orgSwitcher.fallbackName', link: ['/projects'] });
+      if (this.inSettings()) {
+        items.push({ key: 'nav.settings', link: ['/settings'] });
+      }
     }
     if (key) items.push({ key, link: null });
     return items;
