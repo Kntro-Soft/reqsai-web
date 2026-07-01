@@ -1,11 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { provideIcons } from '@ng-icons/core';
 import {
+  lucideBell,
+  lucideChartLine,
+  lucideCreditCard,
   lucideFolder,
+  lucideKey,
   lucideLayoutDashboard,
   lucideList,
+  lucideLock,
   lucideMic,
+  lucidePalette,
+  lucidePlug,
   lucideSettings,
+  lucideSlidersHorizontal,
+  lucideTriangleAlert,
+  lucideUser,
   lucideUsers,
 } from '@ng-icons/lucide';
 import { HlmIcon } from '../../ui';
@@ -20,6 +30,18 @@ const NAV_ICONS: Record<string, string> = {
   stories: 'lucideList',
   members: 'lucideUsers',
   settings: 'lucideSettings',
+  // Settings sub-nav.
+  general: 'lucideSlidersHorizontal',
+  billing: 'lucideCreditCard',
+  integrations: 'lucidePlug',
+  usage: 'lucideChartLine',
+  danger: 'lucideTriangleAlert',
+  // Account sub-nav.
+  profile: 'lucideUser',
+  security: 'lucideLock',
+  appearance: 'lucidePalette',
+  notifications: 'lucideBell',
+  tokens: 'lucideKey',
 };
 
 @Component({
@@ -35,6 +57,16 @@ const NAV_ICONS: Record<string, string> = {
       lucideList,
       lucideUsers,
       lucideSettings,
+      lucideSlidersHorizontal,
+      lucideCreditCard,
+      lucidePlug,
+      lucideChartLine,
+      lucideTriangleAlert,
+      lucideUser,
+      lucideLock,
+      lucidePalette,
+      lucideBell,
+      lucideKey,
     }),
   ],
   template: `<hlm-icon [name]="icon()" [size]="size() + 'px'" />`,

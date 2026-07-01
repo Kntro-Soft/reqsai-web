@@ -44,7 +44,17 @@
     "forgotPassword": "Recover password",
     "resetPassword": "New password",
     "account": "Account",
-    "newProject": "New project"
+    "newProject": "New project",
+    "general": "General",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "usage": "Usage",
+    "danger": "Danger",
+    "profile": "Profile",
+    "security": "Security",
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "tokens": "API tokens"
   },
   "nav": {
     "projects": "Projects",
@@ -56,10 +66,27 @@
     "projectFallback": "Project",
     "projectAria": "Project navigation",
     "orgAria": "Organization navigation",
+    "accountAria": "Account navigation",
     "overview": "Overview",
     "allProjects": "All Projects",
     "find": "Find…",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "soon": "Soon",
+    "account": "Account",
+    "general": "General",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "usage": "Usage",
+    "danger": "Danger",
+    "profile": "Profile",
+    "security": "Security",
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "tokens": "API tokens"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "subtitle": "This section isn't available yet. It's on the roadmap — check back soon."
   },
   "userMenu": {
     "ariaLabel": "User menu",

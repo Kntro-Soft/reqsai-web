@@ -44,7 +44,17 @@
     "forgotPassword": "Recuperar contraseña",
     "resetPassword": "Nueva contraseña",
     "account": "Cuenta",
-    "newProject": "Nuevo proyecto"
+    "newProject": "Nuevo proyecto",
+    "general": "General",
+    "billing": "Facturación",
+    "integrations": "Integraciones",
+    "usage": "Uso",
+    "danger": "Peligro",
+    "profile": "Perfil",
+    "security": "Seguridad",
+    "appearance": "Apariencia",
+    "notifications": "Notificaciones",
+    "tokens": "Tokens de API"
   },
   "nav": {
     "projects": "Proyectos",
@@ -56,10 +66,27 @@
     "projectFallback": "Proyecto",
     "projectAria": "Navegación del proyecto",
     "orgAria": "Navegación de la organización",
+    "accountAria": "Navegación de la cuenta",
     "overview": "Resumen",
     "allProjects": "Todos los proyectos",
     "find": "Buscar…",
-    "openMenu": "Abrir menú"
+    "openMenu": "Abrir menú",
+    "soon": "Pronto",
+    "account": "Cuenta",
+    "general": "General",
+    "billing": "Facturación",
+    "integrations": "Integraciones",
+    "usage": "Uso",
+    "danger": "Peligro",
+    "profile": "Perfil",
+    "security": "Seguridad",
+    "appearance": "Apariencia",
+    "notifications": "Notificaciones",
+    "tokens": "Tokens de API"
+  },
+  "comingSoon": {
+    "title": "Próximamente",
+    "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
   },
   "userMenu": {
     "ariaLabel": "Menú de usuario",
