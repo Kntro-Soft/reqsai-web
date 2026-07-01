@@ -16,6 +16,7 @@ import { lucideChevronLeft, lucideMenu, lucideSearch, lucideX } from '@ng-icons/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { PageTitleService } from '../../core/layout/page-title.service';
+import { modLabel } from '../../core/platform/shortcut';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
 import { OrgSwitcher } from '../../shared/components/org-switcher/org-switcher';
 import { ProjectSwitcher } from '../../shared/components/project-switcher/project-switcher';
@@ -27,6 +28,15 @@ import { HlmIcon } from '../../shared/ui';
 interface NavItem {
   /** Route segment + i18n key (`nav.<seg>`) + nav-icon name. */
   seg: string;
+}
+
+interface Crumb {
+  /** Raw label (entity name); when absent, `key` is translated instead. */
+  label?: string;
+  /** i18n fallback key (used when `label` is empty). */
+  key: string;
+  /** Router link for an ancestor crumb, or null for the current page. */
+  link: unknown[] | null;
 }
 
 /**
@@ -74,7 +84,7 @@ interface NavItem {
           <kbd
             class="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground"
             aria-hidden="true"
-            >⌘K</kbd
+            >{{ shortcut }}</kbd
           >
         </button>
 
@@ -121,7 +131,7 @@ interface NavItem {
       </div>
     </ng-template>
 
-    <div class="flex h-dvh overflow-hidden bg-background text-foreground">
+    <div class="app-ambient flex h-dvh overflow-hidden text-foreground">
       <!-- Sidebar (desktop) -->
       <aside class="hidden w-60 shrink-0 border-r border-border md:block">
         <ng-container [ngTemplateOutlet]="sidebar" />
@@ -159,15 +169,31 @@ interface NavItem {
             <app-project-switcher [currentProjectId]="projectId()" />
           </div>
 
-          @if (titleKey(); as key) {
-            <span class="col-start-2 hidden max-w-full truncate text-sm font-medium sm:block">{{
-              key | transloco
-            }}</span>
-          }
+          <nav
+            class="col-start-2 hidden max-w-full items-center gap-1.5 truncate text-sm sm:flex"
+            aria-label="Breadcrumb"
+          >
+            @for (crumb of crumbs(); track $index; let last = $last; let first = $first) {
+              @if (!first) {
+                <span class="text-muted-foreground/40" aria-hidden="true">/</span>
+              }
+              @if (crumb.link && !last) {
+                <a
+                  [routerLink]="crumb.link"
+                  class="truncate text-muted-foreground transition-colors hover:text-foreground"
+                  >{{ crumb.label ?? (crumb.key | transloco) }}</a
+                >
+              } @else {
+                <span class="truncate font-medium">{{
+                  crumb.label ?? (crumb.key | transloco)
+                }}</span>
+              }
+            }
+          </nav>
         </header>
 
         <main class="flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
-          <div class="mx-auto w-full max-w-6xl">
+          <div class="mx-auto w-full max-w-5xl">
             <router-outlet />
           </div>
         </main>
@@ -184,6 +210,7 @@ export class Shell {
   private readonly pageTitle = inject(PageTitleService);
 
   protected readonly titleKey = this.pageTitle.titleKey;
+  protected readonly shortcut = modLabel('K');
   protected readonly mobileOpen = signal(false);
   protected readonly paletteOpen = signal(false);
 
@@ -226,6 +253,28 @@ export class Shell {
   protected readonly filteredNav = computed(() =>
     this.projectId() ? this.projectNav : this.orgNav,
   );
+
+  /** Breadcrumb trail for the top bar: the org/project context (clickable) then the
+   * current page title. */
+  protected readonly crumbs = computed<Crumb[]>(() => {
+    const items: Crumb[] = [];
+    const pid = this.projectId();
+    if (pid) {
+      const project = this.workspace.projects().find((p) => p.id === pid);
+      items.push({
+        label: project?.name,
+        key: 'nav.projectFallback',
+        link: ['/projects', pid, 'overview'],
+      });
+    } else {
+      const orgId = this.auth.organizationId();
+      const org = this.workspace.organizations().find((o) => o.id === orgId);
+      items.push({ label: org?.name, key: 'orgSwitcher.fallbackName', link: ['/projects'] });
+    }
+    const key = this.titleKey();
+    if (key) items.push({ key, link: null });
+    return items;
+  });
 
   constructor() {
     // Org list powers the org switcher; project list powers the project switcher label.

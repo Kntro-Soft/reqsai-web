@@ -153,10 +153,10 @@ import { HlmIcon } from '../../ui';
           type="button"
           data-testid="logout"
           (click)="logout()"
-          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
+          class="flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
         >
-          <hlm-icon name="lucideLogOut" size="16px" class="text-muted-foreground" />
           {{ 'userMenu.signOut' | transloco }}
+          <hlm-icon name="lucideLogOut" size="16px" class="text-muted-foreground" />
         </button>
 
         <div class="mt-1 px-1 pb-1">

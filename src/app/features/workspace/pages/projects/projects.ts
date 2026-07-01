@@ -75,7 +75,7 @@ const VIEW_KEY = 'projects.view';
           </button>
         </div>
 
-        <button hlmBtn type="button" routerLink="/projects/new" data-testid="add-project">
+        <button hlmBtn size="sm" class="h-9" type="button" routerLink="/projects/new" data-testid="add-project">
           <hlm-icon name="lucidePlus" size="16px" />
           {{ 'projects.addNew' | transloco }}
         </button>
