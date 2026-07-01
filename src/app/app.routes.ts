@@ -72,24 +72,89 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/workspace/pages/projects/projects').then((m) => m.Projects),
       },
-      {
-        path: 'members',
-        title: 'titles.members',
-        canActivate: [orgGuard],
-        loadComponent: () =>
-          import('./features/workspace/pages/members/members').then((m) => m.Members),
-      },
+      // Members moved under Settings; keep the old path working.
+      { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },
       {
         path: 'settings',
-        title: 'titles.settings',
         canActivate: [orgGuard],
-        loadComponent: () =>
-          import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
+        children: [
+          { path: '', redirectTo: 'general', pathMatch: 'full' },
+          {
+            path: 'general',
+            title: 'titles.general',
+            loadComponent: () =>
+              import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
+          },
+          {
+            path: 'members',
+            title: 'titles.members',
+            loadComponent: () =>
+              import('./features/workspace/pages/members/members').then((m) => m.Members),
+          },
+          {
+            path: 'billing',
+            title: 'titles.billing',
+            loadComponent: () =>
+              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+            data: { titleKey: 'titles.billing', icon: 'lucideCreditCard' },
+          },
+          {
+            path: 'integrations',
+            title: 'titles.integrations',
+            loadComponent: () =>
+              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+            data: { titleKey: 'titles.integrations', icon: 'lucidePlug' },
+          },
+          {
+            path: 'usage',
+            title: 'titles.usage',
+            loadComponent: () =>
+              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+            data: { titleKey: 'titles.usage', icon: 'lucideChartLine' },
+          },
+        ],
       },
       {
         path: 'account',
-        title: 'titles.account',
-        loadComponent: () => import('./features/iam/pages/account/account').then((m) => m.Account),
+        children: [
+          { path: '', redirectTo: 'profile', pathMatch: 'full' },
+          {
+            path: 'profile',
+            title: 'titles.profile',
+            loadComponent: () =>
+              import('./features/iam/pages/account/profile/profile').then((m) => m.AccountProfile),
+          },
+          {
+            path: 'security',
+            title: 'titles.security',
+            loadComponent: () =>
+              import('./features/iam/pages/account/security/security').then(
+                (m) => m.AccountSecurity,
+              ),
+          },
+          {
+            path: 'appearance',
+            title: 'titles.appearance',
+            loadComponent: () =>
+              import('./features/iam/pages/account/appearance/appearance').then(
+                (m) => m.AccountAppearance,
+              ),
+          },
+          {
+            path: 'notifications',
+            title: 'titles.notifications',
+            loadComponent: () =>
+              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+            data: { titleKey: 'titles.notifications', icon: 'lucideBell' },
+          },
+          {
+            path: 'tokens',
+            title: 'titles.tokens',
+            loadComponent: () =>
+              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+            data: { titleKey: 'titles.tokens', icon: 'lucideKey' },
+          },
+        ],
       },
       {
         path: 'projects/:projectId',
@@ -124,21 +189,36 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
           },
-          {
-            path: 'members',
-            title: 'titles.projectMembers',
-            loadComponent: () =>
-              import('./features/workspace/pages/project-members/project-members').then(
-                (m) => m.ProjectMembers,
-              ),
-          },
+          // Members moved under Settings; keep the old path working.
+          { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },
           {
             path: 'settings',
-            title: 'titles.projectSettings',
-            loadComponent: () =>
-              import('./features/workspace/pages/project-settings/project-settings').then(
-                (m) => m.ProjectSettings,
-              ),
+            children: [
+              { path: '', redirectTo: 'general', pathMatch: 'full' },
+              {
+                path: 'general',
+                title: 'titles.general',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-settings/project-settings').then(
+                    (m) => m.ProjectSettings,
+                  ),
+              },
+              {
+                path: 'members',
+                title: 'titles.projectMembers',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-members/project-members').then(
+                    (m) => m.ProjectMembers,
+                  ),
+              },
+              {
+                path: 'danger',
+                title: 'titles.danger',
+                loadComponent: () =>
+                  import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+                data: { titleKey: 'titles.danger', icon: 'lucideTriangleAlert' },
+              },
+            ],
           },
         ],
       },
