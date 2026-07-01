@@ -89,6 +89,24 @@ export interface CreateMemberRequest {
   role: 'ADMIN' | 'MEMBER';
 }
 
+/** Public view of an invitation, resolved from the token (GET /api/invitations/{token}). */
+export interface InvitationView {
+  organizationName: string;
+  role: 'ADMIN' | 'MEMBER' | string;
+  email: string;
+  invitedByName: string | null;
+  status: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED' | 'SUPERSEDED' | string;
+  expired: boolean;
+}
+
+/** Result of accepting an invitation (POST /api/invitations/accept). */
+export interface AcceptInvitationResult {
+  organizationId: string;
+  organizationName: string;
+  memberId: string;
+  role: string;
+}
+
 /** A project ↔ member assignment (the names are resolved client-side from the org members). */
 export interface ProjectMemberResponse {
   id: string;

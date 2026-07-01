@@ -192,6 +192,14 @@ export class WorkspaceApiService {
     return this.http.delete<void>(`/api/organizations/${orgId}/members/${memberId}`);
   }
 
+  /** Re-sends a pending invitation email (owner/admin). `409` if the member isn't PENDING. */
+  resendInvitation(orgId: string, memberId: string): Observable<MemberResponse> {
+    return this.http.post<MemberResponse>(
+      `/api/organizations/${orgId}/members/${memberId}/resend`,
+      {},
+    );
+  }
+
   uploadOrganizationAvatar(orgId: string, file: File): Observable<OrganizationResponse> {
     const form = new FormData();
     form.append('file', file);
