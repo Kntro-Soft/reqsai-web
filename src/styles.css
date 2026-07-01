@@ -143,6 +143,14 @@
   .app-ambient {
     background-color: var(--background);
   }
+  /* Light mode reads a touch flat, so give it a whisper of the same brand/navy
+   * glow (weaker than dark, still Geist-tasteful). */
+  :root:not(.dark) .app-ambient {
+    background-image:
+      radial-gradient(70rem 40rem at 15% -10%, rgba(239, 68, 68, 0.04), transparent 60%),
+      radial-gradient(60rem 40rem at 100% 0%, rgba(56, 89, 148, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
   .dark .app-ambient {
     background-image:
       radial-gradient(70rem 40rem at 15% -10%, rgba(239, 68, 68, 0.05), transparent 60%),
@@ -152,12 +160,23 @@
 
   /* Optional faint dot grid — add alongside .app-ambient for extra texture. */
   .app-ambient-grid {
-    background-image: radial-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px);
     background-size: 22px 22px;
     background-position: -1px -1px;
   }
   .dark .app-ambient-grid {
     background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  /* A yet-lighter dot grid for use as a full-app backdrop under cards/tables:
+   * subtle enough that it never competes with content or hurts readability. */
+  .app-ambient-grid-subtle {
+    background-image: radial-gradient(rgba(15, 23, 42, 0.028) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+  .dark .app-ambient-grid-subtle {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px);
   }
 
   /* Skeleton shimmer: a soft highlight sweep travelling across a muted block while

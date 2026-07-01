@@ -157,7 +157,13 @@ interface Crumb {
       </div>
     </ng-template>
 
-    <div class="app-ambient flex h-dvh overflow-hidden text-foreground">
+    <div class="app-ambient relative flex h-dvh overflow-hidden text-foreground">
+      <!-- Very subtle full-app dot-grid texture under the content (both themes). -->
+      <div
+        class="app-ambient-grid-subtle pointer-events-none absolute inset-0 -z-10"
+        aria-hidden="true"
+      ></div>
+
       <!-- Sidebar (desktop) -->
       <aside class="hidden w-60 shrink-0 border-r border-border md:block">
         <ng-container [ngTemplateOutlet]="sidebar" />
