@@ -32,6 +32,23 @@ import { Avatar } from '../avatar/avatar';
 import { HlmIcon } from '../../ui';
 import { CommandRegistry, SearchItem } from '../../search/command-registry';
 
+/** localStorage key for the small most-recently-used list of activated item ids. */
+const RECENT_KEY = 'commandPalette.recent';
+/** How many recent items to remember / surface. */
+const RECENT_MAX = 5;
+
+/** A search item paired with its flat index across all visible groups (for keyboard nav). */
+interface IndexedItem {
+  item: SearchItem;
+  index: number;
+}
+
+/** A rendered section: a translatable header key and its indexed items. */
+interface PaletteGroup {
+  key: string;
+  items: IndexedItem[];
+}
+
 /**
  * Global command palette (⌘K). A centered modal overlay (CDK global position +
  * dim backdrop) with a search input and a keyboard-navigable list of
@@ -92,41 +109,46 @@ import { CommandRegistry, SearchItem } from '../../search/command-registry';
             >
           </div>
 
-          <div class="overflow-y-auto p-1.5" role="listbox">
-            @for (item of items(); track item.id; let i = $index) {
-              <button
-                type="button"
-                role="option"
-                [attr.aria-selected]="i === selected()"
-                (click)="activate(item)"
-                (mouseenter)="selected.set(i)"
-                class="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors"
-                [class]="
-                  i === selected()
-                    ? 'bg-accent text-foreground'
-                    : 'text-foreground/90 hover:bg-accent'
-                "
-                data-testid="command-palette-item"
+          <div #list class="overflow-y-auto p-1.5" role="listbox">
+            @for (group of groups(); track group.key) {
+              <div
+                class="sticky top-0 z-10 bg-popover px-2.5 pt-2 pb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
               >
-                @if (item.icon; as icon) {
-                  <span
-                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-secondary text-muted-foreground"
-                  >
-                    <hlm-icon [name]="icon" size="15px" />
-                  </span>
-                } @else {
-                  <app-avatar
-                    [name]="item.avatarName ?? ''"
-                    [seed]="item.avatarSeed ?? ''"
-                    [imageUrl]="item.avatarUrl ?? null"
-                    [size]="28"
-                  />
-                }
-                <span class="min-w-0 flex-1 truncate font-medium">{{ item.label }}</span>
-                <span class="shrink-0 text-xs text-muted-foreground">{{
-                  item.group | transloco
-                }}</span>
-              </button>
+                {{ group.key | transloco }}
+              </div>
+              @for (entry of group.items; track entry.item.id) {
+                <button
+                  type="button"
+                  role="option"
+                  [attr.data-index]="entry.index"
+                  [attr.aria-selected]="entry.index === selected()"
+                  (click)="activate(entry.item)"
+                  (mouseenter)="selected.set(entry.index)"
+                  class="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors"
+                  [class]="
+                    entry.index === selected()
+                      ? 'bg-accent text-foreground'
+                      : 'text-foreground/90 hover:bg-accent'
+                  "
+                  data-testid="command-palette-item"
+                >
+                  @if (entry.item.icon; as icon) {
+                    <span
+                      class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-secondary text-muted-foreground"
+                    >
+                      <hlm-icon [name]="icon" size="15px" />
+                    </span>
+                  } @else {
+                    <app-avatar
+                      [name]="entry.item.avatarName ?? ''"
+                      [seed]="entry.item.avatarSeed ?? ''"
+                      [imageUrl]="entry.item.avatarUrl ?? null"
+                      [size]="28"
+                    />
+                  }
+                  <span class="min-w-0 flex-1 truncate font-medium">{{ entry.item.label }}</span>
+                </button>
+              }
             } @empty {
               <p class="px-2.5 py-8 text-center text-sm text-muted-foreground">
                 {{ 'commandPalette.empty' | transloco }}
@@ -153,7 +175,11 @@ export class CommandPalette {
   protected readonly query = signal('');
   protected readonly selected = signal(0);
 
+  /** Ids of recently activated items, most-recent first (persisted in localStorage). */
+  private readonly recentIds = signal<string[]>(this.loadRecent());
+
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('search');
+  private readonly listEl = viewChild<ElementRef<HTMLElement>>('list');
 
   /** Re-translate group hints / actions on language change. */
   private readonly lang = signal(this.transloco.getActiveLang());
@@ -237,8 +263,55 @@ export class CommandPalette {
     return items;
   }
 
-  /** The filtered, grouped results from every registered source. */
-  protected readonly items = computed<SearchItem[]>(() => this.registry.search(this.query()));
+  /** The fuzzy-ranked results from every registered source for the current query. */
+  private readonly results = computed<SearchItem[]>(() => this.registry.search(this.query()));
+
+  /**
+   * The visible sections. On a blank query a "Recent" group of the last-activated items is shown
+   * first (when any exist), followed by every item grouped by its `group` key in first-seen order.
+   * While filtering, results stay in fuzzy-rank order but are still bucketed by group for headers.
+   * Each item carries a flat `index` so arrow-key navigation is a single running counter.
+   */
+  protected readonly groups = computed<PaletteGroup[]>(() => {
+    const results = this.results();
+    const blank = this.query().trim() === '';
+    const groups: PaletteGroup[] = [];
+    const byKey = new Map<string, IndexedItem[]>();
+    let index = 0;
+
+    const push = (key: string, item: SearchItem): void => {
+      let bucket = byKey.get(key);
+      if (!bucket) {
+        bucket = [];
+        byKey.set(key, bucket);
+        groups.push({ key, items: bucket });
+      }
+      bucket.push({ item, index: index++ });
+    };
+
+    if (blank) {
+      const recent = this.recentItems();
+      for (const item of recent) push('commandPalette.recent', item);
+    }
+    for (const item of results) push(item.group, item);
+
+    return groups;
+  });
+
+  /** The visible items in render order — the flat list keyboard nav walks. */
+  protected readonly visibleItems = computed<SearchItem[]>(() =>
+    this.groups().flatMap((g) => g.items.map((e) => e.item)),
+  );
+
+  /** Resolve the persisted recent ids against the current live items, dropping stale ones. */
+  private readonly recentItems = computed<SearchItem[]>(() => {
+    const all = this.registry.items();
+    const byId = new Map(all.map((i) => [i.id, i]));
+    return this.recentIds()
+      .map((id) => byId.get(id))
+      .filter((i): i is SearchItem => !!i)
+      .slice(0, RECENT_MAX);
+  });
 
   constructor() {
     this.registry.register(() => this.buildItems());
@@ -251,10 +324,21 @@ export class CommandPalette {
         queueMicrotask(() => this.searchInput()?.nativeElement.focus());
       }
     });
-    // Keep the selection in range as the filtered list shrinks.
+    // Keep the selection in range as the visible list shrinks.
     effect(() => {
-      const len = this.items().length;
+      const len = this.visibleItems().length;
       if (this.selected() >= len) this.selected.set(Math.max(0, len - 1));
+    });
+    // Scroll the selected row into view as it moves.
+    effect(() => {
+      const i = this.selected();
+      const host = this.listEl()?.nativeElement;
+      if (!host) return;
+      queueMicrotask(() => {
+        host
+          .querySelector<HTMLElement>(`[data-index="${i}"]`)
+          ?.scrollIntoView({ block: 'nearest' });
+      });
     });
   }
 
@@ -279,7 +363,7 @@ export class CommandPalette {
         break;
       case 'Enter': {
         event.preventDefault();
-        const item = this.items()[this.selected()];
+        const item = this.visibleItems()[this.selected()];
         if (item) this.activate(item);
         break;
       }
@@ -287,13 +371,35 @@ export class CommandPalette {
   }
 
   private move(delta: number): void {
-    const len = this.items().length;
+    const len = this.visibleItems().length;
     if (len === 0) return;
     this.selected.update((i) => (i + delta + len) % len);
   }
 
   protected activate(item: SearchItem): void {
+    this.remember(item.id);
     item.run();
+  }
+
+  /** Record `id` at the head of the MRU list (deduped, capped) and persist it. */
+  private remember(id: string): void {
+    const next = [id, ...this.recentIds().filter((x) => x !== id)].slice(0, RECENT_MAX);
+    this.recentIds.set(next);
+    try {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage failures (private mode / quota) — recents are best-effort.
+    }
+  }
+
+  private loadRecent(): string[] {
+    try {
+      const raw = localStorage.getItem(RECENT_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
   }
 
   protected close(): void {

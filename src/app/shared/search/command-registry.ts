@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { fuzzyScore } from './fuzzy';
 
 /** A single searchable/actionable entry surfaced by the command palette. */
 export interface SearchItem {
@@ -48,14 +49,25 @@ export class CommandRegistry {
   /** Every item from every registered source; reactive to the signals those sources read. */
   readonly items = computed<SearchItem[]>(() => this.sources().flatMap((source) => source()));
 
-  /** The items whose label or keywords match `query` (case-insensitive substring); all when blank. */
+  /**
+   * The items matching `query`, ranked by a fuzzy (subsequence) score against the label and
+   * keywords; a substring match acts as a score floor so exact substrings never rank below a
+   * looser subsequence hit. Returns all items unranked when the query is blank.
+   */
   search(query: string): SearchItem[] {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     const items = this.items();
     if (!q) return items;
-    return items.filter(
-      (item) =>
-        item.label.toLowerCase().includes(q) || (item.keywords?.toLowerCase().includes(q) ?? false),
-    );
+    const scored: { item: SearchItem; score: number }[] = [];
+    for (const item of items) {
+      const labelScore = fuzzyScore(q, item.label);
+      const keywordScore = item.keywords ? fuzzyScore(q, item.keywords) : 0;
+      const score = Math.max(labelScore, keywordScore);
+      if (score > 0) scored.push({ item, score });
+    }
+    // Stable sort by descending score (Array.prototype.sort is stable in modern engines),
+    // so items with equal scores keep their registration order.
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map((s) => s.item);
   }
 }

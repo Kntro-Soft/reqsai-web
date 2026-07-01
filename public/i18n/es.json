@@ -89,6 +89,7 @@
     "open": "Abrir paleta de comandos",
     "placeholder": "Buscar o ir a…",
     "empty": "No se encontraron resultados.",
+    "recent": "Recientes",
     "groups": {
       "actions": "Acción",
       "organizations": "Organización",

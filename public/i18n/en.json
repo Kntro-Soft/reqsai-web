@@ -89,6 +89,7 @@
     "open": "Open command palette",
     "placeholder": "Search or jump to…",
     "empty": "No results found.",
+    "recent": "Recent",
     "groups": {
       "actions": "Action",
       "organizations": "Organization",
