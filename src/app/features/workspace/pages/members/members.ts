@@ -226,6 +226,7 @@ const MENU_POS: ConnectedPosition[] = [
                       <app-avatar
                         [name]="m.displayName || m.email"
                         [seed]="m.id"
+                        [imageUrl]="m.avatarUrl"
                         [size]="34"
                         [circle]="true"
                       />
@@ -378,20 +379,27 @@ export class Members {
       role: 'OWNER' as const,
       status: 'ACTIVE',
       isOwnerSelf: true,
+      avatarUrl: user.avatarUrl ?? null,
     };
   });
+
+  /** The user's public avatar endpoint, when the member is linked to a user account (falls back to a
+   * monogram for pending invites, which have no user yet, or users without an uploaded image). */
+  private memberAvatar(userId: string | null): string | null {
+    return userId ? `/api/users/${userId}/avatar` : null;
+  }
 
   protected readonly activeRows = computed(() => {
     const owner = this.ownerRow();
     const active = this.members()
       .filter((m) => m.status === 'ACTIVE')
-      .map((m) => ({ ...m, isOwnerSelf: false }));
+      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) }));
     return owner ? [owner, ...active] : active;
   });
   protected readonly pending = computed(() =>
     this.members()
       .filter((m) => m.status === 'PENDING')
-      .map((m) => ({ ...m, isOwnerSelf: false })),
+      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) })),
   );
 
   /** The current tab's rows after the filter / role / sort controls are applied. */
