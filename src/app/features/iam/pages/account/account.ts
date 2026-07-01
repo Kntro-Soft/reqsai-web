@@ -4,17 +4,18 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideMonitor, lucideMoon, lucideSun, lucideUpload } from '@ng-icons/lucide';
+import { lucideCheck, lucideMonitor, lucideMoon, lucideSun, lucideUpload } from '@ng-icons/lucide';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { ThemeMode, ThemeService } from '../../../../core/theme/theme.service';
 import { Lang, SUPPORTED_LANGS, saveLang } from '../../../../core/i18n/language';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
-import { HlmButton, HlmCard, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
+import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 const MAX_AVATAR_BYTES = 1_000_000;
 
-/** Personal account settings (Vercel-style): profile (avatar + name), password, appearance. */
+/** Personal account settings — same Vercel-style bordered cards as the org settings page:
+ * avatar (click to upload), profile name, password and appearance, each with its footer Save. */
 @Component({
   selector: 'app-account',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,25 +23,29 @@ const MAX_AVATAR_BYTES = 1_000_000;
     ReactiveFormsModule,
     Avatar,
     HlmButton,
-    HlmCard,
     HlmIcon,
     HlmInput,
     HlmLabel,
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideMonitor, lucideSun, lucideMoon, lucideUpload })],
+  viewProviders: [provideIcons({ lucideCheck, lucideMonitor, lucideSun, lucideMoon, lucideUpload })],
   template: `
-    <div class="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ 'account.title' | transloco }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">{{ 'account.subtitle' | transloco }}</p>
-      </div>
-
-      <!-- Profile: avatar + name -->
-      <section hlmCard class="overflow-hidden">
-        <div class="flex flex-col gap-5 p-6">
-          <div class="flex items-center gap-4">
+    <div class="flex flex-col gap-6">
+      <!-- Avatar -->
+      <section class="overflow-hidden rounded-2xl border border-border">
+        <div class="flex items-center justify-between gap-4 p-5">
+          <div class="flex flex-col gap-1">
+            <h2 class="text-base font-semibold">{{ 'account.avatar' | transloco }}</h2>
+            <p class="text-sm text-muted-foreground">{{ 'account.avatarDesc' | transloco }}</p>
+          </div>
+          <button
+            type="button"
+            (click)="fileInput.click()"
+            [disabled]="uploading()"
+            class="group relative shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            [attr.aria-label]="'account.changeAvatar' | transloco"
+          >
             <app-avatar
               [name]="store.user()?.fullName ?? ''"
               [seed]="store.user()?.id ?? ''"
@@ -48,38 +53,42 @@ const MAX_AVATAR_BYTES = 1_000_000;
               [size]="64"
               [circle]="true"
             />
-            <div class="flex flex-col gap-2">
-              <p class="text-sm text-muted-foreground">{{ 'account.avatarDesc' | transloco }}</p>
-              <div>
-                <input
-                  #fileInput
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  class="hidden"
-                  (change)="onAvatarSelected($event)"
-                />
-                <button
-                  hlmBtn
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  (click)="fileInput.click()"
-                  [disabled]="uploading()"
-                >
-                  @if (uploading()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  } @else {
-                    <hlm-icon name="lucideUpload" size="15px" />
-                  }
-                  {{ 'account.changeAvatar' | transloco }}
-                </button>
-              </div>
-              @if (avatarError()) {
-                <p class="text-xs text-destructive">{{ avatarError() }}</p>
+            <span
+              class="absolute inset-0 grid place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              <hlm-icon name="lucideUpload" size="18px" />
+            </span>
+          </button>
+          <input
+            #fileInput
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            class="hidden"
+            (change)="onAvatarSelected($event)"
+          />
+        </div>
+        <div class="border-t border-border bg-muted/30 px-5 py-3">
+          @if (avatarError()) {
+            <span class="text-xs text-destructive">{{ avatarError() }}</span>
+          } @else {
+            <span class="text-xs text-muted-foreground">
+              @if (uploading()) {
+                {{ 'account.avatarUploading' | transloco }}
+              } @else {
+                {{ 'account.avatarHint' | transloco }}
               }
-            </div>
-          </div>
+            </span>
+          }
+        </div>
+      </section>
 
+      <!-- Profile name -->
+      <section class="overflow-hidden rounded-2xl border border-border">
+        <div class="flex flex-col gap-4 p-5">
+          <div class="flex flex-col gap-1">
+            <h2 class="text-base font-semibold">{{ 'account.profile' | transloco }}</h2>
+            <p class="text-sm text-muted-foreground">{{ 'account.profileDesc' | transloco }}</p>
+          </div>
           <form [formGroup]="profileForm" class="grid gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
               <label hlmLabel for="firstName">{{ 'auth.fields.firstName' | transloco }}</label>
@@ -92,10 +101,13 @@ const MAX_AVATAR_BYTES = 1_000_000;
           </form>
         </div>
         <div
-          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
         >
           @if (profileSaved()) {
-            <span class="text-xs text-emerald-500">{{ 'account.saved' | transloco }}</span>
+            <span class="flex items-center gap-1 text-xs text-emerald-500">
+              <hlm-icon name="lucideCheck" size="13px" />
+              {{ 'account.saved' | transloco }}
+            </span>
           }
           <button
             hlmBtn
@@ -113,13 +125,11 @@ const MAX_AVATAR_BYTES = 1_000_000;
       </section>
 
       <!-- Password -->
-      <section hlmCard class="overflow-hidden">
-        <form [formGroup]="passwordForm" class="flex flex-col gap-4 p-6">
-          <div>
+      <section class="overflow-hidden rounded-2xl border border-border">
+        <form [formGroup]="passwordForm" class="flex flex-col gap-4 p-5">
+          <div class="flex flex-col gap-1">
             <h2 class="text-base font-semibold">{{ 'account.password' | transloco }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">
-              {{ 'account.passwordDesc' | transloco }}
-            </p>
+            <p class="text-sm text-muted-foreground">{{ 'account.passwordDesc' | transloco }}</p>
           </div>
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
@@ -151,10 +161,13 @@ const MAX_AVATAR_BYTES = 1_000_000;
           }
         </form>
         <div
-          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-6 py-3"
+          class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
         >
           @if (passwordSaved()) {
-            <span class="text-xs text-emerald-500">{{ 'account.passwordSaved' | transloco }}</span>
+            <span class="flex items-center gap-1 text-xs text-emerald-500">
+              <hlm-icon name="lucideCheck" size="13px" />
+              {{ 'account.passwordSaved' | transloco }}
+            </span>
           }
           <button
             hlmBtn
@@ -172,13 +185,11 @@ const MAX_AVATAR_BYTES = 1_000_000;
       </section>
 
       <!-- Appearance -->
-      <section hlmCard class="overflow-hidden">
-        <div class="flex flex-col gap-4 p-6">
-          <div>
+      <section class="overflow-hidden rounded-2xl border border-border">
+        <div class="flex flex-col gap-4 p-5">
+          <div class="flex flex-col gap-1">
             <h2 class="text-base font-semibold">{{ 'account.appearance' | transloco }}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">
-              {{ 'account.appearanceDesc' | transloco }}
-            </p>
+            <p class="text-sm text-muted-foreground">{{ 'account.appearanceDesc' | transloco }}</p>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-3">
             <span class="text-sm">{{ 'userMenu.theme' | transloco }}</span>

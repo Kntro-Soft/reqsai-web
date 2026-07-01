@@ -46,12 +46,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
   ],
   viewProviders: [provideIcons({ lucideCheck, lucideCopy, lucideUpload })],
   template: `
-    <div class="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ 'orgSettings.title' | transloco }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">{{ 'orgSettings.subtitle' | transloco }}</p>
-      </div>
-
+    <div class="flex flex-col gap-6">
       @if (state() === 'loading') {
         <div class="flex justify-center rounded-2xl border border-border py-10">
           <hlm-spinner class="h-5 w-5" />
