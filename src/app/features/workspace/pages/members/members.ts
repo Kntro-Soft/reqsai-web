@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
 import { lucideEllipsis, lucidePlus, lucideTrash2, lucideUserPlus } from '@ng-icons/lucide';
@@ -13,6 +12,7 @@ import { CreateMemberRequest, MemberResponse } from '../../data/workspace.models
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { translateFn } from '../../../../core/i18n/translate-fn';
 import {
   HlmButton,
   HlmIcon,
@@ -339,29 +339,30 @@ export class Members {
   protected readonly roleFilter = signal('all');
   protected readonly sort = signal('recent');
 
-  private readonly activeLang = toSignal(this.transloco.langChanges$, {
-    initialValue: this.transloco.getActiveLang(),
-  });
+  private readonly translate = translateFn(this.transloco);
   protected readonly roleOptions = computed<SelectOption[]>(() => {
-    this.activeLang();
+    const t = this.translate();
+    if (!t) return [];
     return [
-      { value: 'MEMBER', label: this.transloco.translate('members.role.MEMBER') },
-      { value: 'ADMIN', label: this.transloco.translate('members.role.ADMIN') },
+      { value: 'MEMBER', label: t('members.role.MEMBER') },
+      { value: 'ADMIN', label: t('members.role.ADMIN') },
     ];
   });
   protected readonly roleFilterOptions = computed<SelectOption[]>(() => {
-    this.activeLang();
+    const t = this.translate();
+    if (!t) return [];
     return [
-      { value: 'all', label: this.transloco.translate('members.filterAllRoles') },
-      { value: 'ADMIN', label: this.transloco.translate('members.role.ADMIN') },
-      { value: 'MEMBER', label: this.transloco.translate('members.role.MEMBER') },
+      { value: 'all', label: t('members.filterAllRoles') },
+      { value: 'ADMIN', label: t('members.role.ADMIN') },
+      { value: 'MEMBER', label: t('members.role.MEMBER') },
     ];
   });
   protected readonly sortOptions = computed<SelectOption[]>(() => {
-    this.activeLang();
+    const t = this.translate();
+    if (!t) return [];
     return [
-      { value: 'recent', label: this.transloco.translate('members.sortRecent') },
-      { value: 'name', label: this.transloco.translate('members.sortName') },
+      { value: 'recent', label: t('members.sortRecent') },
+      { value: 'name', label: t('members.sortName') },
     ];
   });
 

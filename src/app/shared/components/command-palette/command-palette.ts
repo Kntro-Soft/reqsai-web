@@ -31,6 +31,7 @@ import { WorkspaceStore } from '../../../features/workspace/data/workspace.store
 import { Avatar } from '../avatar/avatar';
 import { HlmIcon } from '../../ui';
 import { CommandRegistry, SearchItem } from '../../search/command-registry';
+import { translateFn } from '../../../core/i18n/translate-fn';
 
 /** localStorage key for the small most-recently-used list of activated item ids. */
 const RECENT_KEY = 'commandPalette.recent';
@@ -181,13 +182,13 @@ export class CommandPalette {
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly listEl = viewChild<ElementRef<HTMLElement>>('list');
 
-  /** Re-translate group hints / actions on language change. */
-  private readonly lang = signal(this.transloco.getActiveLang());
+  /** Null until translations load; re-emits on language change (avoids pre-load translate() warns). */
+  private readonly translate = translateFn(this.transloco);
 
   /** The app-specific search source: quick actions + organizations + projects. */
   private buildItems(): SearchItem[] {
-    this.lang();
-    const t = (k: string) => this.transloco.translate(k);
+    const t = this.translate();
+    if (!t) return [];
     const items: SearchItem[] = [];
 
     // Quick actions.
@@ -315,7 +316,6 @@ export class CommandPalette {
 
   constructor() {
     this.registry.register(() => this.buildItems());
-    this.transloco.langChanges$.subscribe((l) => this.lang.set(l));
     // On open: reset query/selection and focus the input.
     effect(() => {
       if (this.open()) {
