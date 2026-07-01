@@ -3,7 +3,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucidePlus, lucideTrash2, lucideUserPlus } from '@ng-icons/lucide';
+import {
+  lucideEllipsis,
+  lucideMailCheck,
+  lucidePlus,
+  lucideTrash2,
+  lucideUserPlus,
+} from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
@@ -48,7 +54,9 @@ const MENU_POS: ConnectedPosition[] = [
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideEllipsis, lucidePlus, lucideTrash2, lucideUserPlus })],
+  viewProviders: [
+    provideIcons({ lucideEllipsis, lucideMailCheck, lucidePlus, lucideTrash2, lucideUserPlus }),
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -295,6 +303,17 @@ const MENU_POS: ConnectedPosition[] = [
                           role="menu"
                           class="w-48 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
                         >
+                          @if (tab() === 'pending') {
+                            <button
+                              role="menuitem"
+                              type="button"
+                              (click)="resend(m); menuFor.set(null)"
+                              class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <hlm-icon name="lucideMailCheck" size="15px" />
+                              {{ 'members.resendInvite' | transloco }}
+                            </button>
+                          }
                           <button
                             role="menuitem"
                             type="button"
@@ -495,6 +514,18 @@ export class Members {
     this.api.changeMemberRole(orgId, member.id, role).subscribe({
       next: (updated) =>
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m))),
+      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+    });
+  }
+
+  protected resend(member: { id: string }): void {
+    const orgId = this.store.organizationId();
+    if (!orgId) return;
+    this.api.resendInvitation(orgId, member.id).subscribe({
+      next: (updated) => {
+        this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
+        this.toast.success(this.transloco.translate('toast.invitationResent'));
+      },
       error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
     });
   }
