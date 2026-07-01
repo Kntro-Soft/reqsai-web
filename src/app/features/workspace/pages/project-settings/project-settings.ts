@@ -36,7 +36,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
   ],
   viewProviders: [provideIcons({ lucideCheck, lucideUpload })],
   template: `
-    <div class="mx-auto flex max-w-3xl flex-col gap-6">
+    <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">{{ 'projectSettings.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">
