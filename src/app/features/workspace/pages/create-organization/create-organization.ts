@@ -11,6 +11,7 @@ import { WorkspaceStore } from '../../data/workspace.store';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
 import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
 import { Logo } from '../../../../shared/components/logo/logo';
+import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
 import {
   HlmButton,
   HlmCard,
@@ -43,32 +44,16 @@ function detectMeetingLanguage(): string {
     ThemeToggle,
     LanguageSwitcher,
     Logo,
+    AnimatedBackdrop,
   ],
   viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown })],
-  styles: [
-    `
-      .org-grid {
-        background-image:
-          linear-gradient(to right, var(--border) 1px, transparent 1px),
-          linear-gradient(to bottom, var(--border) 1px, transparent 1px);
-        background-size: 44px 44px;
-        -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent 72%);
-        mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent 72%);
-      }
-    `,
-  ],
   template: `
     <div
       class="relative grid min-h-dvh place-items-center overflow-hidden bg-background px-4 py-20 text-foreground"
     >
-      <!-- Decorative background: faint grid, soft brand glows and a faint brand-mark watermark -->
-      <div class="org-grid pointer-events-none absolute inset-0 opacity-50"></div>
-      <div
-        class="pointer-events-none absolute -top-32 left-1/2 h-80 w-2xl -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
-      ></div>
-      <div
-        class="pointer-events-none absolute -bottom-40 -right-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl"
-      ></div>
+      <!-- Decorative, interactive background: faint grid + soft brand/navy glows that
+           parallax with the pointer and drift on their own when idle. -->
+      <app-animated-backdrop />
       <img
         src="/assets/img/reqsai-combination-mark-original.webp"
         alt=""

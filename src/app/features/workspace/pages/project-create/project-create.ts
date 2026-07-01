@@ -8,6 +8,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Logo } from '../../../../shared/components/logo/logo';
+import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
@@ -23,6 +24,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     ReactiveFormsModule,
     RouterLink,
     Logo,
+    AnimatedBackdrop,
     ChipInput,
     HlmButton,
     HlmIcon,
@@ -33,9 +35,14 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
   ],
   viewProviders: [provideIcons({ lucideArrowLeft, lucideChevronDown })],
   template: `
-    <div class="relative flex min-h-dvh flex-col bg-background text-foreground">
+    <div
+      class="relative flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
+    >
+      <!-- Decorative, interactive background matching the onboarding composition. -->
+      <app-animated-backdrop />
+
       <header
-        class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:px-6"
+        class="relative z-10 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:px-6"
       >
         <a
           routerLink="/projects"
@@ -49,7 +56,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
       </header>
 
       <main
-        class="flex flex-1 justify-center px-4 py-10"
+        class="relative z-10 flex flex-1 justify-center px-4 py-10"
         [class.items-center]="!showAdvanced()"
         [class.items-start]="showAdvanced()"
       >
