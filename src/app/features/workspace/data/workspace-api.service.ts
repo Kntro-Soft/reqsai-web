@@ -154,6 +154,15 @@ export class WorkspaceApiService {
     return this.http.post<MemberResponse>(`/api/organizations/${orgId}/members`, request);
   }
 
+  batchInviteMembers(
+    orgId: string,
+    invitations: CreateMemberRequest[],
+  ): Observable<MemberResponse[]> {
+    return this.http.post<MemberResponse[]>(`/api/organizations/${orgId}/members/batch`, {
+      invitations,
+    });
+  }
+
   changeMemberRole(
     orgId: string,
     memberId: string,
