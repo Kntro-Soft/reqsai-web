@@ -105,8 +105,8 @@ interface Crumb {
             @for (item of filteredNav(); track item.seg) {
               <a
                 [routerLink]="['/projects', pid, item.seg]"
-                routerLinkActive="bg-primary/15 text-primary"
-                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                routerLinkActive="nav-link-active bg-primary/15 text-primary"
+                class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <app-nav-icon [name]="item.seg" [size]="18" />
                 {{ 'nav.' + item.seg | transloco }}
@@ -116,9 +116,9 @@ interface Crumb {
             @for (item of filteredNav(); track item.seg) {
               <a
                 [routerLink]="['/' + item.seg]"
-                routerLinkActive="bg-primary/15 text-primary"
+                routerLinkActive="nav-link-active bg-primary/15 text-primary"
                 [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
-                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <app-nav-icon [name]="item.seg" [size]="18" />
                 {{ 'nav.' + item.seg | transloco }}
@@ -205,6 +205,35 @@ interface Crumb {
     <app-command-palette [(open)]="paletteOpen" />
     <app-toast-host />
   `,
+  styles: [
+    `
+      /* Sidebar active-route indicator: a short accent bar that grows in on the left
+       * edge of the active nav link. */
+      .nav-link {
+        position: relative;
+      }
+      .nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        height: 0;
+        width: 3px;
+        border-radius: 9999px;
+        background: var(--primary);
+        transform: translateY(-50%);
+        transition: height 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .nav-link-active::before {
+        height: 1.15rem;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .nav-link::before {
+          transition: none;
+        }
+      }
+    `,
+  ],
 })
 export class Shell {
   protected readonly auth = inject(AuthStore);

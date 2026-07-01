@@ -6,7 +6,8 @@ export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 
 const BASE =
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ' +
-  'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
+  'transition-[color,background-color,transform] duration-150 active:scale-[.98] ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ' +
   'focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none ' +
   'disabled:opacity-50 cursor-pointer';
 

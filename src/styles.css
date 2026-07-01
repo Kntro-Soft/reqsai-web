@@ -91,6 +91,52 @@
   }
 }
 
+/* Motion: keep everything tasteful and reduced-motion-safe. The single guard at the
+ * bottom disables route view transitions and every keyframe we add app-wide. */
+@layer utilities {
+  /* Staggered fade-up for list/grid items. Add `.stagger-item` and set `--stagger-index`
+   * (via an inline style) on each child; the delay ramps up a little per item. */
+  .stagger-item {
+    animation: stagger-fade-up 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--stagger-index, 0) * 35ms);
+  }
+  @keyframes stagger-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Cross-fade the outgoing/incoming route snapshots (Chromium View Transitions). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Kill route view transitions and all app-level motion for users who ask for it. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .stagger-item {
+    animation: none !important;
+  }
+  /* Neutralize the button press-scale micro-interaction. */
+  [hlmBtn] {
+    transition-property: color, background-color !important;
+  }
+  [hlmBtn]:active {
+    transform: none !important;
+  }
+}
+
 @layer utilities {
   /* App-shell ambient background (both themes). Used in place of bg-background on
    * the shell root: a very subtle brand/navy radial glow in dark, plain in light. */

@@ -14,6 +14,7 @@ import {
   provideRouter,
   withComponentInputBinding,
   withRouterConfig,
+  withViewTransitions,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
@@ -66,6 +67,9 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      // Cross-fade route content on navigation (Chromium View Transitions API); a
+      // no-op elsewhere. Skip the very first paint so the app doesn't fade in on load.
+      withViewTransitions({ skipInitialTransition: true }),
     ),
     // Order matters: authInterceptor stamps the version/token on the way out;
     // errorInterceptor catches 401s on the way back and replays once.

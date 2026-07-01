@@ -144,8 +144,8 @@ const VIEW_KEY = 'projects.view';
             </p>
           } @else if (view() === 'cards') {
             <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              @for (project of filtered(); track project.id) {
-                <li>
+              @for (project of filtered(); track project.id; let idx = $index) {
+                <li class="stagger-item" [style.--stagger-index]="idx">
                   <a
                     [routerLink]="['/projects', project.id]"
                     class="flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40"
@@ -202,10 +202,11 @@ const VIEW_KEY = 'projects.view';
                   </tr>
                 </thead>
                 <tbody>
-                  @for (project of filtered(); track project.id) {
+                  @for (project of filtered(); track project.id; let idx = $index) {
                     <tr
                       [routerLink]="['/projects', project.id]"
-                      class="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent/40"
+                      class="stagger-item cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-accent/40"
+                      [style.--stagger-index]="idx"
                       data-testid="project-row"
                     >
                       <td class="px-4 py-2.5">
