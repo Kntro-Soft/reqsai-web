@@ -150,6 +150,21 @@ export class WorkspaceApiService {
     return this.http.get<MemberResponse[]>(`/api/organizations/${orgId}/members`);
   }
 
+  transferOwnership(orgId: string, newOwnerMemberId: string): Observable<OrganizationResponse> {
+    return this.http.post<OrganizationResponse>(
+      `/api/organizations/${orgId}/transfer-ownership`,
+      { newOwnerMemberId },
+    );
+  }
+
+  deleteOrganization(orgId: string): Observable<void> {
+    return this.http.delete<void>(`/api/organizations/${orgId}`);
+  }
+
+  leaveOrganization(orgId: string): Observable<void> {
+    return this.http.delete<void>(`/api/organizations/${orgId}/members/me`);
+  }
+
   inviteMember(orgId: string, request: CreateMemberRequest): Observable<MemberResponse> {
     return this.http.post<MemberResponse>(`/api/organizations/${orgId}/members`, request);
   }
