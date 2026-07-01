@@ -9,6 +9,17 @@
     "back": "Volver",
     "remove": "Quitar"
   },
+  "toast": {
+    "dismiss": "Descartar",
+    "changesSaved": "Cambios guardados.",
+    "saveError": "No se pudieron guardar los cambios.",
+    "memberRemoved": "Miembro eliminado.",
+    "invitesSent": "Invitaciones enviadas.",
+    "orgDeleted": "Organización eliminada.",
+    "orgLeft": "Has salido de la organización.",
+    "ownershipTransferred": "Propiedad transferida.",
+    "profileSaved": "Perfil actualizado."
+  },
   "language": {
     "label": "Idioma",
     "en": "Inglés",

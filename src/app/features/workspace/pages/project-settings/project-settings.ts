@@ -16,6 +16,7 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
+import { ToastService } from '../../../../shared/toast/toast.service';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 /** Project settings: a logo card (immediate upload) plus an editable name, description and tech
@@ -173,6 +174,7 @@ export class ProjectSettings implements OnInit {
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
   private readonly transloco = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
   readonly projectId = input.required<string>();
 
@@ -249,16 +251,17 @@ export class ProjectSettings implements OnInit {
           this.saving.set(false);
           this.saved.set(true);
           this.projectName.set(project.name);
+          this.toast.success(this.transloco.translate('projectSettings.saved'));
         },
         error: (err: HttpErrorResponse) => {
           this.saving.set(false);
-          this.errorMessage.set(
-            this.transloco.translate(
-              err.status === 400
-                ? 'projectSettings.errorValidation'
-                : 'projectSettings.errorGeneric',
-            ),
+          const message = this.transloco.translate(
+            err.status === 400
+              ? 'projectSettings.errorValidation'
+              : 'projectSettings.errorGeneric',
           );
+          this.errorMessage.set(message);
+          this.toast.error(message);
         },
       });
   }

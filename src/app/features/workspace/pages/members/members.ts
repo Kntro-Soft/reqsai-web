@@ -12,6 +12,7 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { CreateMemberRequest, MemberResponse } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { ToastService } from '../../../../shared/toast/toast.service';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 type MemberTab = 'active' | 'pending';
@@ -300,6 +301,7 @@ export class Members {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
 
@@ -445,14 +447,15 @@ export class Members {
         this.submitting.set(false);
         this.tab.set(created.some((m) => m.status === 'PENDING') ? 'pending' : 'active');
         this.form.setControl('invites', this.fb.array([this.newInviteGroup()]));
+        this.toast.success(this.transloco.translate('toast.invitesSent'));
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 409 ? 'members.errorAlreadyInvited' : 'members.errorInvite',
-          ),
+        const message = this.transloco.translate(
+          err.status === 409 ? 'members.errorAlreadyInvited' : 'members.errorInvite',
         );
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -463,7 +466,7 @@ export class Members {
     this.api.changeMemberRole(orgId, member.id, role).subscribe({
       next: (updated) =>
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m))),
-      error: () => this.errorMessage.set(this.transloco.translate('members.errorInvite')),
+      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
     });
   }
 
@@ -471,7 +474,11 @@ export class Members {
     const orgId = this.store.organizationId();
     if (!orgId) return;
     this.api.removeMember(orgId, member.id).subscribe({
-      next: () => this.members.update((list) => list.filter((m) => m.id !== member.id)),
+      next: () => {
+        this.members.update((list) => list.filter((m) => m.id !== member.id));
+        this.toast.success(this.transloco.translate('toast.memberRemoved'));
+      },
+      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
     });
   }
 }

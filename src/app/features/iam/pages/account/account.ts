@@ -10,6 +10,7 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { ThemeMode, ThemeService } from '../../../../core/theme/theme.service';
 import { Lang, SUPPORTED_LANGS, saveLang } from '../../../../core/i18n/language';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { ToastService } from '../../../../shared/toast/toast.service';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 const MAX_AVATAR_BYTES = 1_000_000;
@@ -243,6 +244,7 @@ export class Account {
   protected readonly store = inject(AuthStore);
   protected readonly theme = inject(ThemeService);
   private readonly transloco = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
   protected readonly langs = SUPPORTED_LANGS;
   protected readonly themes: { mode: ThemeMode; icon: string }[] = [
@@ -293,8 +295,12 @@ export class Account {
       next: () => {
         this.savingProfile.set(false);
         this.profileSaved.set(true);
+        this.toast.success(this.transloco.translate('toast.profileSaved'));
       },
-      error: () => this.savingProfile.set(false),
+      error: () => {
+        this.savingProfile.set(false);
+        this.toast.error(this.transloco.translate('account.errorGeneric'));
+      },
     });
   }
 
@@ -309,6 +315,7 @@ export class Account {
         this.savingPassword.set(false);
         this.passwordSaved.set(true);
         this.passwordForm.reset();
+        this.toast.success(this.transloco.translate('account.passwordSaved'));
       },
       error: (err: HttpErrorResponse) => {
         this.savingPassword.set(false);

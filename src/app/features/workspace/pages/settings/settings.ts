@@ -11,6 +11,7 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { ToastService } from '../../../../shared/toast/toast.service';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
 type OrgField = 'name' | 'meetingLanguage' | 'audioRetentionDays';
@@ -412,6 +413,7 @@ export class OrgSettings {
   private readonly workspace = inject(WorkspaceStore);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
   protected readonly languageOptions = LANGUAGE_OPTIONS;
 
@@ -499,14 +501,15 @@ export class OrgSettings {
         this.saving.set(null);
         this.savedField.set(field);
         if (field === 'name') this.orgName.set(value.name);
+        this.toast.success(this.transloco.translate('orgSettings.saved'));
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(null);
-        this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 400 ? 'orgSettings.errorValidation' : 'orgSettings.errorGeneric',
-          ),
+        const message = this.transloco.translate(
+          err.status === 400 ? 'orgSettings.errorValidation' : 'orgSettings.errorGeneric',
         );
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -549,10 +552,13 @@ export class OrgSettings {
         this.ownerId.set(org.ownerId);
         this.newOwnerId.set('');
         this.workspace.loadOrganizations();
+        this.toast.success(this.transloco.translate('toast.ownershipTransferred'));
       },
       error: () => {
         this.transferring.set(false);
-        this.errorMessage.set(this.transloco.translate('orgSettings.errorGeneric'));
+        const message = this.transloco.translate('orgSettings.errorGeneric');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -563,10 +569,15 @@ export class OrgSettings {
     this.deleting.set(true);
     this.errorMessage.set(null);
     this.api.deleteOrganization(orgId).subscribe({
-      next: () => this.leaveToLaunch(),
+      next: () => {
+        this.toast.success(this.transloco.translate('toast.orgDeleted'));
+        this.leaveToLaunch();
+      },
       error: () => {
         this.deleting.set(false);
-        this.errorMessage.set(this.transloco.translate('orgSettings.errorGeneric'));
+        const message = this.transloco.translate('orgSettings.errorGeneric');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }
@@ -577,10 +588,15 @@ export class OrgSettings {
     this.leaving.set(true);
     this.errorMessage.set(null);
     this.api.leaveOrganization(orgId).subscribe({
-      next: () => this.leaveToLaunch(),
+      next: () => {
+        this.toast.success(this.transloco.translate('toast.orgLeft'));
+        this.leaveToLaunch();
+      },
       error: () => {
         this.leaving.set(false);
-        this.errorMessage.set(this.transloco.translate('orgSettings.errorGeneric'));
+        const message = this.transloco.translate('orgSettings.errorGeneric');
+        this.errorMessage.set(message);
+        this.toast.error(message);
       },
     });
   }

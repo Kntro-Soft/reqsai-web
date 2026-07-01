@@ -23,6 +23,7 @@ import { ProjectSwitcher } from '../../shared/components/project-switcher/projec
 import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 import { CommandPalette } from '../../shared/components/command-palette/command-palette';
+import { ToastHost } from '../../shared/toast/toast-host';
 import { HlmIcon } from '../../shared/ui';
 
 interface NavItem {
@@ -60,6 +61,7 @@ interface Crumb {
     UserMenu,
     NavIcon,
     CommandPalette,
+    ToastHost,
     HlmIcon,
     TranslocoPipe,
   ],
@@ -201,6 +203,7 @@ interface Crumb {
     </div>
 
     <app-command-palette [(open)]="paletteOpen" />
+    <app-toast-host />
   `,
 })
 export class Shell {
