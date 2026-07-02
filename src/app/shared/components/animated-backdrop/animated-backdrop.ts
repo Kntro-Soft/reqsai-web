@@ -35,7 +35,7 @@ import {
     }
 
     <!-- Blob A: brand red, drifts from top-centre. -->
-    <div #blob class="ab-blob ab-blob-a" data-fx="70" data-fy="55"></div>
+    <div #blob class="ab-blob ab-blob-a" data-follow="true"></div>
     <!-- Blob B: navy tint, drifts from bottom-right (opposite parallax sign). -->
     <div #blob class="ab-blob ab-blob-b" data-fx="-58" data-fy="-64"></div>
     <!-- Blob C: faint brand, bottom-left, gentlest. -->
@@ -73,13 +73,14 @@ import {
 
       /* Blob A — brand red, top centre. */
       .ab-blob-a {
-        top: -8rem;
-        left: 50%;
-        height: 22rem;
-        width: 40rem;
-        margin-left: -20rem;
+        top: 0;
+        left: 0;
+        height: 34rem;
+        width: 34rem;
         background: radial-gradient(closest-side, rgba(239, 68, 68, 0.26), transparent 70%);
         filter: blur(60px);
+        /* Follows the cursor (centred on it); the rAF loop sets --rx/--ry. Fallback: centred. */
+        transform: translate3d(var(--rx, calc(50vw - 50%)), var(--ry, calc(42vh - 50%)), 0);
       }
       /* Blob B — navy tint, bottom right. */
       .ab-blob-b {
@@ -136,37 +137,45 @@ export class AnimatedBackdrop {
   }
 
   private setup(): void {
-    // Fully static under reduced-motion: no listeners, no rAF.
-    if (
-      typeof matchMedia === 'function' &&
-      matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
+    const el = this.host.nativeElement as HTMLElement;
+    const nodes = Array.from(el.querySelectorAll<HTMLElement>('.ab-blob'));
+    if (nodes.length === 0) return;
+
+    const blobs = nodes.map((node) => ({
+      node,
+      follow: node.dataset['follow'] === 'true',
+      fx: Number(node.dataset['fx'] ?? 0),
+      fy: Number(node.dataset['fy'] ?? 0),
+      w: node.offsetWidth,
+      h: node.offsetHeight,
+      cur: { x: 0, y: 0 },
+    }));
+
+    // Fully static under reduced-motion: no listeners, no rAF — just centre the follow blob.
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (const b of blobs) {
+        if (!b.follow) continue;
+        b.node.style.setProperty('--rx', `${(innerWidth - b.w) / 2}px`);
+        b.node.style.setProperty('--ry', `${(innerHeight - b.h) / 2}px`);
+      }
       return;
     }
 
-    const el = this.host.nativeElement as HTMLElement;
-    const nodes = Array.from(el.querySelectorAll<HTMLElement>('.ab-blob'));
-    const blobs = nodes.map((node) => ({
-      node,
-      fx: Number(node.dataset['fx'] ?? 0),
-      fy: Number(node.dataset['fy'] ?? 0),
-      cur: { x: 0, y: 0 },
-    }));
-    if (blobs.length === 0) return;
-
     const amp = this.intensity();
-    // Pointer target as an offset from viewport centre, normalized to [-1, 1].
-    let targetX = 0;
-    let targetY = 0;
-    let lastMove = 0; // timestamp of the last real pointer movement
+    // Start the follow blob at the viewport centre so it eases in instead of flying from a corner.
+    for (const b of blobs) {
+      if (b.follow) b.cur = { x: (innerWidth - b.w) / 2, y: (innerHeight - b.h) / 2 };
+    }
+
+    let pointerX = innerWidth / 2;
+    let pointerY = innerHeight / 2;
+    let lastMove = 0;
     let hasPointer = false;
     const IDLE_MS = 2000;
 
     const onMove = (e: MouseEvent) => {
-      const w = innerWidth || 1;
-      const h = innerHeight || 1;
-      targetX = (e.clientX / w) * 2 - 1;
-      targetY = (e.clientY / h) * 2 - 1;
+      pointerX = e.clientX;
+      pointerY = e.clientY;
       lastMove = performance.now();
       hasPointer = true;
     };
@@ -176,26 +185,39 @@ export class AnimatedBackdrop {
     const tick = (now: number) => {
       const idle = !hasPointer || now - lastMove > IDLE_MS;
       const t = now / 1000;
+      const vw = innerWidth || 1;
+      const vh = innerHeight || 1;
 
       for (let i = 0; i < blobs.length; i++) {
         const b = blobs[i];
         let goalX: number;
         let goalY: number;
 
-        if (idle) {
-          // Gentle self-drift: slow looping sine/cosine, phase-shifted per blob.
+        if (b.follow) {
+          // The red light tracks the cursor across the whole page; when idle it roams broadly.
+          const cx = idle ? vw / 2 + Math.sin(t * 0.16) * vw * 0.34 : pointerX;
+          const cy = idle ? vh / 2 + Math.cos(t * 0.13) * vh * 0.34 : pointerY;
+          goalX = cx - b.w / 2;
+          goalY = cy - b.h / 2;
+          b.cur.x += (goalX - b.cur.x) * 0.09;
+          b.cur.y += (goalY - b.cur.y) * 0.09;
+        } else if (idle) {
+          // Ambient blobs: gentle self-drift, phase-shifted per blob.
           const phase = i * 1.7;
           goalX = Math.sin(t * 0.24 + phase) * 95 * amp;
           goalY = Math.cos(t * 0.2 + phase) * 72 * amp;
+          b.cur.x += (goalX - b.cur.x) * 0.06;
+          b.cur.y += (goalY - b.cur.y) * 0.06;
         } else {
-          // Parallax: translate by a small factor of the cursor offset.
-          goalX = targetX * b.fx * amp;
-          goalY = targetY * b.fy * amp;
+          // Ambient blobs: slight opposite parallax for depth behind the follow light.
+          const nx = (pointerX / vw) * 2 - 1;
+          const ny = (pointerY / vh) * 2 - 1;
+          goalX = nx * b.fx * amp;
+          goalY = ny * b.fy * amp;
+          b.cur.x += (goalX - b.cur.x) * 0.06;
+          b.cur.y += (goalY - b.cur.y) * 0.06;
         }
 
-        // Ease toward the goal (lerp) for smooth transitions in both modes.
-        b.cur.x += (goalX - b.cur.x) * 0.06;
-        b.cur.y += (goalY - b.cur.y) * 0.06;
         b.node.style.setProperty('--rx', `${b.cur.x.toFixed(2)}px`);
         b.node.style.setProperty('--ry', `${b.cur.y.toFixed(2)}px`);
       }
