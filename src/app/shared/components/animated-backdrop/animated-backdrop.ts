@@ -203,18 +203,20 @@ export class AnimatedBackdrop {
           let cy: number;
           if (idle) {
             // On going idle, anchor the roam at the light's CURRENT centre so it keeps drifting
-            // from where it is instead of snapping toward a far, time-based point.
+            // from where it is instead of snapping toward a far point.
             if (!idlePrev) {
               idleAnchorX = b.cur.x + b.w / 2;
               idleAnchorY = b.cur.y + b.h / 2;
               idleStart = now;
             }
+            // Ease the anchor toward centre so it never wanders off-screen — but it starts exactly
+            // at the light's current spot (no clamp jump) and migrates gently.
+            idleAnchorX += (vw / 2 - idleAnchorX) * 0.004;
+            idleAnchorY += (vh / 2 - idleAnchorY) * 0.004;
             const e = (now - idleStart) / 1000;
-            cx = idleAnchorX + Math.sin(e * 0.32) * vw * 0.22;
-            cy = idleAnchorY + Math.cos(e * 0.26) * vh * 0.22;
-            // Keep it comfortably on-screen.
-            cx = Math.min(Math.max(cx, vw * 0.08), vw * 0.92);
-            cy = Math.min(Math.max(cy, vh * 0.08), vh * 0.92);
+            // Both axes use sin so the offset starts at 0 (cos starts at its max → a jump).
+            cx = idleAnchorX + Math.sin(e * 0.33) * vw * 0.18;
+            cy = idleAnchorY + Math.sin(e * 0.24) * vh * 0.18;
           } else {
             cx = pointerX;
             cy = pointerY;

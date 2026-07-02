@@ -31,7 +31,7 @@ import { HlmIcon } from '../../ui';
               <button
                 type="button"
                 (click)="remove(i)"
-                class="text-muted-foreground transition-colors hover:text-foreground"
+                class="inline-flex items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="remove"
               >
                 <hlm-icon name="lucideX" size="12px" />
