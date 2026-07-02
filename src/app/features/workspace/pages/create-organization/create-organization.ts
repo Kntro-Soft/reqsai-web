@@ -1,18 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideBuilding2, lucideChevronDown } from '@ng-icons/lucide';
+import { lucideBuilding2, lucideChevronDown } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
-import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
-import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
-import { Logo } from '../../../../shared/components/logo/logo';
 import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
+import { CreatePageHeader } from '../../../../shared/components/create-page-header/create-page-header';
 import {
   HlmButton,
   HlmCard,
@@ -42,16 +40,13 @@ function detectMeetingLanguage(): string {
     HlmSpinner,
     HlmIcon,
     TranslocoPipe,
-    RouterLink,
-    ThemeToggle,
-    LanguageSwitcher,
-    Logo,
     AnimatedBackdrop,
+    CreatePageHeader,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideBuilding2, lucideChevronDown })],
+  viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown })],
   template: `
     <div
-      class="relative isolate grid min-h-dvh place-items-center overflow-hidden bg-background px-4 py-20 text-foreground"
+      class="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
     >
       <!-- Decorative, interactive background: faint grid + soft brand/navy glows that
            parallax with the pointer and drift on their own when idle. -->
@@ -63,28 +58,13 @@ function detectMeetingLanguage(): string {
         class="pointer-events-none absolute -bottom-10 -left-10 w-64 opacity-[0.05] select-none dark:opacity-[0.08]"
       />
 
-      <header
-        class="absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center px-5 py-4 md:px-6"
-      >
-        <div class="flex items-center justify-start">
-          @if (authStore.organizationId()) {
-            <a
-              routerLink="/projects"
-              class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <hlm-icon name="lucideArrowLeft" size="16px" />
-              {{ 'common.back' | transloco }}
-            </a>
-          }
-        </div>
-        <app-logo [size]="28" />
-        <div class="flex items-center justify-end gap-1">
-          <app-language-switcher />
-          <app-theme-toggle />
-        </div>
-      </header>
+      <app-create-page-header
+        [backHref]="authStore.organizationId() ? '/projects' : null"
+        [logoSize]="28"
+      />
 
-      <div class="relative z-1 w-full max-w-md">
+      <main class="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
+        <div class="relative z-1 w-full max-w-md">
         <div class="mb-6 flex flex-col items-center gap-3 text-center">
           <span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
             <hlm-icon name="lucideBuilding2" size="24px" />
@@ -162,7 +142,8 @@ function detectMeetingLanguage(): string {
             </form>
           </div>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   `,
 })

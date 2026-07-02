@@ -1,16 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideChevronDown } from '@ng-icons/lucide';
+import { lucideChevronDown } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
-import { Logo } from '../../../../shared/components/logo/logo';
 import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
-import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
-import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
+import { CreatePageHeader } from '../../../../shared/components/create-page-header/create-page-header';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
@@ -24,11 +22,8 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    Logo,
     AnimatedBackdrop,
-    LanguageSwitcher,
-    ThemeToggle,
+    CreatePageHeader,
     ChipInput,
     HlmButton,
     HlmIcon,
@@ -37,7 +32,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideChevronDown })],
+  viewProviders: [provideIcons({ lucideChevronDown })],
   template: `
     <div
       class="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
@@ -45,24 +40,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
       <!-- Decorative, interactive background matching the onboarding composition. -->
       <app-animated-backdrop />
 
-      <header
-        class="relative z-10 grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-border px-4 md:px-6"
-      >
-        <div class="flex items-center justify-start">
-          <a
-            routerLink="/projects"
-            class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <hlm-icon name="lucideArrowLeft" size="16px" />
-            {{ 'common.back' | transloco }}
-          </a>
-        </div>
-        <app-logo [size]="24" />
-        <div class="flex items-center justify-end gap-1">
-          <app-language-switcher />
-          <app-theme-toggle />
-        </div>
-      </header>
+      <app-create-page-header backHref="/projects" [logoSize]="24" />
 
       <main
         class="relative z-10 flex flex-1 justify-center px-4 py-10"
