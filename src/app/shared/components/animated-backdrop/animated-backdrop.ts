@@ -35,11 +35,11 @@ import {
     }
 
     <!-- Blob A: brand red, drifts from top-centre. -->
-    <div #blob class="ab-blob ab-blob-a" data-fx="8" data-fy="7"></div>
+    <div #blob class="ab-blob ab-blob-a" data-fx="70" data-fy="55"></div>
     <!-- Blob B: navy tint, drifts from bottom-right (opposite parallax sign). -->
-    <div #blob class="ab-blob ab-blob-b" data-fx="-5" data-fy="-6"></div>
+    <div #blob class="ab-blob ab-blob-b" data-fx="-58" data-fy="-64"></div>
     <!-- Blob C: faint brand, bottom-left, gentlest. -->
-    <div #blob class="ab-blob ab-blob-c" data-fx="4" data-fy="-3"></div>
+    <div #blob class="ab-blob ab-blob-c" data-fx="46" data-fy="-40"></div>
   `,
   styles: [
     `
@@ -53,13 +53,13 @@ import {
           linear-gradient(to right, var(--border) 1px, transparent 1px),
           linear-gradient(to bottom, var(--border) 1px, transparent 1px);
         background-size: 44px 44px;
-        opacity: 0.5;
-        -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent 72%);
-        mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent 72%);
+        opacity: 0.65;
+        -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 45%, black, transparent 75%);
+        mask-image: radial-gradient(ellipse 75% 65% at 50% 45%, black, transparent 75%);
       }
       /* Light mode reads flat, so bump the grid a touch (still tasteful). */
       :root:not(.dark) .ab-grid {
-        opacity: 0.7;
+        opacity: 0.9;
       }
 
       .ab-blob {
@@ -78,8 +78,8 @@ import {
         height: 22rem;
         width: 40rem;
         margin-left: -20rem;
-        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.16), transparent 70%);
-        filter: blur(64px);
+        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.26), transparent 70%);
+        filter: blur(60px);
       }
       /* Blob B — navy tint, bottom right. */
       .ab-blob-b {
@@ -87,8 +87,8 @@ import {
         bottom: -10rem;
         height: 24rem;
         width: 24rem;
-        background: radial-gradient(closest-side, rgba(56, 89, 148, 0.22), transparent 70%);
-        filter: blur(56px);
+        background: radial-gradient(closest-side, rgba(56, 89, 148, 0.32), transparent 70%);
+        filter: blur(52px);
       }
       /* Blob C — faint brand, bottom left. */
       .ab-blob-c {
@@ -96,19 +96,19 @@ import {
         left: -6rem;
         height: 18rem;
         width: 18rem;
-        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.1), transparent 70%);
-        filter: blur(48px);
+        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.16), transparent 70%);
+        filter: blur(46px);
       }
 
       /* Light mode: slightly stronger glow alpha so it doesn't wash out. */
       :root:not(.dark) .ab-blob-a {
-        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.14), transparent 70%);
+        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.2), transparent 70%);
       }
       :root:not(.dark) .ab-blob-b {
-        background: radial-gradient(closest-side, rgba(56, 89, 148, 0.16), transparent 70%);
+        background: radial-gradient(closest-side, rgba(56, 89, 148, 0.22), transparent 70%);
       }
       :root:not(.dark) .ab-blob-c {
-        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.1), transparent 70%);
+        background: radial-gradient(closest-side, rgba(239, 68, 68, 0.14), transparent 70%);
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -185,8 +185,8 @@ export class AnimatedBackdrop {
         if (idle) {
           // Gentle self-drift: slow looping sine/cosine, phase-shifted per blob.
           const phase = i * 1.7;
-          goalX = Math.sin(t * 0.18 + phase) * 26 * amp;
-          goalY = Math.cos(t * 0.15 + phase) * 20 * amp;
+          goalX = Math.sin(t * 0.24 + phase) * 95 * amp;
+          goalY = Math.cos(t * 0.2 + phase) * 72 * amp;
         } else {
           // Parallax: translate by a small factor of the cursor offset.
           goalX = targetX * b.fx * amp;
