@@ -1,9 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCheck, lucideCopy, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideCheck,
+  lucideChevronsUpDown,
+  lucideCopy,
+  lucideSearch,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../../core/auth/auth.store';
@@ -13,6 +29,7 @@ import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
+import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import {
   HlmButton,
@@ -46,6 +63,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    OverlayModule,
     Avatar,
     Select,
     Modal,
@@ -57,7 +75,15 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideCheck, lucideCopy, lucideUpload })],
+  viewProviders: [
+    provideIcons({
+      lucideCheck,
+      lucideChevronsUpDown,
+      lucideCopy,
+      lucideSearch,
+      lucideUpload,
+    }),
+  ],
   template: `
     <div class="flex flex-col gap-6">
       @if (state() === 'loading') {
@@ -338,15 +364,113 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
               <p
                 [innerHTML]="'orgSettings.transferModalBody' | transloco: { org: orgNameHtml() }"
               ></p>
-              @if (transferOptions().length) {
+              @if (activeMembers().length) {
                 <div class="flex flex-col gap-1.5">
-                  <span hlmLabel>{{ 'orgSettings.transferModalLabel' | transloco }}</span>
-                  <app-select
-                    [options]="transferOptions()"
-                    [value]="newOwnerId()"
-                    (valueChange)="newOwnerId.set($event)"
-                    [ariaLabel]="'orgSettings.transferModalLabel' | transloco"
-                  />
+                  <span hlmLabel>{{ 'orgSettings.transferTo' | transloco }}</span>
+                  <!-- Searchable member picker (CDK overlay + avatar rows), like the switchers. -->
+                  <button
+                    type="button"
+                    cdkOverlayOrigin
+                    #pickerOrigin="cdkOverlayOrigin"
+                    (click)="togglePicker()"
+                    [attr.aria-expanded]="pickerOpen()"
+                    aria-haspopup="listbox"
+                    [attr.aria-label]="'orgSettings.transferTo' | transloco"
+                    class="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <hlm-icon
+                      name="lucideSearch"
+                      size="15px"
+                      class="shrink-0 text-muted-foreground"
+                    />
+                    @if (selectedMember(); as m) {
+                      <app-avatar
+                        [name]="m.displayName || m.email"
+                        [seed]="m.id"
+                        [size]="20"
+                        [circle]="true"
+                      />
+                      <span class="min-w-0 flex-1 truncate text-left">{{
+                        m.displayName || m.email
+                      }}</span>
+                    } @else {
+                      <span class="min-w-0 flex-1 truncate text-left text-muted-foreground">
+                        {{ 'orgSettings.transferPlaceholder' | transloco }}
+                      </span>
+                    }
+                    <hlm-icon
+                      name="lucideChevronsUpDown"
+                      size="14px"
+                      class="shrink-0 text-muted-foreground"
+                    />
+                  </button>
+
+                  <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayOrigin]="pickerOrigin"
+                    [cdkConnectedOverlayOpen]="pickerOpen()"
+                    [cdkConnectedOverlayPositions]="pickerPositions"
+                    [cdkConnectedOverlayWidth]="pickerOrigin.elementRef.nativeElement.offsetWidth"
+                    (overlayOutsideClick)="pickerOpen.set(false)"
+                    (overlayKeydown)="onPickerKeydown($event)"
+                    (detach)="pickerOpen.set(false)"
+                  >
+                    <div
+                      role="listbox"
+                      class="overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+                    >
+                      <div class="flex items-center gap-2 border-b border-border px-3">
+                        <hlm-icon
+                          name="lucideSearch"
+                          size="15px"
+                          class="shrink-0 text-muted-foreground"
+                        />
+                        <input
+                          #memberSearch
+                          type="text"
+                          [value]="memberQuery()"
+                          (input)="memberQuery.set($any($event.target).value)"
+                          [placeholder]="'orgSettings.transferSearch' | transloco"
+                          class="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                          autocomplete="off"
+                          spellcheck="false"
+                        />
+                      </div>
+                      <div class="max-h-64 overflow-y-auto p-1">
+                        @for (m of filteredMembers(); track m.id) {
+                          <button
+                            type="button"
+                            role="option"
+                            [attr.aria-selected]="m.id === newOwnerId()"
+                            (click)="pickMember(m.id)"
+                            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+                          >
+                            <app-avatar
+                              [name]="m.displayName || m.email"
+                              [seed]="m.id"
+                              [size]="28"
+                              [circle]="true"
+                            />
+                            <span class="flex min-w-0 flex-1 flex-col">
+                              <span class="truncate font-medium">{{ m.displayName || m.email }}</span>
+                              @if (m.displayName) {
+                                <span class="truncate text-xs text-muted-foreground">{{
+                                  m.email
+                                }}</span>
+                              }
+                            </span>
+                            @if (m.id === newOwnerId()) {
+                              <hlm-icon name="lucideCheck" size="15px" class="text-primary" />
+                            }
+                          </button>
+                        } @empty {
+                          <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">
+                            {{ 'orgSettings.transferSearchEmpty' | transloco }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </ng-template>
                 </div>
               } @else {
                 <p class="text-sm text-muted-foreground">
@@ -354,47 +478,77 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 </p>
               }
             </div>
-            <button
-              modalFooter
-              hlmBtn
-              size="sm"
-              variant="ghost"
-              type="button"
-              (click)="transferOpen.set(false)"
-            >
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button
-              modalFooter
-              hlmBtn
-              size="sm"
-              type="button"
-              (click)="transfer()"
-              [disabled]="!newOwnerId() || transferring()"
-            >
-              @if (transferring()) {
-                <hlm-spinner class="h-4 w-4" />
-              }
-              {{ 'orgSettings.transferCta' | transloco }}
-            </button>
+            <div modalFooter class="flex w-full items-center justify-between gap-2">
+              <button
+                hlmBtn
+                size="sm"
+                variant="ghost"
+                type="button"
+                (click)="transferOpen.set(false)"
+              >
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                type="button"
+                (click)="transfer()"
+                [disabled]="!newOwnerId() || transferring()"
+              >
+                @if (transferring()) {
+                  <hlm-spinner class="h-4 w-4" />
+                }
+                {{ 'orgSettings.transferCta' | transloco }}
+              </button>
+            </div>
           </app-modal>
 
           <!-- Delete organization modal -->
           <app-modal [(open)]="deleteOpen">
             <span modalTitle>{{ 'orgSettings.deleteModalTitle' | transloco }}</span>
             <div class="flex flex-col gap-4">
+              <!-- Identity row: the org's circular logo + its name. -->
+              <div class="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                <app-avatar
+                  [name]="orgName()"
+                  [seed]="orgId() ?? ''"
+                  [imageUrl]="avatarUrl()"
+                  [size]="36"
+                  [circle]="true"
+                />
+                <span class="min-w-0 flex-1 truncate font-medium text-foreground">{{
+                  orgName()
+                }}</span>
+              </div>
               <p [innerHTML]="'orgSettings.deleteModalBody' | transloco: { org: orgNameHtml() }"></p>
               <div class="flex flex-col gap-1.5">
-                <label hlmLabel for="delete-confirm">
-                  {{ 'orgSettings.deleteConfirmLabel' | transloco: { org: orgName() } }}
+                <label hlmLabel for="delete-confirm-name">
+                  {{ 'orgSettings.deleteConfirmName' | transloco: { org: orgName() } }}
                 </label>
                 <input
                   hlmInput
-                  id="delete-confirm"
+                  id="delete-confirm-name"
                   autocomplete="off"
                   spellcheck="false"
-                  [value]="deleteConfirmText()"
-                  (input)="deleteConfirmText.set($any($event.target).value)"
+                  [value]="deleteConfirmName()"
+                  (input)="deleteConfirmName.set($any($event.target).value)"
+                />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label hlmLabel for="delete-confirm-phrase">
+                  <span
+                    [innerHTML]="
+                      'orgSettings.deleteConfirmPhrase' | transloco: { phrase: deletePhraseHtml() }
+                    "
+                  ></span>
+                </label>
+                <input
+                  hlmInput
+                  id="delete-confirm-phrase"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [value]="deleteConfirmPhrase()"
+                  (input)="deleteConfirmPhrase.set($any($event.target).value)"
                 />
               </div>
               <div
@@ -404,30 +558,30 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 {{ 'orgSettings.deleteWarning' | transloco: { org: orgName() } }}
               </div>
             </div>
-            <button
-              modalFooter
-              hlmBtn
-              size="sm"
-              variant="ghost"
-              type="button"
-              (click)="deleteOpen.set(false)"
-            >
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button
-              modalFooter
-              hlmBtn
-              size="sm"
-              variant="destructive"
-              type="button"
-              (click)="deleteOrg()"
-              [disabled]="deleteConfirmText() !== orgName() || deleting()"
-            >
-              @if (deleting()) {
-                <hlm-spinner class="h-4 w-4" />
-              }
-              {{ 'orgSettings.delete' | transloco }}
-            </button>
+            <div modalFooter class="flex w-full items-center justify-between gap-2">
+              <button
+                hlmBtn
+                size="sm"
+                variant="ghost"
+                type="button"
+                (click)="deleteOpen.set(false)"
+              >
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                variant="destructive"
+                type="button"
+                (click)="deleteOrg()"
+                [disabled]="!canDelete() || deleting()"
+              >
+                @if (deleting()) {
+                  <hlm-spinner class="h-4 w-4" />
+                }
+                {{ 'orgSettings.delete' | transloco }}
+              </button>
+            </div>
           </app-modal>
         } @else {
           <!-- Leave organization -->
@@ -521,26 +675,59 @@ export class OrgSettings {
   protected readonly transferOpen = signal(false);
   protected readonly deleteOpen = signal(false);
   protected readonly leaveOpen = signal(false);
-  /** Type-to-confirm text; deletion is gated on this matching the org name exactly (case-sensitive). */
-  protected readonly deleteConfirmText = signal('');
+  // Delete: two required type-to-confirm inputs (org name + a literal phrase), both case-sensitive.
+  protected readonly deleteConfirmName = signal('');
+  protected readonly deleteConfirmPhrase = signal('');
+  // Transfer member picker (CDK-overlay searchable list, like the switchers).
+  protected readonly pickerOpen = signal(false);
+  protected readonly memberQuery = signal('');
+  protected readonly pickerPositions = BELOW_START;
+  private readonly memberSearch = viewChild<ElementRef<HTMLInputElement>>('memberSearch');
+
   protected readonly isOwner = computed(() => {
     const uid = this.store.user()?.id;
     return !!uid && this.ownerId() === uid;
   });
-  protected readonly transferOptions = computed<SelectOption[]>(() =>
-    this.members()
-      .filter((m) => m.status === 'ACTIVE')
-      .map((m) => ({ value: m.id, label: m.displayName || m.email })),
+  /** The org's ACTIVE members — the transfer candidates. */
+  protected readonly activeMembers = computed(() =>
+    this.members().filter((m) => m.status === 'ACTIVE'),
+  );
+  /** The active members matching the picker's search query (by display name or email). */
+  protected readonly filteredMembers = computed(() => {
+    const q = this.memberQuery().trim().toLowerCase();
+    const members = this.activeMembers();
+    if (!q) return members;
+    return members.filter(
+      (m) => m.displayName.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
+    );
+  });
+  /** The member currently chosen as the new owner, or null. */
+  protected readonly selectedMember = computed(
+    () => this.activeMembers().find((m) => m.id === this.newOwnerId()) ?? null,
+  );
+  /** The literal delete phrase, resolved for the active language (e.g. "delete my organization"). */
+  private readonly deletePhrase = computed(() =>
+    this.transloco.translate('orgSettings.deletePhrase'),
+  );
+  /** Deletion is enabled only when BOTH inputs match exactly (name + literal phrase). */
+  protected readonly canDelete = computed(
+    () =>
+      this.deleteConfirmName() === this.orgName() &&
+      this.deleteConfirmPhrase() === this.deletePhrase(),
   );
   /** The org name wrapped in `<strong>`, HTML-escaped, for interpolation into the modal sentences. */
-  protected readonly orgNameHtml = computed(() => {
-    const escaped = this.orgName().replace(
+  protected readonly orgNameHtml = computed(() => this.bold(this.orgName()));
+  /** The delete phrase, escaped and bolded, for the confirm-phrase label. */
+  protected readonly deletePhraseHtml = computed(() => this.bold(this.deletePhrase()));
+
+  private bold(text: string): string {
+    const escaped = text.replace(
       /[&<>"']/g,
       (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
     );
     return `<strong>${escaped}</strong>`;
-  });
+  }
 
   private readonly avatarBase = signal<string | null>(null);
   private readonly avatarVersion = signal(0);
@@ -571,6 +758,13 @@ export class OrgSettings {
   );
 
   constructor() {
+    // Focus the member search field when the transfer picker opens.
+    effect(() => {
+      if (this.pickerOpen()) {
+        queueMicrotask(() => this.memberSearch()?.nativeElement.focus());
+      }
+    });
+
     const orgId = this.store.organizationId();
     if (!orgId) return;
     this.api.getOrganization(orgId).subscribe({
@@ -656,12 +850,32 @@ export class OrgSettings {
 
   protected openTransfer(): void {
     this.newOwnerId.set('');
+    this.memberQuery.set('');
+    this.pickerOpen.set(false);
     this.transferOpen.set(true);
   }
 
   protected openDelete(): void {
-    this.deleteConfirmText.set('');
+    this.deleteConfirmName.set('');
+    this.deleteConfirmPhrase.set('');
     this.deleteOpen.set(true);
+  }
+
+  protected togglePicker(): void {
+    this.pickerOpen.update((v) => !v);
+    if (this.pickerOpen()) this.memberQuery.set('');
+  }
+
+  protected pickMember(id: string): void {
+    this.newOwnerId.set(id);
+    this.pickerOpen.set(false);
+  }
+
+  protected onPickerKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      this.pickerOpen.set(false);
+    }
   }
 
   protected transfer(): void {
