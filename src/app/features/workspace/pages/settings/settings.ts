@@ -27,6 +27,7 @@ import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { InlineEntity } from '../../../../shared/components/inline-entity/inline-entity';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
@@ -65,6 +66,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
     ReactiveFormsModule,
     OverlayModule,
     Avatar,
+    InlineEntity,
     Select,
     Modal,
     HlmButton,
@@ -361,9 +363,15 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
           <app-modal [(open)]="transferOpen">
             <span modalTitle>{{ 'orgSettings.transferModalTitle' | transloco }}</span>
             <div class="flex flex-col gap-4">
-              <p
-                [innerHTML]="'orgSettings.transferModalBody' | transloco: { org: orgNameHtml() }"
-              ></p>
+              <p>
+                {{ 'orgSettings.transferModalBodyBefore' | transloco }}
+                <app-inline-entity
+                  [name]="orgName()"
+                  [seed]="orgId() ?? ''"
+                  [imageUrl]="avatarUrl()"
+                />
+                {{ 'orgSettings.transferModalBodyAfter' | transloco }}
+              </p>
               @if (activeMembers().length) {
                 <div class="flex flex-col gap-1.5">
                   <span hlmLabel>{{ 'orgSettings.transferTo' | transloco }}</span>
@@ -417,7 +425,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                   >
                     <div
                       role="listbox"
-                      class="overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+                      class="w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
                     >
                       <div class="flex items-center gap-2 border-b border-border px-3">
                         <hlm-icon
@@ -507,20 +515,15 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
           <app-modal [(open)]="deleteOpen">
             <span modalTitle>{{ 'orgSettings.deleteModalTitle' | transloco }}</span>
             <div class="flex flex-col gap-4">
-              <!-- Identity row: the org's circular logo + its name. -->
-              <div class="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
-                <app-avatar
+              <p>
+                {{ 'orgSettings.deleteModalBodyBefore' | transloco }}
+                <app-inline-entity
                   [name]="orgName()"
                   [seed]="orgId() ?? ''"
                   [imageUrl]="avatarUrl()"
-                  [size]="36"
-                  [circle]="true"
                 />
-                <span class="min-w-0 flex-1 truncate font-medium text-foreground">{{
-                  orgName()
-                }}</span>
-              </div>
-              <p [innerHTML]="'orgSettings.deleteModalBody' | transloco: { org: orgNameHtml() }"></p>
+                {{ 'orgSettings.deleteModalBodyAfter' | transloco }}
+              </p>
               <div class="flex flex-col gap-1.5">
                 <label hlmLabel for="delete-confirm-name">
                   {{ 'orgSettings.deleteConfirmName' | transloco: { org: orgName() } }}
@@ -715,8 +718,6 @@ export class OrgSettings {
       this.deleteConfirmName() === this.orgName() &&
       this.deleteConfirmPhrase() === this.deletePhrase(),
   );
-  /** The org name wrapped in `<strong>`, HTML-escaped, for interpolation into the modal sentences. */
-  protected readonly orgNameHtml = computed(() => this.bold(this.orgName()));
   /** The delete phrase, escaped and bolded, for the confirm-phrase label. */
   protected readonly deletePhraseHtml = computed(() => this.bold(this.deletePhrase()));
 

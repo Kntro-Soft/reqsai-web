@@ -18,6 +18,8 @@ import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { CreateMemberRequest, MemberResponse } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { InlineEntity } from '../../../../shared/components/inline-entity/inline-entity';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { translateFn } from '../../../../core/i18n/translate-fn';
@@ -47,6 +49,8 @@ const MENU_POS: ConnectedPosition[] = [
     ReactiveFormsModule,
     OverlayModule,
     Avatar,
+    InlineEntity,
+    Modal,
     Select,
     HlmButton,
     HlmIcon,
@@ -330,7 +334,7 @@ const MENU_POS: ConnectedPosition[] = [
                       >
                         <div
                           role="menu"
-                          class="w-48 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+                          class="w-max min-w-48 overflow-hidden rounded-lg border border-border bg-popover p-1 whitespace-nowrap text-popover-foreground shadow-xl"
                         >
                           @if (tab() === 'pending') {
                             <button
@@ -347,7 +351,7 @@ const MENU_POS: ConnectedPosition[] = [
                             <button
                               role="menuitem"
                               type="button"
-                              (click)="changeStatus(m, 'INACTIVE'); menuFor.set(null)"
+                              (click)="askStatus(m, 'INACTIVE'); menuFor.set(null)"
                               class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground"
                             >
                               <hlm-icon name="lucideUserX" size="15px" />
@@ -358,7 +362,7 @@ const MENU_POS: ConnectedPosition[] = [
                             <button
                               role="menuitem"
                               type="button"
-                              (click)="changeStatus(m, 'ACTIVE'); menuFor.set(null)"
+                              (click)="askStatus(m, 'ACTIVE'); menuFor.set(null)"
                               class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground"
                             >
                               <hlm-icon name="lucideUserCheck" size="15px" />
@@ -368,7 +372,7 @@ const MENU_POS: ConnectedPosition[] = [
                           <button
                             role="menuitem"
                             type="button"
-                            (click)="remove(m); menuFor.set(null)"
+                            (click)="askRemove(m); menuFor.set(null)"
                             class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
                           >
                             <hlm-icon name="lucideTrash2" size="15px" />
@@ -384,6 +388,139 @@ const MENU_POS: ConnectedPosition[] = [
           </table>
         </div>
       }
+
+      <!-- Deactivate / reactivate confirmation (plain confirm, no typing) -->
+      <app-modal [(open)]="statusOpen">
+        <span modalTitle>{{
+          (statusIsDeactivate() ? 'members.deactivateTitle' : 'members.reactivateTitle') | transloco
+        }}</span>
+        @if (statusTarget(); as t) {
+          <p>
+            {{
+              (statusIsDeactivate() ? 'members.deactivateBefore' : 'members.reactivateBefore')
+                | transloco
+            }}
+            <app-inline-entity [name]="t.name" [seed]="t.id" [imageUrl]="t.avatarUrl" />{{
+              (statusIsDeactivate() ? 'members.deactivateAfter' : 'members.reactivateAfter')
+                | transloco
+            }}
+          </p>
+        }
+        <button
+          modalFooter
+          hlmBtn
+          size="sm"
+          variant="ghost"
+          type="button"
+          (click)="statusOpen.set(false)"
+        >
+          {{ 'common.cancel' | transloco }}
+        </button>
+        @if (statusIsDeactivate()) {
+          <button
+            modalFooter
+            hlmBtn
+            size="sm"
+            variant="destructive"
+            type="button"
+            (click)="confirmStatus()"
+            [disabled]="actioning()"
+          >
+            @if (actioning()) {
+              <hlm-spinner class="h-4 w-4" />
+            }
+            {{ 'members.deactivate' | transloco }}
+          </button>
+        } @else {
+          <button
+            modalFooter
+            hlmBtn
+            size="sm"
+            type="button"
+            (click)="confirmStatus()"
+            [disabled]="actioning()"
+          >
+            @if (actioning()) {
+              <hlm-spinner class="h-4 w-4" />
+            }
+            {{ 'members.reactivate' | transloco }}
+          </button>
+        }
+      </app-modal>
+
+      <!-- Remove from organization (type-to-confirm, like delete organization) -->
+      <app-modal [(open)]="removeOpen">
+        <span modalTitle>{{ 'members.removeTitle' | transloco }}</span>
+        @if (removeTarget(); as t) {
+          <div class="flex flex-col gap-4">
+            <p>
+              {{ 'members.removeBefore' | transloco }}
+              <app-inline-entity [name]="t.name" [seed]="t.id" [imageUrl]="t.avatarUrl" />
+              {{ 'members.removeAfter' | transloco }}
+            </p>
+            <div class="flex flex-col gap-1.5">
+              <label hlmLabel for="remove-confirm-name">{{
+                'members.removeConfirmName' | transloco: { name: t.name }
+              }}</label>
+              <input
+                hlmInput
+                id="remove-confirm-name"
+                autocomplete="off"
+                spellcheck="false"
+                [value]="removeName()"
+                (input)="removeName.set($any($event.target).value)"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label hlmLabel for="remove-confirm-phrase">
+                <span
+                  [innerHTML]="
+                    'members.removeConfirmPhrase' | transloco: { phrase: removePhraseHtml() }
+                  "
+                ></span>
+              </label>
+              <input
+                hlmInput
+                id="remove-confirm-phrase"
+                autocomplete="off"
+                spellcheck="false"
+                [value]="removePhrase()"
+                (input)="removePhrase.set($any($event.target).value)"
+              />
+            </div>
+            <div
+              class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              role="alert"
+            >
+              {{ 'members.removeWarning' | transloco: { name: t.name } }}
+            </div>
+          </div>
+        }
+        <button
+          modalFooter
+          hlmBtn
+          size="sm"
+          variant="ghost"
+          type="button"
+          (click)="removeOpen.set(false)"
+        >
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          modalFooter
+          hlmBtn
+          size="sm"
+          variant="destructive"
+          type="button"
+          (click)="confirmRemove()"
+          [disabled]="!canRemove() || actioning()"
+        >
+          @if (actioning()) {
+            <hlm-spinner class="h-4 w-4" />
+          }
+          {{ 'members.removeFromOrg' | transloco }}
+        </button>
+      </app-modal>
     </div>
   `,
 })
@@ -413,6 +550,44 @@ export class Members {
   protected readonly query = signal('');
   protected readonly roleFilter = signal('all');
   protected readonly sort = signal('recent');
+
+  // Confirmation modals: deactivate/reactivate ask for a plain confirm; remove is a
+  // type-to-confirm (member name + a literal phrase), mirroring the delete-organization modal.
+  protected readonly actioning = signal(false);
+  protected readonly statusOpen = signal(false);
+  protected readonly statusTarget = signal<{
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    next: 'ACTIVE' | 'INACTIVE';
+  } | null>(null);
+  protected readonly statusIsDeactivate = computed(() => this.statusTarget()?.next === 'INACTIVE');
+  protected readonly removeOpen = signal(false);
+  protected readonly removeTarget = signal<{
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  } | null>(null);
+  protected readonly removeName = signal('');
+  protected readonly removePhrase = signal('');
+  private readonly removePhraseText = computed(() =>
+    this.transloco.translate('members.removePhrase'),
+  );
+  protected readonly removePhraseHtml = computed(() => this.bold(this.removePhraseText()));
+  /** Removal is enabled only when BOTH inputs match: the member's name and the literal phrase. */
+  protected readonly canRemove = computed(() => {
+    const t = this.removeTarget();
+    return !!t && this.removeName() === t.name && this.removePhrase() === this.removePhraseText();
+  });
+
+  private bold(text: string): string {
+    const escaped = text.replace(
+      /[&<>"']/g,
+      (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+    );
+    return `<strong>${escaped}</strong>`;
+  }
 
   private readonly translate = translateFn(this.transloco);
   protected readonly roleOptions = computed<SelectOption[]>(() => {
@@ -606,31 +781,74 @@ export class Members {
     });
   }
 
-  protected changeStatus(member: { id: string }, status: 'ACTIVE' | 'INACTIVE'): void {
+  protected askStatus(
+    member: { id: string; displayName: string; email: string; avatarUrl: string | null },
+    next: 'ACTIVE' | 'INACTIVE',
+  ): void {
+    this.statusTarget.set({
+      id: member.id,
+      name: member.displayName || member.email,
+      avatarUrl: member.avatarUrl,
+      next,
+    });
+    this.statusOpen.set(true);
+  }
+
+  protected confirmStatus(): void {
     const orgId = this.store.organizationId();
-    if (!orgId) return;
-    this.api.changeMemberStatus(orgId, member.id, status).subscribe({
+    const target = this.statusTarget();
+    if (!orgId || !target || this.actioning()) return;
+    this.actioning.set(true);
+    this.api.changeMemberStatus(orgId, target.id, target.next).subscribe({
       next: (updated) => {
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
+        this.actioning.set(false);
+        this.statusOpen.set(false);
         this.toast.success(
           this.transloco.translate(
-            status === 'ACTIVE' ? 'toast.memberReactivated' : 'toast.memberDeactivated',
+            target.next === 'ACTIVE' ? 'toast.memberReactivated' : 'toast.memberDeactivated',
           ),
         );
       },
-      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+      error: () => {
+        this.actioning.set(false);
+        this.toast.error(this.transloco.translate('members.errorInvite'));
+      },
     });
   }
 
-  protected remove(member: { id: string }): void {
+  protected askRemove(member: {
+    id: string;
+    displayName: string;
+    email: string;
+    avatarUrl: string | null;
+  }): void {
+    this.removeTarget.set({
+      id: member.id,
+      name: member.displayName || member.email,
+      avatarUrl: member.avatarUrl,
+    });
+    this.removeName.set('');
+    this.removePhrase.set('');
+    this.removeOpen.set(true);
+  }
+
+  protected confirmRemove(): void {
     const orgId = this.store.organizationId();
-    if (!orgId) return;
-    this.api.removeMember(orgId, member.id).subscribe({
+    const target = this.removeTarget();
+    if (!orgId || !target || !this.canRemove() || this.actioning()) return;
+    this.actioning.set(true);
+    this.api.removeMember(orgId, target.id).subscribe({
       next: () => {
-        this.members.update((list) => list.filter((m) => m.id !== member.id));
+        this.members.update((list) => list.filter((m) => m.id !== target.id));
+        this.actioning.set(false);
+        this.removeOpen.set(false);
         this.toast.success(this.transloco.translate('toast.memberRemoved'));
       },
-      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+      error: () => {
+        this.actioning.set(false);
+        this.toast.error(this.transloco.translate('members.errorInvite'));
+      },
     });
   }
 }
