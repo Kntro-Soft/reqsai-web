@@ -66,7 +66,7 @@ function detectMeetingLanguage(): string {
       <header
         class="absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center px-5 py-4 md:px-6"
       >
-        <div class="flex justify-start">
+        <div class="flex items-center justify-start">
           @if (authStore.organizationId()) {
             <a
               routerLink="/projects"

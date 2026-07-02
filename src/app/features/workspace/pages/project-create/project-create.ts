@@ -48,7 +48,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
       <header
         class="relative z-10 grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-border px-4 md:px-6"
       >
-        <div class="flex justify-start">
+        <div class="flex items-center justify-start">
           <a
             routerLink="/projects"
             class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
