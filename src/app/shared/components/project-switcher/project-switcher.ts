@@ -33,10 +33,10 @@ import { HlmIcon } from '../../ui';
       aria-haspopup="dialog"
       [attr.aria-label]="'projectSwitcher.ariaLabel' | transloco"
       data-testid="project-switcher"
-      class="flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       @if (activeProject(); as p) {
-        <app-avatar [name]="p.name" [seed]="p.id" [imageUrl]="p.avatarUrl" [size]="20" />
+        <app-avatar [name]="p.name" [seed]="p.id" [imageUrl]="p.avatarUrl" [size]="22" />
       }
       <span class="max-w-[12rem] truncate">{{
         activeProject()?.name ?? ('nav.allProjects' | transloco)

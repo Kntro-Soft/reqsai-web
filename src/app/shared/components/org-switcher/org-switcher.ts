@@ -50,7 +50,7 @@ import { HlmIcon } from '../../ui';
         aria-haspopup="dialog"
         [attr.aria-label]="'orgSwitcher.ariaLabel' | transloco"
         data-testid="org-switcher"
-        class="shrink-0 cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="shrink-0 cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <hlm-icon name="lucideChevronsUpDown" size="14px" />
       </button>
