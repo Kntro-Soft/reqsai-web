@@ -260,7 +260,7 @@ const MENU_POS: ConnectedPosition[] = [
                       <div class="min-w-0">
                         <p class="flex items-center gap-2 truncate font-medium">
                           {{ m.displayName || m.email }}
-                          @if (m.isOwnerSelf) {
+                          @if (m.isSelf) {
                             <span
                               class="rounded bg-secondary px-1.5 text-[11px] text-muted-foreground"
                             >
@@ -290,24 +290,26 @@ const MENU_POS: ConnectedPosition[] = [
                     </td>
                   }
                   <td class="px-3 text-right whitespace-nowrap">
-                    @if (m.role === 'OWNER' || tab() !== 'active' || !canManage()) {
+                    @if (m.role === 'OWNER' || tab() !== 'active' || !canManage() || m.isSelf) {
                       <span
                         class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                       >
                         {{ 'members.role.' + m.role | transloco }}
                       </span>
                     } @else {
-                      <app-select
-                        size="sm"
-                        [options]="roleOptions()"
-                        [value]="m.role"
-                        (valueChange)="changeRole(m, $any($event))"
-                        [ariaLabel]="'members.fieldRole' | transloco"
-                      />
+                      <div class="flex justify-end">
+                        <app-select
+                          size="sm"
+                          [options]="roleOptions()"
+                          [value]="m.role"
+                          (valueChange)="changeRole(m, $any($event))"
+                          [ariaLabel]="'members.fieldRole' | transloco"
+                        />
+                      </div>
                     }
                   </td>
                   <td class="w-12 py-3 pr-3 pl-1 text-right">
-                    @if (!m.isOwnerSelf && canManage()) {
+                    @if (!m.isSelf && m.role !== 'OWNER' && canManage()) {
                       <button
                         type="button"
                         cdkOverlayOrigin
@@ -450,44 +452,36 @@ export class Members {
     return me?.role === 'ADMIN' || me?.role === 'OWNER';
   });
 
-  private readonly ownerRow = computed(() => {
-    const orgId = this.store.organizationId();
-    const org = this.workspace.organizations().find((o) => o.id === orgId);
-    const user = this.store.user();
-    if (!org || !user || org.ownerId !== user.id) return null;
-    return {
-      id: user.id,
-      email: user.email,
-      displayName: user.fullName,
-      role: 'OWNER' as const,
-      status: 'ACTIVE',
-      isOwnerSelf: true,
-      avatarUrl: user.avatarUrl ?? null,
-    };
-  });
-
   /** The user's public avatar endpoint, when the member is linked to a user account (falls back to a
    * monogram for pending invites, which have no user yet, or users without an uploaded image). */
   private memberAvatar(userId: string | null): string | null {
     return userId ? `/api/users/${userId}/avatar` : null;
   }
 
-  protected readonly activeRows = computed(() => {
-    const owner = this.ownerRow();
-    const active = this.members()
+  /** Decorates a backend member row with the "this is you" flag and its resolved avatar URL. The owner
+   * now comes from the backend roster (as an OWNER row), so no client-side synthesis is needed. */
+  private toRow(m: MemberResponse) {
+    return {
+      ...m,
+      isSelf: !!m.userId && m.userId === this.store.user()?.id,
+      avatarUrl: this.memberAvatar(m.userId),
+    };
+  }
+
+  protected readonly activeRows = computed(() =>
+    this.members()
       .filter((m) => m.status === 'ACTIVE')
-      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) }));
-    return owner ? [owner, ...active] : active;
-  });
+      .map((m) => this.toRow(m)),
+  );
   protected readonly pending = computed(() =>
     this.members()
       .filter((m) => m.status === 'PENDING')
-      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) })),
+      .map((m) => this.toRow(m)),
   );
   protected readonly inactive = computed(() =>
     this.members()
       .filter((m) => m.status === 'INACTIVE')
-      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) })),
+      .map((m) => this.toRow(m)),
   );
 
   protected tabCount(t: MemberTab): number {
