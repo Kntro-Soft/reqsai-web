@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
@@ -150,7 +151,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                   size="sm"
                   type="button"
                   (click)="saveField('name')"
-                  [disabled]="saving() === 'name' || form.controls.name.invalid"
+                  [disabled]="saving() === 'name' || form.controls.name.invalid || !dirtyName()"
                 >
                   @if (saving() === 'name') {
                     <hlm-spinner class="h-4 w-4" />
@@ -193,7 +194,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 size="sm"
                 type="button"
                 (click)="saveField('meetingLanguage')"
-                [disabled]="saving() === 'meetingLanguage'"
+                [disabled]="saving() === 'meetingLanguage' || !dirtyLanguage()"
               >
                 @if (saving() === 'meetingLanguage') {
                   <hlm-spinner class="h-4 w-4" />
@@ -237,7 +238,9 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 type="button"
                 (click)="saveField('audioRetentionDays')"
                 [disabled]="
-                  saving() === 'audioRetentionDays' || form.controls.audioRetentionDays.invalid
+                  saving() === 'audioRetentionDays' ||
+                  form.controls.audioRetentionDays.invalid ||
+                  !dirtyRetention()
                 "
               >
                 @if (saving() === 'audioRetentionDays') {
@@ -479,6 +482,20 @@ export class OrgSettings {
     audioRetentionDays: [30, [Validators.required, Validators.min(-1)]],
   });
 
+  /** Snapshot of the last loaded/saved values; per-field Save is disabled until the field differs. */
+  private readonly initial = signal(this.form.getRawValue());
+  /** Live form value, mirrored into a signal so the dirty computeds recompute reactively. */
+  private readonly value = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+  protected readonly dirtyName = computed(() => this.value().name !== this.initial().name);
+  protected readonly dirtyLanguage = computed(
+    () => this.value().meetingLanguage !== this.initial().meetingLanguage,
+  );
+  protected readonly dirtyRetention = computed(
+    () => this.value().audioRetentionDays !== this.initial().audioRetentionDays,
+  );
+
   constructor() {
     const orgId = this.store.organizationId();
     if (!orgId) return;
@@ -492,6 +509,7 @@ export class OrgSettings {
           meetingLanguage: org.meetingLanguage,
           audioRetentionDays: org.audioRetentionDays,
         });
+        this.initial.set(this.form.getRawValue());
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
@@ -520,6 +538,8 @@ export class OrgSettings {
       next: () => {
         this.saving.set(null);
         this.savedField.set(field);
+        // Re-baseline just this field so its Save disables again until it changes once more.
+        this.initial.update((prev) => ({ ...prev, [field]: value[field] }));
         if (field === 'name') this.orgName.set(value.name);
         this.toast.success(this.transloco.translate('orgSettings.saved'));
       },
