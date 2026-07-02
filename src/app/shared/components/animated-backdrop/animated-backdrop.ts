@@ -172,6 +172,11 @@ export class AnimatedBackdrop {
     let lastMove = 0;
     let hasPointer = false;
     const IDLE_MS = 2000;
+    // When the pointer leaves / goes idle, roam from the light's current spot (not a fixed path).
+    let idlePrev = false;
+    let idleAnchorX = 0;
+    let idleAnchorY = 0;
+    let idleStart = 0;
 
     const onMove = (e: MouseEvent) => {
       pointerX = e.clientX;
@@ -194,9 +199,26 @@ export class AnimatedBackdrop {
         let goalY: number;
 
         if (b.follow) {
-          // The red light tracks the cursor across the whole page; when idle it roams broadly.
-          const cx = idle ? vw / 2 + Math.sin(t * 0.16) * vw * 0.34 : pointerX;
-          const cy = idle ? vh / 2 + Math.cos(t * 0.13) * vh * 0.34 : pointerY;
+          let cx: number;
+          let cy: number;
+          if (idle) {
+            // On going idle, anchor the roam at the light's CURRENT centre so it keeps drifting
+            // from where it is instead of snapping toward a far, time-based point.
+            if (!idlePrev) {
+              idleAnchorX = b.cur.x + b.w / 2;
+              idleAnchorY = b.cur.y + b.h / 2;
+              idleStart = now;
+            }
+            const e = (now - idleStart) / 1000;
+            cx = idleAnchorX + Math.sin(e * 0.32) * vw * 0.22;
+            cy = idleAnchorY + Math.cos(e * 0.26) * vh * 0.22;
+            // Keep it comfortably on-screen.
+            cx = Math.min(Math.max(cx, vw * 0.08), vw * 0.92);
+            cy = Math.min(Math.max(cy, vh * 0.08), vh * 0.92);
+          } else {
+            cx = pointerX;
+            cy = pointerY;
+          }
           goalX = cx - b.w / 2;
           goalY = cy - b.h / 2;
           b.cur.x += (goalX - b.cur.x) * 0.09;
@@ -222,6 +244,7 @@ export class AnimatedBackdrop {
         b.node.style.setProperty('--ry', `${b.cur.y.toFixed(2)}px`);
       }
 
+      idlePrev = idle;
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
