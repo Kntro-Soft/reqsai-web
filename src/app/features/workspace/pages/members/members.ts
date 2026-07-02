@@ -8,7 +8,9 @@ import {
   lucideMailCheck,
   lucidePlus,
   lucideTrash2,
+  lucideUserCheck,
   lucideUserPlus,
+  lucideUserX,
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
@@ -28,7 +30,7 @@ import {
   HlmSpinner,
 } from '../../../../shared/ui';
 
-type MemberTab = 'active' | 'pending';
+type MemberTab = 'active' | 'pending' | 'inactive';
 
 const MENU_POS: ConnectedPosition[] = [
   { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
@@ -55,7 +57,15 @@ const MENU_POS: ConnectedPosition[] = [
     TranslocoPipe,
   ],
   viewProviders: [
-    provideIcons({ lucideEllipsis, lucideMailCheck, lucidePlus, lucideTrash2, lucideUserPlus }),
+    provideIcons({
+      lucideEllipsis,
+      lucideMailCheck,
+      lucidePlus,
+      lucideTrash2,
+      lucideUserCheck,
+      lucideUserPlus,
+      lucideUserX,
+    }),
   ],
   template: `
     <div class="flex flex-col gap-6">
@@ -160,20 +170,20 @@ const MENU_POS: ConnectedPosition[] = [
 
       <!-- Tabs -->
       <div class="flex gap-4 border-b border-border text-sm">
-        @for (t of tabs; track t) {
+        @for (t of tabs; track t.value) {
           <button
             type="button"
-            (click)="tab.set(t)"
+            (click)="tab.set(t.value)"
             class="-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-1 pb-2.5 font-medium transition-colors"
             [class]="
-              tab() === t
+              tab() === t.value
                 ? 'border-primary text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             "
           >
-            {{ (t === 'active' ? 'members.tabActive' : 'members.tabPending') | transloco }}
+            {{ t.labelKey | transloco }}
             <span class="rounded-full bg-secondary px-1.5 text-xs text-muted-foreground">
-              {{ t === 'active' ? activeRows().length : pending().length }}
+              {{ tabCount(t.value) }}
             </span>
           </button>
         }
@@ -221,7 +231,14 @@ const MENU_POS: ConnectedPosition[] = [
         <p class="text-sm text-destructive">{{ 'members.loadError' | transloco }}</p>
       } @else if (rows().length === 0) {
         <p class="rounded-2xl border border-border py-10 text-center text-sm text-muted-foreground">
-          {{ (tab() === 'active' ? 'members.emptyBody' : 'members.emptyPending') | transloco }}
+          {{
+            (tab() === 'active'
+              ? 'members.emptyBody'
+              : tab() === 'pending'
+                ? 'members.emptyPending'
+                : 'members.emptyInactive'
+            ) | transloco
+          }}
         </p>
       } @else {
         <div class="overflow-hidden rounded-2xl border border-border">
@@ -261,9 +278,17 @@ const MENU_POS: ConnectedPosition[] = [
                         {{ 'members.status.PENDING' | transloco }}
                       </span>
                     </td>
+                  } @else if (tab() === 'inactive') {
+                    <td class="px-3 text-right whitespace-nowrap">
+                      <span
+                        class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                      >
+                        {{ 'members.status.INACTIVE' | transloco }}
+                      </span>
+                    </td>
                   }
                   <td class="px-3 text-right whitespace-nowrap">
-                    @if (m.role === 'OWNER' || tab() === 'pending') {
+                    @if (m.role === 'OWNER' || tab() !== 'active') {
                       <span
                         class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                       >
@@ -314,6 +339,28 @@ const MENU_POS: ConnectedPosition[] = [
                               {{ 'members.resendInvite' | transloco }}
                             </button>
                           }
+                          @if (tab() === 'active') {
+                            <button
+                              role="menuitem"
+                              type="button"
+                              (click)="changeStatus(m, 'INACTIVE'); menuFor.set(null)"
+                              class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <hlm-icon name="lucideUserX" size="15px" />
+                              {{ 'members.deactivate' | transloco }}
+                            </button>
+                          }
+                          @if (tab() === 'inactive') {
+                            <button
+                              role="menuitem"
+                              type="button"
+                              (click)="changeStatus(m, 'ACTIVE'); menuFor.set(null)"
+                              class="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <hlm-icon name="lucideUserCheck" size="15px" />
+                              {{ 'members.reactivate' | transloco }}
+                            </button>
+                          }
                           <button
                             role="menuitem"
                             type="button"
@@ -345,7 +392,11 @@ export class Members {
   private readonly workspace = inject(WorkspaceStore);
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
-  protected readonly tabs: readonly MemberTab[] = ['active', 'pending'];
+  protected readonly tabs: readonly { value: MemberTab; labelKey: string }[] = [
+    { value: 'active', labelKey: 'members.tabActive' },
+    { value: 'pending', labelKey: 'members.tabPending' },
+    { value: 'inactive', labelKey: 'members.tabInactive' },
+  ];
   protected readonly tab = signal<MemberTab>('active');
   protected readonly members = signal<MemberResponse[]>([]);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
@@ -420,10 +471,28 @@ export class Members {
       .filter((m) => m.status === 'PENDING')
       .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) })),
   );
+  protected readonly inactive = computed(() =>
+    this.members()
+      .filter((m) => m.status === 'INACTIVE')
+      .map((m) => ({ ...m, isOwnerSelf: false, avatarUrl: this.memberAvatar(m.userId) })),
+  );
+
+  protected tabCount(t: MemberTab): number {
+    return t === 'active'
+      ? this.activeRows().length
+      : t === 'pending'
+        ? this.pending().length
+        : this.inactive().length;
+  }
 
   /** The current tab's rows after the filter / role / sort controls are applied. */
   protected readonly rows = computed(() => {
-    const base = this.tab() === 'active' ? this.activeRows() : this.pending();
+    const base =
+      this.tab() === 'active'
+        ? this.activeRows()
+        : this.tab() === 'pending'
+          ? this.pending()
+          : this.inactive();
     const q = this.query().trim().toLowerCase();
     const role = this.roleFilter();
     let list = base.filter((m) => {
@@ -525,6 +594,22 @@ export class Members {
       next: (updated) => {
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
         this.toast.success(this.transloco.translate('toast.invitationResent'));
+      },
+      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+    });
+  }
+
+  protected changeStatus(member: { id: string }, status: 'ACTIVE' | 'INACTIVE'): void {
+    const orgId = this.store.organizationId();
+    if (!orgId) return;
+    this.api.changeMemberStatus(orgId, member.id, status).subscribe({
+      next: (updated) => {
+        this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
+        this.toast.success(
+          this.transloco.translate(
+            status === 'ACTIVE' ? 'toast.memberReactivated' : 'toast.memberDeactivated',
+          ),
+        );
       },
       error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
     });

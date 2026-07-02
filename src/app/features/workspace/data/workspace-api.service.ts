@@ -192,6 +192,17 @@ export class WorkspaceApiService {
     return this.http.delete<void>(`/api/organizations/${orgId}/members/${memberId}`);
   }
 
+  changeMemberStatus(
+    orgId: string,
+    memberId: string,
+    status: 'ACTIVE' | 'INACTIVE',
+  ): Observable<MemberResponse> {
+    return this.http.patch<MemberResponse>(
+      `/api/organizations/${orgId}/members/${memberId}/status`,
+      { status },
+    );
+  }
+
   /** Re-sends a pending invitation email (owner/admin). `409` if the member isn't PENDING. */
   resendInvitation(orgId: string, memberId: string): Observable<MemberResponse> {
     return this.http.post<MemberResponse>(
