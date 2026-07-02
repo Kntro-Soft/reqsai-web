@@ -74,8 +74,9 @@ const MENU_POS: ConnectedPosition[] = [
         <p class="mt-1 text-sm text-muted-foreground">{{ 'members.subtitle' | transloco }}</p>
       </div>
 
-      <!-- Invite (always visible, supports several at once) -->
-      <section class="overflow-hidden rounded-2xl border border-border">
+      <!-- Invite (owner/admin only) -->
+      @if (canManage()) {
+        <section class="overflow-hidden rounded-2xl border border-border">
         <div class="flex flex-col gap-1 p-5">
           <h2 class="text-base font-semibold">{{ 'members.inviteTitle' | transloco }}</h2>
           <p class="text-sm text-muted-foreground">{{ 'members.inviteDesc' | transloco }}</p>
@@ -166,7 +167,8 @@ const MENU_POS: ConnectedPosition[] = [
             <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
           }
         </form>
-      </section>
+        </section>
+      }
 
       <!-- Tabs -->
       <div class="flex gap-4 border-b border-border text-sm">
@@ -288,7 +290,7 @@ const MENU_POS: ConnectedPosition[] = [
                     </td>
                   }
                   <td class="px-3 text-right whitespace-nowrap">
-                    @if (m.role === 'OWNER' || tab() !== 'active') {
+                    @if (m.role === 'OWNER' || tab() !== 'active' || !canManage()) {
                       <span
                         class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                       >
@@ -305,7 +307,7 @@ const MENU_POS: ConnectedPosition[] = [
                     }
                   </td>
                   <td class="w-12 py-3 pr-3 pl-1 text-right">
-                    @if (!m.isOwnerSelf) {
+                    @if (!m.isOwnerSelf && canManage()) {
                       <button
                         type="button"
                         cdkOverlayOrigin
@@ -435,6 +437,17 @@ export class Members {
       { value: 'recent', label: t('members.sortRecent') },
       { value: 'name', label: t('members.sortName') },
     ];
+  });
+
+  /** Owner or admin of the active org may manage members; everyone else gets a read-only roster. */
+  protected readonly canManage = computed(() => {
+    const user = this.store.user();
+    if (!user) return false;
+    const orgId = this.store.organizationId();
+    const org = this.workspace.organizations().find((o) => o.id === orgId);
+    if (org?.ownerId === user.id) return true;
+    const me = this.members().find((m) => m.userId === user.id && m.status === 'ACTIVE');
+    return me?.role === 'ADMIN' || me?.role === 'OWNER';
   });
 
   private readonly ownerRow = computed(() => {
