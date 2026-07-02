@@ -64,9 +64,9 @@ function detectMeetingLanguage(): string {
       />
 
       <header
-        class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-4 md:px-6"
+        class="absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center px-5 py-4 md:px-6"
       >
-        <div class="flex items-center gap-3">
+        <div class="flex justify-start">
           @if (authStore.organizationId()) {
             <a
               routerLink="/projects"
@@ -76,9 +76,9 @@ function detectMeetingLanguage(): string {
               {{ 'common.back' | transloco }}
             </a>
           }
-          <app-logo [size]="28" />
         </div>
-        <div class="flex items-center gap-1">
+        <app-logo [size]="28" />
+        <div class="flex items-center justify-end gap-1">
           <app-language-switcher />
           <app-theme-toggle />
         </div>
