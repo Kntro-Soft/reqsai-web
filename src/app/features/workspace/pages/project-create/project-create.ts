@@ -9,6 +9,8 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Logo } from '../../../../shared/components/logo/logo';
 import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
+import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
+import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 
@@ -25,6 +27,8 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
     RouterLink,
     Logo,
     AnimatedBackdrop,
+    LanguageSwitcher,
+    ThemeToggle,
     ChipInput,
     HlmButton,
     HlmIcon,
@@ -44,15 +48,20 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../
       <header
         class="relative z-10 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border px-4 md:px-6"
       >
-        <a
-          routerLink="/projects"
-          class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <hlm-icon name="lucideArrowLeft" size="16px" />
-          {{ 'common.back' | transloco }}
-        </a>
-        <span class="text-sm font-medium">{{ 'projectCreate.title' | transloco }}</span>
-        <app-logo [size]="24" [showText]="false" />
+        <div class="flex items-center gap-3">
+          <a
+            routerLink="/projects"
+            class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <hlm-icon name="lucideArrowLeft" size="16px" />
+            {{ 'common.back' | transloco }}
+          </a>
+          <app-logo [size]="24" />
+        </div>
+        <div class="flex items-center gap-1">
+          <app-language-switcher />
+          <app-theme-toggle />
+        </div>
       </header>
 
       <main

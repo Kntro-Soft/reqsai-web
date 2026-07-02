@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs';
 import { provideIcons } from '@ng-icons/core';
-import { lucideBuilding2, lucideChevronDown } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucideBuilding2, lucideChevronDown } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
 import { LanguageSwitcher } from '../../../../shared/components/language-switcher/language-switcher';
@@ -41,12 +42,13 @@ function detectMeetingLanguage(): string {
     HlmSpinner,
     HlmIcon,
     TranslocoPipe,
+    RouterLink,
     ThemeToggle,
     LanguageSwitcher,
     Logo,
     AnimatedBackdrop,
   ],
-  viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucideBuilding2, lucideChevronDown })],
   template: `
     <div
       class="relative isolate grid min-h-dvh place-items-center overflow-hidden bg-background px-4 py-20 text-foreground"
@@ -64,7 +66,18 @@ function detectMeetingLanguage(): string {
       <header
         class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-4 md:px-6"
       >
-        <app-logo [size]="28" />
+        <div class="flex items-center gap-3">
+          @if (authStore.organizationId()) {
+            <a
+              routerLink="/projects"
+              class="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <hlm-icon name="lucideArrowLeft" size="16px" />
+              {{ 'common.back' | transloco }}
+            </a>
+          }
+          <app-logo [size]="28" />
+        </div>
         <div class="flex items-center gap-1">
           <app-language-switcher />
           <app-theme-toggle />
@@ -157,6 +170,7 @@ export class CreateOrganization {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(WorkspaceStore);
   private readonly auth = inject(AuthService);
+  protected readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
