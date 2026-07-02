@@ -50,8 +50,8 @@ export class Avatar {
   readonly seed = input<string>('');
   /** Pixel size of the square/circle. */
   readonly size = input<number>(32);
-  /** Render as a circle (users) instead of a rounded square (orgs/projects). */
-  readonly circle = input<boolean>(false);
+  /** Circular (default) vs a rounded square. Logos across the app are circular. */
+  readonly circle = input<boolean>(true);
   /** When set, the image is shown instead of the monogram. */
   readonly imageUrl = input<string | null>(null);
 

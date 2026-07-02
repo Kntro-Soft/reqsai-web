@@ -61,7 +61,7 @@ import {
                 <hlm-skeleton class="h-5 w-32" />
                 <hlm-skeleton class="h-3 w-72 max-w-full" />
               </div>
-              <hlm-skeleton class="h-16 w-16 shrink-0 rounded-xl" />
+              <hlm-skeleton class="h-16 w-16 shrink-0 rounded-full" />
             </div>
             <div class="border-t border-border bg-muted/30 px-5 py-3">
               <hlm-skeleton class="h-3 w-52" />
@@ -92,7 +92,7 @@ import {
             <button
               type="button"
               (click)="fileInput.click()"
-              class="group relative shrink-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              class="group relative shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               [attr.aria-label]="'orgSettings.logoUpload' | transloco"
             >
               <app-avatar
@@ -102,7 +102,7 @@ import {
                 [size]="64"
               />
               <span
-                class="absolute inset-0 grid place-items-center rounded-xl bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                class="absolute inset-0 grid place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
               >
                 <hlm-icon name="lucideUpload" size="18px" />
               </span>

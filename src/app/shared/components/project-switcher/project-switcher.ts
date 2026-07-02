@@ -36,7 +36,7 @@ import { HlmIcon } from '../../ui';
       class="flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       @if (activeProject(); as p) {
-        <app-avatar [name]="p.name" [seed]="p.id" [size]="20" />
+        <app-avatar [name]="p.name" [seed]="p.id" [imageUrl]="p.avatarUrl" [size]="20" />
       }
       <span class="max-w-[12rem] truncate">{{
         activeProject()?.name ?? ('nav.allProjects' | transloco)
@@ -83,7 +83,12 @@ import { HlmIcon } from '../../ui';
               (click)="select(project)"
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
             >
-              <app-avatar [name]="project.name" [seed]="project.id" [size]="22" />
+              <app-avatar
+                [name]="project.name"
+                [seed]="project.id"
+                [imageUrl]="project.avatarUrl"
+                [size]="22"
+              />
               <span class="min-w-0 flex-1 truncate">{{ project.name }}</span>
             </button>
           } @empty {
