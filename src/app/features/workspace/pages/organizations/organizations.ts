@@ -138,6 +138,6 @@ export class Organizations {
   }
 
   protected create(): void {
-    void this.router.navigate(['/onboarding']);
+    void this.router.navigate(['/organizations/new']);
   }
 }

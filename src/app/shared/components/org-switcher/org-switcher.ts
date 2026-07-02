@@ -170,7 +170,7 @@ export class OrgSwitcher {
 
   protected create(): void {
     this.close();
-    void this.router.navigate(['/onboarding']);
+    void this.router.navigate(['/organizations/new']);
   }
 
   protected goToProjects(): void {

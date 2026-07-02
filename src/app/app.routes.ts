@@ -49,6 +49,18 @@ export const routes: Routes = [
       import('./features/workspace/pages/launcher/launcher').then((m) => m.Launcher),
   },
 
+  // Create an ADDITIONAL organization: same component as onboarding, but without onboardingGuard
+  // (which bounces users who already have an org), so existing users can reach it.
+  {
+    path: 'organizations/new',
+    title: 'titles.onboarding',
+    canActivate: [authGuard, termsGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/create-organization/create-organization').then(
+        (m) => m.CreateOrganization,
+      ),
+  },
+
   {
     path: 'organizations',
     title: 'titles.organizations',
