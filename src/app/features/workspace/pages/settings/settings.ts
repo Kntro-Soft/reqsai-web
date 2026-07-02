@@ -12,6 +12,7 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import {
   HlmButton,
@@ -47,6 +48,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
     ReactiveFormsModule,
     Avatar,
     Select,
+    Modal,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -282,25 +284,11 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
         @if (isOwner()) {
           <!-- Transfer ownership -->
           <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <div class="flex flex-col gap-1">
-                <h2 class="text-base font-semibold">{{ 'orgSettings.transfer' | transloco }}</h2>
-                <p class="text-sm text-muted-foreground">
-                  {{ 'orgSettings.transferDesc' | transloco }}
-                </p>
-              </div>
-              @if (transferOptions().length) {
-                <app-select
-                  [options]="transferOptions()"
-                  [value]="newOwnerId()"
-                  (valueChange)="newOwnerId.set($event)"
-                  [ariaLabel]="'orgSettings.transfer' | transloco"
-                />
-              } @else {
-                <p class="text-sm text-muted-foreground">
-                  {{ 'orgSettings.transferEmpty' | transloco }}
-                </p>
-              }
+            <div class="flex flex-col gap-1 p-5">
+              <h2 class="text-base font-semibold">{{ 'orgSettings.transfer' | transloco }}</h2>
+              <p class="text-sm text-muted-foreground">
+                {{ 'orgSettings.transferDesc' | transloco }}
+              </p>
             </div>
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
@@ -310,12 +298,8 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 size="sm"
                 variant="outline"
                 type="button"
-                (click)="transfer()"
-                [disabled]="!newOwnerId() || transferring()"
+                (click)="openTransfer()"
               >
-                @if (transferring()) {
-                  <hlm-spinner class="h-4 w-4" />
-                }
                 {{ 'orgSettings.transferCta' | transloco }}
               </button>
             </div>
@@ -335,44 +319,116 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
               <span class="text-xs text-muted-foreground">
                 {{ 'orgSettings.deleteHint' | transloco }}
               </span>
-              @if (confirmingDelete()) {
-                <div class="flex items-center gap-2">
-                  <button
-                    hlmBtn
-                    size="sm"
-                    variant="ghost"
-                    type="button"
-                    (click)="confirmingDelete.set(false)"
-                  >
-                    {{ 'common.cancel' | transloco }}
-                  </button>
-                  <button
-                    hlmBtn
-                    size="sm"
-                    variant="destructive"
-                    type="button"
-                    (click)="deleteOrg()"
-                    [disabled]="deleting()"
-                  >
-                    @if (deleting()) {
-                      <hlm-spinner class="h-4 w-4" />
-                    }
-                    {{ 'orgSettings.deleteConfirm' | transloco }}
-                  </button>
-                </div>
-              } @else {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="destructive"
-                  type="button"
-                  (click)="confirmingDelete.set(true)"
-                >
-                  {{ 'orgSettings.delete' | transloco }}
-                </button>
-              }
+              <button
+                hlmBtn
+                size="sm"
+                variant="destructive"
+                type="button"
+                (click)="openDelete()"
+              >
+                {{ 'orgSettings.delete' | transloco }}
+              </button>
             </div>
           </section>
+
+          <!-- Transfer ownership modal -->
+          <app-modal [(open)]="transferOpen">
+            <span modalTitle>{{ 'orgSettings.transferModalTitle' | transloco }}</span>
+            <div class="flex flex-col gap-4">
+              <p
+                [innerHTML]="'orgSettings.transferModalBody' | transloco: { org: orgNameHtml() }"
+              ></p>
+              @if (transferOptions().length) {
+                <div class="flex flex-col gap-1.5">
+                  <span hlmLabel>{{ 'orgSettings.transferModalLabel' | transloco }}</span>
+                  <app-select
+                    [options]="transferOptions()"
+                    [value]="newOwnerId()"
+                    (valueChange)="newOwnerId.set($event)"
+                    [ariaLabel]="'orgSettings.transferModalLabel' | transloco"
+                  />
+                </div>
+              } @else {
+                <p class="text-sm text-muted-foreground">
+                  {{ 'orgSettings.transferEmpty' | transloco }}
+                </p>
+              }
+            </div>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              variant="ghost"
+              type="button"
+              (click)="transferOpen.set(false)"
+            >
+              {{ 'common.cancel' | transloco }}
+            </button>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              type="button"
+              (click)="transfer()"
+              [disabled]="!newOwnerId() || transferring()"
+            >
+              @if (transferring()) {
+                <hlm-spinner class="h-4 w-4" />
+              }
+              {{ 'orgSettings.transferCta' | transloco }}
+            </button>
+          </app-modal>
+
+          <!-- Delete organization modal -->
+          <app-modal [(open)]="deleteOpen">
+            <span modalTitle>{{ 'orgSettings.deleteModalTitle' | transloco }}</span>
+            <div class="flex flex-col gap-4">
+              <p [innerHTML]="'orgSettings.deleteModalBody' | transloco: { org: orgNameHtml() }"></p>
+              <div class="flex flex-col gap-1.5">
+                <label hlmLabel for="delete-confirm">
+                  {{ 'orgSettings.deleteConfirmLabel' | transloco: { org: orgName() } }}
+                </label>
+                <input
+                  hlmInput
+                  id="delete-confirm"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [value]="deleteConfirmText()"
+                  (input)="deleteConfirmText.set($any($event.target).value)"
+                />
+              </div>
+              <div
+                class="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                role="alert"
+              >
+                {{ 'orgSettings.deleteWarning' | transloco: { org: orgName() } }}
+              </div>
+            </div>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              variant="ghost"
+              type="button"
+              (click)="deleteOpen.set(false)"
+            >
+              {{ 'common.cancel' | transloco }}
+            </button>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              variant="destructive"
+              type="button"
+              (click)="deleteOrg()"
+              [disabled]="deleteConfirmText() !== orgName() || deleting()"
+            >
+              @if (deleting()) {
+                <hlm-spinner class="h-4 w-4" />
+              }
+              {{ 'orgSettings.delete' | transloco }}
+            </button>
+          </app-modal>
         } @else {
           <!-- Leave organization -->
           <section class="overflow-hidden rounded-2xl border border-border">
@@ -383,42 +439,47 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
             >
-              @if (confirmingLeave()) {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  (click)="confirmingLeave.set(false)"
-                >
-                  {{ 'common.cancel' | transloco }}
-                </button>
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="destructive"
-                  type="button"
-                  (click)="leaveOrg()"
-                  [disabled]="leaving()"
-                >
-                  @if (leaving()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  }
-                  {{ 'orgSettings.leaveConfirm' | transloco }}
-                </button>
-              } @else {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  (click)="confirmingLeave.set(true)"
-                >
-                  {{ 'orgSettings.leave' | transloco }}
-                </button>
-              }
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="leaveOpen.set(true)"
+              >
+                {{ 'orgSettings.leave' | transloco }}
+              </button>
             </div>
           </section>
+
+          <!-- Leave organization modal -->
+          <app-modal [(open)]="leaveOpen">
+            <span modalTitle>{{ 'orgSettings.leaveModalTitle' | transloco }}</span>
+            <p>{{ 'orgSettings.leaveModalBody' | transloco: { org: orgName() } }}</p>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              variant="ghost"
+              type="button"
+              (click)="leaveOpen.set(false)"
+            >
+              {{ 'common.cancel' | transloco }}
+            </button>
+            <button
+              modalFooter
+              hlmBtn
+              size="sm"
+              variant="destructive"
+              type="button"
+              (click)="leaveOrg()"
+              [disabled]="leaving()"
+            >
+              @if (leaving()) {
+                <hlm-spinner class="h-4 w-4" />
+              }
+              {{ 'orgSettings.leave' | transloco }}
+            </button>
+          </app-modal>
         }
 
         @if (errorMessage()) {
@@ -456,8 +517,12 @@ export class OrgSettings {
   protected readonly transferring = signal(false);
   protected readonly deleting = signal(false);
   protected readonly leaving = signal(false);
-  protected readonly confirmingDelete = signal(false);
-  protected readonly confirmingLeave = signal(false);
+  // Confirm-modal visibility.
+  protected readonly transferOpen = signal(false);
+  protected readonly deleteOpen = signal(false);
+  protected readonly leaveOpen = signal(false);
+  /** Type-to-confirm text; deletion is gated on this matching the org name exactly (case-sensitive). */
+  protected readonly deleteConfirmText = signal('');
   protected readonly isOwner = computed(() => {
     const uid = this.store.user()?.id;
     return !!uid && this.ownerId() === uid;
@@ -467,6 +532,15 @@ export class OrgSettings {
       .filter((m) => m.status === 'ACTIVE')
       .map((m) => ({ value: m.id, label: m.displayName || m.email })),
   );
+  /** The org name wrapped in `<strong>`, HTML-escaped, for interpolation into the modal sentences. */
+  protected readonly orgNameHtml = computed(() => {
+    const escaped = this.orgName().replace(
+      /[&<>"']/g,
+      (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+    );
+    return `<strong>${escaped}</strong>`;
+  });
 
   private readonly avatarBase = signal<string | null>(null);
   private readonly avatarVersion = signal(0);
@@ -580,6 +654,16 @@ export class OrgSettings {
     });
   }
 
+  protected openTransfer(): void {
+    this.newOwnerId.set('');
+    this.transferOpen.set(true);
+  }
+
+  protected openDelete(): void {
+    this.deleteConfirmText.set('');
+    this.deleteOpen.set(true);
+  }
+
   protected transfer(): void {
     const orgId = this.store.organizationId();
     const target = this.newOwnerId();
@@ -591,6 +675,7 @@ export class OrgSettings {
         this.transferring.set(false);
         this.ownerId.set(org.ownerId);
         this.newOwnerId.set('');
+        this.transferOpen.set(false);
         this.workspace.loadOrganizations();
         this.toast.success(this.transloco.translate('toast.ownershipTransferred'));
       },

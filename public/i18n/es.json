@@ -572,7 +572,16 @@
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
     "errorValidation": "Revisa los datos e intenta de nuevo.",
-    "errorGeneric": "No se pudieron guardar los cambios."
+    "errorGeneric": "No se pudieron guardar los cambios.",
+    "transferModalTitle": "Transferir propiedad",
+    "transferModalBody": "Estás a punto de transferir {{org}} a otro miembro.",
+    "transferModalLabel": "Transferir a",
+    "deleteModalTitle": "Eliminar organización",
+    "deleteModalBody": "Esto eliminará permanentemente {{org}} y todos sus datos.",
+    "deleteConfirmLabel": "Para confirmar, escribe \"{{org}}\"",
+    "deleteWarning": "Eliminar {{org}} no se puede deshacer.",
+    "leaveModalTitle": "Salir de la organización",
+    "leaveModalBody": "Perderás el acceso a {{org}}. Esto no se puede deshacer a menos que te vuelvan a invitar."
   },
   "projectSettings": {
     "title": "Ajustes",

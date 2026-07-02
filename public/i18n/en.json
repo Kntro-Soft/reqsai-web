@@ -572,7 +572,16 @@
     "saved": "Changes saved.",
     "save": "Save changes",
     "errorValidation": "Check the data and try again.",
-    "errorGeneric": "Could not save the changes."
+    "errorGeneric": "Could not save the changes.",
+    "transferModalTitle": "Transfer ownership",
+    "transferModalBody": "You are about to transfer {{org}} to another member.",
+    "transferModalLabel": "Transfer to",
+    "deleteModalTitle": "Delete organization",
+    "deleteModalBody": "This will permanently delete {{org}} and all of its data.",
+    "deleteConfirmLabel": "To confirm, type \"{{org}}\"",
+    "deleteWarning": "Deleting {{org}} cannot be undone.",
+    "leaveModalTitle": "Leave organization",
+    "leaveModalBody": "You'll lose access to {{org}}. This can't be undone unless you're invited again."
   },
   "projectSettings": {
     "title": "Settings",
