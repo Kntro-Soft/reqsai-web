@@ -158,7 +158,7 @@ export class ProjectSwitcher {
 
   protected create(): void {
     this.close();
-    void this.router.navigate(['/projects']);
+    void this.router.navigate(['/projects/new']);
   }
 
   private ensureProjectsLoaded(): void {
