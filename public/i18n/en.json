@@ -828,6 +828,12 @@
       "comingSoon": "Text to pipeline is coming soon.",
       "record": "Start recording"
     },
+    "language": {
+      "label": "Meeting language",
+      "search": "Search language…",
+      "empty": "No language found.",
+      "locked": "The language is fixed once recording starts."
+    },
     "bar": {
       "recording": "Recording",
       "paused": "Paused",

@@ -828,6 +828,12 @@
       "comingSoon": "La entrada de texto llegará pronto.",
       "record": "Iniciar grabación"
     },
+    "language": {
+      "label": "Idioma de la reunión",
+      "search": "Buscar idioma…",
+      "empty": "No se encontró el idioma.",
+      "locked": "El idioma queda fijo al iniciar la grabación."
+    },
     "bar": {
       "recording": "Grabando",
       "paused": "En pausa",
