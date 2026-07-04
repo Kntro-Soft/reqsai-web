@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   input,
   linkedSignal,
   output,
@@ -9,39 +8,53 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSparkles } from '@ng-icons/lucide';
 import {
   AcceptSuggestionRequest,
   DisplayStory,
   SuggestionPriority,
   SuggestionResponse,
 } from '../../data/discovery.models';
-import { provideIcons } from '@ng-icons/core';
-import { lucideSparkles } from '@ng-icons/lucide';
 import { HlmButton, HlmIcon, HlmInput } from '../../../../shared/ui';
 
 const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-/** One AI suggestion the analyst can edit, accept or dismiss, rendered per type. */
+/**
+ * One AI suggestion rendered per type (draft story, story update diff, edge
+ * case, clarifying question) with Accept / Dismiss and inline editing.
+ * Read-only when `canDecide` is false. `openTarget` asks the page to reveal
+ * the target story in the side panel.
+ */
 @Component({
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon],
+  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideSparkles })],
   template: `
-    <div class="rounded-2xl border border-primary/30 bg-card/60 p-4" data-testid="suggestion-card">
+    <div
+      class="rounded-2xl border border-primary/30 bg-card p-4 shadow-lg"
+      data-testid="suggestion-card"
+    >
       <div class="mb-2 flex flex-wrap items-center gap-2">
         <span
           class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
         >
           <hlm-icon name="lucideSparkles" size="12px" />
-          {{ typeLabel() }}
+          {{ 'discovery.suggestion.type.' + suggestion().type | transloco }}
         </span>
         @if (suggestion().type !== 'CLARIFYING_QUESTION') {
           <span
             class="rounded-full px-2 py-0.5 text-[11px] font-medium"
             [class]="priorityClass(ePriority())"
           >
-            {{ priorityLabel(ePriority()) }}
+            {{ 'discovery.suggestion.priority.' + ePriority() | transloco }}
+          </span>
+        }
+        @if (suggestion().relatedTopic; as topic) {
+          <span class="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+            {{ topic }}
           </span>
         }
       </div>
@@ -53,18 +66,26 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         @case ('UPDATE_STORY') {
           <div class="grid gap-3 sm:grid-cols-2">
             <div class="rounded-xl border border-border bg-background/40 p-3">
-              <p class="mb-1 text-[11px] font-medium uppercase text-muted-foreground">Actual</p>
+              <p class="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
+                {{ 'discovery.suggestion.current' | transloco }}
+              </p>
               @if (targetStory(); as cur) {
                 <p class="text-sm font-medium">{{ cur.title }}</p>
                 <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  Como {{ cur.role }}, quiero {{ cur.action }}, para {{ cur.benefit }}.
+                  {{ 'discovery.story.as' | transloco }} {{ cur.role
+                  }}{{ 'discovery.story.want' | transloco }} {{ cur.action
+                  }}{{ 'discovery.story.soThat' | transloco }} {{ cur.benefit }}.
                 </p>
               } @else {
-                <p class="text-xs text-muted-foreground">Historia no encontrada.</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ 'discovery.suggestion.storyNotFound' | transloco }}
+                </p>
               }
             </div>
             <div class="rounded-xl border border-primary/40 p-3">
-              <p class="mb-1 text-[11px] font-medium uppercase text-primary">Propuesta</p>
+              <p class="mb-1 text-[11px] font-medium uppercase text-primary">
+                {{ 'discovery.suggestion.proposed' | transloco }}
+              </p>
               <ng-container [ngTemplateOutlet]="storyBody" />
             </div>
           </div>
@@ -74,32 +95,53 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         }
       }
 
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button hlmBtn size="sm" type="button" (click)="onAccept()" data-testid="suggestion-accept">
-          Aceptar
+      @if (suggestion().targetStoryId && suggestion().type !== 'NEW_STORY') {
+        <button
+          type="button"
+          class="mt-2 text-xs font-medium text-primary hover:underline"
+          (click)="openTarget.emit(suggestion().targetStoryId!)"
+          data-testid="suggestion-open-target"
+        >
+          {{ 'discovery.suggestion.viewTarget' | transloco }}
         </button>
-        @if (suggestion().type !== 'CLARIFYING_QUESTION') {
+      }
+
+      @if (canDecide()) {
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            type="button"
+            (click)="onAccept()"
+            data-testid="suggestion-accept"
+          >
+            {{ 'discovery.suggestion.accept' | transloco }}
+          </button>
+          @if (suggestion().type !== 'CLARIFYING_QUESTION') {
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="editing.set(!editing())"
+            >
+              {{
+                (editing() ? 'discovery.suggestion.done' : 'discovery.suggestion.edit') | transloco
+              }}
+            </button>
+          }
           <button
             hlmBtn
             size="sm"
             variant="outline"
             type="button"
-            (click)="editing.set(!editing())"
+            (click)="dismiss.emit()"
+            data-testid="suggestion-dismiss"
           >
-            {{ editing() ? 'Listo' : 'Editar' }}
+            {{ 'discovery.suggestion.dismiss' | transloco }}
           </button>
-        }
-        <button
-          hlmBtn
-          size="sm"
-          variant="outline"
-          type="button"
-          (click)="dismiss.emit()"
-          data-testid="suggestion-dismiss"
-        >
-          Rechazar
-        </button>
-      </div>
+        </div>
+      }
     </div>
 
     <ng-template #storyBody>
@@ -107,7 +149,10 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         <div class="flex flex-col gap-2.5">
           <div class="flex flex-col gap-1">
             <span class="text-xs text-muted-foreground">{{
-              suggestion().type === 'EDGE_CASE' ? 'Escenario' : 'Título'
+              (suggestion().type === 'EDGE_CASE'
+                ? 'discovery.suggestion.scenario'
+                : 'discovery.suggestion.titleField'
+              ) | transloco
             }}</span>
             <input hlmInput class="h-9" [ngModel]="eTitle()" (ngModelChange)="eTitle.set($event)" />
           </div>
@@ -115,21 +160,21 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
             <input
               hlmInput
               class="h-9"
-              placeholder="Rol"
+              [placeholder]="'discovery.suggestion.role' | transloco"
               [ngModel]="eRole()"
               (ngModelChange)="eRole.set($event)"
             />
             <input
               hlmInput
               class="h-9"
-              placeholder="Acción"
+              [placeholder]="'discovery.suggestion.action' | transloco"
               [ngModel]="eAction()"
               (ngModelChange)="eAction.set($event)"
             />
             <input
               hlmInput
               class="h-9"
-              placeholder="Beneficio"
+              [placeholder]="'discovery.suggestion.benefit' | transloco"
               [ngModel]="eBenefit()"
               (ngModelChange)="eBenefit.set($event)"
             />
@@ -137,19 +182,25 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           @if (suggestion().type !== 'EDGE_CASE') {
             <div class="flex items-end gap-2">
               <div class="flex flex-col gap-1">
-                <span class="text-xs text-muted-foreground">Prioridad</span>
+                <span class="text-xs text-muted-foreground">{{
+                  'discovery.suggestion.priorityField' | transloco
+                }}</span>
                 <select
                   class="h-9 rounded-md border border-input bg-background px-2 text-sm"
                   [ngModel]="ePriority()"
                   (ngModelChange)="ePriority.set($event)"
                 >
                   @for (p of priorities; track p) {
-                    <option [value]="p">{{ priorityLabel(p) }}</option>
+                    <option [value]="p">
+                      {{ 'discovery.suggestion.priority.' + p | transloco }}
+                    </option>
                   }
                 </select>
               </div>
               <div class="flex flex-col gap-1">
-                <span class="text-xs text-muted-foreground">Puntos</span>
+                <span class="text-xs text-muted-foreground">{{
+                  'discovery.suggestion.points' | transloco
+                }}</span>
                 <input
                   hlmInput
                   class="h-9 w-20"
@@ -165,17 +216,23 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         <div class="text-sm leading-relaxed">
           <p class="font-medium">{{ eTitle() }}</p>
           <p class="mt-1 text-muted-foreground">
-            <span class="text-foreground">Dado</span> que el usuario es
-            {{ eRole() || 'el usuario' }}, <span class="text-foreground">cuando</span>
-            {{ eAction() }}, <span class="text-foreground">entonces</span> {{ eBenefit() }}.
+            <span class="text-foreground">{{ 'discovery.suggestion.given' | transloco }}</span>
+            {{ eRole() }},
+            <span class="text-foreground">{{ 'discovery.suggestion.when' | transloco }}</span>
+            {{ eAction() }},
+            <span class="text-foreground">{{ 'discovery.suggestion.then' | transloco }}</span>
+            {{ eBenefit() }}.
           </p>
         </div>
       } @else {
         <p class="text-sm font-medium">{{ eTitle() }}</p>
         <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Como <span class="text-foreground">{{ eRole() }}</span
-          >, quiero <span class="text-foreground">{{ eAction() }}</span
-          >, para <span class="text-foreground">{{ eBenefit() }}</span
+          {{ 'discovery.story.as' | transloco }}
+          <span class="text-foreground">{{ eRole() }}</span
+          >{{ 'discovery.story.want' | transloco }}
+          <span class="text-foreground">{{ eAction() }}</span
+          >{{ 'discovery.story.soThat' | transloco }}
+          <span class="text-foreground">{{ eBenefit() }}</span
           >.
         </p>
       }
@@ -185,8 +242,12 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 export class SuggestionCard {
   readonly suggestion = input.required<SuggestionResponse>();
   readonly targetStory = input<DisplayStory | undefined>(undefined);
+  /** False renders the card read-only (viewer without decide rights). */
+  readonly canDecide = input(true);
   readonly accept = output<AcceptSuggestionRequest>();
   readonly dismiss = output<void>();
+  /** Asks the page to reveal the target story in the side panel. */
+  readonly openTarget = output<string>();
 
   protected readonly editing = signal(false);
   protected readonly priorities = PRIORITIES;
@@ -202,16 +263,6 @@ export class SuggestionCard {
     () => this.suggestion().draftStoryPoints,
   );
 
-  protected readonly typeLabel = computed(() => {
-    const labels: Record<string, string> = {
-      NEW_STORY: 'Nueva historia',
-      UPDATE_STORY: 'Actualizar historia',
-      EDGE_CASE: 'Caso borde',
-      CLARIFYING_QUESTION: 'Pregunta',
-    };
-    return labels[this.suggestion().type] ?? this.suggestion().type;
-  });
-
   protected onAccept(): void {
     if (!this.editing()) {
       this.accept.emit({});
@@ -225,16 +276,6 @@ export class SuggestionCard {
       editedPriority: this.ePriority(),
       editedStoryPoints: this.ePoints() ?? undefined,
     });
-  }
-
-  protected priorityLabel(priority: string): string {
-    const labels: Record<string, string> = {
-      LOW: 'Baja',
-      MEDIUM: 'Media',
-      HIGH: 'Alta',
-      CRITICAL: 'Crítica',
-    };
-    return labels[priority] ?? priority;
   }
 
   protected priorityClass(priority: string): string {
