@@ -226,6 +226,14 @@ export const routes: Routes = [
                   ),
               },
               {
+                path: 'roles',
+                title: 'titles.projectRoles',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-roles/project-roles').then(
+                    (m) => m.ProjectRoles,
+                  ),
+              },
+              {
                 path: 'members',
                 title: 'titles.projectMembers',
                 loadComponent: () =>
