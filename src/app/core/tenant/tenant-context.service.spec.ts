@@ -17,6 +17,7 @@ function session(accessToken: string): AuthResponse {
     expiresIn: 900,
     user: {
       id: 'u-1',
+      email: 'ada@example.com',
       firstName: 'Ada',
       lastName: 'Lovelace',
       fullName: 'Ada Lovelace',
