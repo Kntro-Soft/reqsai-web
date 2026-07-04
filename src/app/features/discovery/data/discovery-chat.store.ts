@@ -24,7 +24,10 @@ import {
   addToQueue,
   buildSessionItems,
   clampQueueIndex,
+  historicalSegmentToMessage,
   lastSequence,
+  lowestSequence,
+  normalizeSegmentPage,
   removeFromQueue,
   toDecisionEntry,
   upsertSegment,
@@ -48,6 +51,9 @@ const STATUS_BY_EVENT: Partial<Record<SessionEventType, SessionStatus>> = {
   FAILED: 'FAILED',
 };
 
+/** Statuses that never emit further realtime events — their content is loaded as a static timeline. */
+const HISTORICAL_STATUSES: readonly SessionStatus[] = ['COMPLETED', 'FAILED'];
+
 /** Normalizes a REST user story into the chat's display shape. */
 function toDisplayStory(story: UserStoryResponse): DisplayStory {
   return {
@@ -58,6 +64,7 @@ function toDisplayStory(story: UserStoryResponse): DisplayStory {
     benefit: story.benefit,
     priority: story.priority,
     storyPoints: story.storyPoints,
+    createdAt: story.createdAt ?? null,
   };
 }
 
@@ -97,20 +104,36 @@ export class DiscoveryChatStore {
   private readonly _focusSessionId = signal<string | null>(null);
 
   readonly state = this._state.asReadonly();
-  readonly loadingOlder = this._loadingOlder.asReadonly();
   readonly queue = this._queue.asReadonly();
   readonly queueIndex = this._queueIndex.asReadonly();
   readonly pendingPrevious = this._pendingPrevious.asReadonly();
   /** Session id the feed should scroll to (set by history/409 flows). */
   readonly focusSessionId = this._focusSessionId.asReadonly();
 
-  /** True while older sessions remain (cache not exhausted or more pages exist). */
+  /** The topmost (oldest loaded) block still has older segments to page in. */
+  private readonly hasOlderSegments = computed(() => {
+    const top = this._blocks()[0];
+    return !!top && top.hasMoreSegments;
+  });
+
+  /**
+   * True while more history can be revealed by scrolling up — either older
+   * segments of the topmost session, or an older session entirely.
+   */
   readonly hasOlder = computed(
-    () => this.morePagesSignal() || this._blocks().length < this.cacheSizeSignal(),
+    () =>
+      this.hasOlderSegments() ||
+      this.morePagesSignal() ||
+      this._blocks().length < this.cacheSizeSignal(),
   );
   // Mirrors of the private pagination fields, so hasOlder stays reactive.
   private readonly morePagesSignal = signal(false);
   private readonly cacheSizeSignal = signal(0);
+
+  /** True while either an older session or an older segment chunk is loading. */
+  readonly loadingOlder = computed(
+    () => this._loadingOlder() || (this._blocks()[0]?.loadingSegments ?? false),
+  );
 
   /** Render-ready blocks, oldest first, feed items assembled per session. */
   readonly blocks = computed<RenderBlock[]>(() =>
@@ -182,10 +205,21 @@ export class DiscoveryChatStore {
     this._focusSessionId.set(null);
   }
 
-  /** Loads the next older session into the top of the feed (lazy history). */
+  /**
+   * Reveals the next older slice of history when the feed is scrolled up. Pages
+   * within the topmost session first (older segments), and only once that
+   * session's segments are exhausted moves on to the previous session.
+   */
   loadOlder(): void {
     const projectId = this.projectId;
     if (!projectId || this._loadingOlder() || !this.hasOlder()) return;
+
+    // Intra-session first: drain the topmost session's older segments.
+    const top = this._blocks()[0];
+    if (top && top.hasMoreSegments) {
+      this.loadOlderSegments(top.session.id);
+      return;
+    }
 
     const nextIndex = this._blocks().length;
     const cached = this.sessionsCache[nextIndex];
@@ -325,12 +359,16 @@ export class DiscoveryChatStore {
     position: 'newest' | 'oldest' | 'sorted',
   ): void {
     if (this._blocks().some((b) => b.session.id === session.id)) return;
+    const historical = HISTORICAL_STATUSES.includes(session.status);
     const block: SessionBlock = {
       session,
       transcript: null,
       segments: [],
       decisions: [],
       stories: [],
+      chronological: historical,
+      hasMoreSegments: false,
+      loadingSegments: false,
       loaded: false,
     };
     this._blocks.update((blocks) => {
@@ -341,6 +379,29 @@ export class DiscoveryChatStore {
       );
     });
 
+    if (historical) {
+      this.loadHistoricalBlock(session);
+    } else {
+      this.loadLiveBlock(session);
+    }
+
+    if (LIVE_STATUSES.includes(session.status)) {
+      this.subscribeTopic(session.id);
+    }
+    if (position === 'newest') {
+      this.api.listSuggestions(session.id).subscribe({
+        next: (pending) =>
+          this._queue.update((queue) => pending.reduce(addToQueue, [...queue])),
+        error: () => undefined,
+      });
+    }
+  }
+
+  /**
+   * Live / in-progress block: the joined transcript string plus stories. Live
+   * segments arrive over the realtime topic and merge by sequence.
+   */
+  private loadLiveBlock(session: DiscoverySessionResponse): void {
     forkJoin({
       transcript: this.api.getTranscript(session.id).pipe(
         map((r) => r.transcript),
@@ -353,17 +414,107 @@ export class DiscoveryChatStore {
     }).subscribe(({ transcript, stories }) => {
       this.updateBlock(session.id, (b) => ({ ...b, transcript, stories, loaded: true }));
     });
+  }
 
-    if (LIVE_STATUSES.includes(session.status)) {
-      this.subscribeTopic(session.id);
-    }
-    if (position === 'newest') {
-      this.api.listSuggestions(session.id).subscribe({
-        next: (pending) =>
-          this._queue.update((queue) => pending.reduce(addToQueue, [...queue])),
-        error: () => undefined,
+  /**
+   * Historical (completed/failed) block: the latest chunk of structured
+   * segments, this session's resolved decisions, and its stories — all merged
+   * chronologically. Falls back to the joined transcript string when the
+   * segments endpoint 404s on an older backend.
+   */
+  private loadHistoricalBlock(session: DiscoverySessionResponse): void {
+    forkJoin({
+      segmentPage: this.api.listSessionSegments(session.id).pipe(
+        map(normalizeSegmentPage),
+        map((page) => ({ page, ok: true as const })),
+        catchError(() => of({ page: { segments: [], hasMore: false }, ok: false as const })),
+      ),
+      transcript: this.api.getTranscript(session.id).pipe(
+        map((r) => r.transcript),
+        catchError(() => of(null)),
+      ),
+      stories: this.api.listSessionStories(session.id).pipe(
+        map((page) => page.content.map(toDisplayStory)),
+        catchError(() => of([] as DisplayStory[])),
+      ),
+      decisions: this.loadResolvedDecisions(session.id),
+    }).subscribe(({ segmentPage, transcript, stories, decisions }) => {
+      const segments = segmentPage.ok
+        ? segmentPage.page.segments.map((s) => historicalSegmentToMessage(session.id, s))
+        : [];
+      this.updateBlock(session.id, (b) => ({
+        ...b,
+        // Structured segments supersede the joined string; keep the string only
+        // as the fallback when the segments endpoint was unavailable.
+        transcript: segmentPage.ok ? null : transcript,
+        segments,
+        stories,
+        decisions,
+        hasMoreSegments: segmentPage.ok && segmentPage.page.hasMore,
+        loaded: true,
+      }));
+    });
+  }
+
+  /**
+   * Fetches a historical session's ACCEPTED + DISMISSED suggestions and turns
+   * them into decision entries (resolution timestamp as `occurredAt`). Degrades
+   * to an empty list on error or on an older backend that ignores the `status`
+   * filter (unresolved rows are dropped by the outcome guard).
+   */
+  private loadResolvedDecisions(sessionId: string) {
+    const decisionsFor = (status: 'ACCEPTED' | 'DISMISSED') =>
+      this.api.listSessionSuggestions(sessionId, status).pipe(
+        map((list) => list.filter((s) => s.status === status)),
+        catchError(() => of([] as SuggestionResponse[])),
+      );
+    return forkJoin({
+      accepted: decisionsFor('ACCEPTED'),
+      dismissed: decisionsFor('DISMISSED'),
+    }).pipe(
+      map(({ accepted, dismissed }) =>
+        [
+          ...accepted.map((s) => this.toResolvedDecision(s, 'ACCEPTED')),
+          ...dismissed.map((s) => this.toResolvedDecision(s, 'DISMISSED')),
+        ].sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt)),
+      ),
+    );
+  }
+
+  private toResolvedDecision(suggestion: SuggestionResponse, outcome: 'ACCEPTED' | 'DISMISSED') {
+    // Prefer the resolution timestamp; fall back to updatedAt on older backends.
+    const occurredAt = suggestion.resolvedAt ?? suggestion.updatedAt;
+    // anchorSequence is unused in chronological mode; -1 keeps it well-formed.
+    return toDecisionEntry(suggestion, outcome, -1, occurredAt);
+  }
+
+  /**
+   * Intra-session scroll-up pagination: loads the segment chunk immediately
+   * older than the block's lowest loaded sequence, prepending in order. No-op
+   * unless the block still has older segments and none are in flight.
+   */
+  loadOlderSegments(sessionId: string): void {
+    const block = this._blocks().find((b) => b.session.id === sessionId);
+    if (!block || !block.hasMoreSegments || block.loadingSegments) return;
+    const cursor = lowestSequence(block.segments);
+    if (cursor === null) return;
+
+    this.updateBlock(sessionId, (b) => ({ ...b, loadingSegments: true }));
+    this.api
+      .listSessionSegments(sessionId, cursor)
+      .pipe(
+        map(normalizeSegmentPage),
+        catchError(() => of({ segments: [], hasMore: false })),
+      )
+      .subscribe((page) => {
+        const older = page.segments.map((s) => historicalSegmentToMessage(sessionId, s));
+        this.updateBlock(sessionId, (b) => ({
+          ...b,
+          segments: older.reduce((acc, s) => upsertSegment(acc, s), b.segments),
+          hasMoreSegments: page.hasMore,
+          loadingSegments: false,
+        }));
       });
-    }
   }
 
   private subscribeTopic(sessionId: string): void {
@@ -427,6 +578,7 @@ export class DiscoveryChatStore {
                   benefit: story.benefit,
                   priority: story.priority,
                   storyPoints: story.storyPoints,
+                  createdAt: story.occurredAt,
                 },
               ],
             },
