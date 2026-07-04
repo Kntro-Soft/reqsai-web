@@ -234,6 +234,22 @@ export const routes: Routes = [
                   ),
               },
               {
+                path: 'roles/new',
+                title: 'titles.newRole',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-role-form/project-role-form').then(
+                    (m) => m.ProjectRoleForm,
+                  ),
+              },
+              {
+                path: 'roles/:roleId/edit',
+                title: 'titles.editRole',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-role-form/project-role-form').then(
+                    (m) => m.ProjectRoleForm,
+                  ),
+              },
+              {
                 path: 'members',
                 title: 'titles.projectMembers',
                 loadComponent: () =>
@@ -245,8 +261,9 @@ export const routes: Routes = [
                 path: 'danger',
                 title: 'titles.danger',
                 loadComponent: () =>
-                  import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-                data: { titleKey: 'titles.danger', icon: 'lucideTriangleAlert' },
+                  import('./features/workspace/pages/project-danger/project-danger').then(
+                    (m) => m.ProjectDanger,
+                  ),
               },
             ],
           },
