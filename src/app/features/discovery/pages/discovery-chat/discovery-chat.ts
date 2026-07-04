@@ -229,10 +229,13 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
               @for (block of store.blocks(); track block.session.id) {
                 <div [attr.data-session-id]="block.session.id" class="flex flex-col gap-3">
-                  <!-- Session separator -->
-                  <div class="flex items-center gap-3 py-1">
+                  <!-- Session separator (sticks to the top of the feed while this
+                       session's messages are on screen, WhatsApp/iMessage-style). -->
+                  <div class="sticky top-0 z-10 -mx-1 flex items-center gap-3 py-1.5">
                     <span class="h-px flex-1 bg-border"></span>
-                    <span class="text-xs font-medium text-muted-foreground">
+                    <span
+                      class="rounded-full border border-border bg-card/85 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+                    >
                       {{ 'discovery.sessionSeparator' | transloco }}
                       {{ block.session.startedAt ?? block.session.createdAt | date: 'MMM d · HH:mm' }}
                       @if (block.session.storiesGeneratedCount !== null && block.session.storiesGeneratedCount !== undefined) {
@@ -263,6 +266,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           [class.opacity-60]="!item.segment.isFinal"
                         >
                           <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
+                          <p class="mt-0.5 text-[11px] text-muted-foreground">
+                            {{ item.segment.occurredAt | date: 'HH:mm' }}
+                          </p>
                         </div>
                       }
                       @case ('decision') {
@@ -289,6 +295,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           @if (item.decision.label) {
                             <span class="ml-1 text-muted-foreground">— {{ item.decision.label }}</span>
                           }
+                          <span class="ml-2 text-[11px] opacity-70">
+                            {{ item.decision.occurredAt | date: 'HH:mm' }}
+                          </span>
                         </div>
                       }
                       @case ('story') {
@@ -312,6 +321,11 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             <span class="text-foreground">{{ item.story.benefit }}</span
                             >.
                           </p>
+                          @if (item.story.createdAt) {
+                            <p class="mt-1 text-[11px] text-muted-foreground">
+                              {{ item.story.createdAt | date: 'HH:mm' }}
+                            </p>
+                          }
                         </div>
                       }
                     }
@@ -452,9 +466,16 @@ export class DiscoveryChat implements OnInit {
   /** Resolver for the CanDeactivate promise, pending while the modal is open. */
   private leaveResolver: ((leave: boolean) => void) | null = null;
 
-  /** Id of the first (oldest) loaded block; watched to restore scroll after prepending older ones. */
-  private readonly topBlockId = computed(() => this.store.blocks()[0]?.session.id ?? null);
-  /** feed.scrollHeight captured right before an older-session load, to offset the prepend. */
+  /**
+   * A key for the top (oldest loaded) content that changes whenever something is
+   * prepended — a new older session OR older segments paged into the topmost
+   * session. Watched to restore scroll position after the prepend.
+   */
+  private readonly topAnchor = computed(() => {
+    const top = this.store.blocks()[0];
+    return top ? `${top.session.id}:${top.items.length}` : null;
+  });
+  /** feed.scrollHeight captured right before an older-history load, to offset the prepend. */
   private pendingPrependHeight: number | null = null;
 
   /** The current project's creation date, for the "project created" start marker. */
@@ -519,7 +540,7 @@ export class DiscoveryChat implements OnInit {
     // Preserve scroll position when older sessions are prepended at the top: the
     // captured pre-load height lets us re-anchor scrollTop so the view never jumps.
     effect(() => {
-      this.topBlockId();
+      this.topAnchor();
       const before = untracked(() => this.pendingPrependHeight);
       if (before === null) return;
       this.pendingPrependHeight = null;
