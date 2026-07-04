@@ -21,8 +21,8 @@ function translateOrNull(transloco: TranslocoService, key: string): string | nul
  * Maps any HTTP (or unknown) error to a translated, user-friendly message via a
  * fallback chain, keyed on the backend's machine-readable error `code`:
  *
- *  1. `HttpErrorResponse` carrying `err.error.code` and a matching `errors.<code>` → that message.
- *  2. Network / offline (status 0, or no response body) → `errors.network`.
+ *  1. Network / offline (status 0) → `errors.network`.
+ *  2. `HttpErrorResponse` carrying `err.error.code` and a matching `errors.<code>` → that message.
  *  3. An authored generic tier for the status (`errors.http.<status>`) → that message.
  *  4. Otherwise → `errors.generic`.
  *
@@ -31,16 +31,17 @@ function translateOrNull(transloco: TranslocoService, key: string): string | nul
  */
 export function messageForError(err: unknown, transloco: TranslocoService): string {
   if (err instanceof HttpErrorResponse) {
-    // 1. Per-code message when the backend sent a known code we translate.
+    // 1. Network / offline: no HTTP response reached us, so any `code` on the body
+    //    is untrustworthy — surface the offline message first.
+    if (err.status === 0) {
+      return transloco.translate('errors.network');
+    }
+
+    // 2. Per-code message when the backend sent a known code we translate.
     const code = (err.error as { code?: unknown } | null)?.code;
     if (typeof code === 'string' && code) {
       const byCode = translateOrNull(transloco, `errors.${code}`);
       if (byCode !== null) return byCode;
-    }
-
-    // 2. Network / offline: no HTTP response reached us.
-    if (err.status === 0) {
-      return transloco.translate('errors.network');
     }
 
     // 3. Authored generic tier for this status.
