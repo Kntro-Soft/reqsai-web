@@ -35,8 +35,11 @@ export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HlmIcon, HlmSpinner, TranslocoPipe],
   viewProviders: [provideIcons({ lucideSearch, lucideX })],
+  host: { class: 'block h-full min-h-0' },
   template: `
-    <div class="flex h-full flex-col rounded-2xl border border-border bg-card/60">
+    <div
+      class="flex h-full min-h-0 flex-col rounded-none border-0 bg-card md:rounded-2xl md:border md:border-border"
+    >
       <!-- Tabs -->
       <div class="flex items-center gap-1 border-b border-border p-2">
         @for (t of tabs; track t) {
@@ -83,7 +86,7 @@ export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
         </div>
       }
 
-      <div class="flex-1 overflow-y-auto p-2.5" #scroller>
+      <div class="min-h-0 flex-1 overflow-y-auto p-2.5" #scroller>
         @switch (tab()) {
           @case ('stories') {
             @if (filteredStories().length === 0) {

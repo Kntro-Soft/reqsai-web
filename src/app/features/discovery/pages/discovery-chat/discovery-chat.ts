@@ -70,9 +70,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     }),
   ],
   template: `
-    <div class="flex h-[calc(100dvh-3.5rem)] flex-col gap-3 py-1 md:flex-row md:gap-4">
+    <div class="flex h-full min-h-0 flex-col gap-3 md:flex-row md:gap-4">
       <!-- Main column -->
-      <div class="flex min-w-0 flex-1 flex-col">
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
         <!-- Header -->
         <div class="mb-2 flex items-center justify-between gap-3">
           <div class="min-w-0">
@@ -100,7 +100,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               variant="outline"
               size="sm"
               (click)="panelOpen.set(!panelOpen())"
-              class="md:hidden"
               data-testid="discovery-panel-toggle"
             >
               {{ 'discovery.panel.toggle' | transloco }}
@@ -329,29 +328,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         }
       </div>
 
-      <!-- Side panel -->
+      <!-- Side panel: full-screen modal on mobile, fixed-width column on desktop.
+           The header "Panel" button toggles it on every breakpoint. -->
       @if (panelOpen()) {
-        <!-- Overlay backdrop on small screens -->
-        <button
-          type="button"
-          (click)="panelOpen.set(false)"
-          [attr.aria-label]="'discovery.panel.close' | transloco"
-          class="fixed inset-0 z-30 bg-black/40 md:hidden"
-        ></button>
         <aside
-          class="fixed inset-y-0 right-0 z-40 w-[min(20rem,90vw)] p-3 md:static md:z-auto md:w-[340px] md:shrink-0 md:p-0"
+          class="fixed inset-0 z-40 md:static md:z-auto md:min-h-0 md:w-[340px] md:shrink-0"
         >
           <app-side-panel [projectId]="projectId()" [(open)]="panelOpen" [(focusStoryId)]="focusStoryId" />
         </aside>
-      } @else {
-        <button
-          type="button"
-          (click)="panelOpen.set(true)"
-          class="hidden shrink-0 rounded-2xl border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-accent md:block"
-          data-testid="panel-reopen"
-        >
-          <span class="[writing-mode:vertical-rl]">{{ 'discovery.panel.open' | transloco }}</span>
-        </button>
       }
     </div>
 
