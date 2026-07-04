@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
@@ -7,6 +13,7 @@ import {
   lucideEllipsis,
   lucideMailCheck,
   lucidePlus,
+  lucideSearch,
   lucideTrash2,
   lucideUserCheck,
   lucideUserPlus,
@@ -65,6 +72,7 @@ const MENU_POS: ConnectedPosition[] = [
       lucideEllipsis,
       lucideMailCheck,
       lucidePlus,
+      lucideSearch,
       lucideTrash2,
       lucideUserCheck,
       lucideUserPlus,
@@ -104,6 +112,11 @@ const MENU_POS: ConnectedPosition[] = [
                     formControlName="email"
                     [placeholder]="'members.placeholderEmail' | transloco"
                   />
+                  @if (row.controls.email.errors?.['selfInvite'] && row.controls.email.touched) {
+                    <p class="text-xs text-destructive" data-testid="invite-self-error">
+                      {{ 'members.errorSelfInvite' | transloco }}
+                    </p>
+                  }
                 </div>
                 <div class="flex flex-1 flex-col gap-1.5">
                   @if (i === 0) {
@@ -197,15 +210,21 @@ const MENU_POS: ConnectedPosition[] = [
 
       <!-- Filters -->
       <div class="flex flex-wrap items-center gap-2">
-        <input
-          hlmInput
-          type="text"
-          [value]="query()"
-          (input)="query.set($any($event.target).value)"
-          [placeholder]="'members.filterPlaceholder' | transloco"
-          class="min-w-0 flex-1"
-          data-testid="members-filter"
-        />
+        <div
+          class="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-input bg-background px-3"
+        >
+          <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
+          <input
+            type="text"
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+            [placeholder]="'members.filterPlaceholder' | transloco"
+            class="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            autocomplete="off"
+            spellcheck="false"
+            data-testid="members-filter"
+          />
+        </div>
         <app-select
           [options]="roleFilterOptions()"
           [value]="roleFilter()"
@@ -701,9 +720,16 @@ export class Members {
     return this.form.controls.invites;
   }
 
+  /** Rejects an invite email that matches the signed-in user's own address (case-insensitive). */
+  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
+    const own = this.store.user()?.email?.trim().toLowerCase();
+    const value = (control.value as string)?.trim().toLowerCase();
+    return own && value && value === own ? { selfInvite: true } : null;
+  };
+
   private newInviteGroup() {
     return this.fb.nonNullable.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email, this.selfInviteValidator]],
       displayName: ['', [Validators.required, Validators.maxLength(150)]],
       role: ['MEMBER' as 'ADMIN' | 'MEMBER', [Validators.required]],
     });

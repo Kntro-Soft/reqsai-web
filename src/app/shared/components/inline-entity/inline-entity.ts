@@ -9,7 +9,7 @@ import { Avatar } from '../avatar/avatar';
 @Component({
   selector: 'app-inline-entity',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'inline-flex align-middle' },
+  host: { class: 'inline-flex items-center align-middle leading-none' },
   imports: [Avatar],
   template: `
     <span class="inline-flex items-center gap-1.5 font-semibold text-foreground">

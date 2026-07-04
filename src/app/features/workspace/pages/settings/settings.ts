@@ -395,6 +395,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                       <app-avatar
                         [name]="m.displayName || m.email"
                         [seed]="m.id"
+                        [imageUrl]="m.userId ? '/api/users/' + m.userId + '/avatar' : null"
                         [size]="20"
                         [circle]="true"
                       />
@@ -456,6 +457,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                             <app-avatar
                               [name]="m.displayName || m.email"
                               [seed]="m.id"
+                              [imageUrl]="m.userId ? '/api/users/' + m.userId + '/avatar' : null"
                               [size]="28"
                               [circle]="true"
                             />
