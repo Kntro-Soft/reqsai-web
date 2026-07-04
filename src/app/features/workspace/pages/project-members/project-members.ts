@@ -38,6 +38,7 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 
@@ -817,9 +818,7 @@ export class ProjectMembers implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        const message = this.transloco.translate(
-          err.status === 409 ? 'projectMembers.errorAlreadyInvited' : 'projectMembers.errorAdd',
-        );
+        const message = messageForError(err, this.transloco);
         this.addError.set(message);
         this.toast.error(message);
       },
@@ -834,7 +833,7 @@ export class ProjectMembers implements OnInit {
     this.api.updateProjectMemberRole(orgId, this.projectId(), assignment.id, { roleId }).subscribe({
       next: (updated) =>
         this.assignments.update((list) => list.map((a) => (a.id === updated.id ? updated : a))),
-      error: () => this.toast.error(this.transloco.translate('projectMembers.errorAssign')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
@@ -865,10 +864,10 @@ export class ProjectMembers implements OnInit {
         this.removeOpen.set(false);
         this.toast.success(this.transloco.translate('projectMembers.removed'));
       },
-      error: () => {
+      error: (err) => {
         this.removing.set(false);
         this.removeOpen.set(false);
-        this.toast.error(this.transloco.translate('projectMembers.errorRemove'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
