@@ -806,15 +806,15 @@
     "subtitle": "Record meetings and turn them into user stories in real time.",
     "loadError": "Could not load the discovery feed.",
     "loadingOlder": "Loading earlier sessions…",
-    "startMarker": "Project created on {date}",
+    "startMarker": "Project created on {{date}}",
     "scrollToBottom": "Jump to latest",
     "emptyTitle": "No sessions yet",
     "emptyBody": "Press record to capture your first requirements conversation.",
     "sessionSeparator": "Session",
-    "sessionStories": "{count} stories",
-    "sessionDefaultTitle": "Discovery session — {date}",
+    "sessionStories": "{{count}} stories",
+    "sessionDefaultTitle": "Discovery session — {{date}}",
     "generatedStory": "Generated story",
-    "pendingPrevious": "{count} pending from previous sessions",
+    "pendingPrevious": "{{count}} pending from previous sessions",
     "story": {
       "as": "As ",
       "want": ", I want ",
@@ -852,8 +852,8 @@
       "audioInitFailed": "Could not initialize the local audio processor."
     },
     "queue": {
-      "pendingBadge": "{count} suggestions pending",
-      "counter": "{n} of {m}",
+      "pendingBadge": "{{count}} suggestions pending",
+      "counter": "{{n}} of {{m}}",
       "prev": "Previous suggestion",
       "next": "Next suggestion",
       "collapse": "Collapse"

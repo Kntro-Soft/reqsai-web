@@ -806,15 +806,15 @@
     "subtitle": "Graba reuniones y conviértelas en historias de usuario en tiempo real.",
     "loadError": "No se pudo cargar el feed de discovery.",
     "loadingOlder": "Cargando sesiones anteriores…",
-    "startMarker": "Proyecto creado el {date}",
+    "startMarker": "Proyecto creado el {{date}}",
     "scrollToBottom": "Ir a lo último",
     "emptyTitle": "Aún no hay sesiones",
     "emptyBody": "Pulsa grabar para capturar tu primera conversación de requisitos.",
     "sessionSeparator": "Sesión",
-    "sessionStories": "{count} historias",
-    "sessionDefaultTitle": "Sesión de discovery — {date}",
+    "sessionStories": "{{count}} historias",
+    "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Historia generada",
-    "pendingPrevious": "{count} pendientes de sesiones anteriores",
+    "pendingPrevious": "{{count}} pendientes de sesiones anteriores",
     "story": {
       "as": "Como ",
       "want": ", quiero ",
@@ -852,8 +852,8 @@
       "audioInitFailed": "No se pudo inicializar el procesador de audio local."
     },
     "queue": {
-      "pendingBadge": "{count} sugerencias pendientes",
-      "counter": "{n} de {m}",
+      "pendingBadge": "{{count}} sugerencias pendientes",
+      "counter": "{{n}} de {{m}}",
       "prev": "Sugerencia anterior",
       "next": "Sugerencia siguiente",
       "collapse": "Contraer"
