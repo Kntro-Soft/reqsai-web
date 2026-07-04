@@ -806,6 +806,7 @@
     "subtitle": "Graba reuniones y conviértelas en historias de usuario en tiempo real.",
     "loadError": "No se pudo cargar el feed de discovery.",
     "loadOlder": "Cargar sesiones anteriores",
+    "scrollToBottom": "Ir a lo último",
     "emptyTitle": "Aún no hay sesiones",
     "emptyBody": "Pulsa grabar para capturar tu primera conversación de requisitos.",
     "sessionSeparator": "Sesión",

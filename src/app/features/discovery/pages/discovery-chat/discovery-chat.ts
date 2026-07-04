@@ -9,6 +9,7 @@ import {
   input,
   linkedSignal,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -17,6 +18,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import {
+  lucideArrowDown,
   lucideCheck,
   lucideCircleHelp,
   lucideClock,
@@ -66,6 +68,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
   ],
   viewProviders: [
     provideIcons({
+      lucideArrowDown,
       lucideCheck,
       lucideCircleHelp,
       lucideClock,
@@ -170,7 +173,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         <div
           #feed
           (scroll)="onScroll()"
-          class="relative flex flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
+          class="relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
           data-testid="discovery-feed"
         >
           @switch (store.state()) {
@@ -311,6 +314,17 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               }
             }
           }
+          @if (!atBottom()) {
+            <button
+              type="button"
+              (click)="jumpToBottom()"
+              class="sticky bottom-2 z-10 inline-flex items-center gap-1.5 self-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
+              data-testid="scroll-bottom"
+            >
+              <hlm-icon name="lucideArrowDown" size="14px" />
+              {{ 'discovery.scrollToBottom' | transloco }}
+            </button>
+          }
         </div>
 
         <!-- Composer -->
@@ -396,6 +410,12 @@ export class DiscoveryChat implements OnInit {
   private readonly feed = viewChild<ElementRef<HTMLElement>>('feed');
   protected readonly panelOpen = signal(true);
   protected readonly focusStoryId = signal<string | null>(null);
+  /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
+  protected readonly atBottom = signal(true);
+  /** Total feed entries across sessions; changes when transcript/decisions arrive, to trigger auto-stick. */
+  protected readonly feedItemCount = computed(() =>
+    this.store.blocks().reduce((total, block) => total + block.items.length, 0),
+  );
 
   /** Owner/admin gate reused from the workspace pages (fine-grained perms not client-side yet). */
   protected readonly canManage = computed(() => {
@@ -434,6 +454,21 @@ export class DiscoveryChat implements OnInit {
         this.store.clearFocus();
       }, 60);
     });
+    // Auto-stick: when new transcript/decisions arrive and the user is already at the bottom, follow along.
+    effect(() => {
+      this.feedItemCount();
+      if (untracked(() => this.atBottom())) setTimeout(() => this.scrollToBottom(), 0);
+    });
+  }
+
+  private scrollToBottom(): void {
+    const el = this.feed()?.nativeElement;
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  protected jumpToBottom(): void {
+    this.atBottom.set(true);
+    this.scrollToBottom();
   }
 
   ngOnInit(): void {
@@ -446,7 +481,9 @@ export class DiscoveryChat implements OnInit {
   /** Lazy-loads older sessions when the feed is scrolled near the top. */
   protected onScroll(): void {
     const el = this.feed()?.nativeElement;
-    if (el && el.scrollTop < 80) this.store.loadOlder();
+    if (!el) return;
+    if (el.scrollTop < 80) this.store.loadOlder();
+    this.atBottom.set(el.scrollHeight - el.scrollTop - el.clientHeight < 120);
   }
 
   protected async record(): Promise<void> {

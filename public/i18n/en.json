@@ -806,6 +806,7 @@
     "subtitle": "Record meetings and turn them into user stories in real time.",
     "loadError": "Could not load the discovery feed.",
     "loadOlder": "Load older sessions",
+    "scrollToBottom": "Jump to latest",
     "emptyTitle": "No sessions yet",
     "emptyBody": "Press record to capture your first requirements conversation.",
     "sessionSeparator": "Session",
