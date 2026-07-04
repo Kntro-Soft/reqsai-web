@@ -125,21 +125,26 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                   <div
                     class="flex items-center gap-2 bg-muted/30 px-3 py-2.5"
                   >
-                    <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-sm">
+                    <label class="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 text-sm">
                       <input
                         type="checkbox"
-                        class="h-4 w-4 shrink-0 accent-primary"
+                        class="mt-0.5 h-4 w-4 shrink-0 accent-primary"
                         [checked]="group.checked"
                         [appIndeterminate]="group.indeterminate"
                         (change)="toggleGroup(group.resourceKey)"
                         [attr.aria-label]="'projectRoleForm.selectAllGroup' | transloco"
                         [attr.data-testid]="'perm-group-all-' + group.resourceKey"
                       />
-                      <span class="text-xs font-semibold tracking-wide text-foreground uppercase">
-                        {{ 'projectRoles.resource.' + group.resourceKey | transloco }}
+                      <span class="flex min-w-0 flex-col gap-0.5">
+                        <span class="text-xs font-semibold tracking-wide text-foreground uppercase">
+                          {{ 'projectRoles.resource.' + group.resourceKey | transloco }}
+                        </span>
+                        <span class="text-xs font-normal normal-case text-muted-foreground">
+                          {{ group.description }}
+                        </span>
                       </span>
                     </label>
-                    <span class="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    <span class="shrink-0 self-start text-xs tabular-nums text-muted-foreground">
                       {{ group.selectedCount }}/{{ group.total }}
                     </span>
                     <button
@@ -148,7 +153,7 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                       [attr.aria-expanded]="!group.collapsed"
                       [attr.aria-label]="'projectRoleForm.toggleGroup' | transloco"
                       [attr.data-testid]="'perm-group-toggle-' + group.resourceKey"
-                      class="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      class="grid h-7 w-7 shrink-0 cursor-pointer place-items-center self-start rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       <hlm-icon
                         name="lucideChevronDown"
@@ -162,16 +167,19 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                     <div class="grid gap-2 p-3 sm:grid-cols-2">
                       @for (perm of group.permissions; track perm.value) {
                         <label
-                          class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border bg-background p-3 text-sm transition-colors hover:bg-accent"
+                          class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-background p-3 text-sm transition-colors hover:bg-accent"
                         >
                           <input
                             type="checkbox"
-                            class="h-4 w-4 shrink-0 accent-primary"
+                            class="mt-0.5 h-4 w-4 shrink-0 accent-primary"
                             [checked]="perm.selected"
                             (change)="togglePermission(perm.value)"
                             [attr.data-testid]="'perm-' + perm.value"
                           />
-                          <span class="min-w-0 font-medium">{{ perm.label }}</span>
+                          <span class="flex min-w-0 flex-col gap-0.5">
+                            <span class="font-medium">{{ perm.label }}</span>
+                            <span class="text-xs text-muted-foreground">{{ perm.description }}</span>
+                          </span>
                         </label>
                       }
                     </div>
@@ -266,13 +274,20 @@ export class ProjectRoleForm implements OnInit {
       const perms = group.permissions.map((value) => ({
         value,
         label: t('projectRoles.perm.' + value),
+        description: t('projectRoles.permDesc.' + value),
         selected: selected.has(value),
       }));
-      const matching = q ? perms.filter((p) => p.label.toLowerCase().includes(q)) : perms;
+      const matching = q
+        ? perms.filter(
+            (p) =>
+              p.label.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
+          )
+        : perms;
       const total = group.permissions.length;
       const selectedCount = group.permissions.filter((p) => selected.has(p)).length;
       return {
         resourceKey: group.resourceKey,
+        description: t('projectRoles.groupDesc.' + group.resourceKey),
         permissions: matching,
         total,
         selectedCount,
