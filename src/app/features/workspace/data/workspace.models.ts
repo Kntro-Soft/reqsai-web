@@ -117,27 +117,83 @@ export interface ProjectMemberResponse {
   assignedAt: string | null;
 }
 
-/** Fine-grained capability a project role may grant. The backend enumerates exactly these. */
+/**
+ * Fine-grained, project-scoped capability a project role may grant. Mirrors the backend `Permission`
+ * enum exactly (resource:action, read split from write/manage per resource).
+ */
 export type Permission =
-  | 'READ_PROJECT'
-  | 'WRITE_PROJECT'
-  | 'MANAGE_MEMBERS'
-  | 'MANAGE_ROLES'
-  | 'UPLOAD_DOCUMENTS'
-  | 'MANAGE_GLOSSARY'
-  | 'RUN_DISCOVERY'
-  | 'MANAGE_INTEGRATIONS';
+  // Project settings / lifecycle
+  | 'PROJECT_UPDATE'
+  | 'PROJECT_ARCHIVE'
+  | 'PROJECT_DELETE'
+  // Members (assignments)
+  | 'MEMBER_READ'
+  | 'MEMBER_INVITE'
+  | 'MEMBER_UPDATE_ROLE'
+  | 'MEMBER_REMOVE'
+  // Roles (RBAC administration)
+  | 'ROLE_READ'
+  | 'ROLE_CREATE'
+  | 'ROLE_UPDATE'
+  | 'ROLE_DELETE'
+  // Documents
+  | 'DOCUMENT_READ'
+  | 'DOCUMENT_CREATE'
+  | 'DOCUMENT_UPDATE'
+  | 'DOCUMENT_DELETE'
+  // Glossary + terms
+  | 'GLOSSARY_READ'
+  | 'GLOSSARY_TERM_WRITE'
+  | 'GLOSSARY_TERM_DELETE'
+  // Constraints
+  | 'CONSTRAINT_READ'
+  | 'CONSTRAINT_WRITE';
 
 /** All permissions, in display order. */
 export const PERMISSIONS: readonly Permission[] = [
-  'READ_PROJECT',
-  'WRITE_PROJECT',
-  'MANAGE_MEMBERS',
-  'MANAGE_ROLES',
-  'UPLOAD_DOCUMENTS',
-  'MANAGE_GLOSSARY',
-  'RUN_DISCOVERY',
-  'MANAGE_INTEGRATIONS',
+  'PROJECT_UPDATE',
+  'PROJECT_ARCHIVE',
+  'PROJECT_DELETE',
+  'MEMBER_READ',
+  'MEMBER_INVITE',
+  'MEMBER_UPDATE_ROLE',
+  'MEMBER_REMOVE',
+  'ROLE_READ',
+  'ROLE_CREATE',
+  'ROLE_UPDATE',
+  'ROLE_DELETE',
+  'DOCUMENT_READ',
+  'DOCUMENT_CREATE',
+  'DOCUMENT_UPDATE',
+  'DOCUMENT_DELETE',
+  'GLOSSARY_READ',
+  'GLOSSARY_TERM_WRITE',
+  'GLOSSARY_TERM_DELETE',
+  'CONSTRAINT_READ',
+  'CONSTRAINT_WRITE',
+];
+
+/** Permissions grouped by resource, for the role editor UI (group header = `projectRoles.resource.<key>`). */
+export interface PermissionGroup {
+  readonly resourceKey: string;
+  readonly permissions: readonly Permission[];
+}
+export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
+  { resourceKey: 'project', permissions: ['PROJECT_UPDATE', 'PROJECT_ARCHIVE', 'PROJECT_DELETE'] },
+  {
+    resourceKey: 'member',
+    permissions: ['MEMBER_READ', 'MEMBER_INVITE', 'MEMBER_UPDATE_ROLE', 'MEMBER_REMOVE'],
+  },
+  { resourceKey: 'role', permissions: ['ROLE_READ', 'ROLE_CREATE', 'ROLE_UPDATE', 'ROLE_DELETE'] },
+  {
+    resourceKey: 'document',
+    permissions: ['DOCUMENT_READ', 'DOCUMENT_CREATE', 'DOCUMENT_UPDATE', 'DOCUMENT_DELETE'],
+  },
+  {
+    resourceKey: 'glossary',
+    permissions: ['GLOSSARY_READ', 'GLOSSARY_TERM_WRITE', 'GLOSSARY_TERM_DELETE'],
+  },
+  { resourceKey: 'constraint', permissions: ['CONSTRAINT_READ', 'CONSTRAINT_WRITE'] },
 ];
 
 /** A dynamic, per-project role bundling a set of permissions. */
