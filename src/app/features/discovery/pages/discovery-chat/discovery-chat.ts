@@ -71,9 +71,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideX,
     }),
   ],
-  host: { class: 'block h-full min-h-0' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
   template: `
-    <div class="flex h-full min-h-0 flex-col gap-3 md:flex-row md:gap-4">
+    <div class="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-4">
       <!-- Main column -->
       <div class="flex min-h-0 min-w-0 flex-1 flex-col">
         <!-- Header -->
