@@ -781,6 +781,8 @@
     "searchEmpty": "No permissions match your search.",
     "selectAllGroup": "Toggle all permissions in this group",
     "toggleGroup": "Expand or collapse this group",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
     "create": "Create role",
     "save": "Save changes",
     "cancel": "Cancel",

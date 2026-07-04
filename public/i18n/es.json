@@ -781,6 +781,8 @@
     "searchEmpty": "Ningún permiso coincide con tu búsqueda.",
     "selectAllGroup": "Alternar todos los permisos de este grupo",
     "toggleGroup": "Expandir o contraer este grupo",
+    "expandAll": "Expandir todo",
+    "collapseAll": "Colapsar todo",
     "create": "Crear rol",
     "save": "Guardar cambios",
     "cancel": "Cancelar",
