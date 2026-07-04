@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
   AcceptSuggestionRequest,
   CreateDiscoverySessionRequest,
@@ -92,9 +92,9 @@ export class DiscoveryApiService {
    */
   listProjectPendingSuggestions(projectId: string): Observable<SuggestionResponse[]> {
     const params = new HttpParams().set('status', 'PENDING');
-    return this.http.get<SuggestionResponse[]>(`/api/projects/${projectId}/suggestions`, {
-      params,
-    });
+    return this.http
+      .get<PageResponse<SuggestionResponse>>(`/api/projects/${projectId}/suggestions`, { params })
+      .pipe(map((page) => page.content));
   }
 
   acceptSuggestion(
