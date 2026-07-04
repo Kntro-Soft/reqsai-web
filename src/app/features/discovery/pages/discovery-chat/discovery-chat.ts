@@ -21,6 +21,7 @@ import {
   lucideClock,
   lucideHistory,
   lucideMic,
+  lucidePanelRight,
   lucideSparkles,
   lucideX,
 } from '@ng-icons/lucide';
@@ -65,10 +66,12 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideClock,
       lucideHistory,
       lucideMic,
+      lucidePanelRight,
       lucideSparkles,
       lucideX,
     }),
   ],
+  host: { class: 'block h-full min-h-0' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-3 md:flex-row md:gap-4">
       <!-- Main column -->
@@ -91,7 +94,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               size="sm"
               data-testid="discovery-history"
             >
-              <hlm-icon name="lucideHistory" size="15px" class="mr-1.5" />
+              <hlm-icon name="lucideHistory" size="15px" />
               {{ 'discovery.history.button' | transloco }}
             </a>
             <button
@@ -102,6 +105,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               (click)="panelOpen.set(!panelOpen())"
               data-testid="discovery-panel-toggle"
             >
+              <hlm-icon name="lucidePanelRight" size="15px" />
               {{ 'discovery.panel.toggle' | transloco }}
             </button>
           </div>
