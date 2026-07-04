@@ -675,6 +675,36 @@
       "CONSTRAINT_READ": "View constraints",
       "CONSTRAINT_WRITE": "Edit constraints"
     },
+    "groupDesc": {
+      "project": "Change the project's settings and lifecycle",
+      "member": "Manage project members and their access",
+      "role": "Define roles and the permissions they grant",
+      "document": "Work with the project's documents",
+      "glossary": "Maintain the project's shared glossary",
+      "constraint": "Manage the project's technical constraints"
+    },
+    "permDesc": {
+      "PROJECT_UPDATE": "Edit the project's name, description and settings",
+      "PROJECT_ARCHIVE": "Archive or restore the project",
+      "PROJECT_DELETE": "Permanently delete the project and all its data",
+      "MEMBER_READ": "See who is assigned to the project and their roles",
+      "MEMBER_INVITE": "Assign existing members and invite new people to the project",
+      "MEMBER_UPDATE_ROLE": "Change the role assigned to a project member",
+      "MEMBER_REMOVE": "Remove members from the project",
+      "ROLE_READ": "See the project's roles and their permissions",
+      "ROLE_CREATE": "Create new project roles",
+      "ROLE_UPDATE": "Rename roles and change the permissions they grant",
+      "ROLE_DELETE": "Delete project roles",
+      "DOCUMENT_READ": "View and download the project's documents",
+      "DOCUMENT_CREATE": "Upload or create new documents",
+      "DOCUMENT_UPDATE": "Edit existing project documents",
+      "DOCUMENT_DELETE": "Delete documents from the project",
+      "GLOSSARY_READ": "View the glossary and its terms",
+      "GLOSSARY_TERM_WRITE": "Add and edit glossary terms",
+      "GLOSSARY_TERM_DELETE": "Delete glossary terms",
+      "CONSTRAINT_READ": "View the project's technical constraints",
+      "CONSTRAINT_WRITE": "Add and edit technical constraints"
+    },
     "newRole": "New role",
     "filterPlaceholder": "Filter roles…",
     "filterEmpty": "No roles match your filter."

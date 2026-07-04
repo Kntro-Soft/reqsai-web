@@ -675,6 +675,36 @@
       "CONSTRAINT_READ": "Ver restricciones",
       "CONSTRAINT_WRITE": "Editar restricciones"
     },
+    "groupDesc": {
+      "project": "Cambia los ajustes y el ciclo de vida del proyecto",
+      "member": "Gestiona los miembros del proyecto y su acceso",
+      "role": "Define roles y los permisos que otorgan",
+      "document": "Trabaja con los documentos del proyecto",
+      "glossary": "Mantén el glosario compartido del proyecto",
+      "constraint": "Gestiona las restricciones técnicas del proyecto"
+    },
+    "permDesc": {
+      "PROJECT_UPDATE": "Editar el nombre, la descripción y los ajustes del proyecto",
+      "PROJECT_ARCHIVE": "Archivar o restaurar el proyecto",
+      "PROJECT_DELETE": "Eliminar el proyecto y todos sus datos de forma permanente",
+      "MEMBER_READ": "Ver quién está asignado al proyecto y sus roles",
+      "MEMBER_INVITE": "Asignar miembros existentes e invitar a personas nuevas al proyecto",
+      "MEMBER_UPDATE_ROLE": "Cambiar el rol asignado a un miembro del proyecto",
+      "MEMBER_REMOVE": "Quitar miembros del proyecto",
+      "ROLE_READ": "Ver los roles del proyecto y sus permisos",
+      "ROLE_CREATE": "Crear nuevos roles del proyecto",
+      "ROLE_UPDATE": "Renombrar roles y cambiar los permisos que otorgan",
+      "ROLE_DELETE": "Eliminar roles del proyecto",
+      "DOCUMENT_READ": "Ver y descargar los documentos del proyecto",
+      "DOCUMENT_CREATE": "Subir o crear documentos nuevos",
+      "DOCUMENT_UPDATE": "Editar los documentos existentes del proyecto",
+      "DOCUMENT_DELETE": "Eliminar documentos del proyecto",
+      "GLOSSARY_READ": "Ver el glosario y sus términos",
+      "GLOSSARY_TERM_WRITE": "Añadir y editar términos del glosario",
+      "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
+      "CONSTRAINT_READ": "Ver las restricciones técnicas del proyecto",
+      "CONSTRAINT_WRITE": "Añadir y editar restricciones técnicas"
+    },
     "newRole": "Nuevo rol",
     "filterPlaceholder": "Filtrar roles…",
     "filterEmpty": "Ningún rol coincide con el filtro."
