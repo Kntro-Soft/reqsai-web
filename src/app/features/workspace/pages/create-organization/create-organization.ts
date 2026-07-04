@@ -9,6 +9,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
+import { messageForError } from '../../../../core/errors/error-message';
 import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
 import { CreatePageHeader } from '../../../../shared/components/create-page-header/create-page-header';
 import {
@@ -178,11 +179,7 @@ export class CreateOrganization {
         next: () => void this.router.navigate(['/projects']),
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);
-          this.errorMessage.set(
-            this.transloco.translate(
-              err.status === 400 ? 'createOrg.errorNameInUse' : 'createOrg.errorGeneric',
-            ),
-          );
+          this.errorMessage.set(messageForError(err, this.transloco));
         },
       });
   }
