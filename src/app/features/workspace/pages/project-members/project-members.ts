@@ -1,23 +1,27 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   signal,
+  viewChildren,
 } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
-import { lucideMailPlus, lucidePlus, lucideSearch, lucideTrash2, lucideUserPlus } from '@ng-icons/lucide';
+import {
+  lucideChevronsUpDown,
+  lucideMailPlus,
+  lucidePlus,
+  lucideSearch,
+  lucideTrash2,
+  lucideUserPlus,
+} from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
@@ -32,24 +36,41 @@ import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { InlineEntity } from '../../../../shared/components/inline-entity/inline-entity';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 
+/** A single "add member" row: an empty draft, a picked existing org member, or a new email invite. */
+interface AddRow {
+  key: number;
+  /** 'draft' = still typing/searching; 'member' = an existing org member is fixed; 'email' = new invite. */
+  kind: 'draft' | 'member' | 'email';
+  /** Free-text search box value (also the captured email for an 'email' row). */
+  search: string;
+  memberId: string;
+  email: string;
+  displayName: string;
+  roleId: string;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
- * Project members (Vercel-style, mirrors the org members page). Owner/admins get a batch "assign
- * existing members" card (rows of member + role, "Add more", remove-row) and — org owner/admin only —
- * a batch "invite new people by email" card. A filter bar (search + role filter + sort) narrows the
- * roster, a compact single-column table shows each assignment with an inline role select and a remove
- * action (behind a confirmation modal). Names are resolved client-side from the org member list; the
- * current user and already-assigned members are excluded from the assign pickers. Only org owners/admins
- * may manage; everyone else gets a read-only roster (the backend enforces MEMBER_* per request).
+ * Project members (Vercel-style, mirrors the org members page). Owner/admins get ONE unified "add
+ * people" card: each row is a searchable combobox over the org's active members (excluding the current
+ * user and anyone already assigned). Picking an existing member fixes the row to that member; typing an
+ * unknown email offers an "invite as new" option that turns the row into a displayName + role invite.
+ * On submit, existing-member rows call assignProjectMember and new-email rows are batched into a single
+ * inviteProjectMembers call. A filter bar (search + role filter + sort) narrows the roster below, a
+ * compact table shows each assignment with an inline role select and a remove action (behind a
+ * confirmation modal). Only org owners/admins may manage; everyone else gets a read-only roster.
  */
 @Component({
   selector: 'app-project-members',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    ReactiveFormsModule,
+    OverlayModule,
     Avatar,
     InlineEntity,
     Modal,
@@ -63,7 +84,14 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
     TranslocoPipe,
   ],
   viewProviders: [
-    provideIcons({ lucideMailPlus, lucidePlus, lucideSearch, lucideTrash2, lucideUserPlus }),
+    provideIcons({
+      lucideChevronsUpDown,
+      lucideMailPlus,
+      lucidePlus,
+      lucideSearch,
+      lucideTrash2,
+      lucideUserPlus,
+    }),
   ],
   template: `
     <div class="flex flex-col gap-6">
@@ -72,42 +100,213 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
         <p class="mt-1 text-sm text-muted-foreground">{{ 'projectMembers.subtitle' | transloco }}</p>
       </div>
 
-      <!-- Assign existing members (owner/admin only) — batch rows -->
+      <!-- Add people (owner/admin only) — unified batch rows -->
       @if (canManage()) {
         <section class="overflow-hidden rounded-2xl border border-border">
           <div class="flex flex-col gap-1 p-5">
-            <h2 class="text-base font-semibold">{{ 'projectMembers.assignTitle' | transloco }}</h2>
-            <p class="text-sm text-muted-foreground">{{ 'projectMembers.assignDesc' | transloco }}</p>
+            <h2 class="text-base font-semibold">{{ 'projectMembers.addTitle' | transloco }}</h2>
+            <p class="text-sm text-muted-foreground">{{ 'projectMembers.addDesc' | transloco }}</p>
           </div>
           <div class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5">
-            @for (row of assignRows(); track row.key; let i = $index) {
+            @for (row of rows_add(); track row.key; let i = $index) {
               <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div class="flex flex-1 flex-col gap-1.5">
                   @if (i === 0) {
                     <span hlmLabel>{{ 'projectMembers.selectMember' | transloco }}</span>
                   }
-                  <app-select
-                    [options]="assignableOptionsFor(row.memberId)"
-                    [value]="row.memberId"
-                    (valueChange)="setAssignMember(i, $event)"
-                    [ariaLabel]="'projectMembers.selectMember' | transloco"
-                  />
+                  @if (row.kind === 'member') {
+                    <!-- Fixed to an existing member -->
+                    <div
+                      class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
+                      [attr.data-testid]="'add-row-member-' + i"
+                    >
+                      <app-avatar
+                        [name]="memberName(row.memberId)"
+                        [seed]="row.memberId"
+                        [imageUrl]="memberAvatar(row.memberId)"
+                        [size]="24"
+                        [circle]="true"
+                      />
+                      <span class="min-w-0 flex-1 truncate font-medium">{{
+                        memberName(row.memberId)
+                      }}</span>
+                      <button
+                        type="button"
+                        (click)="resetRow(i)"
+                        class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {{ 'projectMembers.change' | transloco }}
+                      </button>
+                    </div>
+                  } @else if (row.kind === 'email') {
+                    <!-- Fixed to a new email invite -->
+                    <div
+                      class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
+                      [attr.data-testid]="'add-row-email-' + i"
+                    >
+                      <span
+                        class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
+                      >
+                        <hlm-icon name="lucideMailPlus" size="13px" />
+                      </span>
+                      <span class="min-w-0 flex-1 truncate font-medium">{{ row.email }}</span>
+                      <button
+                        type="button"
+                        (click)="resetRow(i)"
+                        class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {{ 'projectMembers.change' | transloco }}
+                      </button>
+                    </div>
+                  } @else {
+                    <!-- Searchable combobox -->
+                    <button
+                      type="button"
+                      cdkOverlayOrigin
+                      #pickerOrigin="cdkOverlayOrigin"
+                      (click)="openPicker(i)"
+                      [attr.aria-expanded]="openPickerIndex() === i"
+                      aria-haspopup="listbox"
+                      [attr.aria-label]="'projectMembers.selectMember' | transloco"
+                      [attr.data-testid]="'add-row-picker-' + i"
+                      class="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <hlm-icon
+                        name="lucideSearch"
+                        size="15px"
+                        class="shrink-0 text-muted-foreground"
+                      />
+                      <span class="min-w-0 flex-1 truncate text-left text-muted-foreground">
+                        {{ 'projectMembers.pickerPlaceholder' | transloco }}
+                      </span>
+                      <hlm-icon
+                        name="lucideChevronsUpDown"
+                        size="14px"
+                        class="shrink-0 text-muted-foreground"
+                      />
+                    </button>
+
+                    <ng-template
+                      cdkConnectedOverlay
+                      [cdkConnectedOverlayOrigin]="pickerOrigin"
+                      [cdkConnectedOverlayOpen]="openPickerIndex() === i"
+                      [cdkConnectedOverlayPositions]="pickerPositions"
+                      [cdkConnectedOverlayWidth]="pickerOrigin.elementRef.nativeElement.offsetWidth"
+                      (overlayOutsideClick)="closePicker()"
+                      (overlayKeydown)="onPickerKeydown($event)"
+                      (detach)="closePicker()"
+                    >
+                      <div
+                        role="listbox"
+                        class="w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+                      >
+                        <div class="flex items-center gap-2 border-b border-border px-3">
+                          <hlm-icon
+                            name="lucideSearch"
+                            size="15px"
+                            class="shrink-0 text-muted-foreground"
+                          />
+                          <input
+                            #pickerSearch
+                            type="text"
+                            [value]="row.search"
+                            (input)="setSearch(i, $any($event.target).value)"
+                            [placeholder]="'projectMembers.pickerPlaceholder' | transloco"
+                            class="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                            autocomplete="off"
+                            spellcheck="false"
+                          />
+                        </div>
+                        <div class="max-h-64 overflow-y-auto p-1">
+                          @for (m of pickerResults(i); track m.id) {
+                            <button
+                              type="button"
+                              role="option"
+                              [attr.aria-selected]="false"
+                              (click)="pickMember(i, m.id)"
+                              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+                            >
+                              <app-avatar
+                                [name]="m.displayName || m.email"
+                                [seed]="m.id"
+                                [imageUrl]="m.userId ? '/api/users/' + m.userId + '/avatar' : null"
+                                [size]="28"
+                                [circle]="true"
+                              />
+                              <span class="flex min-w-0 flex-1 flex-col">
+                                <span class="truncate font-medium">{{
+                                  m.displayName || m.email
+                                }}</span>
+                                @if (m.displayName) {
+                                  <span class="truncate text-xs text-muted-foreground">{{
+                                    m.email
+                                  }}</span>
+                                }
+                              </span>
+                            </button>
+                          }
+                          @if (canInviteTyped(i); as email) {
+                            <button
+                              type="button"
+                              (click)="pickEmail(i, email)"
+                              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+                              [attr.data-testid]="'add-row-invite-option-' + i"
+                            >
+                              <span
+                                class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
+                              >
+                                <hlm-icon name="lucideMailPlus" size="14px" />
+                              </span>
+                              <span class="min-w-0 flex-1 truncate">
+                                {{ 'projectMembers.inviteAsNew' | transloco: { email: email } }}
+                              </span>
+                            </button>
+                          }
+                          @if (!pickerResults(i).length && !canInviteTyped(i)) {
+                            <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">
+                              {{ 'projectMembers.pickerEmpty' | transloco }}
+                            </p>
+                          }
+                        </div>
+                      </div>
+                    </ng-template>
+                  }
                 </div>
-                <div class="flex flex-1 flex-col gap-1.5">
+
+                <!-- New-invite rows need a display name -->
+                @if (row.kind === 'email') {
+                  <div class="flex flex-1 flex-col gap-1.5">
+                    @if (i === 0) {
+                      <label hlmLabel [for]="'add-name-' + i">
+                        {{ 'projectMembers.fieldName' | transloco }}
+                      </label>
+                    }
+                    <input
+                      hlmInput
+                      [id]="'add-name-' + i"
+                      [value]="row.displayName"
+                      (input)="setDisplayName(i, $any($event.target).value)"
+                      [placeholder]="'projectMembers.placeholderName' | transloco"
+                      autocomplete="off"
+                    />
+                  </div>
+                }
+
+                <div class="flex flex-col gap-1.5">
                   @if (i === 0) {
                     <span hlmLabel>{{ 'projectMembers.selectRole' | transloco }}</span>
                   }
                   <app-select
                     [options]="roleOptions()"
                     [value]="row.roleId"
-                    (valueChange)="setAssignRole(i, $event)"
+                    (valueChange)="setRole(i, $event)"
                     [ariaLabel]="'projectMembers.selectRole' | transloco"
                   />
                 </div>
                 <button
                   type="button"
-                  (click)="removeAssignRow(i)"
-                  [disabled]="assignRows().length === 1"
+                  (click)="removeRow(i)"
+                  [disabled]="rows_add().length === 1"
                   [attr.aria-label]="'projectMembers.removeRowAria' | transloco"
                   class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -118,9 +317,9 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
             <div class="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
-                (click)="addAssignRow()"
+                (click)="addRow()"
                 class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                data-testid="assign-add-more"
+                data-testid="add-more"
               >
                 <hlm-icon name="lucidePlus" size="15px" />
                 {{ 'projectMembers.addMore' | transloco }}
@@ -129,124 +328,22 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                 hlmBtn
                 size="sm"
                 type="button"
-                (click)="assign()"
-                [disabled]="!canAssign() || assigning()"
-                data-testid="assign-submit"
+                (click)="submit()"
+                [disabled]="!canSubmit() || submitting()"
+                data-testid="add-submit"
               >
-                @if (assigning()) {
+                @if (submitting()) {
                   <hlm-spinner class="h-4 w-4" />
                 } @else {
                   <hlm-icon name="lucideUserPlus" size="15px" />
                 }
-                {{ 'projectMembers.assign' | transloco }}
+                {{ 'projectMembers.add' | transloco }}
               </button>
             </div>
-            @if (assignError()) {
-              <p class="text-sm text-destructive" data-testid="assign-error">{{ assignError() }}</p>
+            @if (addError()) {
+              <p class="text-sm text-destructive" data-testid="add-error">{{ addError() }}</p>
             }
           </div>
-        </section>
-      }
-
-      <!-- Invite new people by email (org owner/admin only) — batch rows -->
-      @if (canInvite()) {
-        <section class="overflow-hidden rounded-2xl border border-border">
-          <div class="flex flex-col gap-1 p-5">
-            <h2 class="text-base font-semibold">{{ 'projectMembers.inviteTitle' | transloco }}</h2>
-            <p class="text-sm text-muted-foreground">{{ 'projectMembers.inviteDesc' | transloco }}</p>
-          </div>
-          <form
-            [formGroup]="inviteForm"
-            (ngSubmit)="invite()"
-            class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5"
-          >
-            <div formArrayName="invites" class="flex flex-col gap-3">
-              @for (grp of invites.controls; track grp; let i = $index) {
-                <div [formGroupName]="i" class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <div class="flex flex-1 flex-col gap-1.5">
-                    @if (i === 0) {
-                      <label hlmLabel [for]="'invite-email' + i">
-                        {{ 'projectMembers.fieldEmail' | transloco }}
-                      </label>
-                    }
-                    <input
-                      hlmInput
-                      [id]="'invite-email' + i"
-                      type="email"
-                      formControlName="email"
-                      [placeholder]="'projectMembers.placeholderEmail' | transloco"
-                    />
-                    @if (grp.controls.email.errors?.['selfInvite'] && grp.controls.email.touched) {
-                      <p class="text-xs text-destructive" data-testid="invite-self-error">
-                        {{ 'projectMembers.errorSelfInvite' | transloco }}
-                      </p>
-                    }
-                  </div>
-                  <div class="flex flex-1 flex-col gap-1.5">
-                    @if (i === 0) {
-                      <label hlmLabel [for]="'invite-name' + i">
-                        {{ 'projectMembers.fieldName' | transloco }}
-                      </label>
-                    }
-                    <input
-                      hlmInput
-                      [id]="'invite-name' + i"
-                      formControlName="displayName"
-                      [placeholder]="'projectMembers.placeholderName' | transloco"
-                    />
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    @if (i === 0) {
-                      <span hlmLabel>{{ 'projectMembers.selectRole' | transloco }}</span>
-                    }
-                    <app-select
-                      [options]="roleOptions()"
-                      [value]="grp.controls.roleId.value"
-                      (valueChange)="grp.controls.roleId.setValue($any($event))"
-                      [ariaLabel]="'projectMembers.selectRole' | transloco"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    (click)="removeInviteRow(i)"
-                    [disabled]="invites.length === 1"
-                    [attr.aria-label]="'projectMembers.removeRowAria' | transloco"
-                    class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <hlm-icon name="lucideTrash2" size="16px" />
-                  </button>
-                </div>
-              }
-            </div>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <button
-                type="button"
-                (click)="addInviteRow()"
-                class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                data-testid="invite-add-more"
-              >
-                <hlm-icon name="lucidePlus" size="15px" />
-                {{ 'projectMembers.addMore' | transloco }}
-              </button>
-              <button
-                hlmBtn
-                size="sm"
-                type="submit"
-                [disabled]="inviteForm.invalid || !roles().length || inviting()"
-                data-testid="invite-submit"
-              >
-                @if (inviting()) {
-                  <hlm-spinner class="h-4 w-4" />
-                } @else {
-                  <hlm-icon name="lucideMailPlus" size="15px" />
-                }
-                {{ 'projectMembers.inviteSubmit' | transloco }}
-              </button>
-            </div>
-            @if (inviteError()) {
-              <p class="text-sm text-destructive" data-testid="invite-error">{{ inviteError() }}</p>
-            }
-          </form>
         </section>
       }
 
@@ -407,7 +504,6 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
   `,
 })
 export class ProjectMembers implements OnInit {
-  private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
@@ -416,6 +512,7 @@ export class ProjectMembers implements OnInit {
 
   readonly projectId = input.required<string>();
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
+  protected readonly pickerPositions = BELOW_START;
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly roles = signal<ProjectRoleResponse[]>([]);
@@ -427,29 +524,15 @@ export class ProjectMembers implements OnInit {
   protected readonly roleFilter = signal('all');
   protected readonly sort = signal('recent');
 
-  // Assign batch rows (member + role); `key` is a stable track id for the @for.
+  // Add batch rows (unified: existing member OR new email invite).
   private nextRowKey = 1;
-  protected readonly assignRows = signal<{ key: number; memberId: string; roleId: string }[]>([
-    { key: 0, memberId: '', roleId: '' },
-  ]);
-  protected readonly assigning = signal(false);
-  protected readonly assignError = signal<string | null>(null);
+  protected readonly rows_add = signal<AddRow[]>([this.blankRow(0)]);
+  protected readonly submitting = signal(false);
+  protected readonly addError = signal<string | null>(null);
 
-  // Invite batch form.
-  /** Rejects an invite email matching the signed-in user's own address (case-insensitive).
-   * Declared before `inviteForm` because that field initializer builds an invite group that
-   * references it — class fields initialize top-to-bottom, so it must exist first. */
-  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
-    const own = this.store.user()?.email?.trim().toLowerCase();
-    const value = (control.value as string)?.trim().toLowerCase();
-    return own && value && value === own ? { selfInvite: true } : null;
-  };
-
-  protected readonly inviteForm = this.fb.group({
-    invites: this.fb.array([this.newInviteGroup()]),
-  });
-  protected readonly inviting = signal(false);
-  protected readonly inviteError = signal<string | null>(null);
+  // Combobox overlay: which row's picker is open, and its focusable search input(s).
+  protected readonly openPickerIndex = signal<number | null>(null);
+  private readonly pickerSearch = viewChildren<ElementRef<HTMLInputElement>>('pickerSearch');
 
   // Remove confirmation modal.
   protected readonly removeOpen = signal(false);
@@ -487,19 +570,20 @@ export class ProjectMembers implements OnInit {
     ];
   });
 
-  get invites() {
-    return this.inviteForm.controls.invites;
-  }
-
-  private newInviteGroup() {
-    return this.fb.nonNullable.group({
-      email: ['', [Validators.required, Validators.email, this.selfInviteValidator]],
-      displayName: ['', [Validators.required, Validators.maxLength(150)]],
-      roleId: ['', [Validators.required]],
+  constructor() {
+    // Focus the picker's search field when its overlay opens.
+    effect(() => {
+      const i = this.openPickerIndex();
+      if (i === null) return;
+      queueMicrotask(() => this.pickerSearch()[0]?.nativeElement.focus());
     });
   }
 
-  /** The org's active members, excluding the current user, that could be assigned. */
+  private blankRow(key: number): AddRow {
+    return { key, kind: 'draft', search: '', memberId: '', email: '', displayName: '', roleId: '' };
+  }
+
+  /** The org's active members, excluding the current user and anyone already assigned. */
   private readonly assignableMembers = computed(() => {
     const selfUserId = this.store.user()?.id;
     const taken = new Set(this.assignments().map((a) => a.memberId));
@@ -508,21 +592,71 @@ export class ProjectMembers implements OnInit {
     );
   });
 
-  /** Assignable member options for a given row, also excluding members picked in OTHER rows. */
-  protected assignableOptionsFor(currentMemberId: string): SelectOption[] {
-    const chosenElsewhere = new Set(
-      this.assignRows()
-        .map((r) => r.memberId)
-        .filter((id) => id && id !== currentMemberId),
-    );
-    return this.assignableMembers()
-      .filter((m) => !chosenElsewhere.has(m.id))
-      .map((m) => ({ value: m.id, label: m.displayName || m.email }));
+  protected memberName(memberId: string): string {
+    const m = this.memberById().get(memberId);
+    return m?.displayName || m?.email || '';
   }
 
-  /** At least one complete row (member + role) is required to submit. */
-  protected readonly canAssign = computed(() =>
-    this.assignRows().some((r) => !!r.memberId && !!r.roleId),
+  protected memberAvatar(memberId: string): string | null {
+    const m = this.memberById().get(memberId);
+    return m?.userId ? `/api/users/${m.userId}/avatar` : null;
+  }
+
+  /** Search results for a row's combobox: assignable members, minus any already chosen in other rows,
+   * minus emails already captured in other rows, filtered by the row's search text. */
+  protected pickerResults(index: number): MemberResponse[] {
+    const rows = this.rows_add();
+    const row = rows[index];
+    if (!row) return [];
+    const chosenMembers = new Set(
+      rows.filter((_, i) => i !== index).map((r) => r.memberId).filter(Boolean),
+    );
+    const q = row.search.trim().toLowerCase();
+    return this.assignableMembers()
+      .filter((m) => !chosenMembers.has(m.id))
+      .filter(
+        (m) =>
+          !q ||
+          (m.displayName?.toLowerCase().includes(q) ?? false) ||
+          m.email.toLowerCase().includes(q),
+      );
+  }
+
+  /** When the typed text is a valid email that matches NO assignable member and isn't already
+   * captured by another row, returns it so the "invite as new" option can be offered; else null. */
+  protected canInviteTyped(index: number): string | null {
+    const rows = this.rows_add();
+    const row = rows[index];
+    if (!row) return null;
+    const value = row.search.trim();
+    if (!EMAIL_RE.test(value)) return null;
+    const lower = value.toLowerCase();
+    // An existing assignable member already owns this email → prefer picking them, not inviting.
+    if (this.assignableMembers().some((m) => m.email.toLowerCase() === lower)) return null;
+    // The current user's own email can't be invited.
+    if (this.store.user()?.email?.trim().toLowerCase() === lower) return null;
+    // Already captured (as a member email or an email row) elsewhere.
+    const takenEmails = new Set(
+      rows
+        .filter((_, i) => i !== index)
+        .flatMap((r) => [r.email.toLowerCase(), this.memberEmail(r.memberId)])
+        .filter(Boolean),
+    );
+    if (takenEmails.has(lower)) return null;
+    return value;
+  }
+
+  private memberEmail(memberId: string): string {
+    return this.memberById().get(memberId)?.email.toLowerCase() ?? '';
+  }
+
+  /** At least one complete row (a member+role, or an email+name+role) is required to submit. */
+  protected readonly canSubmit = computed(() =>
+    this.rows_add().some(
+      (r) =>
+        (r.kind === 'member' && !!r.memberId && !!r.roleId) ||
+        (r.kind === 'email' && !!r.email && !!r.displayName.trim() && !!r.roleId),
+    ),
   );
 
   /** Owner or admin of the active org may manage members; everyone else gets a read-only roster. */
@@ -535,9 +669,6 @@ export class ProjectMembers implements OnInit {
     const me = this.orgMembers().find((m) => m.userId === user.id && m.status === 'ACTIVE');
     return me?.role === 'ADMIN' || me?.role === 'OWNER';
   });
-
-  /** Inviting NEW people by email is limited to org owner/admin (same gate as managing). */
-  protected readonly canInvite = this.canManage;
 
   /** Assignment rows decorated with resolved display name, email, avatar and role name, then filtered/sorted. */
   protected readonly rows = computed(() => {
@@ -588,83 +719,108 @@ export class ProjectMembers implements OnInit {
     });
   }
 
-  // --- Assign batch rows ---
+  // --- Combobox overlay ---
 
-  protected addAssignRow(): void {
-    this.assignRows.update((rows) => [...rows, { key: this.nextRowKey++, memberId: '', roleId: '' }]);
+  protected openPicker(index: number): void {
+    this.openPickerIndex.set(index);
   }
 
-  protected removeAssignRow(index: number): void {
-    this.assignRows.update((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows));
+  protected closePicker(): void {
+    this.openPickerIndex.set(null);
   }
 
-  protected setAssignMember(index: number, memberId: string): void {
-    this.assignRows.update((rows) => rows.map((r, i) => (i === index ? { ...r, memberId } : r)));
+  protected onPickerKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      this.closePicker();
+    }
   }
 
-  protected setAssignRole(index: number, roleId: string): void {
-    this.assignRows.update((rows) => rows.map((r, i) => (i === index ? { ...r, roleId } : r)));
+  // --- Add batch rows ---
+
+  protected addRow(): void {
+    this.rows_add.update((rows) => [...rows, this.blankRow(this.nextRowKey++)]);
   }
 
-  protected assign(): void {
+  protected removeRow(index: number): void {
+    this.rows_add.update((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows));
+    if (this.openPickerIndex() === index) this.closePicker();
+  }
+
+  private patchRow(index: number, patch: Partial<AddRow>): void {
+    this.rows_add.update((rows) => rows.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+
+  protected setSearch(index: number, search: string): void {
+    this.patchRow(index, { search });
+  }
+
+  protected setRole(index: number, roleId: string): void {
+    this.patchRow(index, { roleId });
+  }
+
+  protected setDisplayName(index: number, displayName: string): void {
+    this.patchRow(index, { displayName });
+  }
+
+  protected pickMember(index: number, memberId: string): void {
+    this.patchRow(index, { kind: 'member', memberId, email: '', displayName: '', search: '' });
+    this.closePicker();
+  }
+
+  protected pickEmail(index: number, email: string): void {
+    this.patchRow(index, { kind: 'email', email, memberId: '', search: email });
+    this.closePicker();
+  }
+
+  /** Return a fixed member/email row to the searchable draft state. */
+  protected resetRow(index: number): void {
+    this.patchRow(index, { kind: 'draft', memberId: '', email: '', displayName: '', search: '' });
+  }
+
+  protected submit(): void {
     const orgId = this.store.organizationId();
-    if (!orgId || !this.canAssign() || this.assigning()) return;
-    const complete = this.assignRows().filter((r) => r.memberId && r.roleId);
-    if (!complete.length) return;
-    this.assigning.set(true);
-    this.assignError.set(null);
-    forkJoin(
-      complete.map((r) =>
-        this.api.assignProjectMember(orgId, this.projectId(), {
-          memberId: r.memberId,
-          roleId: r.roleId,
-        }),
-      ),
-    ).subscribe({
-      next: (created) => {
-        this.assignments.update((list) => [...list, ...created]);
-        this.assigning.set(false);
-        this.assignRows.set([{ key: this.nextRowKey++, memberId: '', roleId: '' }]);
-        this.toast.success(this.transloco.translate('projectMembers.assigned'));
-      },
-      error: () => {
-        this.assigning.set(false);
-        const message = this.transloco.translate('projectMembers.errorAssign');
-        this.assignError.set(message);
-        this.toast.error(message);
-      },
-    });
-  }
+    if (!orgId || !this.canSubmit() || this.submitting()) return;
+    const rows = this.rows_add();
+    const memberRows = rows.filter((r) => r.kind === 'member' && r.memberId && r.roleId);
+    const emailRows = rows.filter((r) => r.kind === 'email' && r.email && r.displayName.trim() && r.roleId);
+    if (!memberRows.length && !emailRows.length) return;
 
-  // --- Invite new people by email ---
+    this.submitting.set(true);
+    this.addError.set(null);
 
-  protected addInviteRow(): void {
-    this.invites.push(this.newInviteGroup());
-  }
+    // Existing members → one assignProjectMember each; new emails → a single batched invite call.
+    const assignCalls: Observable<ProjectMemberResponse>[] = memberRows.map((r) =>
+      this.api.assignProjectMember(orgId, this.projectId(), {
+        memberId: r.memberId,
+        roleId: r.roleId,
+      }),
+    );
+    const invitations: ProjectInvitation[] = emailRows.map((r) => ({
+      email: r.email,
+      displayName: r.displayName.trim(),
+      roleId: r.roleId,
+    }));
+    const inviteCall: Observable<ProjectMemberResponse[]> = invitations.length
+      ? this.api.inviteProjectMembers(orgId, this.projectId(), { invitations })
+      : of([]);
 
-  protected removeInviteRow(index: number): void {
-    if (this.invites.length > 1) this.invites.removeAt(index);
-  }
-
-  protected invite(): void {
-    const orgId = this.store.organizationId();
-    if (!orgId || this.inviteForm.invalid || this.inviting()) return;
-    this.inviting.set(true);
-    this.inviteError.set(null);
-    const invitations = this.invites.getRawValue() as ProjectInvitation[];
-    this.api.inviteProjectMembers(orgId, this.projectId(), { invitations }).subscribe({
-      next: (created) => {
-        this.assignments.update((list) => [...list, ...created]);
-        this.inviting.set(false);
-        this.inviteForm.setControl('invites', this.fb.array([this.newInviteGroup()]));
-        this.toast.success(this.transloco.translate('toast.invitesSent'));
+    forkJoin({
+      assigned: assignCalls.length ? forkJoin(assignCalls) : of([] as ProjectMemberResponse[]),
+      invited: inviteCall,
+    }).subscribe({
+      next: ({ assigned, invited }) => {
+        this.assignments.update((list) => [...list, ...assigned, ...invited]);
+        this.submitting.set(false);
+        this.rows_add.set([this.blankRow(this.nextRowKey++)]);
+        this.toast.success(this.transloco.translate('projectMembers.added'));
       },
       error: (err: HttpErrorResponse) => {
-        this.inviting.set(false);
+        this.submitting.set(false);
         const message = this.transloco.translate(
-          err.status === 409 ? 'projectMembers.errorAlreadyInvited' : 'projectMembers.errorInvite',
+          err.status === 409 ? 'projectMembers.errorAlreadyInvited' : 'projectMembers.errorAdd',
         );
-        this.inviteError.set(message);
+        this.addError.set(message);
         this.toast.error(message);
       },
     });
