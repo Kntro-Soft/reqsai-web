@@ -8,9 +8,13 @@ import {
   PageResponse,
   ProcessTranscriptResponse,
   SuggestionResponse,
+  SuggestionStatus,
   TranscriptResponse,
   UserStoryResponse,
 } from './discovery.models';
+
+/** Default segment page size for the cursor-paginated segments endpoint. */
+export const SEGMENT_PAGE_SIZE = 50;
 
 /** HTTP client for discovery sessions. Tenant is resolved by the backend from the JWT. */
 @Injectable({ providedIn: 'root' })
@@ -58,6 +62,29 @@ export class DiscoveryApiService {
     return this.http.get<TranscriptResponse>(`/api/sessions/${sessionId}/transcript`);
   }
 
+  /**
+   * A cursor page of a session's final transcript segments, ascending by
+   * sequence — replays a historical session as timestamped bubbles. Pass
+   * `beforeSequence` to fetch the chunk immediately older than an already-loaded
+   * segment (omit for the newest chunk); `limit` caps the page size.
+   *
+   * Added by a parallel backend branch; callers must fall back to
+   * {@link getTranscript} when it 404s. The response shape is still settling
+   * (bare array / hasMore flag / PageResponse), so it is typed `unknown` and
+   * normalized by `normalizeSegmentPage` in feed.ts.
+   */
+  listSessionSegments(
+    sessionId: string,
+    beforeSequence?: number,
+    limit = SEGMENT_PAGE_SIZE,
+  ): Observable<unknown> {
+    let params = new HttpParams().set('limit', limit);
+    if (beforeSequence !== undefined) {
+      params = params.set('beforeSequence', beforeSequence);
+    }
+    return this.http.get<unknown>(`/api/sessions/${sessionId}/segments`, { params });
+  }
+
   /** Uploads an audio file for transcription (session-scoped endpoint). */
   uploadAudio(sessionId: string, file: File): Observable<DiscoverySessionResponse> {
     const form = new FormData();
@@ -84,6 +111,23 @@ export class DiscoveryApiService {
   /** Pending suggestions for a session (accepted/dismissed are not returned). */
   listSuggestions(sessionId: string): Observable<SuggestionResponse[]> {
     return this.http.get<SuggestionResponse[]>(`/api/sessions/${sessionId}/suggestions`);
+  }
+
+  /**
+   * A session's suggestions filtered by status — e.g. ACCEPTED/DISMISSED to
+   * reconstruct past decisions for a loaded (non-live) session. The `status`
+   * query param is being added by a parallel backend branch; on an older
+   * backend the param is ignored and only PENDING rows come back, so callers
+   * must tolerate an unfiltered result.
+   */
+  listSessionSuggestions(
+    sessionId: string,
+    status: SuggestionStatus,
+  ): Observable<SuggestionResponse[]> {
+    const params = new HttpParams().set('status', status);
+    return this.http.get<SuggestionResponse[]>(`/api/sessions/${sessionId}/suggestions`, {
+      params,
+    });
   }
 
   /**

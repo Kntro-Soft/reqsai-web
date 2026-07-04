@@ -35,6 +35,35 @@ export interface TranscriptResponse {
   transcript: string | null;
 }
 
+/**
+ * A persisted final transcript segment (GET /sessions/{id}/segments), used to
+ * replay a historical session's conversation as timestamped bubbles. Added by a
+ * parallel backend branch — consumers must degrade gracefully when the endpoint
+ * is absent (404) and fall back to the joined transcript string.
+ */
+export interface SessionSegmentResponse {
+  sequence: number;
+  text: string;
+  speakerLabel: string | null;
+  startMs: number;
+  endMs: number;
+  /** Wall-clock time the segment was recorded (ISO 8601). */
+  occurredAt: string;
+}
+
+/**
+ * A cursor page of segments (GET /sessions/{id}/segments?beforeSequence&limit).
+ * The backend shape is still settling — it may return a bare array, an object
+ * with a `hasMore` flag, or a full {@link PageResponse}. Consumers normalize
+ * every shape through {@link normalizeSegmentPage} in feed.ts.
+ */
+export interface SegmentPage {
+  /** Up to `limit` final segments with sequence < beforeSequence, ascending. */
+  segments: SessionSegmentResponse[];
+  /** Whether older segments remain before the returned chunk. */
+  hasMore: boolean;
+}
+
 export interface CreateDiscoverySessionRequest {
   title: string;
   language: string;
@@ -52,6 +81,8 @@ export interface UserStoryResponse {
   priority: string;
   storyPoints: number | null;
   status: string;
+  /** When the story was created (ISO 8601); optional on older backends. */
+  createdAt?: string | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -68,6 +99,11 @@ export interface DisplayStory {
   benefit: string;
   priority: string;
   storyPoints: number | null;
+  /**
+   * When the story was generated (ISO 8601); used to place it chronologically in
+   * the feed. Null when the source (older REST payloads) carried no timestamp.
+   */
+  createdAt?: string | null;
 }
 
 export interface PageResponse<T> {
@@ -108,6 +144,11 @@ export interface SuggestionResponse {
   resolvedStoryId: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * When the suggestion was accepted/dismissed. Being added by a parallel backend
+   * branch; absent on older deployments, so consumers fall back to `updatedAt`.
+   */
+  resolvedAt?: string | null;
 }
 
 /** Accept payload; every field optional — omitted/null keeps the original draft. */
