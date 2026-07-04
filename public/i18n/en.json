@@ -940,6 +940,12 @@
       "transitionFailed": "Could not update the session. Please try again.",
       "decideFailed": "Could not save your decision. Please try again.",
       "alreadyResolved": "Someone already decided on this suggestion."
+    },
+    "leaveGuard": {
+      "title": "A recording is in progress",
+      "body": "Leave this page anyway? The session keeps recording in the background and stays active.",
+      "stay": "Stay",
+      "leave": "Leave anyway"
     }
   }
 }

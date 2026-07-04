@@ -940,6 +940,12 @@
       "transitionFailed": "No se pudo actualizar la sesión. Inténtalo de nuevo.",
       "decideFailed": "No se pudo guardar tu decisión. Inténtalo de nuevo.",
       "alreadyResolved": "Alguien ya decidió sobre esta sugerencia."
+    },
+    "leaveGuard": {
+      "title": "Hay una grabación en curso",
+      "body": "¿Salir de esta página de todos modos? La sesión sigue grabando en segundo plano y permanece activa.",
+      "stay": "Quedarse",
+      "leave": "Salir de todos modos"
     }
   }
 }

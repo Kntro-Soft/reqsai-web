@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
+import { recordingLeaveGuard } from './features/discovery/guards/recording-leave.guard';
 
 export const routes: Routes = [
   // Default landing: the launch dispatcher routes by organization count.
@@ -195,6 +196,7 @@ export const routes: Routes = [
             // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
             title: 'titles.discovery',
+            canDeactivate: [recordingLeaveGuard],
             loadComponent: () =>
               import('./features/discovery/pages/discovery-chat/discovery-chat').then(
                 (m) => m.DiscoveryChat,

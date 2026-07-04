@@ -40,6 +40,7 @@ import { SessionBar } from '../../components/session-bar/session-bar';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { DISCOVERY_LANGUAGES } from '../../data/discovery-languages';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
@@ -62,6 +63,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     DecisionQueue,
     SidePanel,
     Select,
+    Modal,
     HlmButton,
     HlmIcon,
     HlmSpinner,
@@ -393,6 +395,34 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       (decideDismiss)="dismiss($event)"
       (openTarget)="focusStory($event)"
     />
+
+    <!-- Leave-while-recording confirmation (in-app navigation guard) -->
+    <app-modal [(open)]="leaveOpen">
+      <span modalTitle>{{ 'discovery.leaveGuard.title' | transloco }}</span>
+      <p>{{ 'discovery.leaveGuard.body' | transloco }}</p>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="resolveLeave(false)"
+        data-testid="leave-cancel"
+      >
+        {{ 'discovery.leaveGuard.stay' | transloco }}
+      </button>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="resolveLeave(true)"
+        data-testid="leave-confirm"
+      >
+        {{ 'discovery.leaveGuard.leave' | transloco }}
+      </button>
+    </app-modal>
   `,
 })
 export class DiscoveryChat implements OnInit {
@@ -412,6 +442,11 @@ export class DiscoveryChat implements OnInit {
   protected readonly focusStoryId = signal<string | null>(null);
   /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
   protected readonly atBottom = signal(true);
+
+  /** Controls the "leave while recording" confirmation modal (in-app nav guard). */
+  protected readonly leaveOpen = signal(false);
+  /** Resolver for the CanDeactivate promise, pending while the modal is open. */
+  private leaveResolver: ((leave: boolean) => void) | null = null;
   /** Total feed entries across sessions; changes when transcript/decisions arrive, to trigger auto-stick. */
   protected readonly feedItemCount = computed(() =>
     this.store.blocks().reduce((total, block) => total + block.items.length, 0),
@@ -458,6 +493,14 @@ export class DiscoveryChat implements OnInit {
     effect(() => {
       this.feedItemCount();
       if (untracked(() => this.atBottom())) setTimeout(() => this.scrollToBottom(), 0);
+    });
+    // If the leave modal is dismissed via backdrop/Escape (not the buttons),
+    // treat it as "stay" so the router's CanDeactivate promise never hangs.
+    effect(() => {
+      if (!this.leaveOpen() && this.leaveResolver) {
+        this.leaveResolver(false);
+        this.leaveResolver = null;
+      }
     });
   }
 
@@ -556,6 +599,26 @@ export class DiscoveryChat implements OnInit {
   protected focusStory(storyId: string): void {
     this.panelOpen.set(true);
     this.focusStoryId.set(storyId);
+  }
+
+  /**
+   * CanDeactivate hook: while a session is live (RECORDING/PAUSED), in-app
+   * navigation prompts a confirmation modal — the recording keeps running in the
+   * background either way. Returns true immediately when nothing is recording.
+   */
+  canLeave(): boolean | Promise<boolean> {
+    if (!this.recording.isActive()) return true;
+    this.leaveOpen.set(true);
+    return new Promise<boolean>((resolve) => {
+      this.leaveResolver = resolve;
+    });
+  }
+
+  /** Resolves the pending CanDeactivate promise and closes the modal. */
+  protected resolveLeave(leave: boolean): void {
+    this.leaveOpen.set(false);
+    this.leaveResolver?.(leave);
+    this.leaveResolver = null;
   }
 
   protected decisionClass(outcome: 'ACCEPTED' | 'DISMISSED'): string {
