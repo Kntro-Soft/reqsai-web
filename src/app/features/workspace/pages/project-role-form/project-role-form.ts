@@ -114,6 +114,19 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                   data-testid="perm-search"
                 />
               </div>
+              <div class="flex justify-end">
+                <button
+                  type="button"
+                  (click)="toggleAll()"
+                  class="cursor-pointer rounded-md px-1.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  data-testid="perm-toggle-all"
+                >
+                  {{
+                    (allCollapsed() ? 'projectRoleForm.expandAll' : 'projectRoleForm.collapseAll')
+                      | transloco
+                  }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -250,15 +263,22 @@ export class ProjectRoleForm implements OnInit {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
 
-  // Permission-editor UI state.
+  // Permission-editor UI state. Groups start collapsed (progressive disclosure over 20 permissions).
   protected readonly query = signal('');
-  private readonly collapsed = signal<Set<string>>(new Set());
+  private readonly collapsed = signal<Set<string>>(
+    new Set(PERMISSION_GROUPS.map((g) => g.resourceKey)),
+  );
 
   private readonly translate = translateFn(this.transloco);
 
   /** Save requires a non-empty name AND at least one selected permission. */
   protected readonly canSave = computed(
     () => !!this.name().trim() && this.permissions().length > 0,
+  );
+
+  /** True when every group is collapsed — drives the expand-all / collapse-all toggle label. */
+  protected readonly allCollapsed = computed(
+    () => this.collapsed().size >= PERMISSION_GROUPS.length,
   );
 
   /**
@@ -295,7 +315,7 @@ export class ProjectRoleForm implements OnInit {
         selectedCount,
         checked: selectedCount === total,
         indeterminate: selectedCount > 0 && selectedCount < total,
-        collapsed: collapsed.has(group.resourceKey),
+        collapsed: q ? false : collapsed.has(group.resourceKey),
       };
     }).filter((g) => g.permissions.length > 0);
   });
@@ -319,6 +339,15 @@ export class ProjectRoleForm implements OnInit {
         }
         this.name.set(role.name);
         this.permissions.set([...role.permissions]);
+        // Editing: expand groups that already have permissions so the user sees what's assigned.
+        const assigned = new Set(role.permissions);
+        this.collapsed.set(
+          new Set(
+            PERMISSION_GROUPS.filter((g) => !g.permissions.some((p) => assigned.has(p))).map(
+              (g) => g.resourceKey,
+            ),
+          ),
+        );
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
@@ -328,6 +357,13 @@ export class ProjectRoleForm implements OnInit {
   protected togglePermission(perm: Permission): void {
     this.permissions.update((list) =>
       list.includes(perm) ? list.filter((p) => p !== perm) : [...list, perm],
+    );
+  }
+
+  /** Expand every group, or collapse every group, depending on the current state. */
+  protected toggleAll(): void {
+    this.collapsed.set(
+      this.allCollapsed() ? new Set() : new Set(PERMISSION_GROUPS.map((g) => g.resourceKey)),
     );
   }
 
