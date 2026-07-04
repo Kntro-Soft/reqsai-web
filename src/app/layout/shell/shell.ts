@@ -227,7 +227,7 @@ interface Crumb {
         </header>
 
         <main class="flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
-          <div class="mx-auto flex min-h-full w-full max-w-5xl flex-col">
+          <div class="mx-auto flex h-full w-full max-w-5xl flex-col">
             <router-outlet />
           </div>
         </main>
