@@ -22,7 +22,10 @@
     "orgDeleted": "Organización eliminada.",
     "orgLeft": "Has salido de la organización.",
     "ownershipTransferred": "Propiedad transferida.",
-    "profileSaved": "Perfil actualizado."
+    "profileSaved": "Perfil actualizado.",
+    "projectArchived": "Proyecto archivado.",
+    "projectRestored": "Proyecto restaurado.",
+    "projectDeleted": "Proyecto eliminado."
   },
   "language": {
     "label": "Idioma",
@@ -36,6 +39,7 @@
     "session": "Sesión",
     "stories": "Historias",
     "projectMembers": "Miembros del proyecto",
+    "projectRoles": "Roles del proyecto",
     "projectSettings": "Ajustes del proyecto",
     "overview": "Resumen",
     "onboarding": "Crear organización",
@@ -59,13 +63,16 @@
     "security": "Seguridad",
     "appearance": "Apariencia",
     "notifications": "Notificaciones",
-    "tokens": "Tokens de API"
+    "tokens": "Tokens de API",
+    "newRole": "Nuevo rol",
+    "editRole": "Editar rol"
   },
   "nav": {
     "projects": "Proyectos",
     "sessions": "Sesiones",
     "stories": "Historias",
     "members": "Miembros",
+    "roles": "Roles",
     "settings": "Ajustes",
     "newSession": "Nueva sesión",
     "projectFallback": "Proyecto",
@@ -513,7 +520,8 @@
       "ACTIVE": "Activo",
       "PENDING": "Pendiente",
       "INACTIVE": "Inactivo"
-    }
+    },
+    "errorSelfInvite": "No puedes invitarte a ti mismo."
   },
   "invitations": {
     "valid": {
@@ -611,69 +619,132 @@
     "errorValidation": "Revisa los datos e intenta de nuevo.",
     "errorGeneric": "No se pudieron guardar los cambios."
   },
-  "projectMembers": {
-    "title": "Miembros y roles",
-    "subtitle": "Define los roles del proyecto y asigna personas de tu organización.",
-    "loading": "Cargando…",
-    "loadError": "No se pudieron cargar los miembros.",
-    "rolesTitle": "Roles",
-    "rolesDesc": "Los roles agrupan los permisos que tiene un miembro en este proyecto.",
-    "rolesEmpty": "Aún no hay roles. Crea uno para empezar a asignar miembros.",
-    "addRole": "Nuevo rol",
+  "projectRoles": {
+    "title": "Roles",
+    "subtitle": "Los roles agrupan los permisos que tiene un miembro en este proyecto.",
+    "createTitle": "Crear rol",
+    "editTitle": "Editar rol",
+    "createDesc": "Nombra el rol y elige los permisos que otorga.",
     "roleName": "Nombre del rol",
     "roleNamePlaceholder": "p. ej. Analista líder",
     "permissionsLabel": "Permisos",
     "noPermissions": "Sin permisos",
-    "editRoleAria": "Editar rol",
-    "deleteRoleAria": "Eliminar rol",
-    "errorRoleSave": "No se pudo guardar el rol. Intenta de nuevo.",
-    "errorRoleNameInUse": "Ya existe un rol con ese nombre.",
-    "errorRoleDelete": "No se pudo eliminar el rol. Intenta de nuevo.",
-    "errorRoleInUse": "Este rol está asignado a miembros. Reasígnalos primero.",
-    "assignTitle": "Miembros del proyecto",
-    "assignDesc": "Asigna miembros de la organización a un rol del proyecto.",
-    "fieldMember": "Miembro",
-    "fieldRole": "Rol",
-    "assign": "Asignar",
-    "errorAssign": "No se pudo asignar al miembro. Intenta de nuevo.",
-    "removeAria": "Quitar miembro",
-    "emptyTitle": "Sin miembros asignados",
-    "emptyBody": "Asigna personas de tu organización para que colaboren en este proyecto.",
-    "fallbackName": "Miembro"
+    "create": "Crear rol",
+    "save": "Guardar cambios",
+    "cancel": "Cancelar",
+    "edit": "Editar rol",
+    "delete": "Eliminar rol",
+    "deleteTitle": "Eliminar rol",
+    "deleteBefore": "Esto eliminará permanentemente",
+    "deleteAfter": "y lo quitará de cualquier miembro asignado.",
+    "empty": "Aún no hay roles. Crea uno para empezar a asignar miembros.",
+    "loadError": "No se pudieron cargar los roles.",
+    "saved": "Rol guardado.",
+    "deleted": "Rol eliminado.",
+    "errorSave": "No se pudo guardar el rol. Intenta de nuevo.",
+    "errorNameInUse": "Ya existe un rol con ese nombre.",
+    "errorDelete": "No se pudo eliminar el rol. Intenta de nuevo.",
+    "errorInUse": "Este rol está asignado a miembros. Reasígnalos primero.",
+    "resource": {
+      "project": "Proyecto",
+      "member": "Miembros",
+      "role": "Roles",
+      "document": "Documentos",
+      "glossary": "Glosario",
+      "constraint": "Restricciones"
+    },
+    "perm": {
+      "PROJECT_UPDATE": "Editar proyecto",
+      "PROJECT_ARCHIVE": "Archivar proyecto",
+      "PROJECT_DELETE": "Eliminar proyecto",
+      "MEMBER_READ": "Ver miembros",
+      "MEMBER_INVITE": "Asignar miembros",
+      "MEMBER_UPDATE_ROLE": "Cambiar roles de miembros",
+      "MEMBER_REMOVE": "Quitar miembros",
+      "ROLE_READ": "Ver roles",
+      "ROLE_CREATE": "Crear roles",
+      "ROLE_UPDATE": "Editar roles",
+      "ROLE_DELETE": "Eliminar roles",
+      "DOCUMENT_READ": "Ver documentos",
+      "DOCUMENT_CREATE": "Subir documentos",
+      "DOCUMENT_UPDATE": "Editar documentos",
+      "DOCUMENT_DELETE": "Eliminar documentos",
+      "GLOSSARY_READ": "Ver glosario",
+      "GLOSSARY_TERM_WRITE": "Editar términos del glosario",
+      "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
+      "CONSTRAINT_READ": "Ver restricciones",
+      "CONSTRAINT_WRITE": "Editar restricciones"
+    },
+    "groupDesc": {
+      "project": "Cambia los ajustes y el ciclo de vida del proyecto",
+      "member": "Gestiona los miembros del proyecto y su acceso",
+      "role": "Define roles y los permisos que otorgan",
+      "document": "Trabaja con los documentos del proyecto",
+      "glossary": "Mantén el glosario compartido del proyecto",
+      "constraint": "Gestiona las restricciones técnicas del proyecto"
+    },
+    "permDesc": {
+      "PROJECT_UPDATE": "Editar el nombre, la descripción y los ajustes del proyecto",
+      "PROJECT_ARCHIVE": "Archivar o restaurar el proyecto",
+      "PROJECT_DELETE": "Eliminar el proyecto y todos sus datos de forma permanente",
+      "MEMBER_READ": "Ver quién está asignado al proyecto y sus roles",
+      "MEMBER_INVITE": "Asignar miembros existentes e invitar a personas nuevas al proyecto",
+      "MEMBER_UPDATE_ROLE": "Cambiar el rol asignado a un miembro del proyecto",
+      "MEMBER_REMOVE": "Quitar miembros del proyecto",
+      "ROLE_READ": "Ver los roles del proyecto y sus permisos",
+      "ROLE_CREATE": "Crear nuevos roles del proyecto",
+      "ROLE_UPDATE": "Renombrar roles y cambiar los permisos que otorgan",
+      "ROLE_DELETE": "Eliminar roles del proyecto",
+      "DOCUMENT_READ": "Ver y descargar los documentos del proyecto",
+      "DOCUMENT_CREATE": "Subir o crear documentos nuevos",
+      "DOCUMENT_UPDATE": "Editar los documentos existentes del proyecto",
+      "DOCUMENT_DELETE": "Eliminar documentos del proyecto",
+      "GLOSSARY_READ": "Ver el glosario y sus términos",
+      "GLOSSARY_TERM_WRITE": "Añadir y editar términos del glosario",
+      "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
+      "CONSTRAINT_READ": "Ver las restricciones técnicas del proyecto",
+      "CONSTRAINT_WRITE": "Añadir y editar restricciones técnicas"
+    },
+    "newRole": "Nuevo rol",
+    "filterPlaceholder": "Filtrar roles…",
+    "filterEmpty": "Ningún rol coincide con el filtro."
   },
-  "permissions": {
-    "READ_PROJECT": {
-      "label": "Ver proyecto",
-      "desc": "Ver el proyecto, sus sesiones e historias."
-    },
-    "WRITE_PROJECT": {
-      "label": "Editar proyecto",
-      "desc": "Editar los datos y el contenido del proyecto."
-    },
-    "MANAGE_MEMBERS": {
-      "label": "Gestionar miembros",
-      "desc": "Asignar y quitar miembros del proyecto."
-    },
-    "MANAGE_ROLES": {
-      "label": "Gestionar roles",
-      "desc": "Crear, editar y eliminar roles del proyecto."
-    },
-    "UPLOAD_DOCUMENTS": {
-      "label": "Subir documentos",
-      "desc": "Subir documentos de referencia al proyecto."
-    },
-    "MANAGE_GLOSSARY": {
-      "label": "Gestionar glosario",
-      "desc": "Mantener el glosario del proyecto."
-    },
-    "RUN_DISCOVERY": {
-      "label": "Ejecutar descubrimiento",
-      "desc": "Iniciar y ejecutar sesiones de descubrimiento."
-    },
-    "MANAGE_INTEGRATIONS": {
-      "label": "Gestionar integraciones",
-      "desc": "Configurar las integraciones del proyecto."
-    }
+  "projectMembers": {
+    "title": "Miembros",
+    "subtitle": "Asigna personas de tu organización a un rol del proyecto.",
+    "loadError": "No se pudieron cargar los miembros.",
+    "addTitle": "Añadir personas",
+    "addDesc": "Busca un miembro de tu organización, o invita a alguien nuevo por correo, y elige su rol en el proyecto.",
+    "selectMember": "Miembro",
+    "selectRole": "Rol",
+    "add": "Añadir",
+    "added": "Personas añadidas.",
+    "change": "Cambiar",
+    "pickerPlaceholder": "Buscar por correo o nombre…",
+    "pickerEmpty": "No hay miembros que coincidan.",
+    "inviteAsNew": "Invitar a {{email}} como nuevo",
+    "errorAssign": "No se pudo actualizar al miembro. Intenta de nuevo.",
+    "errorAdd": "No se pudo añadir a todos. Intenta de nuevo.",
+    "filterPlaceholder": "Filtrar por nombre o correo…",
+    "remove": "Quitar miembro",
+    "removed": "Miembro eliminado.",
+    "removeTitle": "Quitar del proyecto",
+    "removeBefore": "Esto quitará a",
+    "removeAfter": "del proyecto y revocará su acceso.",
+    "errorRemove": "No se pudo quitar al miembro. Intenta de nuevo.",
+    "empty": "Sin miembros asignados. Asigna personas de tu organización para que colaboren aquí.",
+    "fallbackName": "Miembro",
+    "addMore": "Añadir más",
+    "removeRowAria": "Quitar esta fila",
+    "filterEmpty": "Ningún miembro coincide con el filtro.",
+    "filterAllRoles": "Todos los roles",
+    "filterRoleAria": "Filtrar por rol",
+    "sortAria": "Ordenar miembros",
+    "sortRecent": "Añadidos recientemente",
+    "sortName": "Nombre",
+    "fieldName": "Nombre",
+    "placeholderName": "Nombre completo",
+    "errorAlreadyInvited": "Alguien aquí ya es miembro o está invitado."
   },
   "stories": {
     "title": "Historias",
@@ -696,5 +767,50 @@
       "APPROVED": "Aprobada",
       "REJECTED": "Rechazada"
     }
+  },
+  "projectRoleForm": {
+    "back": "Volver a roles",
+    "createTitle": "Crear rol",
+    "editTitle": "Editar rol",
+    "subtitle": "Nombra el rol y elige los permisos que otorga.",
+    "roleName": "Nombre del rol",
+    "roleNamePlaceholder": "p. ej. Analista principal",
+    "permissionsLabel": "Permisos",
+    "selectedCount": "{{count}} seleccionados",
+    "searchPlaceholder": "Buscar permisos…",
+    "searchEmpty": "Ningún permiso coincide con tu búsqueda.",
+    "selectAllGroup": "Alternar todos los permisos de este grupo",
+    "toggleGroup": "Expandir o contraer este grupo",
+    "expandAll": "Expandir todo",
+    "collapseAll": "Colapsar todo",
+    "create": "Crear rol",
+    "save": "Guardar cambios",
+    "cancel": "Cancelar",
+    "loadError": "No se pudo cargar el rol."
+  },
+  "projectDanger": {
+    "title": "Zona de peligro",
+    "subtitle": "Archiva, restaura o elimina permanentemente este proyecto.",
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo.",
+    "readonly": "Solo los propietarios y administradores de la organización pueden gestionar este proyecto.",
+    "archive": "Archivar proyecto",
+    "archiveDesc": "Oculta el proyecto y pausa su actividad. Podrás restaurarlo más tarde.",
+    "archiveHint": "Archivar es reversible.",
+    "archiveTitle": "Archivar proyecto",
+    "archiveBefore": "Esto archivará",
+    "archiveAfter": "y pausará su actividad. Podrás restaurarlo más tarde.",
+    "restore": "Restaurar proyecto",
+    "restoreDesc": "Este proyecto está archivado. Restáuralo para volver a activarlo.",
+    "restoreHint": "Restaurar vuelve a activar el proyecto.",
+    "delete": "Eliminar proyecto",
+    "deleteDesc": "Elimina permanentemente este proyecto y todos sus datos.",
+    "deleteHint": "Esta acción no se puede deshacer.",
+    "deleteModalTitle": "Eliminar proyecto",
+    "deleteModalBodyBefore": "Esto eliminará permanentemente",
+    "deleteModalBodyAfter": "y todos sus datos.",
+    "deleteConfirmName": "Para confirmar, escribe \"{{project}}\"",
+    "deleteConfirmPhrase": "Para confirmar, escribe {{phrase}}",
+    "deletePhrase": "eliminar este proyecto",
+    "deleteWarning": "Eliminar {{project}} no se puede deshacer."
   }
 }

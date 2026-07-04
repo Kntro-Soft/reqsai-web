@@ -13,6 +13,7 @@ import {
   lucidePalette,
   lucidePlug,
   lucideSettings,
+  lucideShield,
   lucideSlidersHorizontal,
   lucideTriangleAlert,
   lucideUser,
@@ -32,6 +33,7 @@ const NAV_ICONS: Record<string, string> = {
   settings: 'lucideSettings',
   // Settings sub-nav.
   general: 'lucideSlidersHorizontal',
+  roles: 'lucideShield',
   billing: 'lucideCreditCard',
   integrations: 'lucidePlug',
   usage: 'lucideChartLine',
@@ -57,6 +59,7 @@ const NAV_ICONS: Record<string, string> = {
       lucideList,
       lucideUsers,
       lucideSettings,
+      lucideShield,
       lucideSlidersHorizontal,
       lucideCreditCard,
       lucidePlug,

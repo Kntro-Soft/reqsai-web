@@ -22,7 +22,10 @@
     "orgDeleted": "Organization deleted.",
     "orgLeft": "You left the organization.",
     "ownershipTransferred": "Ownership transferred.",
-    "profileSaved": "Profile updated."
+    "profileSaved": "Profile updated.",
+    "projectArchived": "Project archived.",
+    "projectRestored": "Project restored.",
+    "projectDeleted": "Project deleted."
   },
   "language": {
     "label": "Language",
@@ -36,6 +39,7 @@
     "session": "Session",
     "stories": "Stories",
     "projectMembers": "Project members",
+    "projectRoles": "Project roles",
     "projectSettings": "Project settings",
     "overview": "Overview",
     "onboarding": "Create organization",
@@ -59,13 +63,16 @@
     "security": "Security",
     "appearance": "Appearance",
     "notifications": "Notifications",
-    "tokens": "API tokens"
+    "tokens": "API tokens",
+    "newRole": "New role",
+    "editRole": "Edit role"
   },
   "nav": {
     "projects": "Projects",
     "sessions": "Sessions",
     "stories": "Stories",
     "members": "Members",
+    "roles": "Roles",
     "settings": "Settings",
     "newSession": "New session",
     "projectFallback": "Project",
@@ -513,7 +520,8 @@
       "ACTIVE": "Active",
       "PENDING": "Pending",
       "INACTIVE": "Inactive"
-    }
+    },
+    "errorSelfInvite": "You can't invite yourself."
   },
   "invitations": {
     "valid": {
@@ -611,69 +619,132 @@
     "errorValidation": "Check the data and try again.",
     "errorGeneric": "Could not save the changes."
   },
-  "projectMembers": {
-    "title": "Members & roles",
-    "subtitle": "Define project roles and assign people from your organization.",
-    "loading": "Loading…",
-    "loadError": "Could not load the members.",
-    "rolesTitle": "Roles",
-    "rolesDesc": "Roles bundle the permissions a member has on this project.",
-    "rolesEmpty": "No roles yet. Create one to start assigning members.",
-    "addRole": "New role",
+  "projectRoles": {
+    "title": "Roles",
+    "subtitle": "Roles bundle the permissions a member has on this project.",
+    "createTitle": "Create role",
+    "editTitle": "Edit role",
+    "createDesc": "Name the role and choose the permissions it grants.",
     "roleName": "Role name",
     "roleNamePlaceholder": "e.g. Lead analyst",
     "permissionsLabel": "Permissions",
     "noPermissions": "No permissions",
-    "editRoleAria": "Edit role",
-    "deleteRoleAria": "Delete role",
-    "errorRoleSave": "Could not save the role. Please try again.",
-    "errorRoleNameInUse": "A role with that name already exists.",
-    "errorRoleDelete": "Could not delete the role. Please try again.",
-    "errorRoleInUse": "This role is assigned to members. Reassign them first.",
-    "assignTitle": "Project members",
-    "assignDesc": "Assign organization members to a project role.",
-    "fieldMember": "Member",
-    "fieldRole": "Role",
-    "assign": "Assign",
-    "errorAssign": "Could not assign the member. Please try again.",
-    "removeAria": "Remove member",
-    "emptyTitle": "No members assigned",
-    "emptyBody": "Assign people from your organization to collaborate on this project.",
-    "fallbackName": "Member"
+    "create": "Create role",
+    "save": "Save changes",
+    "cancel": "Cancel",
+    "edit": "Edit role",
+    "delete": "Delete role",
+    "deleteTitle": "Delete role",
+    "deleteBefore": "This will permanently delete",
+    "deleteAfter": "and revoke it from any assigned members.",
+    "empty": "No roles yet. Create one to start assigning members.",
+    "loadError": "Could not load the roles.",
+    "saved": "Role saved.",
+    "deleted": "Role deleted.",
+    "errorSave": "Could not save the role. Please try again.",
+    "errorNameInUse": "A role with that name already exists.",
+    "errorDelete": "Could not delete the role. Please try again.",
+    "errorInUse": "This role is assigned to members. Reassign them first.",
+    "resource": {
+      "project": "Project",
+      "member": "Members",
+      "role": "Roles",
+      "document": "Documents",
+      "glossary": "Glossary",
+      "constraint": "Constraints"
+    },
+    "perm": {
+      "PROJECT_UPDATE": "Edit project",
+      "PROJECT_ARCHIVE": "Archive project",
+      "PROJECT_DELETE": "Delete project",
+      "MEMBER_READ": "View members",
+      "MEMBER_INVITE": "Assign members",
+      "MEMBER_UPDATE_ROLE": "Change member roles",
+      "MEMBER_REMOVE": "Remove members",
+      "ROLE_READ": "View roles",
+      "ROLE_CREATE": "Create roles",
+      "ROLE_UPDATE": "Edit roles",
+      "ROLE_DELETE": "Delete roles",
+      "DOCUMENT_READ": "View documents",
+      "DOCUMENT_CREATE": "Upload documents",
+      "DOCUMENT_UPDATE": "Edit documents",
+      "DOCUMENT_DELETE": "Delete documents",
+      "GLOSSARY_READ": "View glossary",
+      "GLOSSARY_TERM_WRITE": "Edit glossary terms",
+      "GLOSSARY_TERM_DELETE": "Delete glossary terms",
+      "CONSTRAINT_READ": "View constraints",
+      "CONSTRAINT_WRITE": "Edit constraints"
+    },
+    "groupDesc": {
+      "project": "Change the project's settings and lifecycle",
+      "member": "Manage project members and their access",
+      "role": "Define roles and the permissions they grant",
+      "document": "Work with the project's documents",
+      "glossary": "Maintain the project's shared glossary",
+      "constraint": "Manage the project's technical constraints"
+    },
+    "permDesc": {
+      "PROJECT_UPDATE": "Edit the project's name, description and settings",
+      "PROJECT_ARCHIVE": "Archive or restore the project",
+      "PROJECT_DELETE": "Permanently delete the project and all its data",
+      "MEMBER_READ": "See who is assigned to the project and their roles",
+      "MEMBER_INVITE": "Assign existing members and invite new people to the project",
+      "MEMBER_UPDATE_ROLE": "Change the role assigned to a project member",
+      "MEMBER_REMOVE": "Remove members from the project",
+      "ROLE_READ": "See the project's roles and their permissions",
+      "ROLE_CREATE": "Create new project roles",
+      "ROLE_UPDATE": "Rename roles and change the permissions they grant",
+      "ROLE_DELETE": "Delete project roles",
+      "DOCUMENT_READ": "View and download the project's documents",
+      "DOCUMENT_CREATE": "Upload or create new documents",
+      "DOCUMENT_UPDATE": "Edit existing project documents",
+      "DOCUMENT_DELETE": "Delete documents from the project",
+      "GLOSSARY_READ": "View the glossary and its terms",
+      "GLOSSARY_TERM_WRITE": "Add and edit glossary terms",
+      "GLOSSARY_TERM_DELETE": "Delete glossary terms",
+      "CONSTRAINT_READ": "View the project's technical constraints",
+      "CONSTRAINT_WRITE": "Add and edit technical constraints"
+    },
+    "newRole": "New role",
+    "filterPlaceholder": "Filter roles…",
+    "filterEmpty": "No roles match your filter."
   },
-  "permissions": {
-    "READ_PROJECT": {
-      "label": "Read project",
-      "desc": "View the project, its sessions and stories."
-    },
-    "WRITE_PROJECT": {
-      "label": "Edit project",
-      "desc": "Edit project details and content."
-    },
-    "MANAGE_MEMBERS": {
-      "label": "Manage members",
-      "desc": "Assign and remove project members."
-    },
-    "MANAGE_ROLES": {
-      "label": "Manage roles",
-      "desc": "Create, edit and delete project roles."
-    },
-    "UPLOAD_DOCUMENTS": {
-      "label": "Upload documents",
-      "desc": "Upload reference documents to the project."
-    },
-    "MANAGE_GLOSSARY": {
-      "label": "Manage glossary",
-      "desc": "Maintain the project glossary."
-    },
-    "RUN_DISCOVERY": {
-      "label": "Run discovery",
-      "desc": "Start and run discovery sessions."
-    },
-    "MANAGE_INTEGRATIONS": {
-      "label": "Manage integrations",
-      "desc": "Configure the project's integrations."
-    }
+  "projectMembers": {
+    "title": "Members",
+    "subtitle": "Assign people from your organization to a project role.",
+    "loadError": "Could not load the members.",
+    "addTitle": "Add people",
+    "addDesc": "Search your organization for a member, or invite someone new by email, and choose their project role.",
+    "selectMember": "Member",
+    "selectRole": "Role",
+    "add": "Add",
+    "added": "People added.",
+    "change": "Change",
+    "pickerPlaceholder": "Search by email or name…",
+    "pickerEmpty": "No matching members.",
+    "inviteAsNew": "Invite {{email}} as new",
+    "errorAssign": "Could not update the member. Please try again.",
+    "errorAdd": "Could not add everyone. Please try again.",
+    "filterPlaceholder": "Filter by name or email…",
+    "remove": "Remove member",
+    "removed": "Member removed.",
+    "removeTitle": "Remove from project",
+    "removeBefore": "This will remove",
+    "removeAfter": "from the project and revoke their access.",
+    "errorRemove": "Could not remove the member. Please try again.",
+    "empty": "No members assigned. Assign people from your organization to collaborate here.",
+    "fallbackName": "Member",
+    "addMore": "Add more",
+    "removeRowAria": "Remove this row",
+    "filterEmpty": "No members match your filter.",
+    "filterAllRoles": "All roles",
+    "filterRoleAria": "Filter by role",
+    "sortAria": "Sort members",
+    "sortRecent": "Recently added",
+    "sortName": "Name",
+    "fieldName": "Name",
+    "placeholderName": "Full name",
+    "errorAlreadyInvited": "Someone here is already a member or invited."
   },
   "stories": {
     "title": "Stories",
@@ -696,5 +767,50 @@
       "APPROVED": "Approved",
       "REJECTED": "Rejected"
     }
+  },
+  "projectRoleForm": {
+    "back": "Back to roles",
+    "createTitle": "Create role",
+    "editTitle": "Edit role",
+    "subtitle": "Name the role and choose the permissions it grants.",
+    "roleName": "Role name",
+    "roleNamePlaceholder": "e.g. Lead analyst",
+    "permissionsLabel": "Permissions",
+    "selectedCount": "{{count}} selected",
+    "searchPlaceholder": "Search permissions…",
+    "searchEmpty": "No permissions match your search.",
+    "selectAllGroup": "Toggle all permissions in this group",
+    "toggleGroup": "Expand or collapse this group",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "create": "Create role",
+    "save": "Save changes",
+    "cancel": "Cancel",
+    "loadError": "Could not load the role."
+  },
+  "projectDanger": {
+    "title": "Danger zone",
+    "subtitle": "Archive, restore or permanently delete this project.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "readonly": "Only organization owners and admins can manage this project.",
+    "archive": "Archive project",
+    "archiveDesc": "Hide the project and pause its activity. You can restore it later.",
+    "archiveHint": "Archiving is reversible.",
+    "archiveTitle": "Archive project",
+    "archiveBefore": "This will archive",
+    "archiveAfter": "and pause its activity. You can restore it later.",
+    "restore": "Restore project",
+    "restoreDesc": "This project is archived. Restore it to make it active again.",
+    "restoreHint": "Restoring makes the project active again.",
+    "delete": "Delete project",
+    "deleteDesc": "Permanently delete this project and all of its data.",
+    "deleteHint": "This action cannot be undone.",
+    "deleteModalTitle": "Delete project",
+    "deleteModalBodyBefore": "This will permanently delete",
+    "deleteModalBodyAfter": "and all of its data.",
+    "deleteConfirmName": "To confirm, type \"{{project}}\"",
+    "deleteConfirmPhrase": "To confirm, type {{phrase}}",
+    "deletePhrase": "delete this project",
+    "deleteWarning": "Deleting {{project}} cannot be undone."
   }
 }

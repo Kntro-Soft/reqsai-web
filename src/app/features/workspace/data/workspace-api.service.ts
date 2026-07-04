@@ -6,6 +6,7 @@ import {
   CreateMemberRequest,
   CreateOrganizationRequest,
   CreateProjectRequest,
+  InviteProjectMembersRequest,
   MemberResponse,
   OrganizationResponse,
   PageResponse,
@@ -55,6 +56,24 @@ export class WorkspaceApiService {
       `/api/organizations/${orgId}/projects/${projectId}`,
       request,
     );
+  }
+
+  archiveProject(orgId: string, projectId: string): Observable<ProjectResponse> {
+    return this.http.post<ProjectResponse>(
+      `/api/organizations/${orgId}/projects/${projectId}/archive`,
+      {},
+    );
+  }
+
+  restoreProject(orgId: string, projectId: string): Observable<ProjectResponse> {
+    return this.http.post<ProjectResponse>(
+      `/api/organizations/${orgId}/projects/${projectId}/restore`,
+      {},
+    );
+  }
+
+  deleteProject(orgId: string, projectId: string): Observable<void> {
+    return this.http.delete<void>(`/api/organizations/${orgId}/projects/${projectId}`);
   }
 
   listProjectMembers(orgId: string, projectId: string): Observable<ProjectMemberResponse[]> {
@@ -109,6 +128,17 @@ export class WorkspaceApiService {
   ): Observable<ProjectMemberResponse> {
     return this.http.post<ProjectMemberResponse>(
       `/api/organizations/${orgId}/projects/${projectId}/members`,
+      request,
+    );
+  }
+
+  inviteProjectMembers(
+    orgId: string,
+    projectId: string,
+    request: InviteProjectMembersRequest,
+  ): Observable<ProjectMemberResponse[]> {
+    return this.http.post<ProjectMemberResponse[]>(
+      `/api/organizations/${orgId}/projects/${projectId}/members/invite`,
       request,
     );
   }

@@ -303,8 +303,9 @@ export class Shell {
   ];
   private readonly projectSettingsSegs: { seg: string; soon?: boolean }[] = [
     { seg: 'general' },
+    { seg: 'roles' },
     { seg: 'members' },
-    { seg: 'danger', soon: true },
+    { seg: 'danger' },
   ];
   private readonly accountSegs: { seg: string; soon?: boolean }[] = [
     { seg: 'profile' },

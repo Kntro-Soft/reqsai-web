@@ -13,6 +13,17 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **Workspace — project access control UI** (`feature/project-admin-ui`): split project settings into a
+  **Roles** page and a dedicated **create/edit role** page whose permission editor is a searchable,
+  collapsible matrix (groups collapsed by default with expand-all/collapse-all, tri-state select-all per
+  group, and an inline description under every permission and group so users know what each grants). The
+  project **Members** page merges "assign existing" and "invite new" into one combobox form — pick an
+  active org member (with avatar) or type an unknown email to invite them as new — dispatching to the
+  assign and batch-invite endpoints. Adds a project **danger zone** (archive / restore / delete with
+  type-to-confirm) and the models/API for project invitations and archive/restore/delete.
+- **UI — select dropdown & alignment fixes** (`feature/project-admin-ui`): the shared `app-select`
+  dropdown now matches its trigger width, plus roles-table name alignment, permission-group count
+  alignment, org-members search icon, a self-invite guard, and inline-entity vertical centering.
 - **UI — Vercel/Geist redesign & design system** (`feature/ui-redesign`): dark-first navy theme with a
   single red accent, reduced global radius (`--radius: 0.375rem`), circular logos across the app,
   avatar monogram fallback, an interactive animated backdrop (cursor-following red light + idle drift),

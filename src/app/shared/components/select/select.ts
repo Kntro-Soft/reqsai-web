@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  input,
+  model,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
@@ -26,7 +35,8 @@ const BELOW_START: ConnectedPosition[] = [
       type="button"
       cdkOverlayOrigin
       #origin="cdkOverlayOrigin"
-      (click)="open.set(!open())"
+      #triggerBtn
+      (click)="toggle()"
       [attr.aria-expanded]="open()"
       [attr.aria-label]="ariaLabel()"
       aria-haspopup="listbox"
@@ -42,13 +52,14 @@ const BELOW_START: ConnectedPosition[] = [
       [cdkConnectedOverlayOrigin]="origin"
       [cdkConnectedOverlayOpen]="open()"
       [cdkConnectedOverlayPositions]="positions"
+      [cdkConnectedOverlayWidth]="triggerWidth()"
       (overlayOutsideClick)="open.set(false)"
       (overlayKeydown)="onKeydown($event)"
       (detach)="open.set(false)"
     >
       <div
         role="listbox"
-        class="min-w-[8rem] overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+        class="w-full overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
       >
         @for (opt of options(); track opt.value) {
           <button
@@ -74,11 +85,22 @@ export class Select {
   readonly ariaLabel = input<string>('');
   readonly size = input<'sm' | 'md'>('md');
 
+  private readonly triggerBtn = viewChild<ElementRef<HTMLButtonElement>>('triggerBtn');
+
   protected readonly open = signal(false);
   protected readonly positions = BELOW_START;
+  /** Overlay panel width, synced to the trigger so the option list matches the select's width. */
+  protected readonly triggerWidth = signal(0);
   protected readonly selectedLabel = computed(
     () => this.options().find((o) => o.value === this.value())?.label ?? '',
   );
+
+  /** Measure the trigger before opening so the overlay panel adopts its exact width. */
+  protected toggle(): void {
+    const el = this.triggerBtn()?.nativeElement;
+    if (el) this.triggerWidth.set(el.offsetWidth);
+    this.open.set(!this.open());
+  }
 
   protected choose(value: string): void {
     this.value.set(value);
