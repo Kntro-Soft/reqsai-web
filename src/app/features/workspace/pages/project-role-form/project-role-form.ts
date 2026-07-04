@@ -144,24 +144,26 @@ import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from 
                         </span>
                       </span>
                     </label>
-                    <span class="shrink-0 self-start text-xs tabular-nums text-muted-foreground">
-                      {{ group.selectedCount }}/{{ group.total }}
-                    </span>
-                    <button
-                      type="button"
-                      (click)="toggleCollapsed(group.resourceKey)"
-                      [attr.aria-expanded]="!group.collapsed"
-                      [attr.aria-label]="'projectRoleForm.toggleGroup' | transloco"
-                      [attr.data-testid]="'perm-group-toggle-' + group.resourceKey"
-                      class="grid h-7 w-7 shrink-0 cursor-pointer place-items-center self-start rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      <hlm-icon
-                        name="lucideChevronDown"
-                        size="15px"
-                        class="transition-transform"
-                        [class.-rotate-90]="group.collapsed"
-                      />
-                    </button>
+                    <div class="flex shrink-0 items-center gap-1 self-start">
+                      <span class="text-xs tabular-nums text-muted-foreground">
+                        {{ group.selectedCount }}/{{ group.total }}
+                      </span>
+                      <button
+                        type="button"
+                        (click)="toggleCollapsed(group.resourceKey)"
+                        [attr.aria-expanded]="!group.collapsed"
+                        [attr.aria-label]="'projectRoleForm.toggleGroup' | transloco"
+                        [attr.data-testid]="'perm-group-toggle-' + group.resourceKey"
+                        class="grid h-7 w-7 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <hlm-icon
+                          name="lucideChevronDown"
+                          size="15px"
+                          class="transition-transform"
+                          [class.-rotate-90]="group.collapsed"
+                        />
+                      </button>
+                    </div>
                   </div>
                   @if (!group.collapsed) {
                     <div class="grid gap-2 p-3 sm:grid-cols-2">
