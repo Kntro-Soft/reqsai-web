@@ -104,7 +104,7 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
                   <td class="py-3 pr-3 pl-4 align-top">
                     <span class="font-medium">{{ role.name }}</span>
                   </td>
-                  <td class="px-3 py-3">
+                  <td class="px-3 py-3 align-top">
                     <div class="flex flex-wrap gap-1">
                       @for (perm of role.permissions; track perm) {
                         <span
