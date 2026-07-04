@@ -86,7 +86,7 @@ export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
         </div>
       }
 
-      <div class="min-h-0 flex-1 overflow-y-auto p-2.5" #scroller>
+      <div class="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-2.5" #scroller>
         @switch (tab()) {
           @case ('stories') {
             @if (filteredStories().length === 0) {
