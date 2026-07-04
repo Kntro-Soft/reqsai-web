@@ -222,3 +222,15 @@ export interface AssignProjectMemberRequest {
 export interface UpdateProjectMemberRoleRequest {
   roleId: string;
 }
+
+/** A single "invite a new person to the project by email" row. */
+export interface ProjectInvitation {
+  email: string;
+  displayName: string;
+  roleId: string;
+}
+
+/** Batch invite new people (by email) directly onto a project role. */
+export interface InviteProjectMembersRequest {
+  invitations: ProjectInvitation[];
+}
