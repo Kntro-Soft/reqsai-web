@@ -72,6 +72,42 @@ export interface PageResponse<T> {
   };
 }
 
+// ---- AI suggestions (review flow) ----
+
+type SuggestionType = 'NEW_STORY' | 'UPDATE_STORY' | 'EDGE_CASE' | 'CLARIFYING_QUESTION';
+type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED';
+export type SuggestionPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface SuggestionResponse {
+  id: string;
+  sessionId: string;
+  projectId: string;
+  type: SuggestionType;
+  status: SuggestionStatus;
+  draftTitle: string | null;
+  draftRole: string | null;
+  draftAction: string | null;
+  draftBenefit: string | null;
+  draftPriority: SuggestionPriority | null;
+  draftStoryPoints: number | null;
+  relatedTopic: string | null;
+  targetStoryId: string | null;
+  question: string | null;
+  resolvedStoryId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Accept payload; every field optional — omitted/null keeps the original draft. */
+export interface AcceptSuggestionRequest {
+  editedTitle?: string;
+  editedRole?: string;
+  editedAction?: string;
+  editedBenefit?: string;
+  editedPriority?: SuggestionPriority;
+  editedStoryPoints?: number;
+}
+
 // ---- Realtime (STOMP topic /topic/sessions/{id}) ----
 
 export type SessionEventType =
@@ -85,7 +121,10 @@ export type SessionEventType =
   | 'PROCESSING'
   | 'COMPLETED'
   | 'FAILED'
-  | 'STORY_GENERATED';
+  | 'STORY_GENERATED'
+  | 'SUGGESTION_GENERATED'
+  | 'SUGGESTION_ACCEPTED'
+  | 'SUGGESTION_DISMISSED';
 
 interface SessionRealtimeBase {
   sessionId: string;
@@ -119,8 +158,26 @@ export interface SessionProcessingFailedMessage extends SessionRealtimeBase {
   reason: string;
 }
 
+export interface SessionSuggestionMessage extends SessionRealtimeBase {
+  type: 'SUGGESTION_GENERATED' | 'SUGGESTION_ACCEPTED' | 'SUGGESTION_DISMISSED';
+  suggestionId: string;
+  suggestionType: SuggestionType;
+  status: SuggestionStatus;
+  draftTitle: string | null;
+  draftRole: string | null;
+  draftAction: string | null;
+  draftBenefit: string | null;
+  draftPriority: SuggestionPriority | null;
+  draftStoryPoints: number | null;
+  relatedTopic: string | null;
+  targetStoryId: string | null;
+  question: string | null;
+  resolvedStoryId: string | null;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
   | SessionStoryGeneratedMessage
-  | SessionProcessingFailedMessage;
+  | SessionProcessingFailedMessage
+  | SessionSuggestionMessage;

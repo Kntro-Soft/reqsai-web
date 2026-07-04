@@ -5,6 +5,10 @@
 
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
+/* CDK Overlay structural styles — required so connected popovers (org/project
+ * switchers, user menu) position correctly and escape sidebar clipping. */
+@import '@angular/cdk/overlay-prebuilt.css';
+
 /*
  * ReqsAI design system — dark-first, navy canvas with a single assertive red
  * accent (see DESIGN.md). Light mode is supported but dark is the default.
@@ -16,9 +20,9 @@
     Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 
-  --radius: 0.75rem;
+  --radius: 0.375rem;
 
-  --background: #ffffff;
+  --background: #f7f8fa;
   --foreground: #050d1a;
   --card: #ffffff;
   --card-foreground: #050d1a;
@@ -33,16 +37,16 @@
   --accent: #fef2f2;
   --accent-foreground: #b91c1c;
   --destructive: #ef4444;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
+  --border: #dbe1ea;
+  --input: #dbe1ea;
   --ring: #ef4444;
-  --sidebar: #f8fafc;
+  --sidebar: #f2f4f7;
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #ef4444;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #fef2f2;
   --sidebar-accent-foreground: #b91c1c;
-  --sidebar-border: #e2e8f0;
+  --sidebar-border: #dbe1ea;
   --sidebar-ring: #ef4444;
 }
 
@@ -64,16 +68,16 @@
   --accent: #1a2b4a;
   --accent-foreground: #fecaca;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.12);
   --input: rgba(255, 255, 255, 0.16);
   --ring: #ef4444;
-  --sidebar: #03080f;
+  --sidebar: #070f1f;
   --sidebar-foreground: #cbd5e1;
   --sidebar-primary: #ef4444;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #0f2040;
   --sidebar-accent-foreground: #fecaca;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #ef4444;
 }
 
@@ -84,5 +88,137 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+  }
+}
+
+/* Motion: keep everything tasteful and reduced-motion-safe. The single guard at the
+ * bottom disables route view transitions and every keyframe we add app-wide. */
+@layer utilities {
+  /* Staggered fade-up for list/grid items. Add `.stagger-item` and set `--stagger-index`
+   * (via an inline style) on each child; the delay ramps up a little per item. */
+  .stagger-item {
+    animation: stagger-fade-up 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--stagger-index, 0) * 35ms);
+  }
+  @keyframes stagger-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Cross-fade the outgoing/incoming route snapshots (Chromium View Transitions). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Kill route view transitions and all app-level motion for users who ask for it. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .stagger-item {
+    animation: none !important;
+  }
+  /* Neutralize the button press-scale micro-interaction. */
+  [hlmBtn] {
+    transition-property: color, background-color !important;
+  }
+  [hlmBtn]:active {
+    transform: none !important;
+  }
+}
+
+@layer utilities {
+  /* App-shell ambient background (both themes). Used in place of bg-background on
+   * the shell root: a very subtle brand/navy radial glow in dark, plain in light. */
+  .app-ambient {
+    background-color: var(--background);
+  }
+  /* Light mode reads a touch flat, so give it a whisper of the same brand/navy
+   * glow (weaker than dark, still Geist-tasteful). */
+  :root:not(.dark) .app-ambient {
+    background-image:
+      radial-gradient(70rem 40rem at 15% -10%, rgba(239, 68, 68, 0.04), transparent 60%),
+      radial-gradient(60rem 40rem at 100% 0%, rgba(56, 89, 148, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+  .dark .app-ambient {
+    background-image:
+      radial-gradient(70rem 40rem at 15% -10%, rgba(239, 68, 68, 0.05), transparent 60%),
+      radial-gradient(60rem 40rem at 100% 0%, rgba(56, 89, 148, 0.1), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* Optional faint dot grid — add alongside .app-ambient for extra texture. */
+  .app-ambient-grid {
+    background-image: radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+  }
+  .dark .app-ambient-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  /* A yet-lighter dot grid for use as a full-app backdrop under cards/tables:
+   * subtle enough that it never competes with content or hurts readability. */
+  /* Faint brand-red constellation under the content — a subtle themed texture. */
+  .app-ambient-grid-subtle {
+    background-image: radial-gradient(rgba(239, 68, 68, 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+  }
+  .dark .app-ambient-grid-subtle {
+    background-image: radial-gradient(rgba(239, 68, 68, 0.09) 1px, transparent 1px);
+  }
+
+  /* Skeleton shimmer: a soft highlight sweep travelling across a muted block while
+   * content loads. Uses a masked gradient so it works on any --muted colour. Falls
+   * back to a plain static block when the user prefers reduced motion. */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--foreground) 8%, transparent),
+      transparent
+    );
+    animation: skeleton-sweep 1.5s ease-in-out infinite;
+  }
+  @keyframes skeleton-sweep {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer::after {
+      animation: none;
+      display: none;
+    }
+  }
+
+  /* Card elevation: a whisper-soft float in light, a lit top edge in dark. */
+  .card-elev {
+    box-shadow:
+      0 1px 2px 0 rgba(16, 24, 40, 0.04),
+      0 1px 3px 0 rgba(16, 24, 40, 0.03);
+  }
+  .dark .card-elev {
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
   }
 }

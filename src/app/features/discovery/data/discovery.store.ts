@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { DiscoveryApiService } from './discovery-api.service';
 import {
+  AcceptSuggestionRequest,
   CreateDiscoverySessionRequest,
   DiscoverySessionResponse,
   DisplayStory,
@@ -11,7 +12,9 @@ import {
   SessionRealtimeMessage,
   SessionStatus,
   SessionStoryGeneratedMessage,
+  SessionSuggestionMessage,
   SessionTranscriptSegmentMessage,
+  SuggestionResponse,
   UserStoryResponse,
 } from './discovery.models';
 
@@ -60,6 +63,9 @@ export class DiscoveryStore {
   private readonly _events = signal<LiveEvent[]>([]);
   private readonly _transcript = signal<SessionTranscriptSegmentMessage[]>([]);
   private readonly _stories = signal<DisplayStory[]>([]);
+  private readonly _suggestions = signal<SuggestionResponse[]>([]);
+  // Whole project backlog, used to resolve a suggestion's target story for the diff view.
+  private readonly _projectStories = signal<DisplayStory[]>([]);
 
   readonly sessions = this._sessions.asReadonly();
   readonly sessionsState = this._sessionsState.asReadonly();
@@ -67,6 +73,7 @@ export class DiscoveryStore {
   readonly events = this._events.asReadonly();
   readonly transcript = this._transcript.asReadonly();
   readonly stories = this._stories.asReadonly();
+  readonly suggestions = this._suggestions.asReadonly();
 
   loadSessions(projectId: string): void {
     this._sessionsState.set('loading');
@@ -97,6 +104,47 @@ export class DiscoveryStore {
     this.api.listSessionStories(sessionId).subscribe({
       next: (page) => this._stories.set(page.content.map(toDisplayStory)),
     });
+    // Pending AI suggestions (resilient: the endpoint may not be deployed yet).
+    this.api.listSuggestions(sessionId).subscribe({
+      next: (list) => this._suggestions.set(list),
+      error: () => this._suggestions.set([]),
+    });
+    // Project backlog, so an UPDATE_STORY/EDGE_CASE target resolves for the diff.
+    this.api.listProjectStories(projectId).subscribe({
+      next: (page) => this._projectStories.set(page.content.map(toDisplayStory)),
+      error: () => this._projectStories.set([]),
+    });
+  }
+
+  /** Resolves a story by id across the session's stories and the project backlog. */
+  findStory(id: string): DisplayStory | undefined {
+    return (
+      this._stories().find((s) => s.id === id) ?? this._projectStories().find((s) => s.id === id)
+    );
+  }
+
+  acceptSuggestion(
+    sessionId: string,
+    suggestionId: string,
+    request: AcceptSuggestionRequest,
+  ): Observable<SuggestionResponse> {
+    return this.api.acceptSuggestion(sessionId, suggestionId, request).pipe(
+      tap(() => {
+        this._suggestions.update((list) => list.filter((s) => s.id !== suggestionId));
+        // The accepted suggestion created/updated a story — refresh the session stories.
+        this.api.listSessionStories(sessionId).subscribe({
+          next: (page) => this._stories.set(page.content.map(toDisplayStory)),
+        });
+      }),
+    );
+  }
+
+  dismissSuggestion(sessionId: string, suggestionId: string): Observable<SuggestionResponse> {
+    return this.api
+      .dismissSuggestion(sessionId, suggestionId)
+      .pipe(
+        tap(() => this._suggestions.update((list) => list.filter((s) => s.id !== suggestionId))),
+      );
   }
 
   /** Uploads an audio file for transcription and reflects the returned session. */
@@ -130,6 +178,8 @@ export class DiscoveryStore {
     this._events.set([]);
     this._transcript.set([]);
     this._stories.set([]);
+    this._suggestions.set([]);
+    this._projectStories.set([]);
   }
 
   /** Applies an incoming realtime message to the live signals. */
@@ -140,7 +190,28 @@ export class DiscoveryStore {
     ]);
 
     if (message.type === 'TRANSCRIPT_SEGMENT') {
-      this._transcript.update((t) => [...t, message as SessionTranscriptSegmentMessage]);
+      const seg = message as SessionTranscriptSegmentMessage;
+      // Upsert by sequence: a hypothesis (isFinal=false) is replaced by its final.
+      this._transcript.update((t) =>
+        [...t.filter((s) => s.sequence !== seg.sequence), seg].sort(
+          (a, b) => a.sequence - b.sequence,
+        ),
+      );
+      return;
+    }
+    if (
+      message.type === 'SUGGESTION_GENERATED' ||
+      message.type === 'SUGGESTION_ACCEPTED' ||
+      message.type === 'SUGGESTION_DISMISSED'
+    ) {
+      const s = message as SessionSuggestionMessage;
+      if (s.type === 'SUGGESTION_GENERATED') {
+        this._suggestions.update((list) =>
+          list.some((x) => x.id === s.suggestionId) ? list : [...list, this.fromMessage(s)],
+        );
+      } else {
+        this._suggestions.update((list) => list.filter((x) => x.id !== s.suggestionId));
+      }
       return;
     }
     if (message.type === 'STORY_GENERATED') {
@@ -168,5 +239,27 @@ export class DiscoveryStore {
         c ? { ...c, status, processingError: error ?? c.processingError } : c,
       );
     }
+  }
+
+  private fromMessage(m: SessionSuggestionMessage): SuggestionResponse {
+    return {
+      id: m.suggestionId,
+      sessionId: m.sessionId,
+      projectId: '',
+      type: m.suggestionType,
+      status: m.status,
+      draftTitle: m.draftTitle,
+      draftRole: m.draftRole,
+      draftAction: m.draftAction,
+      draftBenefit: m.draftBenefit,
+      draftPriority: m.draftPriority,
+      draftStoryPoints: m.draftStoryPoints,
+      relatedTopic: m.relatedTopic,
+      targetStoryId: m.targetStoryId,
+      question: m.question,
+      resolvedStoryId: m.resolvedStoryId,
+      createdAt: m.occurredAt,
+      updatedAt: m.occurredAt,
+    };
   }
 }

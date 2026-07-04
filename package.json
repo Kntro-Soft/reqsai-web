@@ -10,6 +10,7 @@
     "test:ci": "ng test --watch=false",
     "lint": "ng lint",
     "knip": "knip",
+    "i18n:check": "node scripts/i18n-check.mjs",
     "format": "prettier --write \"src/**/*.{ts,html,css}\"",
     "e2e": "ng e2e",
     "e2e:ui": "playwright test --ui",
@@ -20,6 +21,7 @@
     "shots:org": "node scripts/seed-shots.mjs",
     "seed:rich": "node scripts/seed-rich.mjs",
     "shots:themes": "node scripts/theme-shots.mjs",
+    "shots:suggestions": "node scripts/suggestion-shots.mjs",
     "ux:check": "node scripts/ux-check.mjs"
   },
   "private": true,

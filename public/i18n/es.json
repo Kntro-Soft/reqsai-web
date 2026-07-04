@@ -5,7 +5,24 @@
   "common": {
     "cancel": "Cancelar",
     "create": "Crear",
-    "loading": "Cargando"
+    "loading": "Cargando",
+    "back": "Volver",
+    "remove": "Quitar"
+  },
+  "toast": {
+    "dismiss": "Descartar",
+    "changesSaved": "Cambios guardados.",
+    "saveError": "No se pudieron guardar los cambios.",
+    "memberRemoved": "Miembro eliminado.",
+    "memberDeactivated": "Miembro desactivado.",
+    "memberReactivated": "Miembro reactivado.",
+    "invitesSent": "Invitaciones enviadas.",
+    "invitationResent": "Invitación reenviada.",
+    "invitationAccepted": "Te has unido a {{org}}.",
+    "orgDeleted": "Organización eliminada.",
+    "orgLeft": "Has salido de la organización.",
+    "ownershipTransferred": "Propiedad transferida.",
+    "profileSaved": "Perfil actualizado."
   },
   "language": {
     "label": "Idioma",
@@ -20,16 +37,29 @@
     "stories": "Historias",
     "projectMembers": "Miembros del proyecto",
     "projectSettings": "Ajustes del proyecto",
-    "home": "Inicio",
+    "overview": "Resumen",
     "onboarding": "Crear organización",
     "projects": "Proyectos",
     "members": "Miembros",
     "settings": "Ajustes",
     "signIn": "Iniciar sesión",
     "signUp": "Crear cuenta",
+    "acceptInvitation": "Aceptar invitación",
     "verifyEmail": "Verificar correo",
     "forgotPassword": "Recuperar contraseña",
-    "resetPassword": "Nueva contraseña"
+    "resetPassword": "Nueva contraseña",
+    "account": "Cuenta",
+    "newProject": "Nuevo proyecto",
+    "general": "General",
+    "billing": "Facturación",
+    "integrations": "Integraciones",
+    "usage": "Uso",
+    "danger": "Peligro",
+    "profile": "Perfil",
+    "security": "Seguridad",
+    "appearance": "Apariencia",
+    "notifications": "Notificaciones",
+    "tokens": "Tokens de API"
   },
   "nav": {
     "projects": "Proyectos",
@@ -40,20 +70,105 @@
     "newSession": "Nueva sesión",
     "projectFallback": "Proyecto",
     "projectAria": "Navegación del proyecto",
-    "orgAria": "Navegación de la organización"
+    "orgAria": "Navegación de la organización",
+    "accountAria": "Navegación de la cuenta",
+    "overview": "Resumen",
+    "allProjects": "Todos los proyectos",
+    "find": "Buscar…",
+    "openMenu": "Abrir menú",
+    "soon": "Pronto",
+    "account": "Cuenta",
+    "general": "General",
+    "billing": "Facturación",
+    "integrations": "Integraciones",
+    "usage": "Uso",
+    "danger": "Peligro",
+    "profile": "Perfil",
+    "security": "Seguridad",
+    "appearance": "Apariencia",
+    "notifications": "Notificaciones",
+    "tokens": "Tokens de API"
+  },
+  "comingSoon": {
+    "title": "Próximamente",
+    "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
   },
   "userMenu": {
     "ariaLabel": "Menú de usuario",
     "personalAccount": "Cuenta personal",
+    "theme": "Tema",
     "organization": "Organización",
     "createOrganization": "Crear organización",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "upgrade": "Mejorar plan",
+    "accountSettings": "Ajustes de cuenta"
   },
   "orgSwitcher": {
     "ariaLabel": "Cambiar organización",
     "organizations": "Organizaciones",
     "createOrganization": "Crear organización",
-    "fallbackName": "Organización"
+    "fallbackName": "Organización",
+    "search": "Buscar organización…",
+    "empty": "No se encontraron organizaciones."
+  },
+  "projectSwitcher": {
+    "ariaLabel": "Cambiar proyecto",
+    "search": "Buscar proyecto…",
+    "empty": "No se encontraron proyectos.",
+    "createProject": "Crear proyecto"
+  },
+  "commandPalette": {
+    "open": "Abrir paleta de comandos",
+    "placeholder": "Buscar o ir a…",
+    "empty": "No se encontraron resultados.",
+    "recent": "Recientes",
+    "groups": {
+      "actions": "Acción",
+      "organizations": "Organización",
+      "projects": "Proyecto",
+      "stories": "Historia",
+      "members": "Miembro",
+      "glossary": "Glosario",
+      "document": "Documento"
+    },
+    "actions": {
+      "newProject": "Nuevo proyecto",
+      "members": "Miembros",
+      "settings": "Ajustes",
+      "account": "Cuenta",
+      "toggleTheme": "Cambiar tema"
+    }
+  },
+  "theme": {
+    "system": "Sistema",
+    "light": "Claro",
+    "dark": "Oscuro"
+  },
+  "overview": {
+    "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
+  },
+  "account": {
+    "title": "Cuenta",
+    "subtitle": "Gestiona tu perfil, contraseña y preferencias.",
+    "avatar": "Avatar",
+    "avatarDesc": "PNG, JPG, WEBP o SVG, hasta 1 MB.",
+    "avatarHint": "El avatar es opcional pero muy recomendable.",
+    "avatarUploading": "Subiendo…",
+    "changeAvatar": "Cambiar avatar",
+    "avatarTooLarge": "La imagen es muy grande (máx. 1 MB).",
+    "profile": "Perfil",
+    "profileDesc": "Ingresa tu nombre, o un nombre visible con el que te sientas cómodo.",
+    "password": "Contraseña",
+    "passwordDesc": "Cambia la contraseña con la que inicias sesión.",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Nueva contraseña",
+    "passwordSaved": "Contraseña actualizada.",
+    "passwordWrong": "Tu contraseña actual es incorrecta.",
+    "appearance": "Apariencia",
+    "appearanceDesc": "Tema e idioma para este dispositivo.",
+    "save": "Guardar",
+    "saved": "Guardado.",
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo."
   },
   "auth": {
     "brand": {
@@ -161,6 +276,8 @@
     "subtitle": "Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de descubrimiento.",
     "name": "Nombre de la organización",
     "language": "Idioma de reuniones",
+    "advanced": "Opciones avanzadas",
+    "languageHint": "Idioma por defecto de las reuniones. Autodetectado — puedes cambiarlo.",
     "submit": "Crear y continuar",
     "errorNameInUse": "Ese nombre ya está en uso. Prueba con otro.",
     "errorGeneric": "No se pudo crear la organización. Intenta de nuevo."
@@ -168,15 +285,24 @@
   "projects": {
     "title": "Proyectos",
     "subtitle": "Gestiona los proyectos de tu organización y sus sesiones de descubrimiento.",
+    "searchPlaceholder": "Buscar proyectos…",
+    "addNew": "Añadir",
+    "viewCards": "Vista de tarjetas",
+    "viewTable": "Vista de tabla",
+    "noMatches": "Ningún proyecto coincide con tu búsqueda.",
+    "noDomain": "Sin dominio",
+    "colName": "Nombre",
+    "colTech": "Arquitectura",
+    "colDomain": "Dominio",
     "new": "Nuevo proyecto",
     "formTitle": "Nuevo proyecto",
     "formSubtitle": "Define el stack para afinar las sugerencias de la IA.",
     "name": "Nombre",
     "description": "Descripción",
-    "programmingLanguages": "Lenguajes (coma)",
-    "frameworks": "Frameworks (coma)",
-    "clientPlatforms": "Plataformas (coma)",
-    "databases": "Bases de datos (coma)",
+    "programmingLanguages": "Lenguajes de programación",
+    "frameworks": "Frameworks",
+    "clientPlatforms": "Plataformas cliente",
+    "databases": "Bases de datos",
     "architecture": "Arquitectura",
     "domain": "Dominio",
     "createCta": "Crear proyecto",
@@ -186,6 +312,12 @@
     "errorNameInUse": "Revisa los datos: el nombre podría estar repetido.",
     "errorGeneric": "No se pudo crear el proyecto. Intenta de nuevo."
   },
+  "projectCreate": {
+    "title": "Nuevo proyecto",
+    "subtitle": "Dale un nombre. Puedes agregar el perfil técnico luego — ayuda a la IA pero es opcional.",
+    "advanced": "Opciones avanzadas",
+    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias."
+  },
   "orgPicker": {
     "title": "Elige una organización",
     "subtitle": "Tienes acceso a varias. Selecciona con cuál quieres continuar.",
@@ -194,37 +326,145 @@
     "createTitle": "Crear organización",
     "createSubtitle": "Empieza un nuevo espacio de trabajo"
   },
-  "terms": {
-    "title": "Términos y Condiciones",
-    "subtitle": "Para continuar, revisa y acepta nuestros términos de servicio.",
-    "p1": "Al usar Reqs-AI aceptas estos términos. La plataforma procesa transcripciones de reuniones y genera artefactos de requisitos asistidos por IA; eres responsable del contenido que subes y de contar con los permisos necesarios.",
-    "p2Label": "Privacidad de datos.",
-    "p2": "Tu información se aísla por organización (tenant) y no se comparte con terceros sin tu consentimiento. Puedes solicitar la eliminación de tus datos en cualquier momento.",
-    "p3Label": "Uso aceptable.",
-    "p3": "No debes usar el servicio para fines ilegales ni cargar información que infrinja derechos de terceros. El contenido generado por IA es una sugerencia y debe revisarse antes de usarse.",
-    "p4Label": "Disponibilidad.",
-    "p4": "Hacemos esfuerzos razonables por mantener el servicio disponible, pero se ofrece «tal cual». Estos términos pueden actualizarse; te pediremos aceptarlos de nuevo cuando cambien.",
-    "accept": "He leído y acepto los Términos y Condiciones y la Política de Privacidad de Reqs-AI.",
+  "legal": {
+    "tabTerms": "Términos de Servicio",
+    "tabPrivacy": "Política de Privacidad",
+    "lastUpdated": "Última actualización: {{date}}",
+    "step": "{{current}} de {{total}}",
+    "next": "Siguiente: Política de Privacidad",
+    "back": "Volver a Términos",
     "submit": "Aceptar y continuar",
+    "signOut": "Cerrar sesión",
     "errorSessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
-    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo."
-  },
-  "home": {
-    "greetingNamed": "Hola, {{name}}",
-    "greetingAnon": "Hola, bienvenido",
-    "sessionActive": "Tu sesión está activa.",
-    "onboardTitle": "Crea tu organización",
-    "workspaceTitle": "Espacio de trabajo",
-    "onboardDesc": "Aún no perteneces a ninguna organización. Crea una para empezar.",
-    "workspaceDesc": "Ya tienes una organización activa. Gestiona tus proyectos.",
-    "userLabel": "Usuario",
-    "orgLabel": "Organización",
-    "createOrg": "Crear organización",
-    "viewProjects": "Ver proyectos"
+    "errorGeneric": "No se pudo registrar la aceptación. Intenta de nuevo.",
+    "terms": {
+      "sections": [
+        {
+          "heading": "1. Aceptación y elegibilidad",
+          "body": "Al crear una cuenta o usar {{tradeName}} aceptas estos Términos. Debes tener al menos 18 años y, si aceptas en nombre de una organización, confirmas que estás autorizado para obligarla."
+        },
+        {
+          "heading": "2. Definiciones",
+          "body": "«Servicio» es la plataforma {{tradeName}}; «Organización» el espacio de trabajo al que perteneces; «Contenido» los datos que envías, incluidos el audio y las transcripciones de reuniones; «Datos de Reunión» cualquier grabación o transcripción procesada por el Servicio."
+        },
+        {
+          "heading": "3. El servicio y la licencia",
+          "body": "{{tradeName}} te concede una licencia limitada, revocable y no exclusiva para usar el Servicio para capturar reuniones y generar artefactos de requisitos. No puedes hacer ingeniería inversa, revenderlo, abusar de él ni usarlo con fines ilícitos."
+        },
+        {
+          "heading": "4. Cuentas y organizaciones",
+          "body": "Eres responsable de la exactitud de los datos de tu cuenta, de proteger tus credenciales y de las acciones de los miembros que invites a tu Organización."
+        },
+        {
+          "heading": "5. Grabación de reuniones y consentimiento",
+          "body": "Declaras y garantizas que, antes de grabar o transcribir cualquier reunión, has obtenido todos los consentimientos exigidos por la ley de cada participante — algunas jurisdicciones requieren el consentimiento de todas las partes. {{tradeName}} ofrece un indicador de grabación, pero tu Organización es la única responsable de la captura lícita e indemnizará a {{name}} por reclamaciones derivadas del incumplimiento de esta sección."
+        },
+        {
+          "heading": "6. Resultados generados por IA",
+          "body": "Las historias de usuario, sugerencias y demás resultados de IA se generan automáticamente, pueden ser inexactos o incompletos y se proporcionan para tu revisión. No son asesoría profesional, legal ni de negocio; revísalos antes de confiar en ellos."
+        },
+        {
+          "heading": "7. Tu contenido y propiedad intelectual",
+          "body": "Conservas la propiedad de tu Contenido y concedes a {{tradeName}} una licencia limitada para procesarlo únicamente para prestar el Servicio. {{name}} conserva todos los derechos sobre la plataforma, el software y las marcas."
+        },
+        {
+          "heading": "8. Subprocesadores de IA de terceros",
+          "body": "Para prestar el Servicio usamos proveedores de IA de terceros — Deepgram (voz a texto), Google Gemini (generación) y OpenAI (embeddings). Los detalles están en nuestra Política de Privacidad."
+        },
+        {
+          "heading": "9. Entrenamiento de modelos",
+          "body": "No usamos tu Contenido, ni los datos derivados de él, para entrenar los modelos de aprendizaje automático de {{tradeName}} ni de nuestros subprocesadores."
+        },
+        {
+          "heading": "10. Tarifas y suscripción",
+          "body": "Los planes de pago, cuando se ofrezcan, se facturan de forma recurrente y se renuevan hasta su cancelación. Podemos cambiar los precios con aviso previo; el Servicio puede ofrecerse de forma gratuita total o parcialmente."
+        },
+        {
+          "heading": "11. Terminación y exportación de datos",
+          "body": "Puedes dejar de usar el Servicio en cualquier momento. Al terminar, dispondrás de un plazo razonable para exportar tus datos antes de su eliminación, sujeto a las reglas de retención de la Política de Privacidad."
+        },
+        {
+          "heading": "12. Garantías y limitación de responsabilidad",
+          "body": "El Servicio se ofrece «tal cual», sin garantías de ningún tipo. En la máxima medida permitida por la ley, {{name}} no se responsabiliza por daños indirectos o consecuentes, y su responsabilidad total se limita a los importes que hayas pagado en los doce meses previos."
+        },
+        {
+          "heading": "13. Cambios en estos Términos",
+          "body": "Podemos actualizar estos Términos; cuando cambie su contenido sustancial te pediremos aceptar la nueva versión. El uso continuado tras una actualización constituye aceptación."
+        },
+        {
+          "heading": "14. Ley aplicable",
+          "body": "Estos Términos se rigen por las leyes de {{jurisdiction}}, y cualquier disputa se somete a los tribunales competentes de {{jurisdiction}}."
+        },
+        {
+          "heading": "15. Contacto",
+          "body": "Las preguntas sobre estos Términos pueden enviarse a {{email}}."
+        }
+      ]
+    },
+    "privacy": {
+      "sections": [
+        {
+          "heading": "1. Quiénes somos",
+          "body": "{{name}} ({{address}}) es el responsable de los datos personales tratados a través de {{tradeName}}. Puedes contactarnos sobre privacidad en {{email}}."
+        },
+        {
+          "heading": "2. Datos que recopilamos",
+          "body": "Datos de la cuenta (nombre, correo), el audio y las transcripciones de reuniones que envías, los artefactos de requisitos y embeddings generados a partir de ellos, y datos técnicos como dirección IP, dispositivo y registros de uso."
+        },
+        {
+          "heading": "3. Finalidades y bases legales",
+          "body": "Tratamos los datos para prestar el Servicio (ejecución de un contrato), mantenerlo seguro (interés legítimo), cumplir la ley y — cuando se graba a terceros — sobre la base del consentimiento que eres responsable de obtener."
+        },
+        {
+          "heading": "4. Procesamiento de IA y subprocesadores",
+          "body": "El audio y el texto son procesados por Deepgram (voz a texto), Google Gemini (generación) y OpenAI (embeddings) estrictamente para prestar el Servicio. Ni ellos ni {{tradeName}} usan tus datos para entrenar modelos."
+        },
+        {
+          "heading": "5. Transferencias internacionales",
+          "body": "Algunos subprocesadores operan fuera de tu país, por lo que tus datos pueden tratarse en el extranjero con las garantías adecuadas."
+        },
+        {
+          "heading": "6. Retención",
+          "body": "La retención de audio y transcripciones es configurable por Organización (días de retención de audio; -1 los conserva hasta que los elimines). Los demás datos se conservan mientras tu cuenta esté activa y según lo exija la ley."
+        },
+        {
+          "heading": "7. Tus derechos",
+          "body": "Conforme a la ley aplicable puedes acceder, rectificar, eliminar, portar u oponerte al tratamiento de tus datos y retirar tu consentimiento. Escribe a {{email}} para ejercerlos; también puedes reclamar ante tu autoridad de protección de datos."
+        },
+        {
+          "heading": "8. Seguridad",
+          "body": "Protegemos los datos con cifrado en tránsito y en reposo, controles de acceso y un aislamiento estricto por Organización (un esquema de base de datos separado por inquilino). Te notificaremos cualquier brecha según lo exija la ley."
+        },
+        {
+          "heading": "9. Cookies y almacenamiento local",
+          "body": "Solo guardamos lo que la app necesita para funcionar — la gestión de sesión y tus preferencias de tema e idioma. No usamos cookies publicitarias."
+        },
+        {
+          "heading": "10. Menores",
+          "body": "El Servicio no está dirigido a menores y está destinado a usuarios de 18 años o más."
+        },
+        {
+          "heading": "11. Cambios en esta Política",
+          "body": "Podemos actualizar esta Política; publicaremos la nueva fecha de vigencia y, cuando el cambio sea relevante, te lo notificaremos."
+        },
+        {
+          "heading": "12. Acuerdo de Tratamiento de Datos",
+          "body": "Las Organizaciones que actúan como responsables del tratamiento pueden solicitar un Acuerdo de Tratamiento de Datos (DPA) escribiendo a {{email}}."
+        }
+      ]
+    }
   },
   "members": {
     "title": "Miembros",
     "subtitle": "Gestiona quién tiene acceso a esta organización y con qué rol.",
+    "inviteTitle": "Invitar miembros",
+    "inviteDesc": "Agrega personas por correo y elige su rol.",
+    "tabActive": "Miembros",
+    "tabPending": "Invitaciones pendientes",
+    "tabInactive": "Inactivos",
+    "emptyPending": "No hay invitaciones pendientes.",
+    "emptyInactive": "No hay miembros inactivos.",
+    "loadError": "No se pudieron cargar los miembros.",
     "invite": "Invitar miembro",
     "fieldEmail": "Correo",
     "fieldName": "Nombre",
@@ -232,8 +472,34 @@
     "placeholderEmail": "persona@empresa.com",
     "placeholderName": "Nombre visible",
     "inviteSubmit": "Invitar",
+    "addMore": "Agregar más",
+    "removeInviteAria": "Quitar esta fila de invitación",
+    "filterPlaceholder": "Filtrar por nombre o correo…",
+    "filterAllRoles": "Todos los roles",
+    "filterRoleAria": "Filtrar por rol",
+    "sortAria": "Ordenar miembros",
+    "sortRecent": "Recientes",
+    "sortName": "Nombre",
+    "menuAria": "Acciones del miembro",
+    "resendInvite": "Reenviar invitación",
+    "deactivate": "Desactivar miembro",
+    "reactivate": "Reactivar miembro",
+    "removeFromOrg": "Quitar de la organización",
     "you": "Tú",
     "removeAria": "Quitar miembro",
+    "deactivateTitle": "Desactivar miembro",
+    "reactivateTitle": "Reactivar miembro",
+    "deactivateBefore": "¿Desactivar a",
+    "deactivateAfter": "? Perderá el acceso a la organización hasta que lo reactives.",
+    "reactivateBefore": "¿Reactivar a",
+    "reactivateAfter": "? Recuperará el acceso a la organización.",
+    "removeTitle": "Quitar de la organización",
+    "removeBefore": "Esto quitará a",
+    "removeAfter": "de la organización y revocará su acceso.",
+    "removePhrase": "quitar miembro",
+    "removeConfirmName": "Para confirmar, escribe \"{{name}}\"",
+    "removeConfirmPhrase": "Para confirmar, escribe {{phrase}}",
+    "removeWarning": "Esta acción revoca el acceso de {{name}} a la organización.",
     "emptyTitle": "Aún no has invitado a nadie",
     "emptyBody": "Invita a tu equipo para colaborar en esta organización.",
     "errorAlreadyInvited": "Esa persona ya está invitada.",
@@ -249,17 +515,93 @@
       "INACTIVE": "Inactivo"
     }
   },
+  "invitations": {
+    "valid": {
+      "title": "Has recibido una invitación",
+      "subtitle": "Únete al equipo y empieza a colaborar en Reqs-AI.",
+      "invitedTo": "Te han invitado a unirte a",
+      "asRole": "como",
+      "by": "invitado por",
+      "forEmail": "Esta invitación es para",
+      "accept": "Aceptar invitación",
+      "acceptError": "No se pudo aceptar la invitación. Inténtalo de nuevo.",
+      "signIn": "Inicia sesión para aceptar",
+      "createAccount": "Crear una cuenta",
+      "signUpNote": "Regístrate con ese correo y verifícalo: te añadiremos a la organización automáticamente."
+    },
+    "wrongAccount": {
+      "title": "Cuenta incorrecta",
+      "body": "Has iniciado sesión como {{yourEmail}}, pero esta invitación es para {{inviteEmail}}. Cierra sesión y vuelve a entrar con la cuenta invitada.",
+      "signOut": "Cerrar sesión"
+    },
+    "accepted": {
+      "title": "Invitación ya aceptada",
+      "body": "Ya eres miembro de esta organización.",
+      "goToApp": "Ir a la aplicación"
+    },
+    "expired": {
+      "title": "Esta invitación ha caducado",
+      "body": "Pide a un administrador que la reenvíe."
+    },
+    "invalid": {
+      "title": "Esta invitación ya no es válida",
+      "body": "Puede que se haya revocado o reemplazado. Pide una nueva a un administrador."
+    },
+    "notFound": {
+      "title": "Invitación no encontrada",
+      "body": "Este enlace de invitación no es válido. Revisa el enlace o solicita uno nuevo."
+    }
+  },
   "orgSettings": {
     "title": "Ajustes",
     "subtitle": "Configura tu organización y los valores por defecto de las reuniones.",
+    "logo": "Logo de la organización",
+    "logoDesc": "Haz clic en el logo para subir una imagen propia (PNG, JPG, WEBP o SVG, máx 1 MB).",
+    "logoUpload": "Subir un nuevo logo",
+    "logoUploading": "Subiendo…",
+    "logoHint": "El logo es opcional pero muy recomendable.",
+    "logoError": "No se pudo usar esa imagen. Prueba con otro archivo.",
+    "orgId": "ID de la organización",
+    "orgIdDesc": "Usa este identificador al contactar soporte o llamar a la API.",
+    "copyId": "Copiar ID de la organización",
+    "transfer": "Transferir propiedad",
+    "transferDesc": "Cede esta organización a otro miembro. Pasarás a ser administrador.",
+    "transferCta": "Transferir",
+    "transferEmpty": "Invita a otro miembro primero para transferir la propiedad.",
+    "delete": "Eliminar organización",
+    "deleteDesc": "Elimina permanentemente esta organización y todos sus datos. No se puede deshacer.",
+    "deleteHint": "Esta acción es irreversible.",
+    "deleteConfirm": "Sí, eliminar",
+    "leave": "Salir de la organización",
+    "leaveDesc": "Renuncia a tu acceso a esta organización. El propietario debe transferir la propiedad antes de salir.",
+    "leaveConfirm": "Sí, salir",
     "name": "Nombre de la organización",
+    "nameDesc": "El nombre visible de tu organización.",
+    "nameHint": "Usa máximo 150 caracteres.",
     "meetingLanguage": "Idioma de reuniones",
+    "languageDesc": "Idioma por defecto de las nuevas sesiones de descubrimiento.",
     "audioRetention": "Retención de audio (días)",
     "audioRetentionHint": "Usa -1 para conservar sin límite.",
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
     "errorValidation": "Revisa los datos e intenta de nuevo.",
-    "errorGeneric": "No se pudieron guardar los cambios."
+    "errorGeneric": "No se pudieron guardar los cambios.",
+    "transferModalTitle": "Transferir propiedad",
+    "transferModalBodyBefore": "Estás a punto de transferir",
+    "transferModalBodyAfter": "a otro miembro.",
+    "transferTo": "Transferir a",
+    "transferPlaceholder": "Selecciona un miembro…",
+    "transferSearch": "Buscar miembros…",
+    "transferSearchEmpty": "Ningún miembro coincide con tu búsqueda.",
+    "deleteModalTitle": "Eliminar organización",
+    "deleteModalBodyBefore": "Esto eliminará permanentemente",
+    "deleteModalBodyAfter": "y todos sus datos (miembros, proyectos, sesiones…).",
+    "deleteConfirmName": "Para confirmar, escribe \"{{org}}\"",
+    "deleteConfirmPhrase": "Para confirmar, escribe {{phrase}}",
+    "deletePhrase": "eliminar mi organización",
+    "deleteWarning": "Eliminar {{org}} no se puede deshacer.",
+    "leaveModalTitle": "Salir de la organización",
+    "leaveModalBody": "Perderás el acceso a {{org}}. Esto no se puede deshacer a menos que te vuelvan a invitar."
   },
   "projectSettings": {
     "title": "Ajustes",
@@ -270,13 +612,68 @@
     "errorGeneric": "No se pudieron guardar los cambios."
   },
   "projectMembers": {
-    "title": "Miembros",
-    "subtitle": "Quién de la organización trabaja en este proyecto.",
+    "title": "Miembros y roles",
+    "subtitle": "Define los roles del proyecto y asigna personas de tu organización.",
     "loading": "Cargando…",
     "loadError": "No se pudieron cargar los miembros.",
+    "rolesTitle": "Roles",
+    "rolesDesc": "Los roles agrupan los permisos que tiene un miembro en este proyecto.",
+    "rolesEmpty": "Aún no hay roles. Crea uno para empezar a asignar miembros.",
+    "addRole": "Nuevo rol",
+    "roleName": "Nombre del rol",
+    "roleNamePlaceholder": "p. ej. Analista líder",
+    "permissionsLabel": "Permisos",
+    "noPermissions": "Sin permisos",
+    "editRoleAria": "Editar rol",
+    "deleteRoleAria": "Eliminar rol",
+    "errorRoleSave": "No se pudo guardar el rol. Intenta de nuevo.",
+    "errorRoleNameInUse": "Ya existe un rol con ese nombre.",
+    "errorRoleDelete": "No se pudo eliminar el rol. Intenta de nuevo.",
+    "errorRoleInUse": "Este rol está asignado a miembros. Reasígnalos primero.",
+    "assignTitle": "Miembros del proyecto",
+    "assignDesc": "Asigna miembros de la organización a un rol del proyecto.",
+    "fieldMember": "Miembro",
+    "fieldRole": "Rol",
+    "assign": "Asignar",
+    "errorAssign": "No se pudo asignar al miembro. Intenta de nuevo.",
+    "removeAria": "Quitar miembro",
     "emptyTitle": "Sin miembros asignados",
     "emptyBody": "Asigna personas de tu organización para que colaboren en este proyecto.",
     "fallbackName": "Miembro"
+  },
+  "permissions": {
+    "READ_PROJECT": {
+      "label": "Ver proyecto",
+      "desc": "Ver el proyecto, sus sesiones e historias."
+    },
+    "WRITE_PROJECT": {
+      "label": "Editar proyecto",
+      "desc": "Editar los datos y el contenido del proyecto."
+    },
+    "MANAGE_MEMBERS": {
+      "label": "Gestionar miembros",
+      "desc": "Asignar y quitar miembros del proyecto."
+    },
+    "MANAGE_ROLES": {
+      "label": "Gestionar roles",
+      "desc": "Crear, editar y eliminar roles del proyecto."
+    },
+    "UPLOAD_DOCUMENTS": {
+      "label": "Subir documentos",
+      "desc": "Subir documentos de referencia al proyecto."
+    },
+    "MANAGE_GLOSSARY": {
+      "label": "Gestionar glosario",
+      "desc": "Mantener el glosario del proyecto."
+    },
+    "RUN_DISCOVERY": {
+      "label": "Ejecutar descubrimiento",
+      "desc": "Iniciar y ejecutar sesiones de descubrimiento."
+    },
+    "MANAGE_INTEGRATIONS": {
+      "label": "Gestionar integraciones",
+      "desc": "Configurar las integraciones del proyecto."
+    }
   },
   "stories": {
     "title": "Historias",

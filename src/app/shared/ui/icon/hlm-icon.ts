@@ -9,6 +9,9 @@ import { cn } from '../../utils/cn';
   selector: 'hlm-icon',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIcon],
+  // inline-flex on the host so the icon centers within line boxes instead of sitting on the text
+  // baseline (which made it look pushed up inside flex buttons).
+  host: { class: 'inline-flex items-center justify-center' },
   template: `<ng-icon [name]="name()" [size]="size()" [class]="computedClass()" />`,
 })
 export class HlmIcon {

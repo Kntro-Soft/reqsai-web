@@ -13,6 +13,35 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **UI — Vercel/Geist redesign & design system** (`feature/ui-redesign`): dark-first navy theme with a
+  single red accent, reduced global radius (`--radius: 0.375rem`), circular logos across the app,
+  avatar monogram fallback, an interactive animated backdrop (cursor-following red light + idle drift),
+  a faint brand-tinted dot grid, reduced-motion-safe route view transitions and micro-interactions, and
+  shared building blocks: `app-modal`, toast notifications, skeleton loaders, `chip-input`,
+  `inline-entity` (small logo + name inline) and a shared chrome-less `create-page-header`.
+- **UI — global command palette (⌘K)** (`feature/ui-redesign`): fuzzy search with grouped results and
+  recents, extracted into a reusable `CommandRegistry`, wired to the backend global search
+  (`GET /api/search`) surfacing project, organization, member, glossary-term and document hits.
+- **Workspace — contextual app shell** (`feature/ui-redesign`): sidebar + top bar with contextual
+  sub-navigations (org settings / project settings / account), a split organization switcher and a
+  project switcher showing real logos, a dynamic clickable breadcrumb, an OS-aware ⌘K/Ctrl-K shortcut,
+  and nested `settings/*` · `account/*` · `projects/:id/settings/*` routes.
+- **Workspace — members management** (`feature/ui-redesign`): always-visible invite card with batch
+  invite, Active/Pending/Inactive tabs, member avatars, resend-invitation, deactivate/reactivate and
+  inline role change. Regular members get a read-only roster (role-gated), the organization owner is
+  shown to everyone, and destructive actions use confirmation modals (deactivate/reactivate;
+  type-to-confirm remove) with the member's logo inline.
+- **Workspace — organization & project settings** (`feature/ui-redesign`): per-field save cards backed
+  by PATCH (Save disabled until the field changes), a danger zone (transfer / delete / leave) rendered
+  as modals — searchable transfer picker with avatars and a double type-to-confirm delete — plus chip
+  inputs and logo upload.
+- **Workspace — projects dashboard** (`feature/ui-redesign`): grid/list view toggle, a dedicated
+  chrome-less new-project page, richer project cards (architecture + full tech stack) and a full-height
+  empty state.
+- **Account settings** (`feature/ui-redesign`): profile, password and appearance, styled to match
+  organization settings.
+- **Invitations** (`feature/ui-redesign`): invitation API client + models and a chrome-less
+  accept-invitation page (`/invitations/accept`) with sign-in redirect and sign-up email prefill.
 - **UI — Lucide icon library** (`feature/ui-icon-library`): replaced hand-pasted inline SVG icon
   paths with [`@ng-icons/lucide`](https://github.com/ng-icons/ng-icons), wrapped in a vendored
   `HlmIcon` (`shared/ui/icon`, Spartan-style, `cn`-based, `currentColor`). `NavIcon` becomes a thin
@@ -62,6 +91,15 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 - **Dependency security audit** (`bun audit --audit-level=critical`) via weekly GitHub Actions
   workflow; blocks on Critical CVEs, reports lower severities.
 - **Docker** multi-stage `Dockerfile` (Bun build → nginx Alpine) and `compose.yaml`.
+
+### Changed
+
+- **UI — Vercel/Geist visual overhaul of existing pages** (`feature/ui-redesign`): redesigned the
+  organization members list into a compact table with a styled role select, organization settings into
+  per-field cards, the terms & privacy gate into a full-page scroll-to-accept flow, and
+  unified/centered the headers of the create-organization and new-project pages. i18n kept at strict
+  EN/ES key parity (CI gate); removed `transloco-keys-manager` and silenced startup
+  "Missing translation" warnings.
 
 ---
 

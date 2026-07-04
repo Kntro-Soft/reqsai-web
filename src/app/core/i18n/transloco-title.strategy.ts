@@ -25,9 +25,24 @@ export class TranslocoTitleStrategy extends TitleStrategy {
   }
 
   private apply(): void {
-    const app = this.transloco.translate('app.title');
-    this.title.setTitle(
-      this.currentKey ? `${this.transloco.translate(this.currentKey)} · ${app}` : app,
-    );
+    const lang = this.transloco.getActiveLang();
+    if (!lang) return;
+
+    try {
+      const translation = this.transloco.getTranslation(lang);
+      if (!translation || Object.keys(translation).length === 0) {
+        return;
+      }
+    } catch {
+      return;
+    }
+
+    const app = this.transloco.translate<string>('app.title');
+    if (app === 'app.title') {
+      return;
+    }
+
+    const pageTitle = this.currentKey ? this.transloco.translate<string>(this.currentKey) : null;
+    this.title.setTitle(pageTitle && pageTitle !== this.currentKey ? `${pageTitle} · ${app}` : app);
   }
 }
