@@ -35,8 +35,6 @@
   "titles": {
     "terms": "Términos y Condiciones",
     "organizations": "Tus organizaciones",
-    "sessions": "Sesiones",
-    "session": "Sesión",
     "stories": "Historias",
     "projectMembers": "Miembros del proyecto",
     "projectRoles": "Roles del proyecto",
@@ -65,16 +63,17 @@
     "notifications": "Notificaciones",
     "tokens": "Tokens de API",
     "newRole": "Nuevo rol",
-    "editRole": "Editar rol"
+    "editRole": "Editar rol",
+    "discovery": "Discovery",
+    "history": "Historial de sesiones"
   },
   "nav": {
     "projects": "Proyectos",
-    "sessions": "Sesiones",
+    "sessions": "Discovery",
     "stories": "Historias",
     "members": "Miembros",
     "roles": "Roles",
     "settings": "Ajustes",
-    "newSession": "Nueva sesión",
     "projectFallback": "Proyecto",
     "projectAria": "Navegación del proyecto",
     "orgAria": "Navegación de la organización",
@@ -251,31 +250,6 @@
       "resent": "Te reenviamos el correo de verificación.",
       "resend": "Reenviar correo",
       "backToSignIn": "Volver a iniciar sesión"
-    }
-  },
-  "sessions": {
-    "title": "Sesiones de descubrimiento",
-    "subtitle": "Captura reuniones y genera historias de usuario con IA en tiempo real.",
-    "new": "Nueva sesión",
-    "formTitle": "Nueva sesión",
-    "fieldTitle": "Título",
-    "titlePlaceholder": "Sprint 24 — Elicitación",
-    "fieldLanguage": "Idioma",
-    "loadError": "No se pudieron cargar las sesiones.",
-    "emptyTitle": "Aún no hay sesiones",
-    "emptyBody": "Crea una sesión para empezar a capturar requisitos.",
-    "createCta": "Crear sesión",
-    "createdRelative": "creada",
-    "errorValidation": "Revisa los datos de la sesión.",
-    "errorCreate": "No se pudo crear la sesión. Intenta de nuevo.",
-    "status": {
-      "DRAFT": "Borrador",
-      "RECORDING": "Grabando",
-      "PAUSED": "Pausada",
-      "STOPPED": "Detenida",
-      "PROCESSING": "Procesando",
-      "COMPLETED": "Completada",
-      "FAILED": "Fallida"
     }
   },
   "createOrg": {
@@ -651,7 +625,9 @@
       "role": "Roles",
       "document": "Documentos",
       "glossary": "Glosario",
-      "constraint": "Restricciones"
+      "constraint": "Restricciones",
+      "session": "Sesiones de discovery",
+      "story": "Historias de usuario"
     },
     "perm": {
       "PROJECT_UPDATE": "Editar proyecto",
@@ -673,7 +649,12 @@
       "GLOSSARY_TERM_WRITE": "Editar términos del glosario",
       "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
       "CONSTRAINT_READ": "Ver restricciones",
-      "CONSTRAINT_WRITE": "Editar restricciones"
+      "CONSTRAINT_WRITE": "Editar restricciones",
+      "SESSION_READ": "Ver sesiones",
+      "SESSION_RUN": "Ejecutar sesiones",
+      "SESSION_DECIDE": "Decidir sobre sugerencias",
+      "STORY_READ": "Ver historias",
+      "STORY_WRITE": "Editar historias"
     },
     "groupDesc": {
       "project": "Cambia los ajustes y el ciclo de vida del proyecto",
@@ -681,7 +662,9 @@
       "role": "Define roles y los permisos que otorgan",
       "document": "Trabaja con los documentos del proyecto",
       "glossary": "Mantén el glosario compartido del proyecto",
-      "constraint": "Gestiona las restricciones técnicas del proyecto"
+      "constraint": "Gestiona las restricciones técnicas del proyecto",
+      "session": "Ejecutar sesiones de discovery y revisar sus sugerencias de IA",
+      "story": "Trabajar con el backlog de historias de usuario del proyecto"
     },
     "permDesc": {
       "PROJECT_UPDATE": "Editar el nombre, la descripción y los ajustes del proyecto",
@@ -703,7 +686,12 @@
       "GLOSSARY_TERM_WRITE": "Añadir y editar términos del glosario",
       "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
       "CONSTRAINT_READ": "Ver las restricciones técnicas del proyecto",
-      "CONSTRAINT_WRITE": "Añadir y editar restricciones técnicas"
+      "CONSTRAINT_WRITE": "Añadir y editar restricciones técnicas",
+      "SESSION_READ": "Ver las sesiones de discovery y sus transcripciones",
+      "SESSION_RUN": "Grabar, pausar y detener sesiones de discovery",
+      "SESSION_DECIDE": "Aceptar o descartar sugerencias de la IA durante una sesión",
+      "STORY_READ": "Ver el backlog de historias de usuario del proyecto",
+      "STORY_WRITE": "Crear y editar historias de usuario y sus criterios de aceptación"
     },
     "newRole": "Nuevo rol",
     "filterPlaceholder": "Filtrar roles…",
@@ -812,5 +800,140 @@
     "deleteConfirmPhrase": "Para confirmar, escribe {{phrase}}",
     "deletePhrase": "eliminar este proyecto",
     "deleteWarning": "Eliminar {{project}} no se puede deshacer."
+  },
+  "discovery": {
+    "title": "Discovery",
+    "subtitle": "Graba reuniones y conviértelas en historias de usuario en tiempo real.",
+    "loadError": "No se pudo cargar el feed de discovery.",
+    "loadOlder": "Cargar sesiones anteriores",
+    "emptyTitle": "Aún no hay sesiones",
+    "emptyBody": "Pulsa grabar para capturar tu primera conversación de requisitos.",
+    "sessionSeparator": "Sesión",
+    "sessionStories": "{count} historias",
+    "sessionDefaultTitle": "Sesión de discovery — {date}",
+    "generatedStory": "Historia generada",
+    "pendingPrevious": "{count} pendientes de sesiones anteriores",
+    "story": {
+      "as": "Como ",
+      "want": ", quiero ",
+      "soThat": ", para "
+    },
+    "decision": {
+      "accepted": "Historia aceptada",
+      "dismissed": "Sugerencia descartada",
+      "question": "Pregunta de aclaración"
+    },
+    "composer": {
+      "placeholder": "Escribe a discovery…",
+      "comingSoon": "La entrada de texto llegará pronto.",
+      "record": "Iniciar grabación"
+    },
+    "bar": {
+      "recording": "Grabando",
+      "paused": "En pausa",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "stop": "Detener"
+    },
+    "rec": {
+      "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",
+      "invalidUserSession": "Tu sesión de usuario no es válida.",
+      "wsError": "No se pudo conectar con el servidor de transcripción.",
+      "wsClosed": "Se cerró la conexión de transcripción.",
+      "initFailed": "No se pudo iniciar la grabación.",
+      "audioInitFailed": "No se pudo inicializar el procesador de audio local."
+    },
+    "queue": {
+      "pendingBadge": "{count} sugerencias pendientes",
+      "counter": "{n} de {m}",
+      "prev": "Sugerencia anterior",
+      "next": "Sugerencia siguiente",
+      "collapse": "Contraer"
+    },
+    "suggestion": {
+      "type": {
+        "NEW_STORY": "Nueva historia",
+        "UPDATE_STORY": "Actualizar historia",
+        "EDGE_CASE": "Caso límite",
+        "CLARIFYING_QUESTION": "Pregunta"
+      },
+      "priority": {
+        "LOW": "Baja",
+        "MEDIUM": "Media",
+        "HIGH": "Alta",
+        "CRITICAL": "Crítica"
+      },
+      "current": "Actual",
+      "proposed": "Propuesta",
+      "storyNotFound": "Historia no encontrada.",
+      "viewTarget": "Ver historia objetivo",
+      "accept": "Aceptar",
+      "dismiss": "Descartar",
+      "edit": "Editar",
+      "done": "Listo",
+      "titleField": "Título",
+      "scenario": "Escenario",
+      "role": "Rol",
+      "action": "Acción",
+      "benefit": "Beneficio",
+      "priorityField": "Prioridad",
+      "points": "Puntos",
+      "given": "Dado",
+      "when": "cuando",
+      "then": "entonces"
+    },
+    "panel": {
+      "stories": "Historias",
+      "info": "Info",
+      "glossary": "Glosario",
+      "constraints": "Restricciones",
+      "filter": "Filtrar…",
+      "toggle": "Panel",
+      "open": "Panel",
+      "close": "Cerrar panel",
+      "storiesEmpty": "Aún no hay historias.",
+      "glossaryEmpty": "No hay términos en el glosario.",
+      "constraintsEmpty": "No hay restricciones.",
+      "infoEmpty": "No hay detalles del proyecto.",
+      "loadError": "No se pudo cargar.",
+      "infoName": "Nombre",
+      "infoDescription": "Descripción",
+      "infoDomain": "Dominio",
+      "infoArchitecture": "Arquitectura",
+      "infoStack": "Tecnologías"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "RECORDING": "Grabando",
+      "PAUSED": "En pausa",
+      "STOPPED": "Detenida",
+      "PROCESSING": "Procesando",
+      "COMPLETED": "Completada",
+      "FAILED": "Fallida"
+    },
+    "history": {
+      "button": "Historial",
+      "back": "Volver a discovery",
+      "title": "Historial de sesiones",
+      "subtitle": "Todas las sesiones de discovery grabadas de este proyecto.",
+      "loadError": "No se pudo cargar el historial.",
+      "emptyTitle": "Aún no hay sesiones",
+      "emptyBody": "Las sesiones grabadas aparecerán aquí.",
+      "loadMore": "Cargar más",
+      "colDate": "Fecha",
+      "colDuration": "Duración",
+      "colStatus": "Estado",
+      "colStories": "Historias",
+      "colAccepted": "Aceptadas",
+      "colPending": "Pendientes",
+      "colQuestions": "Preguntas"
+    },
+    "errors": {
+      "startFailed": "No se pudo iniciar la grabación. Inténtalo de nuevo.",
+      "alreadyActive": "Ya hay una sesión activa. Abriéndola ahora.",
+      "transitionFailed": "No se pudo actualizar la sesión. Inténtalo de nuevo.",
+      "decideFailed": "No se pudo guardar tu decisión. Inténtalo de nuevo.",
+      "alreadyResolved": "Alguien ya decidió sobre esta sugerencia."
+    }
   }
 }

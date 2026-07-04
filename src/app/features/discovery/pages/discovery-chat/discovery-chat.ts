@@ -11,7 +11,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
@@ -372,6 +372,7 @@ export class DiscoveryChat implements OnInit {
   private readonly workspace = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly projectId = input.required<string>();
 
@@ -407,6 +408,9 @@ export class DiscoveryChat implements OnInit {
 
   ngOnInit(): void {
     this.store.init(this.projectId());
+    // History click-through: ?session=<id> reveals that session in the feed.
+    const focus = this.route.snapshot.queryParamMap.get('session');
+    if (focus) this.store.showSession(focus);
   }
 
   /** Lazy-loads older sessions when the feed is scrolled near the top. */

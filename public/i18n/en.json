@@ -35,8 +35,6 @@
   "titles": {
     "terms": "Terms and Conditions",
     "organizations": "Your organizations",
-    "sessions": "Sessions",
-    "session": "Session",
     "stories": "Stories",
     "projectMembers": "Project members",
     "projectRoles": "Project roles",
@@ -65,16 +63,17 @@
     "notifications": "Notifications",
     "tokens": "API tokens",
     "newRole": "New role",
-    "editRole": "Edit role"
+    "editRole": "Edit role",
+    "discovery": "Discovery",
+    "history": "Session history"
   },
   "nav": {
     "projects": "Projects",
-    "sessions": "Sessions",
+    "sessions": "Discovery",
     "stories": "Stories",
     "members": "Members",
     "roles": "Roles",
     "settings": "Settings",
-    "newSession": "New session",
     "projectFallback": "Project",
     "projectAria": "Project navigation",
     "orgAria": "Organization navigation",
@@ -251,31 +250,6 @@
       "resent": "We resent the verification email.",
       "resend": "Resend email",
       "backToSignIn": "Back to sign in"
-    }
-  },
-  "sessions": {
-    "title": "Discovery sessions",
-    "subtitle": "Capture meetings and generate user stories with AI in real time.",
-    "new": "New session",
-    "formTitle": "New session",
-    "fieldTitle": "Title",
-    "titlePlaceholder": "Sprint 24 — Elicitation",
-    "fieldLanguage": "Language",
-    "loadError": "Could not load the sessions.",
-    "emptyTitle": "No sessions yet",
-    "emptyBody": "Create a session to start capturing requirements.",
-    "createCta": "Create session",
-    "createdRelative": "created",
-    "errorValidation": "Check the session details.",
-    "errorCreate": "Could not create the session. Please try again.",
-    "status": {
-      "DRAFT": "Draft",
-      "RECORDING": "Recording",
-      "PAUSED": "Paused",
-      "STOPPED": "Stopped",
-      "PROCESSING": "Processing",
-      "COMPLETED": "Completed",
-      "FAILED": "Failed"
     }
   },
   "createOrg": {
@@ -651,7 +625,9 @@
       "role": "Roles",
       "document": "Documents",
       "glossary": "Glossary",
-      "constraint": "Constraints"
+      "constraint": "Constraints",
+      "session": "Discovery sessions",
+      "story": "User stories"
     },
     "perm": {
       "PROJECT_UPDATE": "Edit project",
@@ -673,7 +649,12 @@
       "GLOSSARY_TERM_WRITE": "Edit glossary terms",
       "GLOSSARY_TERM_DELETE": "Delete glossary terms",
       "CONSTRAINT_READ": "View constraints",
-      "CONSTRAINT_WRITE": "Edit constraints"
+      "CONSTRAINT_WRITE": "Edit constraints",
+      "SESSION_READ": "View sessions",
+      "SESSION_RUN": "Run sessions",
+      "SESSION_DECIDE": "Decide on suggestions",
+      "STORY_READ": "View stories",
+      "STORY_WRITE": "Edit stories"
     },
     "groupDesc": {
       "project": "Change the project's settings and lifecycle",
@@ -681,7 +662,9 @@
       "role": "Define roles and the permissions they grant",
       "document": "Work with the project's documents",
       "glossary": "Maintain the project's shared glossary",
-      "constraint": "Manage the project's technical constraints"
+      "constraint": "Manage the project's technical constraints",
+      "session": "Run discovery sessions and review their AI suggestions",
+      "story": "Work with the project's user-story backlog"
     },
     "permDesc": {
       "PROJECT_UPDATE": "Edit the project's name, description and settings",
@@ -703,7 +686,12 @@
       "GLOSSARY_TERM_WRITE": "Add and edit glossary terms",
       "GLOSSARY_TERM_DELETE": "Delete glossary terms",
       "CONSTRAINT_READ": "View the project's technical constraints",
-      "CONSTRAINT_WRITE": "Add and edit technical constraints"
+      "CONSTRAINT_WRITE": "Add and edit technical constraints",
+      "SESSION_READ": "View discovery sessions and their transcripts",
+      "SESSION_RUN": "Record, pause and stop discovery sessions",
+      "SESSION_DECIDE": "Accept or dismiss AI suggestions during a session",
+      "STORY_READ": "View the project backlog of user stories",
+      "STORY_WRITE": "Create and edit user stories and their acceptance criteria"
     },
     "newRole": "New role",
     "filterPlaceholder": "Filter roles…",
@@ -812,5 +800,140 @@
     "deleteConfirmPhrase": "To confirm, type {{phrase}}",
     "deletePhrase": "delete this project",
     "deleteWarning": "Deleting {{project}} cannot be undone."
+  },
+  "discovery": {
+    "title": "Discovery",
+    "subtitle": "Record meetings and turn them into user stories in real time.",
+    "loadError": "Could not load the discovery feed.",
+    "loadOlder": "Load older sessions",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Press record to capture your first requirements conversation.",
+    "sessionSeparator": "Session",
+    "sessionStories": "{count} stories",
+    "sessionDefaultTitle": "Discovery session — {date}",
+    "generatedStory": "Generated story",
+    "pendingPrevious": "{count} pending from previous sessions",
+    "story": {
+      "as": "As ",
+      "want": ", I want ",
+      "soThat": ", so that "
+    },
+    "decision": {
+      "accepted": "Story accepted",
+      "dismissed": "Suggestion dismissed",
+      "question": "Clarifying question"
+    },
+    "composer": {
+      "placeholder": "Message discovery…",
+      "comingSoon": "Text to pipeline is coming soon.",
+      "record": "Start recording"
+    },
+    "bar": {
+      "recording": "Recording",
+      "paused": "Paused",
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop"
+    },
+    "rec": {
+      "micDenied": "Microphone permission denied. Enable it in your browser settings.",
+      "invalidUserSession": "Your user session is not valid.",
+      "wsError": "Could not connect to the transcription server.",
+      "wsClosed": "The transcription connection was closed.",
+      "initFailed": "Could not start recording.",
+      "audioInitFailed": "Could not initialize the local audio processor."
+    },
+    "queue": {
+      "pendingBadge": "{count} suggestions pending",
+      "counter": "{n} of {m}",
+      "prev": "Previous suggestion",
+      "next": "Next suggestion",
+      "collapse": "Collapse"
+    },
+    "suggestion": {
+      "type": {
+        "NEW_STORY": "New story",
+        "UPDATE_STORY": "Update story",
+        "EDGE_CASE": "Edge case",
+        "CLARIFYING_QUESTION": "Question"
+      },
+      "priority": {
+        "LOW": "Low",
+        "MEDIUM": "Medium",
+        "HIGH": "High",
+        "CRITICAL": "Critical"
+      },
+      "current": "Current",
+      "proposed": "Proposed",
+      "storyNotFound": "Story not found.",
+      "viewTarget": "View target story",
+      "accept": "Accept",
+      "dismiss": "Dismiss",
+      "edit": "Edit",
+      "done": "Done",
+      "titleField": "Title",
+      "scenario": "Scenario",
+      "role": "Role",
+      "action": "Action",
+      "benefit": "Benefit",
+      "priorityField": "Priority",
+      "points": "Points",
+      "given": "Given",
+      "when": "when",
+      "then": "then"
+    },
+    "panel": {
+      "stories": "Stories",
+      "info": "Info",
+      "glossary": "Glossary",
+      "constraints": "Constraints",
+      "filter": "Filter…",
+      "toggle": "Panel",
+      "open": "Panel",
+      "close": "Close panel",
+      "storiesEmpty": "No stories yet.",
+      "glossaryEmpty": "No glossary terms.",
+      "constraintsEmpty": "No constraints.",
+      "infoEmpty": "No project details.",
+      "loadError": "Could not load.",
+      "infoName": "Name",
+      "infoDescription": "Description",
+      "infoDomain": "Domain",
+      "infoArchitecture": "Architecture",
+      "infoStack": "Stack"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "RECORDING": "Recording",
+      "PAUSED": "Paused",
+      "STOPPED": "Stopped",
+      "PROCESSING": "Processing",
+      "COMPLETED": "Completed",
+      "FAILED": "Failed"
+    },
+    "history": {
+      "button": "History",
+      "back": "Back to discovery",
+      "title": "Session history",
+      "subtitle": "Every recorded discovery session for this project.",
+      "loadError": "Could not load the history.",
+      "emptyTitle": "No sessions yet",
+      "emptyBody": "Recorded sessions will appear here.",
+      "loadMore": "Load more",
+      "colDate": "Date",
+      "colDuration": "Duration",
+      "colStatus": "Status",
+      "colStories": "Stories",
+      "colAccepted": "Accepted",
+      "colPending": "Pending",
+      "colQuestions": "Questions"
+    },
+    "errors": {
+      "startFailed": "Could not start the recording. Please try again.",
+      "alreadyActive": "A session is already active. Opening it now.",
+      "transitionFailed": "Could not update the session. Please try again.",
+      "decideFailed": "Could not save your decision. Please try again.",
+      "alreadyResolved": "Someone already decided on this suggestion."
+    }
   }
 }

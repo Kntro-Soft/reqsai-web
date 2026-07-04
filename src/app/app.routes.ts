@@ -192,18 +192,19 @@ export const routes: Routes = [
               ),
           },
           {
+            // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
-            title: 'titles.sessions',
+            title: 'titles.discovery',
             loadComponent: () =>
-              import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
+              import('./features/discovery/pages/discovery-chat/discovery-chat').then(
+                (m) => m.DiscoveryChat,
+              ),
           },
           {
-            path: 'sessions/:sessionId',
-            title: 'titles.session',
+            path: 'sessions/history',
+            title: 'titles.history',
             loadComponent: () =>
-              import('./features/discovery/pages/session-detail/session-detail').then(
-                (m) => m.SessionDetail,
-              ),
+              import('./features/discovery/pages/history/history').then((m) => m.DiscoveryHistory),
           },
           {
             path: 'stories',

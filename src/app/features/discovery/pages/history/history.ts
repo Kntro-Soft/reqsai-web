@@ -1,46 +1,25 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucideTrash2 } from '@ng-icons/lucide';
-import { AuthStore } from '../../../../core/auth/auth.store';
-import { WorkspaceStore } from '../../../workspace/data/workspace.store';
-import { ToastService } from '../../../../shared/toast/toast.service';
+import { lucideArrowLeft } from '@ng-icons/lucide';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { DiscoverySessionResponse } from '../../data/discovery.models';
 import { formatElapsed } from '../../components/session-bar/session-bar';
-import { Modal } from '../../../../shared/components/modal/modal';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
  * Paginated session history: date, duration, status and — when the parallel
- * backend branch exposes them — per-session stats columns. A row opens that
- * session in the chat feed. Delete is behind a confirm modal and calls
- * DELETE session when supported (hidden on 404/405). No reset action anywhere.
+ * backend branch exposes them — per-session stats columns (rendered only when
+ * present). A row opens that session in the chat feed. Sessions are permanent,
+ * immutable history: there is no delete or reset action anywhere.
  */
 @Component({
   selector: 'app-discovery-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    DatePipe,
-    TranslocoPipe,
-    Modal,
-    HlmButton,
-    HlmIcon,
-    HlmSpinner,
-  ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucideTrash2 })],
+  imports: [RouterLink, DatePipe, TranslocoPipe, HlmButton, HlmIcon, HlmSpinner],
+  viewProviders: [provideIcons({ lucideArrowLeft })],
   template: `
     <div class="flex flex-col gap-5">
       <div class="flex flex-col gap-2">
@@ -53,7 +32,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           {{ 'discovery.history.back' | transloco }}
         </a>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">{{ 'discovery.history.title' | transloco }}</h1>
+          <h1 class="text-2xl font-bold tracking-tight">
+            {{ 'discovery.history.title' | transloco }}
+          </h1>
           <p class="mt-1 text-sm text-muted-foreground">
             {{ 'discovery.history.subtitle' | transloco }}
           </p>
@@ -92,7 +73,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       <th class="px-4 py-2.5">{{ 'discovery.history.colPending' | transloco }}</th>
                       <th class="px-4 py-2.5">{{ 'discovery.history.colQuestions' | transloco }}</th>
                     }
-                    <th class="px-4 py-2.5"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,24 +97,17 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                         </span>
                       </td>
                       @if (showStats()) {
-                        <td class="px-4 py-3 tabular-nums">{{ session.storiesGeneratedCount ?? '—' }}</td>
-                        <td class="px-4 py-3 tabular-nums">{{ session.storiesAcceptedCount ?? '—' }}</td>
-                        <td class="px-4 py-3 tabular-nums">{{ session.pendingSuggestionsCount ?? '—' }}</td>
+                        <td class="px-4 py-3 tabular-nums">
+                          {{ session.storiesGeneratedCount ?? '—' }}
+                        </td>
+                        <td class="px-4 py-3 tabular-nums">
+                          {{ session.storiesAcceptedCount ?? '—' }}
+                        </td>
+                        <td class="px-4 py-3 tabular-nums">
+                          {{ session.pendingSuggestionsCount ?? '—' }}
+                        </td>
                         <td class="px-4 py-3 tabular-nums">{{ session.questionsCount ?? '—' }}</td>
                       }
-                      <td class="px-4 py-3 text-right">
-                        @if (canDelete()) {
-                          <button
-                            type="button"
-                            (click)="askDelete(session, $event)"
-                            class="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                            [attr.aria-label]="'discovery.history.delete' | transloco"
-                            data-testid="history-delete"
-                          >
-                            <hlm-icon name="lucideTrash2" size="15px" />
-                          </button>
-                        }
-                      </td>
                     </tr>
                   }
                 </tbody>
@@ -163,41 +136,11 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         }
       }
     </div>
-
-    <app-modal [(open)]="deleteOpen">
-      <span modalTitle>{{ 'discovery.history.deleteTitle' | transloco }}</span>
-      <p>
-        {{ 'discovery.history.deleteBody' | transloco }}
-      </p>
-      <div modalFooter>
-        <button hlmBtn variant="outline" size="sm" type="button" (click)="deleteOpen.set(false)">
-          {{ 'common.cancel' | transloco }}
-        </button>
-        <button
-          hlmBtn
-          variant="destructive"
-          size="sm"
-          type="button"
-          [disabled]="deleting()"
-          (click)="confirmDelete()"
-          data-testid="history-delete-confirm"
-        >
-          @if (deleting()) {
-            <hlm-spinner class="mr-1.5 h-4 w-4" />
-          }
-          {{ 'discovery.history.delete' | transloco }}
-        </button>
-      </div>
-    </app-modal>
   `,
 })
 export class DiscoveryHistory implements OnInit {
   private readonly api = inject(DiscoveryApiService);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthStore);
-  private readonly workspace = inject(WorkspaceStore);
-  private readonly toast = inject(ToastService);
-  private readonly transloco = inject(TranslocoService);
 
   readonly projectId = input.required<string>();
 
@@ -207,25 +150,9 @@ export class DiscoveryHistory implements OnInit {
   protected readonly hasNext = signal(false);
   private nextPage = 0;
 
-  /** Delete is hidden once the endpoint answers 404/405 (not deployed / not allowed). */
-  protected readonly deleteSupported = signal(true);
-
-  protected readonly deleteOpen = signal(false);
-  protected readonly deleting = signal(false);
-  private readonly deleteTarget = signal<DiscoverySessionResponse | null>(null);
-
-  /** Owner-only management gate (mirrors the workspace pages). */
-  protected readonly canManage = computed(() => {
-    const user = this.auth.user();
-    if (!user) return false;
-    const org = this.workspace.organizations().find((o) => o.id === this.auth.organizationId());
-    return org?.ownerId === user.id;
-  });
-  protected readonly canDelete = computed(() => this.canManage() && this.deleteSupported());
-
   /** Show stats columns only when at least one session actually carries them. */
   protected readonly showStats = computed(() =>
-    this.sessions().some((s) => s.storiesGeneratedCount != null),
+    this.sessions().some((s) => s.storiesGeneratedCount !== null && s.storiesGeneratedCount !== undefined),
   );
 
   ngOnInit(): void {
@@ -239,9 +166,7 @@ export class DiscoveryHistory implements OnInit {
         this.sessions.update((list) =>
           page === 0 ? result.content : [...list, ...result.content],
         );
-        this.hasNext.set(
-          result.page?.hasNext ?? result.page.number + 1 < result.page.totalPages,
-        );
+        this.hasNext.set(result.page?.hasNext ?? result.page.number + 1 < result.page.totalPages);
         this.nextPage = page + 1;
         this.state.set('ready');
         this.loadingMore.set(false);
@@ -262,37 +187,6 @@ export class DiscoveryHistory implements OnInit {
   protected open(session: DiscoverySessionResponse): void {
     void this.router.navigate(['/projects', this.projectId(), 'sessions'], {
       queryParams: { session: session.id },
-    });
-  }
-
-  protected askDelete(session: DiscoverySessionResponse, event: Event): void {
-    event.stopPropagation();
-    this.deleteTarget.set(session);
-    this.deleteOpen.set(true);
-  }
-
-  protected confirmDelete(): void {
-    const target = this.deleteTarget();
-    if (!target || this.deleting()) return;
-    this.deleting.set(true);
-    this.api.deleteSession(this.projectId(), target.id).subscribe({
-      next: () => {
-        this.sessions.update((list) => list.filter((s) => s.id !== target.id));
-        this.deleting.set(false);
-        this.deleteOpen.set(false);
-        this.toast.success(this.transloco.translate('discovery.history.deleted'));
-      },
-      error: (err: HttpErrorResponse) => {
-        this.deleting.set(false);
-        this.deleteOpen.set(false);
-        if (err.status === 404 || err.status === 405 || err.status === 501) {
-          // Endpoint not available in this deployment — hide the action from now on.
-          this.deleteSupported.set(false);
-          this.toast.info(this.transloco.translate('discovery.history.deleteUnsupported'));
-          return;
-        }
-        this.toast.error(this.transloco.translate('discovery.history.deleteError'));
-      },
     });
   }
 

@@ -14,7 +14,7 @@ export class PageTitleService {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  /** Translation key of the current page (e.g. `titles.sessions`), or null. */
+  /** Translation key of the current page (e.g. `titles.discovery`), or null. */
   readonly titleKey = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),

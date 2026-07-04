@@ -53,14 +53,6 @@ export class DiscoveryApiService {
     );
   }
 
-  /**
-   * Deletes a session. The endpoint is being added by a parallel backend branch —
-   * callers must treat a 404/405 as "not supported yet" and hide the affordance.
-   */
-  deleteSession(projectId: string, sessionId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base(projectId)}/${sessionId}`);
-  }
-
   /** Raw transcript text of a session (null while nothing has been transcribed). */
   getTranscript(sessionId: string): Observable<TranscriptResponse> {
     return this.http.get<TranscriptResponse>(`/api/sessions/${sessionId}/transcript`);
