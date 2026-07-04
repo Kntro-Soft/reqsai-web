@@ -12,6 +12,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { InvitationApiService } from '../../../../shared/data/invitation-api.service';
 import { InvitationView } from '../../data/workspace.models';
 import { ThemeToggle } from '../../../../shared/components/theme-toggle/theme-toggle';
@@ -364,7 +365,7 @@ export class AcceptInvitation {
         } else if (err.status === 404) {
           this.view.set('notFound');
         } else {
-          this.errorMessage.set(this.transloco.translate('invitations.valid.acceptError'));
+          this.errorMessage.set(messageForError(err, this.transloco));
         }
       },
     });
