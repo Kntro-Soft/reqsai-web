@@ -29,6 +29,7 @@ import { InlineEntity } from '../../../../shared/components/inline-entity/inline
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import {
   HlmButton,
@@ -778,9 +779,7 @@ export class Members {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        const message = this.transloco.translate(
-          err.status === 409 ? 'members.errorAlreadyInvited' : 'members.errorInvite',
-        );
+        const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
       },
@@ -793,7 +792,7 @@ export class Members {
     this.api.changeMemberRole(orgId, member.id, role).subscribe({
       next: (updated) =>
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m))),
-      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
@@ -805,7 +804,7 @@ export class Members {
         this.members.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
         this.toast.success(this.transloco.translate('toast.invitationResent'));
       },
-      error: () => this.toast.error(this.transloco.translate('members.errorInvite')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
@@ -838,9 +837,9 @@ export class Members {
           ),
         );
       },
-      error: () => {
+      error: (err) => {
         this.actioning.set(false);
-        this.toast.error(this.transloco.translate('members.errorInvite'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -873,9 +872,9 @@ export class Members {
         this.removeOpen.set(false);
         this.toast.success(this.transloco.translate('toast.memberRemoved'));
       },
-      error: () => {
+      error: (err) => {
         this.actioning.set(false);
-        this.toast.error(this.transloco.translate('members.errorInvite'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }

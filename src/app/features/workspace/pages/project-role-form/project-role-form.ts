@@ -17,6 +17,7 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { PERMISSION_GROUPS, Permission } from '../../data/workspace.models';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { Indeterminate } from '../../../../shared/directives/indeterminate';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
@@ -413,9 +414,7 @@ export class ProjectRoleForm implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        const message = this.transloco.translate(
-          err.status === 409 ? 'projectRoles.errorNameInUse' : 'projectRoles.errorSave',
-        );
+        const message = messageForError(err, this.transloco);
         this.formError.set(message);
         this.toast.error(message);
       },
