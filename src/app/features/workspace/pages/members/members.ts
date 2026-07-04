@@ -712,6 +712,15 @@ export class Members {
     return list;
   });
 
+  /** Rejects an invite email that matches the signed-in user's own address (case-insensitive).
+   * Declared before `form` because the field initializer below builds an invite group that
+   * references it — class fields initialize top-to-bottom, so it must exist first. */
+  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
+    const own = this.store.user()?.email?.trim().toLowerCase();
+    const value = (control.value as string)?.trim().toLowerCase();
+    return own && value && value === own ? { selfInvite: true } : null;
+  };
+
   protected readonly form = this.fb.group({
     invites: this.fb.array([this.newInviteGroup()]),
   });
@@ -719,13 +728,6 @@ export class Members {
   get invites() {
     return this.form.controls.invites;
   }
-
-  /** Rejects an invite email that matches the signed-in user's own address (case-insensitive). */
-  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
-    const own = this.store.user()?.email?.trim().toLowerCase();
-    const value = (control.value as string)?.trim().toLowerCase();
-    return own && value && value === own ? { selfInvite: true } : null;
-  };
 
   private newInviteGroup() {
     return this.fb.nonNullable.group({

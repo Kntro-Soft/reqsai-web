@@ -436,6 +436,15 @@ export class ProjectMembers implements OnInit {
   protected readonly assignError = signal<string | null>(null);
 
   // Invite batch form.
+  /** Rejects an invite email matching the signed-in user's own address (case-insensitive).
+   * Declared before `inviteForm` because that field initializer builds an invite group that
+   * references it — class fields initialize top-to-bottom, so it must exist first. */
+  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
+    const own = this.store.user()?.email?.trim().toLowerCase();
+    const value = (control.value as string)?.trim().toLowerCase();
+    return own && value && value === own ? { selfInvite: true } : null;
+  };
+
   protected readonly inviteForm = this.fb.group({
     invites: this.fb.array([this.newInviteGroup()]),
   });
@@ -481,13 +490,6 @@ export class ProjectMembers implements OnInit {
   get invites() {
     return this.inviteForm.controls.invites;
   }
-
-  /** Rejects an invite email matching the signed-in user's own address (case-insensitive). */
-  private readonly selfInviteValidator = (control: AbstractControl): ValidationErrors | null => {
-    const own = this.store.user()?.email?.trim().toLowerCase();
-    const value = (control.value as string)?.trim().toLowerCase();
-    return own && value && value === own ? { selfInvite: true } : null;
-  };
 
   private newInviteGroup() {
     return this.fb.nonNullable.group({
