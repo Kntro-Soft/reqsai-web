@@ -32,7 +32,7 @@ function toDisplayStory(story: UserStoryResponse): DisplayStory {
 }
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
-type SessionAction = 'start' | 'pause' | 'resume' | 'stop' | 'reset';
+type SessionAction = 'start' | 'pause' | 'resume' | 'stop';
 
 export interface LiveEvent {
   type: SessionEventType;

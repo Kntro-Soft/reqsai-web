@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   AcceptSuggestionRequest,
@@ -8,6 +8,7 @@ import {
   PageResponse,
   ProcessTranscriptResponse,
   SuggestionResponse,
+  TranscriptResponse,
   UserStoryResponse,
 } from './discovery.models';
 
@@ -31,19 +32,38 @@ export class DiscoveryApiService {
     return this.http.get<DiscoverySessionResponse>(`${this.base(projectId)}/${sessionId}`);
   }
 
-  listSessions(projectId: string): Observable<PageResponse<DiscoverySessionResponse>> {
-    return this.http.get<PageResponse<DiscoverySessionResponse>>(this.base(projectId));
+  /** Paginated session list, newest first (the backend's default sort is createdAt DESC). */
+  listSessions(
+    projectId: string,
+    page = 0,
+    size = 20,
+  ): Observable<PageResponse<DiscoverySessionResponse>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PageResponse<DiscoverySessionResponse>>(this.base(projectId), { params });
   }
 
   transition(
     projectId: string,
     sessionId: string,
-    action: 'start' | 'pause' | 'resume' | 'stop' | 'reset',
+    action: 'start' | 'pause' | 'resume' | 'stop',
   ): Observable<DiscoverySessionResponse> {
     return this.http.post<DiscoverySessionResponse>(
       `${this.base(projectId)}/${sessionId}/${action}`,
       {},
     );
+  }
+
+  /**
+   * Deletes a session. The endpoint is being added by a parallel backend branch —
+   * callers must treat a 404/405 as "not supported yet" and hide the affordance.
+   */
+  deleteSession(projectId: string, sessionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base(projectId)}/${sessionId}`);
+  }
+
+  /** Raw transcript text of a session (null while nothing has been transcribed). */
+  getTranscript(sessionId: string): Observable<TranscriptResponse> {
+    return this.http.get<TranscriptResponse>(`/api/sessions/${sessionId}/transcript`);
   }
 
   /** Uploads an audio file for transcription (session-scoped endpoint). */
@@ -72,6 +92,17 @@ export class DiscoveryApiService {
   /** Pending suggestions for a session (accepted/dismissed are not returned). */
   listSuggestions(sessionId: string): Observable<SuggestionResponse[]> {
     return this.http.get<SuggestionResponse[]>(`/api/sessions/${sessionId}/suggestions`);
+  }
+
+  /**
+   * Project-wide pending suggestions. The endpoint is being added by a parallel
+   * backend branch — callers must fall back to per-session queries on error.
+   */
+  listProjectPendingSuggestions(projectId: string): Observable<SuggestionResponse[]> {
+    const params = new HttpParams().set('status', 'PENDING');
+    return this.http.get<SuggestionResponse[]>(`/api/projects/${projectId}/suggestions`, {
+      params,
+    });
   }
 
   acceptSuggestion(

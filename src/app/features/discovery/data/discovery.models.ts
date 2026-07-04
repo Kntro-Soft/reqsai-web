@@ -21,6 +21,18 @@ export interface DiscoverySessionResponse {
   processingError: string | null;
   createdAt: string;
   updatedAt: string;
+  // Per-session stats being added by a parallel backend branch — absent on older
+  // deployments, so every consumer must degrade gracefully when undefined.
+  storiesGeneratedCount?: number | null;
+  storiesAcceptedCount?: number | null;
+  pendingSuggestionsCount?: number | null;
+  questionsCount?: number | null;
+}
+
+/** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */
+export interface TranscriptResponse {
+  sessionId: string;
+  transcript: string | null;
 }
 
 export interface CreateDiscoverySessionRequest {
@@ -74,8 +86,8 @@ export interface PageResponse<T> {
 
 // ---- AI suggestions (review flow) ----
 
-type SuggestionType = 'NEW_STORY' | 'UPDATE_STORY' | 'EDGE_CASE' | 'CLARIFYING_QUESTION';
-type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED';
+export type SuggestionType = 'NEW_STORY' | 'UPDATE_STORY' | 'EDGE_CASE' | 'CLARIFYING_QUESTION';
+export type SuggestionStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED';
 export type SuggestionPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface SuggestionResponse {
