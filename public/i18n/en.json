@@ -22,7 +22,10 @@
     "orgDeleted": "Organization deleted.",
     "orgLeft": "You left the organization.",
     "ownershipTransferred": "Ownership transferred.",
-    "profileSaved": "Profile updated."
+    "profileSaved": "Profile updated.",
+    "projectArchived": "Project archived.",
+    "projectRestored": "Project restored.",
+    "projectDeleted": "Project deleted."
   },
   "language": {
     "label": "Language",
@@ -60,7 +63,9 @@
     "security": "Security",
     "appearance": "Appearance",
     "notifications": "Notifications",
-    "tokens": "API tokens"
+    "tokens": "API tokens",
+    "newRole": "New role",
+    "editRole": "Edit role"
   },
   "nav": {
     "projects": "Projects",
@@ -515,7 +520,8 @@
       "ACTIVE": "Active",
       "PENDING": "Pending",
       "INACTIVE": "Inactive"
-    }
+    },
+    "errorSelfInvite": "You can't invite yourself."
   },
   "invitations": {
     "valid": {
@@ -668,7 +674,10 @@
       "GLOSSARY_TERM_DELETE": "Delete glossary terms",
       "CONSTRAINT_READ": "View constraints",
       "CONSTRAINT_WRITE": "Edit constraints"
-    }
+    },
+    "newRole": "New role",
+    "filterPlaceholder": "Filter roles…",
+    "filterEmpty": "No roles match your filter."
   },
   "projectMembers": {
     "title": "Members",
@@ -689,7 +698,25 @@
     "removeAfter": "from the project and revoke their access.",
     "errorRemove": "Could not remove the member. Please try again.",
     "empty": "No members assigned. Assign people from your organization to collaborate here.",
-    "fallbackName": "Member"
+    "fallbackName": "Member",
+    "addMore": "Add more",
+    "removeRowAria": "Remove this row",
+    "filterEmpty": "No members match your filter.",
+    "filterAllRoles": "All roles",
+    "filterRoleAria": "Filter by role",
+    "sortAria": "Sort members",
+    "sortRecent": "Recently added",
+    "sortName": "Name",
+    "inviteTitle": "Invite new people",
+    "inviteDesc": "Invite people by email straight onto a project role.",
+    "inviteSubmit": "Send invitations",
+    "fieldEmail": "Email",
+    "fieldName": "Name",
+    "placeholderEmail": "name@company.com",
+    "placeholderName": "Full name",
+    "errorSelfInvite": "You can't invite yourself.",
+    "errorInvite": "Could not send the invitations. Please try again.",
+    "errorAlreadyInvited": "Someone here is already a member or invited."
   },
   "stories": {
     "title": "Stories",
@@ -712,5 +739,43 @@
       "APPROVED": "Approved",
       "REJECTED": "Rejected"
     }
+  },
+  "projectRoleForm": {
+    "back": "Back to roles",
+    "createTitle": "Create role",
+    "editTitle": "Edit role",
+    "subtitle": "Name the role and choose the permissions it grants.",
+    "roleName": "Role name",
+    "roleNamePlaceholder": "e.g. Lead analyst",
+    "permissionsLabel": "Permissions",
+    "create": "Create role",
+    "save": "Save changes",
+    "cancel": "Cancel",
+    "loadError": "Could not load the role."
+  },
+  "projectDanger": {
+    "title": "Danger zone",
+    "subtitle": "Archive, restore or permanently delete this project.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "readonly": "Only organization owners and admins can manage this project.",
+    "archive": "Archive project",
+    "archiveDesc": "Hide the project and pause its activity. You can restore it later.",
+    "archiveHint": "Archiving is reversible.",
+    "archiveTitle": "Archive project",
+    "archiveBefore": "This will archive",
+    "archiveAfter": "and pause its activity. You can restore it later.",
+    "restore": "Restore project",
+    "restoreDesc": "This project is archived. Restore it to make it active again.",
+    "restoreHint": "Restoring makes the project active again.",
+    "delete": "Delete project",
+    "deleteDesc": "Permanently delete this project and all of its data.",
+    "deleteHint": "This action cannot be undone.",
+    "deleteModalTitle": "Delete project",
+    "deleteModalBodyBefore": "This will permanently delete",
+    "deleteModalBodyAfter": "and all of its data.",
+    "deleteConfirmName": "To confirm, type \"{{project}}\"",
+    "deleteConfirmPhrase": "To confirm, type {{phrase}}",
+    "deletePhrase": "delete this project",
+    "deleteWarning": "Deleting {{project}} cannot be undone."
   }
 }

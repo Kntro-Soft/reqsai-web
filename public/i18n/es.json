@@ -22,7 +22,10 @@
     "orgDeleted": "Organización eliminada.",
     "orgLeft": "Has salido de la organización.",
     "ownershipTransferred": "Propiedad transferida.",
-    "profileSaved": "Perfil actualizado."
+    "profileSaved": "Perfil actualizado.",
+    "projectArchived": "Proyecto archivado.",
+    "projectRestored": "Proyecto restaurado.",
+    "projectDeleted": "Proyecto eliminado."
   },
   "language": {
     "label": "Idioma",
@@ -60,7 +63,9 @@
     "security": "Seguridad",
     "appearance": "Apariencia",
     "notifications": "Notificaciones",
-    "tokens": "Tokens de API"
+    "tokens": "Tokens de API",
+    "newRole": "Nuevo rol",
+    "editRole": "Editar rol"
   },
   "nav": {
     "projects": "Proyectos",
@@ -515,7 +520,8 @@
       "ACTIVE": "Activo",
       "PENDING": "Pendiente",
       "INACTIVE": "Inactivo"
-    }
+    },
+    "errorSelfInvite": "No puedes invitarte a ti mismo."
   },
   "invitations": {
     "valid": {
@@ -668,7 +674,10 @@
       "GLOSSARY_TERM_DELETE": "Eliminar términos del glosario",
       "CONSTRAINT_READ": "Ver restricciones",
       "CONSTRAINT_WRITE": "Editar restricciones"
-    }
+    },
+    "newRole": "Nuevo rol",
+    "filterPlaceholder": "Filtrar roles…",
+    "filterEmpty": "Ningún rol coincide con el filtro."
   },
   "projectMembers": {
     "title": "Miembros",
@@ -689,7 +698,25 @@
     "removeAfter": "del proyecto y revocará su acceso.",
     "errorRemove": "No se pudo quitar al miembro. Intenta de nuevo.",
     "empty": "Sin miembros asignados. Asigna personas de tu organización para que colaboren aquí.",
-    "fallbackName": "Miembro"
+    "fallbackName": "Miembro",
+    "addMore": "Añadir más",
+    "removeRowAria": "Quitar esta fila",
+    "filterEmpty": "Ningún miembro coincide con el filtro.",
+    "filterAllRoles": "Todos los roles",
+    "filterRoleAria": "Filtrar por rol",
+    "sortAria": "Ordenar miembros",
+    "sortRecent": "Añadidos recientemente",
+    "sortName": "Nombre",
+    "inviteTitle": "Invitar personas nuevas",
+    "inviteDesc": "Invita personas por correo directamente a un rol del proyecto.",
+    "inviteSubmit": "Enviar invitaciones",
+    "fieldEmail": "Correo",
+    "fieldName": "Nombre",
+    "placeholderEmail": "nombre@empresa.com",
+    "placeholderName": "Nombre completo",
+    "errorSelfInvite": "No puedes invitarte a ti mismo.",
+    "errorInvite": "No se pudieron enviar las invitaciones. Inténtalo de nuevo.",
+    "errorAlreadyInvited": "Alguien aquí ya es miembro o está invitado."
   },
   "stories": {
     "title": "Historias",
@@ -712,5 +739,43 @@
       "APPROVED": "Aprobada",
       "REJECTED": "Rechazada"
     }
+  },
+  "projectRoleForm": {
+    "back": "Volver a roles",
+    "createTitle": "Crear rol",
+    "editTitle": "Editar rol",
+    "subtitle": "Nombra el rol y elige los permisos que otorga.",
+    "roleName": "Nombre del rol",
+    "roleNamePlaceholder": "p. ej. Analista principal",
+    "permissionsLabel": "Permisos",
+    "create": "Crear rol",
+    "save": "Guardar cambios",
+    "cancel": "Cancelar",
+    "loadError": "No se pudo cargar el rol."
+  },
+  "projectDanger": {
+    "title": "Zona de peligro",
+    "subtitle": "Archiva, restaura o elimina permanentemente este proyecto.",
+    "errorGeneric": "Algo salió mal. Inténtalo de nuevo.",
+    "readonly": "Solo los propietarios y administradores de la organización pueden gestionar este proyecto.",
+    "archive": "Archivar proyecto",
+    "archiveDesc": "Oculta el proyecto y pausa su actividad. Podrás restaurarlo más tarde.",
+    "archiveHint": "Archivar es reversible.",
+    "archiveTitle": "Archivar proyecto",
+    "archiveBefore": "Esto archivará",
+    "archiveAfter": "y pausará su actividad. Podrás restaurarlo más tarde.",
+    "restore": "Restaurar proyecto",
+    "restoreDesc": "Este proyecto está archivado. Restáuralo para volver a activarlo.",
+    "restoreHint": "Restaurar vuelve a activar el proyecto.",
+    "delete": "Eliminar proyecto",
+    "deleteDesc": "Elimina permanentemente este proyecto y todos sus datos.",
+    "deleteHint": "Esta acción no se puede deshacer.",
+    "deleteModalTitle": "Eliminar proyecto",
+    "deleteModalBodyBefore": "Esto eliminará permanentemente",
+    "deleteModalBodyAfter": "y todos sus datos.",
+    "deleteConfirmName": "Para confirmar, escribe \"{{project}}\"",
+    "deleteConfirmPhrase": "Para confirmar, escribe {{phrase}}",
+    "deletePhrase": "eliminar este proyecto",
+    "deleteWarning": "Eliminar {{project}} no se puede deshacer."
   }
 }
