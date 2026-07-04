@@ -3,13 +3,35 @@ import {
   addToQueue,
   buildSessionItems,
   clampQueueIndex,
+  historicalSegmentToMessage,
   lastSequence,
+  lowestSequence,
+  normalizeSegmentPage,
   removeFromQueue,
   toDecisionEntry,
   transcriptToItems,
   upsertSegment,
 } from './feed';
-import { SessionTranscriptSegmentMessage, SuggestionResponse } from './discovery.models';
+import {
+  DisplayStory,
+  SessionSegmentResponse,
+  SessionTranscriptSegmentMessage,
+  SuggestionResponse,
+} from './discovery.models';
+
+function displayStory(overrides: Partial<DisplayStory> = {}): DisplayStory {
+  return {
+    id: 'story-1',
+    title: 'Export invoices',
+    role: 'accountant',
+    action: 'export invoices',
+    benefit: 'share them',
+    priority: 'MEDIUM',
+    storyPoints: 3,
+    createdAt: null,
+    ...overrides,
+  };
+}
 
 function segment(
   sequence: number,
@@ -111,6 +133,76 @@ describe('lastSequence', () => {
 
   it('is the highest sequence present', () => {
     expect(lastSequence([segment(3), segment(7), segment(5)])).toBe(7);
+  });
+});
+
+describe('lowestSequence', () => {
+  it('is null with no segments', () => {
+    expect(lowestSequence([])).toBeNull();
+  });
+
+  it('is the lowest sequence present', () => {
+    expect(lowestSequence([segment(3), segment(7), segment(5)])).toBe(3);
+  });
+});
+
+describe('historicalSegmentToMessage', () => {
+  function raw(overrides: Partial<SessionSegmentResponse> = {}): SessionSegmentResponse {
+    return {
+      sequence: 4,
+      text: 'persisted line',
+      speakerLabel: 'A',
+      startMs: 4000,
+      endMs: 4900,
+      occurredAt: '2026-07-04T12:03:00Z',
+      ...overrides,
+    };
+  }
+
+  it('adapts a persisted segment into a final transcript-segment message', () => {
+    const msg = historicalSegmentToMessage('sess-9', raw());
+    expect(msg.type).toBe('TRANSCRIPT_SEGMENT');
+    expect(msg.sessionId).toBe('sess-9');
+    expect(msg.isFinal).toBe(true);
+    expect(msg.sequence).toBe(4);
+    expect(msg.occurredAt).toBe('2026-07-04T12:03:00Z');
+    expect(msg.text).toBe('persisted line');
+  });
+});
+
+describe('normalizeSegmentPage', () => {
+  const seg: SessionSegmentResponse = {
+    sequence: 1,
+    text: 'a',
+    speakerLabel: null,
+    startMs: 0,
+    endMs: 500,
+    occurredAt: '2026-07-04T12:00:00Z',
+  };
+
+  it('treats a bare array as a page with no more', () => {
+    expect(normalizeSegmentPage([seg])).toEqual({ segments: [seg], hasMore: false });
+  });
+
+  it('reads a segments + hasMore object', () => {
+    expect(normalizeSegmentPage({ segments: [seg], hasMore: true })).toEqual({
+      segments: [seg],
+      hasMore: true,
+    });
+  });
+
+  it('reads a PageResponse (content + page.hasPrevious)', () => {
+    const page = normalizeSegmentPage({
+      content: [seg],
+      page: { hasNext: false, hasPrevious: true },
+    });
+    expect(page.segments).toEqual([seg]);
+    expect(page.hasMore).toBe(true);
+  });
+
+  it('degrades unknown shapes to an empty page', () => {
+    expect(normalizeSegmentPage(null)).toEqual({ segments: [], hasMore: false });
+    expect(normalizeSegmentPage(42)).toEqual({ segments: [], hasMore: false });
   });
 });
 
@@ -233,6 +325,66 @@ describe('buildSessionItems', () => {
       ],
     });
     expect(items.filter((i) => i.kind === 'story')).toHaveLength(1);
+  });
+
+  describe('chronological (historical) mode', () => {
+    it('interleaves segments, decisions and stories by timestamp', () => {
+      const items = buildSessionItems({
+        session,
+        transcript: null,
+        chronological: true,
+        segments: [
+          segment(0, { occurredAt: '2026-07-04T12:00:00Z' }),
+          segment(1, { occurredAt: '2026-07-04T12:00:30Z' }),
+        ],
+        decisions: [
+          decision({ id: 'sug-1', storyId: 'story-x', occurredAt: '2026-07-04T12:00:20Z' }),
+        ],
+        stories: [displayStory({ id: 'story-late', createdAt: '2026-07-04T12:01:00Z' })],
+      });
+      expect(items.map((i) => i.kind)).toEqual(['segment', 'decision', 'segment', 'story']);
+    });
+
+    it('ignores anchorSequence and orders purely by time', () => {
+      const items = buildSessionItems({
+        session,
+        transcript: null,
+        chronological: true,
+        segments: [segment(5, { occurredAt: '2026-07-04T12:00:10Z' })],
+        // A decision whose anchor (99) does not match any segment still lands by time.
+        decisions: [
+          decision({ anchorSequence: 99, storyId: null, occurredAt: '2026-07-04T12:00:05Z' }),
+        ],
+        stories: [],
+      });
+      expect(items.map((i) => i.kind)).toEqual(['decision', 'segment']);
+    });
+
+    it('places stories lacking a timestamp after timestamped items', () => {
+      const items = buildSessionItems({
+        session,
+        transcript: null,
+        chronological: true,
+        segments: [segment(0, { occurredAt: '2026-07-04T12:00:10Z' })],
+        decisions: [],
+        stories: [displayStory({ id: 'story-untimed', createdAt: null })],
+      });
+      expect(items.map((i) => i.kind)).toEqual(['segment', 'story']);
+    });
+
+    it('still hides stories already shown as an accepted decision', () => {
+      const items = buildSessionItems({
+        session,
+        transcript: null,
+        chronological: true,
+        segments: [],
+        decisions: [
+          decision({ outcome: 'ACCEPTED', storyId: 'story-1', occurredAt: '2026-07-04T12:00:05Z' }),
+        ],
+        stories: [displayStory({ id: 'story-1', createdAt: '2026-07-04T12:00:06Z' })],
+      });
+      expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
+    });
   });
 });
 
