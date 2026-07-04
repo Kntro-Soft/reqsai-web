@@ -175,7 +175,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         <div
           #feed
           (scroll)="onScroll()"
-          class="relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
+          class="scrollbar-thin relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
           data-testid="discovery-feed"
         >
           @switch (store.state()) {
@@ -190,20 +190,24 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               </p>
             }
             @default {
-              @if (store.hasOlder()) {
-                <div class="flex justify-center">
-                  <button
-                    type="button"
-                    (click)="store.loadOlder()"
-                    [disabled]="store.loadingOlder()"
-                    class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    data-testid="load-older"
-                  >
-                    @if (store.loadingOlder()) {
-                      <hlm-spinner class="h-3 w-3" />
-                    }
-                    {{ 'discovery.loadOlder' | transloco }}
-                  </button>
+              @if (store.loadingOlder()) {
+                <div
+                  class="flex items-center justify-center gap-2 py-1 text-xs text-muted-foreground"
+                  data-testid="loading-older"
+                >
+                  <hlm-spinner class="h-3 w-3" />
+                  {{ 'discovery.loadingOlder' | transloco }}
+                </div>
+              } @else if (!store.hasOlder() && store.blocks().length > 0 && projectCreatedAt()) {
+                <div class="flex items-center gap-3 py-1" data-testid="feed-start-marker">
+                  <span class="h-px flex-1 bg-border"></span>
+                  <span class="text-xs font-medium text-muted-foreground">
+                    {{
+                      'discovery.startMarker'
+                        | transloco: { date: projectCreatedAt() | date: 'mediumDate' }
+                    }}
+                  </span>
+                  <span class="h-px flex-1 bg-border"></span>
                 </div>
               }
 
@@ -447,6 +451,16 @@ export class DiscoveryChat implements OnInit {
   protected readonly leaveOpen = signal(false);
   /** Resolver for the CanDeactivate promise, pending while the modal is open. */
   private leaveResolver: ((leave: boolean) => void) | null = null;
+
+  /** Id of the first (oldest) loaded block; watched to restore scroll after prepending older ones. */
+  private readonly topBlockId = computed(() => this.store.blocks()[0]?.session.id ?? null);
+  /** feed.scrollHeight captured right before an older-session load, to offset the prepend. */
+  private pendingPrependHeight: number | null = null;
+
+  /** The current project's creation date, for the "project created" start marker. */
+  protected readonly projectCreatedAt = computed(
+    () => this.workspace.projects().find((p) => p.id === this.projectId())?.createdAt ?? null,
+  );
   /** Total feed entries across sessions; changes when transcript/decisions arrive, to trigger auto-stick. */
   protected readonly feedItemCount = computed(() =>
     this.store.blocks().reduce((total, block) => total + block.items.length, 0),
@@ -502,6 +516,18 @@ export class DiscoveryChat implements OnInit {
         this.leaveResolver = null;
       }
     });
+    // Preserve scroll position when older sessions are prepended at the top: the
+    // captured pre-load height lets us re-anchor scrollTop so the view never jumps.
+    effect(() => {
+      this.topBlockId();
+      const before = untracked(() => this.pendingPrependHeight);
+      if (before === null) return;
+      this.pendingPrependHeight = null;
+      setTimeout(() => {
+        const el = this.feed()?.nativeElement;
+        if (el) el.scrollTop += el.scrollHeight - before;
+      }, 0);
+    });
   }
 
   private scrollToBottom(): void {
@@ -521,11 +547,15 @@ export class DiscoveryChat implements OnInit {
     if (focus) this.store.showSession(focus);
   }
 
-  /** Lazy-loads older sessions when the feed is scrolled near the top. */
+  /** Lazy-loads older sessions when the feed is scrolled near the top, preserving scroll position. */
   protected onScroll(): void {
     const el = this.feed()?.nativeElement;
     if (!el) return;
-    if (el.scrollTop < 80) this.store.loadOlder();
+    if (el.scrollTop < 120 && this.store.hasOlder() && !this.store.loadingOlder()) {
+      // Capture the height before the prepend so the effect can re-anchor scrollTop.
+      this.pendingPrependHeight = el.scrollHeight;
+      this.store.loadOlder();
+    }
     this.atBottom.set(el.scrollHeight - el.scrollTop - el.clientHeight < 120);
   }
 
