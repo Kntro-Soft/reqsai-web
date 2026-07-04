@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   viewChild,
 } from '@angular/core';
@@ -20,6 +21,7 @@ import {
   lucideCircleHelp,
   lucideClock,
   lucideHistory,
+  lucideLanguages,
   lucideMic,
   lucidePanelRight,
   lucideSparkles,
@@ -35,6 +37,8 @@ import { AcceptSuggestionRequest, SuggestionResponse } from '../../data/discover
 import { SessionBar } from '../../components/session-bar/session-bar';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SidePanel } from '../../components/side-panel/side-panel';
+import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { DISCOVERY_LANGUAGES } from '../../data/discovery-languages';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -55,6 +59,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     SessionBar,
     DecisionQueue,
     SidePanel,
+    Select,
     HlmButton,
     HlmIcon,
     HlmSpinner,
@@ -65,6 +70,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideCircleHelp,
       lucideClock,
       lucideHistory,
+      lucideLanguages,
       lucideMic,
       lucidePanelRight,
       lucideSparkles,
@@ -87,6 +93,29 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             </p>
           </div>
           <div class="flex shrink-0 items-center gap-1.5">
+            <!-- Meeting language: editable until a session is recording, then locked. -->
+            @if (recording.isActive()) {
+              <span
+                class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-secondary/50 px-2.5 text-xs font-medium text-muted-foreground"
+                [title]="'discovery.language.locked' | transloco"
+                data-testid="discovery-language-locked"
+              >
+                <hlm-icon name="lucideLanguages" size="14px" />
+                {{ languageLabel() }}
+              </span>
+            } @else {
+              <app-select
+                size="sm"
+                [searchable]="true"
+                [options]="languageOptions()"
+                [value]="language()"
+                (valueChange)="language.set($event)"
+                [ariaLabel]="'discovery.language.label' | transloco"
+                [searchPlaceholder]="'discovery.language.search' | transloco"
+                [emptyText]="'discovery.language.empty' | transloco"
+                data-testid="discovery-language"
+              />
+            }
             <a
               [routerLink]="['history']"
               hlmBtn
@@ -379,6 +408,19 @@ export class DiscoveryChat implements OnInit {
   protected readonly canRecord = this.canManage;
   protected readonly canDecide = this.canManage;
 
+  /** Meeting language for the next session — defaults to the org's, editable until recording starts. */
+  protected readonly language = linkedSignal(() => this.projectLanguage());
+  protected readonly languageOptions = computed<SelectOption[]>(() => {
+    const base = DISCOVERY_LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
+    const current = this.language();
+    return base.some((o) => o.value === current)
+      ? base
+      : [{ value: current, label: current }, ...base];
+  });
+  protected readonly languageLabel = computed(
+    () => DISCOVERY_LANGUAGES.find((l) => l.code === this.language())?.label ?? this.language(),
+  );
+
   constructor() {
     // Scroll a freshly focused session into view (history row click / new session).
     effect(() => {
@@ -410,7 +452,7 @@ export class DiscoveryChat implements OnInit {
   protected async record(): Promise<void> {
     const granted = await this.recorder.requestPermission();
     if (!granted) return;
-    const language = this.projectLanguage();
+    const language = this.language();
     this.recording
       .start(this.projectId(), { title: this.defaultTitle(), language })
       .subscribe({
