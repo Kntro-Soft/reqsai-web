@@ -60,11 +60,14 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
   template: `
     @if (store.queue().length > 0) {
       <div
-        class="pointer-events-none fixed left-1/2 top-16 z-30 w-[min(44rem,calc(100vw-2rem))] -translate-x-1/2"
+        class="pointer-events-none fixed left-1/2 top-14 z-40 w-[min(44rem,calc(100vw-2rem))] -translate-x-1/2"
         data-testid="decision-queue"
       >
         @if (collapsed()) {
-          <div class="flex justify-center">
+          <!-- Collapsed: a pill pinned to the app header's bottom border (h-14 =
+               56px). Its center sits on that divider line (-translate-y-1/2), so
+               it stays clear of the header toolbar buttons on narrow viewports. -->
+          <div class="flex -translate-y-1/2 justify-center">
             <button
               type="button"
               (click)="collapsed.set(false)"
@@ -81,7 +84,9 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
             </button>
           </div>
         } @else {
-          <div class="queue-card pointer-events-auto relative">
+          <!-- Expanded: keep the open card at its prior offset (the container now
+               anchors 8px higher, at the header border, for the collapsed pill). -->
+          <div class="queue-card pointer-events-auto relative mt-2">
             <!-- Top bar: just a clear minimize control (the counter now lives in
                  the folded-corner tab on the card itself). -->
             <div class="mb-1.5 flex items-center justify-end px-1">
@@ -420,10 +425,7 @@ export class DecisionQueue {
     this.dragX.set(0);
   }
 
-  private releaseDrag(
-    drag: NonNullable<DecisionQueue['drag']>,
-    pointerId: number,
-  ): void {
+  private releaseDrag(drag: NonNullable<DecisionQueue['drag']>, pointerId: number): void {
     if (drag.target.hasPointerCapture(pointerId)) {
       drag.target.releasePointerCapture(pointerId);
     }
