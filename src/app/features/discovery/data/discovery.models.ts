@@ -187,7 +187,15 @@ export function suggestionCriteria(
     .filter((c) => c.given.length > 0 && c.when.length > 0 && c.then.length > 0);
 }
 
-/** Accept payload; every field optional — omitted/null keeps the original draft. */
+/**
+ * Accept payload; every field optional — omitted/null keeps the original draft.
+ *
+ * The flat `edited*` fields are the shape today's backend reads. A parallel
+ * backend branch is teaching accept to persist edited acceptance criteria too:
+ * we send `editedAcceptanceCriteria` alongside the flat fields so a newer
+ * backend picks it up while an older one simply ignores the unknown property
+ * and still commits the flat edits. See {@link editableToAcceptRequest}.
+ */
 export interface AcceptSuggestionRequest {
   editedTitle?: string;
   editedRole?: string;
@@ -195,6 +203,130 @@ export interface AcceptSuggestionRequest {
   editedBenefit?: string;
   editedPriority?: SuggestionPriority;
   editedStoryPoints?: number;
+  /** Edited Given/When/Then criteria (NEW_STORY list, or the EDGE_CASE single criterion). */
+  editedAcceptanceCriteria?: AcceptanceCriterion[];
+}
+
+/**
+ * An editable acceptance criterion in the card's inline form. Unlike the
+ * validated {@link AcceptanceCriterion}, every field may be blank while the
+ * analyst is typing; blanks are pruned when the payload is built.
+ */
+export interface EditableCriterion {
+  scenario: string;
+  given: string;
+  when: string;
+  then: string;
+}
+
+/** The card's editable model for a story-shaped suggestion (NEW_STORY / UPDATE_STORY / EDGE_CASE). */
+export interface EditableSuggestion {
+  title: string;
+  role: string;
+  action: string;
+  benefit: string;
+  priority: SuggestionPriority;
+  storyPoints: number | null;
+  criteria: EditableCriterion[];
+}
+
+/** An empty, ready-to-fill editable criterion row. */
+export function emptyEditableCriterion(): EditableCriterion {
+  return { scenario: '', given: '', when: '', then: '' };
+}
+
+/**
+ * Seeds the inline edit form from a suggestion's draft. For EDGE_CASE the four
+ * Given/When/Then fields live in `draftAcceptanceCriteria[0]` (parallel backend
+ * branch); on an older backend that carried the edge case in the plain draft
+ * fields there is no criterion, so the criteria list starts with one empty row
+ * for the analyst to fill.
+ */
+export function draftToEditable(suggestion: SuggestionResponse): EditableSuggestion {
+  const criteria = suggestionCriteria(suggestion.draftAcceptanceCriteria).map((c) => ({
+    scenario: c.scenario ?? '',
+    given: c.given,
+    when: c.when,
+    then: c.then,
+  }));
+  if (suggestion.type === 'EDGE_CASE' && criteria.length === 0) {
+    criteria.push(emptyEditableCriterion());
+  }
+  return {
+    title: suggestion.draftTitle ?? '',
+    role: suggestion.draftRole ?? '',
+    action: suggestion.draftAction ?? '',
+    benefit: suggestion.draftBenefit ?? '',
+    priority: suggestion.draftPriority ?? 'MEDIUM',
+    storyPoints: suggestion.draftStoryPoints,
+    criteria,
+  };
+}
+
+/** Trims an editable criterion and reports whether all three G/W/T parts are present. */
+function cleanCriterion(c: EditableCriterion): AcceptanceCriterion | null {
+  const scenario = c.scenario.trim();
+  const given = c.given.trim();
+  const when = c.when.trim();
+  const then = c.then.trim();
+  if (!given || !when || !then) return null;
+  return { scenario: scenario || null, given, when, then };
+}
+
+/**
+ * Maps the card's edited model into an {@link AcceptSuggestionRequest}. Only
+ * fields that differ from the original draft are sent (an omitted field keeps
+ * the draft server-side); empty strings are dropped rather than overwriting a
+ * draft with blank. For EDGE_CASE the single edited criterion is ALSO projected
+ * onto the flat `edited*` fields the current backend composes its Gherkin line
+ * from (scenario→title, given→role, when→action, then→benefit), so the edit
+ * takes effect even before the richer backend ships.
+ */
+export function editableToAcceptRequest(
+  suggestion: SuggestionResponse,
+  edited: EditableSuggestion,
+): AcceptSuggestionRequest {
+  const request: AcceptSuggestionRequest = {};
+  const put = (
+    key: 'editedTitle' | 'editedRole' | 'editedAction' | 'editedBenefit',
+    value: string,
+    original: string | null,
+  ): void => {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== (original ?? '')) request[key] = trimmed;
+  };
+
+  if (suggestion.type === 'EDGE_CASE') {
+    const first = edited.criteria[0] ?? emptyEditableCriterion();
+    // Project the edited criterion onto the flat fields the current backend
+    // reads (scenario/given/when/then) AND send it structured for the new one.
+    put('editedTitle', first.scenario, suggestion.draftTitle);
+    put('editedRole', first.given, suggestion.draftRole);
+    put('editedAction', first.when, suggestion.draftAction);
+    put('editedBenefit', first.then, suggestion.draftBenefit);
+    const criterion = cleanCriterion(first);
+    if (criterion) request.editedAcceptanceCriteria = [criterion];
+    return request;
+  }
+
+  put('editedTitle', edited.title, suggestion.draftTitle);
+  put('editedRole', edited.role, suggestion.draftRole);
+  put('editedAction', edited.action, suggestion.draftAction);
+  put('editedBenefit', edited.benefit, suggestion.draftBenefit);
+  if (edited.priority !== (suggestion.draftPriority ?? 'MEDIUM')) {
+    request.editedPriority = edited.priority;
+  }
+  if (edited.storyPoints != null && edited.storyPoints !== suggestion.draftStoryPoints) {
+    request.editedStoryPoints = edited.storyPoints;
+  }
+  // NEW_STORY carries an editable criteria list; UPDATE_STORY does not edit criteria.
+  if (suggestion.type === 'NEW_STORY') {
+    const criteria = edited.criteria
+      .map(cleanCriterion)
+      .filter((c): c is AcceptanceCriterion => c !== null);
+    if (criteria.length > 0) request.editedAcceptanceCriteria = criteria;
+  }
+  return request;
 }
 
 // ---- Realtime (STOMP topic /topic/sessions/{id}) ----
