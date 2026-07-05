@@ -215,6 +215,18 @@ export const routes: Routes = [
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
           },
           {
+            path: 'stories/new',
+            title: 'titles.newStory',
+            loadComponent: () =>
+              import('./features/discovery/pages/stories/story-form').then((m) => m.StoryCreate),
+          },
+          {
+            path: 'stories/:storyId',
+            title: 'titles.story',
+            loadComponent: () =>
+              import('./features/discovery/pages/stories/story-detail').then((m) => m.StoryDetail),
+          },
+          {
             path: 'glossary',
             title: 'titles.glossary',
             loadComponent: () =>
