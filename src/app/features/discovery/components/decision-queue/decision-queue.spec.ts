@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { computed, signal } from '@angular/core';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { clampQueueIndex } from '../../data/feed';
@@ -74,6 +74,22 @@ describe('DecisionQueue', () => {
     const fixture = TestBed.createComponent(DecisionQueue);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
+  }
+
+  /** Drives a committed horizontal swipe on the drag handle by dispatching pointer events. */
+  function swipe(handle: HTMLElement, deltaX: number): void {
+    const opts = (clientX: number): PointerEventInit => ({
+      pointerId: 1,
+      clientX,
+      clientY: 0,
+      bubbles: true,
+    });
+    handle.dispatchEvent(new PointerEvent('pointerdown', opts(0)));
+    // Two moves: the first crosses the horizontal lock, the second clears the
+    // commit threshold (min 90px) so the drag resolves to a real navigation.
+    handle.dispatchEvent(new PointerEvent('pointermove', opts(deltaX < 0 ? -20 : 20)));
+    handle.dispatchEvent(new PointerEvent('pointermove', opts(deltaX)));
+    handle.dispatchEvent(new PointerEvent('pointerup', opts(deltaX)));
   }
 
   it('shows nothing while the queue is empty', () => {
@@ -188,5 +204,65 @@ describe('DecisionQueue', () => {
     expect(handle).not.toBeNull();
     // pan-y keeps vertical page scroll working while a horizontal drag swipes.
     expect(handle?.classList.contains('touch-pan-y')).toBe(true);
+  });
+
+  it('on a committed swipe, flings the OUTGOING card (card-exiting) before swapping the suggestion', () => {
+    // Reduced-motion swaps instantly with no fling — only assert the exit flow
+    // where motion is allowed.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const fixture: ComponentFixture<DecisionQueue> = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const handle = el.querySelector<HTMLElement>('[data-testid="queue-drag"]')!;
+    // Swipe left past the commit threshold → commit to "next".
+    swipe(handle, -300);
+    fixture.detectChanges();
+
+    // The card is now flinging out: it carries the exit class and is still the
+    // FIRST suggestion — the swap is deferred until the fling finishes.
+    const card = el.querySelector<HTMLElement>('[data-testid="queue-card"]')!;
+    expect(card.classList.contains('card-exiting')).toBe(true);
+    expect(card.style.opacity).toBe('0');
+    expect(store.queueIndex()).toBe(0);
+
+    // The transform transition ending is what commits the navigation.
+    card.dispatchEvent(new TransitionEvent('transitionend', { propertyName: 'transform' }));
+    fixture.detectChanges();
+
+    expect(store.queueIndex()).toBe(1);
+    // Exit state cleared; the freshly-mounted card is back at rest.
+    const swapped = el.querySelector<HTMLElement>('[data-testid="queue-card"]')!;
+    expect(swapped.classList.contains('card-exiting')).toBe(false);
+  });
+
+  it('ignores a fresh grab while a card is still flinging out (no desync)', () => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' }), suggestion({ id: 'c' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const handle = el.querySelector<HTMLElement>('[data-testid="queue-drag"]')!;
+    swipe(handle, -300);
+    fixture.detectChanges();
+    expect(
+      el.querySelector<HTMLElement>('[data-testid="queue-card"]')!.classList.contains('card-exiting'),
+    ).toBe(true);
+
+    // A second swipe mid-fling must be ignored — the index still hasn't advanced.
+    swipe(handle, -300);
+    fixture.detectChanges();
+    expect(store.queueIndex()).toBe(0);
+
+    // Only after the first fling completes does the single navigation apply.
+    el.querySelector<HTMLElement>('[data-testid="queue-card"]')!.dispatchEvent(
+      new TransitionEvent('transitionend', { propertyName: 'transform' }),
+    );
+    fixture.detectChanges();
+    expect(store.queueIndex()).toBe(1);
   });
 });

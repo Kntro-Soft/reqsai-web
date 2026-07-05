@@ -36,8 +36,10 @@ const STACK_FADE_STEP = 0.22;
 
 /** Max rotation (deg) applied to the card at a full-width drag, for the Tinder tilt. */
 const DRAG_MAX_ROTATE_DEG = 8;
-/** How far off-screen (px) the card flings when a drag commits to prev/next. */
-const DRAG_FLING_PX = 600;
+/** How far off-screen the committed card flings, as a fraction of its own width. */
+const EXIT_TRANSLATE_FRACTION = 1.2;
+/** Exit fling duration (ms) — MUST match the `.card-exiting` CSS transition. */
+const EXIT_DURATION_MS = 200;
 /** Horizontal delta (px) past which a gesture is treated as a swipe (not a page scroll). */
 const DRAG_HORIZONTAL_LOCK_PX = 8;
 
@@ -148,7 +150,10 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                 <div
                   class="card-swap relative z-10"
                   [class.card-dragging]="dragging()"
+                  [class.card-exiting]="exiting() !== null"
                   [style.transform]="cardTransform()"
+                  [style.opacity]="cardOpacity()"
+                  (transitionend)="onCardTransitionEnd($event)"
                   data-testid="queue-card"
                 >
                   <!-- Folded-corner tab: the "n de m" counter, clearly detached
@@ -221,7 +226,7 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
           .card-swap {
             animation: none;
           }
-          /* No spring/fling under reduced motion: the card snaps instantly. */
+          /* No spring/fling/enter under reduced motion: the card snaps instantly. */
           .card-swap {
             transition: none;
           }
@@ -233,22 +238,34 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
           .queue-badge {
             animation: queue-badge-pulse 1.8s ease-in-out infinite;
           }
+          /* Enter: the incoming card eases in from a gentle scale + fade rather
+             than popping. Replayed on each swap via the keyed @for remount. */
           .card-swap {
-            animation: card-swap-in 140ms ease-out;
+            animation: card-swap-in 160ms ease-out;
           }
-          /* While the pointer holds the card it follows instantly; on release the
-             card springs back (or flings out) with an eased transform transition. */
+          /* Resting card: a drag under the commit threshold springs back to
+             center (transform 0, no rotation) with a short ease-out. */
           .card-swap {
-            transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+            transition:
+              transform 150ms ease-out,
+              opacity 150ms ease-out;
           }
+          /* While the pointer holds the card it follows the finger instantly. */
           .card-swap.card-dragging {
             transition: none;
+          }
+          /* Commit: the outgoing card flings fully off-screen (±120% width) with
+             its tilt while fading out, over ~200ms, before the swap happens. */
+          .card-swap.card-exiting {
+            transition:
+              transform 200ms ease-out,
+              opacity 200ms ease-out;
           }
         }
         @keyframes card-swap-in {
           from {
-            opacity: 0.35;
-            transform: scale(0.985);
+            opacity: 0;
+            transform: scale(0.96);
           }
           to {
             opacity: 1;
@@ -334,6 +351,15 @@ export class DecisionQueue {
   protected readonly dragging = signal(false);
   /** Live horizontal drag delta (px): negative = left/next, positive = right/prev. */
   private readonly dragX = signal(0);
+  /**
+   * A committed swipe that is flinging off-screen but has not yet swapped the
+   * current suggestion. Non-null only during the ~200ms exit animation; carries
+   * the outcome to apply and the card width, so the transform can fling to a
+   * fixed fraction of the card width regardless of the drag's end position.
+   */
+  protected readonly exiting = signal<{ outcome: 'next' | 'prev'; width: number } | null>(null);
+  /** Guards the exit swap so a transitionend + fallback timeout can't both fire it. */
+  private exitDone = false;
   /** The pending drag gesture's mutable state, or null when idle. */
   private drag: {
     pointerId: number;
@@ -345,8 +371,18 @@ export class DecisionQueue {
     target: HTMLElement;
   } | null = null;
 
-  /** The active card's transform: follow the pointer with a proportional Tinder tilt. */
+  /**
+   * The active card's transform. Three phases: while exiting, fling fully
+   * off-screen (±120% of the card width) keeping the tilt; while dragging, follow
+   * the pointer with a proportional Tinder tilt; otherwise rest at center.
+   */
   protected readonly cardTransform = computed(() => {
+    const exit = this.exiting();
+    if (exit) {
+      const sign = exit.outcome === 'next' ? -1 : 1;
+      const offset = sign * exit.width * EXIT_TRANSLATE_FRACTION;
+      return `translateX(${offset}px) rotate(${sign * DRAG_MAX_ROTATE_DEG}deg)`;
+    }
     const dx = this.dragX();
     if (dx === 0) return '';
     if (this.prefersReducedMotion()) return `translateX(${dx}px)`;
@@ -354,6 +390,9 @@ export class DecisionQueue {
     const rotate = Math.max(-DRAG_MAX_ROTATE_DEG, Math.min(DRAG_MAX_ROTATE_DEG, (dx / width) * 20));
     return `translateX(${dx}px) rotate(${rotate}deg)`;
   });
+
+  /** The card fades to 0 as it flings out on commit; otherwise fully opaque. */
+  protected readonly cardOpacity = computed(() => (this.exiting() ? 0 : 1));
 
   private prefersReducedMotion(): boolean {
     return (
@@ -364,6 +403,9 @@ export class DecisionQueue {
   protected onDragStart(event: PointerEvent): void {
     // A lone card has nowhere to navigate — ignore drags entirely.
     if (this.store.queue().length <= 1) return;
+    // Ignore a new grab while the previous card is still flinging off-screen, so a
+    // fast repeated swipe can't desync the exit animation from the current card.
+    if (this.exiting()) return;
     const target = event.currentTarget as HTMLElement;
     this.drag = {
       pointerId: event.pointerId,
@@ -398,24 +440,62 @@ export class DecisionQueue {
     const drag = this.drag;
     if (!drag || event.pointerId !== drag.pointerId) return;
     const dx = this.dragX();
-    const outcome = dragOutcome(dx, drag.width, this.safeIndex(), this.store.queue().length);
+    const width = drag.width;
+    const outcome = dragOutcome(dx, width, this.safeIndex(), this.store.queue().length);
     this.releaseDrag(drag, event.pointerId);
 
+    // Below the threshold: spring the card back to center (the resting `.card-swap`
+    // transition eases translate + rotation back to 0).
     if (outcome === 'snap') {
       this.dragX.set(0);
       return;
     }
-    // Fling the card out in the drag direction, then swap to the target card and
-    // reset. Under reduced motion there is no fling — switch instantly.
+    // Under reduced motion there is no fling — swap to the target card instantly.
     if (this.prefersReducedMotion()) {
       this.dragX.set(0);
       this.navigate(outcome);
       return;
     }
-    this.dragX.set(dx < 0 ? -DRAG_FLING_PX : DRAG_FLING_PX);
-    this.navigate(outcome);
-    // The keyed @for remounts the new card at rest; clear the delta on the next frame.
-    setTimeout(() => this.dragX.set(0), 0);
+    // Commit: hand off to the exit animation. The card keeps its current drag delta
+    // as the transition's start point, then `.card-exiting` flings it fully
+    // off-screen; only once that finishes do we swap the current suggestion.
+    this.beginExit(outcome, width);
+  }
+
+  /**
+   * Starts the off-screen fling for a committed swipe. Clearing `dragX` lets the
+   * exit transform (computed from {@link exiting}) take over from the drag delta,
+   * so the card animates from where the finger left it out to ±120% width. A
+   * fallback timeout matching the CSS duration guarantees the swap even if the
+   * `transitionend` event never fires.
+   */
+  private beginExit(outcome: 'next' | 'prev', width: number): void {
+    this.exitDone = false;
+    this.exiting.set({ outcome, width });
+    this.dragX.set(0);
+    setTimeout(() => this.finishExit(), EXIT_DURATION_MS + 30);
+  }
+
+  /**
+   * Fires when the outgoing card's exit transition ends. Swaps to the target card
+   * and clears the exit state; the keyed `@for` then remounts the new card, which
+   * plays the enter animation. Guarded so it runs once per exit even though both
+   * `transitionend` (possibly per-property) and the fallback timeout call it.
+   */
+  protected onCardTransitionEnd(event: TransitionEvent): void {
+    // Only the exiting card's transform transition should trigger the swap — ignore
+    // the enter animation, opacity, and any child transitions bubbling up.
+    if (event.target !== event.currentTarget || event.propertyName !== 'transform') return;
+    this.finishExit();
+  }
+
+  /** Applies the committed navigation and resets the exit state (idempotent). */
+  private finishExit(): void {
+    const exit = this.exiting();
+    if (!exit || this.exitDone) return;
+    this.exitDone = true;
+    this.exiting.set(null);
+    this.navigate(exit.outcome);
   }
 
   protected onDragCancel(event: PointerEvent): void {
