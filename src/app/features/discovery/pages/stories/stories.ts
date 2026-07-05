@@ -40,9 +40,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, Select, HlmButton, HlmIcon, HlmInput, HlmSkeleton, TranslocoPipe],
   viewProviders: [provideIcons({ lucidePlus, lucideSearch })],
+  host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
-    <div class="flex flex-col gap-6">
-      <div class="flex items-start justify-between gap-3">
+    <div class="flex h-full min-h-0 flex-col gap-6">
+      <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
@@ -54,7 +55,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
       </div>
 
       <!-- Filters + sort -->
-      <div class="flex flex-col gap-2">
+      <div class="flex shrink-0 flex-col gap-2">
         <div class="flex flex-wrap items-center gap-2">
           <div
             class="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-input bg-background px-3"
@@ -131,7 +132,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
       </div>
 
       @if (state() === 'loading') {
-        <div class="overflow-hidden rounded-2xl border border-border" data-testid="stories-skeleton">
+        <div
+          class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border"
+          data-testid="stories-skeleton"
+        >
           @for (i of skeletonRows; track i) {
             <div class="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
               <div class="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -144,19 +148,21 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           }
         </div>
       } @else if (state() === 'error') {
-        <p class="text-sm text-destructive">{{ 'stories.loadError' | transloco }}</p>
+        <p class="shrink-0 text-sm text-destructive">{{ 'stories.loadError' | transloco }}</p>
       } @else if (stories().length === 0) {
         <p
-          class="rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+          class="min-h-0 flex-1 rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
           data-testid="stories-empty"
         >
           {{ (hasFilters() ? 'stories.noMatches' : 'stories.emptyBody') | transloco }}
         </p>
       } @else {
-        <div class="overflow-hidden rounded-2xl border border-border">
-          <table class="w-full text-sm">
+        <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
+          <table class="w-full min-w-[720px] text-sm">
             <thead>
-              <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <tr
+                class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
+              >
                 <th class="px-4 py-2.5 font-medium">{{ 'stories.colTitle' | transloco }}</th>
                 <th class="px-3 py-2.5 font-medium">{{ 'stories.colPriority' | transloco }}</th>
                 <th class="px-3 py-2.5 font-medium">{{ 'stories.colStatus' | transloco }}</th>
@@ -210,37 +216,36 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           </table>
         </div>
 
-        @if (totalPages() > 1) {
-          <div class="flex items-center justify-between gap-3">
-            <span class="text-sm text-muted-foreground">
-              {{ 'stories.pageOf' | transloco: { page: page() + 1, total: totalPages() } }}
-            </span>
-            <div class="flex gap-2">
-              <button
-                hlmBtn
-                size="sm"
-                variant="outline"
-                type="button"
-                [disabled]="page() === 0 || state() === 'loading'"
-                (click)="goToPage(page() - 1)"
-                data-testid="stories-prev"
-              >
-                {{ 'stories.prev' | transloco }}
-              </button>
-              <button
-                hlmBtn
-                size="sm"
-                variant="outline"
-                type="button"
-                [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
-                (click)="goToPage(page() + 1)"
-                data-testid="stories-next"
-              >
-                {{ 'stories.next' | transloco }}
-              </button>
-            </div>
+        <div class="flex shrink-0 items-center justify-between gap-3">
+          <div class="flex flex-col text-sm text-muted-foreground">
+            <span>{{ 'stories.total' | transloco: { count: total() } }}</span>
+            <span>{{ 'stories.pageOf' | transloco: { page: page() + 1, total: totalPages() } }}</span>
           </div>
-        }
+          <div class="flex gap-2">
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              [disabled]="page() === 0 || state() === 'loading'"
+              (click)="goToPage(page() - 1)"
+              data-testid="stories-prev"
+            >
+              {{ 'stories.prev' | transloco }}
+            </button>
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
+              (click)="goToPage(page() + 1)"
+              data-testid="stories-next"
+            >
+              {{ 'stories.next' | transloco }}
+            </button>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -259,6 +264,7 @@ export class ProjectStories implements OnInit, OnDestroy {
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly page = signal(0);
   protected readonly totalPages = signal(1);
+  protected readonly total = signal(0);
 
   protected readonly query = signal('');
   protected readonly priorityFilter = signal('all');
@@ -384,7 +390,8 @@ export class ProjectStories implements OnInit, OnDestroy {
     this.api.listProjectStories(this.projectId(), filters).subscribe({
       next: (res) => {
         this.stories.set(res.content);
-        this.totalPages.set(Math.max(1, res.page.totalPages));
+        this.totalPages.set(Math.max(1, res.page?.totalPages ?? 1));
+        this.total.set(res.page?.totalElements ?? res.content.length);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),

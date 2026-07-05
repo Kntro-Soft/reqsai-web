@@ -68,9 +68,10 @@ const MAX_DESCRIPTION = 500;
   viewProviders: [
     provideIcons({ lucideEllipsis, lucidePencil, lucidePlus, lucideSearch, lucideTrash2 }),
   ],
+  host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
-    <div class="flex flex-col gap-6">
-      <div>
+    <div class="flex h-full min-h-0 flex-col gap-6">
+      <div class="shrink-0">
         <h1 class="text-2xl font-bold tracking-tight">{{ 'constraintsPage.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">
           {{ 'constraintsPage.subtitle' | transloco }}
@@ -78,7 +79,7 @@ const MAX_DESCRIPTION = 500;
       </div>
 
       <!-- Add -->
-      <section class="overflow-hidden rounded-2xl border border-border">
+      <section class="shrink-0 overflow-hidden rounded-2xl border border-border">
         <div class="flex flex-col gap-1 p-5">
           <h2 class="text-base font-semibold">{{ 'constraintsPage.addTitle' | transloco }}</h2>
           <p class="text-sm text-muted-foreground">{{ 'constraintsPage.addDesc' | transloco }}</p>
@@ -127,7 +128,9 @@ const MAX_DESCRIPTION = 500;
       </section>
 
       <!-- Search -->
-      <div class="flex items-center gap-2 rounded-md border border-input bg-background px-3">
+      <div
+        class="flex shrink-0 items-center gap-2 rounded-md border border-input bg-background px-3"
+      >
         <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
         <input
           type="text"
@@ -143,7 +146,7 @@ const MAX_DESCRIPTION = 500;
 
       @if (state() === 'loading') {
         <div
-          class="overflow-hidden rounded-2xl border border-border"
+          class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border"
           data-testid="constraints-skeleton"
         >
           @for (i of skeletonRows; track i) {
@@ -153,19 +156,23 @@ const MAX_DESCRIPTION = 500;
           }
         </div>
       } @else if (state() === 'error') {
-        <p class="text-sm text-destructive">{{ 'constraintsPage.loadError' | transloco }}</p>
+        <p class="shrink-0 text-sm text-destructive">
+          {{ 'constraintsPage.loadError' | transloco }}
+        </p>
       } @else if (constraints().length === 0) {
         <p
-          class="rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+          class="min-h-0 flex-1 rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
           data-testid="constraints-empty"
         >
           {{ (query() ? 'constraintsPage.noMatches' : 'constraintsPage.emptyBody') | transloco }}
         </p>
       } @else {
-        <div class="overflow-hidden rounded-2xl border border-border">
-          <table class="w-full text-sm">
+        <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
+          <table class="w-full min-w-[560px] text-sm">
             <thead>
-              <tr class="border-b border-border text-left text-xs text-muted-foreground">
+              <tr
+                class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
+              >
                 <th class="px-4 py-2.5 font-medium">
                   {{ 'constraintsPage.colDescription' | transloco }}
                 </th>
@@ -238,37 +245,38 @@ const MAX_DESCRIPTION = 500;
           </table>
         </div>
 
-        @if (totalPages() > 1) {
-          <div class="flex items-center justify-between gap-3">
-            <span class="text-sm text-muted-foreground">
-              {{ 'constraintsPage.pageOf' | transloco: { page: page() + 1, total: totalPages() } }}
-            </span>
-            <div class="flex gap-2">
-              <button
-                hlmBtn
-                size="sm"
-                variant="outline"
-                type="button"
-                [disabled]="page() === 0 || state() === 'loading'"
-                (click)="goToPage(page() - 1)"
-                data-testid="constraints-prev"
-              >
-                {{ 'constraintsPage.prev' | transloco }}
-              </button>
-              <button
-                hlmBtn
-                size="sm"
-                variant="outline"
-                type="button"
-                [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
-                (click)="goToPage(page() + 1)"
-                data-testid="constraints-next"
-              >
-                {{ 'constraintsPage.next' | transloco }}
-              </button>
-            </div>
+        <div class="flex shrink-0 items-center justify-between gap-3">
+          <div class="flex flex-col text-sm text-muted-foreground">
+            <span>{{ 'constraintsPage.total' | transloco: { count: total() } }}</span>
+            <span>{{
+              'constraintsPage.pageOf' | transloco: { page: page() + 1, total: totalPages() }
+            }}</span>
           </div>
-        }
+          <div class="flex gap-2">
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              [disabled]="page() === 0 || state() === 'loading'"
+              (click)="goToPage(page() - 1)"
+              data-testid="constraints-prev"
+            >
+              {{ 'constraintsPage.prev' | transloco }}
+            </button>
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
+              (click)="goToPage(page() + 1)"
+              data-testid="constraints-next"
+            >
+              {{ 'constraintsPage.next' | transloco }}
+            </button>
+          </div>
+        </div>
       }
 
       <!-- Edit -->
@@ -377,6 +385,7 @@ export class ProjectConstraints implements OnInit, OnDestroy {
   protected readonly query = signal('');
   protected readonly page = signal(0);
   protected readonly totalPages = signal(1);
+  protected readonly total = signal(0);
   protected readonly menuFor = signal<string | null>(null);
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -438,7 +447,8 @@ export class ProjectConstraints implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.constraints.set(res.content);
-          this.totalPages.set(Math.max(1, res.page.totalPages));
+          this.totalPages.set(Math.max(1, res.page?.totalPages ?? 1));
+          this.total.set(res.page?.totalElements ?? res.content.length);
           this.state.set('ready');
         },
         error: () => this.state.set('error'),
