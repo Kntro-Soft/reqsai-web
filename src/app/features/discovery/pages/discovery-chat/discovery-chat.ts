@@ -614,7 +614,15 @@ export class DiscoveryChat implements OnInit, OnDestroy {
   readonly projectId = input.required<string>();
 
   private readonly feed = viewChild<ElementRef<HTMLElement>>('feed');
-  protected readonly panelOpen = signal(true);
+  // Open by default only on desktop (md+, where the panel is a static side
+  // column); on mobile it's a full-screen overlay, so it starts closed and is
+  // opened explicitly (toggle button or jump-to-story) — reloading no longer
+  // pops it over the chat.
+  protected readonly panelOpen = signal(
+    typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(min-width: 768px)').matches,
+  );
   protected readonly focusStoryId = signal<string | null>(null);
   /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
   protected readonly atBottom = signal(true);
