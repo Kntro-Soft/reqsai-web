@@ -334,49 +334,67 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       }
                       @case ('decision') {
                         <div
-                          class="self-center rounded-xl border px-3.5 py-2.5 text-sm"
+                          class="flex w-full max-w-[80%] flex-col gap-2 self-center rounded-2xl border px-3.5 py-2.5 text-sm"
                           [class]="decisionClass(item.decision.outcome)"
+                          [class.opacity-75]="item.decision.outcome === 'DISMISSED'"
                           data-testid="decision-entry"
+                          [attr.data-outcome]="item.decision.outcome"
                         >
-                          <span class="inline-flex items-center gap-1.5 font-medium">
-                            @if (item.decision.outcome === 'ACCEPTED') {
-                              <hlm-icon name="lucideCheck" size="14px" />
-                              {{ 'discovery.decision.accepted' | transloco }}
-                            } @else {
-                              <hlm-icon name="lucideX" size="14px" />
-                              {{ 'discovery.decision.dismissed' | transloco }}
+                          <!-- Top row: outcome + type badge on the left, action on the right. -->
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                              <span class="inline-flex items-center gap-1.5 font-medium">
+                                @if (item.decision.outcome === 'ACCEPTED') {
+                                  <hlm-icon name="lucideCheck" size="14px" />
+                                  {{ 'discovery.decision.accepted' | transloco }}
+                                } @else {
+                                  <hlm-icon name="lucideX" size="14px" />
+                                  {{ 'discovery.decision.dismissed' | transloco }}
+                                }
+                              </span>
+                              <span
+                                class="inline-flex items-center rounded-full border border-border bg-background/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+                                data-testid="decision-type"
+                              >
+                                @if (item.decision.type === 'CLARIFYING_QUESTION') {
+                                  <hlm-icon name="lucideCircleHelp" size="10px" class="mr-1" />
+                                }
+                                {{ 'discovery.suggestion.type.' + item.decision.type | transloco }}
+                              </span>
+                            </div>
+                            @if (item.decision.storyId) {
+                              <button
+                                type="button"
+                                (click)="focusStory(item.decision.storyId)"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
+                                [attr.aria-label]="'discovery.goToStory' | transloco"
+                                [title]="'discovery.goToStory' | transloco"
+                                data-testid="decision-go-to-story"
+                              >
+                                <hlm-icon name="lucideArrowUpRight" size="12px" />
+                                {{ 'discovery.goToStory' | transloco }}
+                              </button>
                             }
-                          </span>
-                          <span
-                            class="ml-1.5 inline-flex items-center rounded-full border border-border bg-background/60 px-1.5 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wide"
-                            data-testid="decision-type"
-                          >
-                            @if (item.decision.type === 'CLARIFYING_QUESTION') {
-                              <hlm-icon name="lucideCircleHelp" size="10px" class="mr-1" />
-                            }
-                            {{ 'discovery.suggestion.type.' + item.decision.type | transloco }}
-                          </span>
+                          </div>
+
+                          <!-- Label, struck through for a dismissed suggestion. -->
                           @if (item.decision.label) {
-                            <span class="ml-1 text-muted-foreground"
-                              >— {{ item.decision.label }}</span
+                            <p
+                              class="leading-relaxed"
+                              [class.text-muted-foreground]="
+                                item.decision.outcome === 'DISMISSED'
+                              "
+                              [class.line-through]="item.decision.outcome === 'DISMISSED'"
+                              data-testid="decision-label"
                             >
+                              {{ item.decision.label }}
+                            </p>
                           }
-                          <span class="ml-2 text-[11px] opacity-70">
+
+                          <!-- Timestamp bottom-right, chat-style. -->
+                          <span class="self-end text-[11px] opacity-70">
                             {{ item.decision.occurredAt | date: 'HH:mm' }}
                           </span>
-                          @if (item.decision.storyId) {
-                            <button
-                              type="button"
-                              (click)="focusStory(item.decision.storyId)"
-                              class="ml-1.5 inline-flex items-center gap-1 align-middle text-[11px] font-medium text-primary hover:underline"
-                              [attr.aria-label]="'discovery.goToStory' | transloco"
-                              [title]="'discovery.goToStory' | transloco"
-                              data-testid="decision-go-to-story"
-                            >
-                              <hlm-icon name="lucideArrowUpRight" size="12px" />
-                              {{ 'discovery.goToStory' | transloco }}
-                            </button>
-                          }
                         </div>
                       }
                       @case ('story') {
