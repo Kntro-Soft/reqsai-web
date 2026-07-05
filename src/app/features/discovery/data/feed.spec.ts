@@ -7,6 +7,7 @@ import {
   clampQueueIndex,
   comparePriority,
   compareRecent,
+  dragOutcome,
   historicalSegmentToMessage,
   isTransientDecideStatus,
   lastSequence,
@@ -544,6 +545,28 @@ describe('decision queue helpers', () => {
     expect(clampQueueIndex(2, 2)).toBe(1);
     expect(clampQueueIndex(-1, 3)).toBe(0);
     expect(clampQueueIndex(1, 3)).toBe(1);
+  });
+
+  it('dragOutcome snaps back below the commit threshold', () => {
+    // 400px card → threshold max(90, 120) = 120px; 100px is short of it.
+    expect(dragOutcome(-100, 400, 1, 3)).toBe('snap');
+    expect(dragOutcome(100, 400, 1, 3)).toBe('snap');
+  });
+
+  it('dragOutcome goes next when dragging LEFT past the threshold in the middle', () => {
+    expect(dragOutcome(-150, 400, 1, 3)).toBe('next');
+  });
+
+  it('dragOutcome goes prev when dragging RIGHT past the threshold in the middle', () => {
+    expect(dragOutcome(150, 400, 1, 3)).toBe('prev');
+  });
+
+  it('dragOutcome snaps at index 0 when dragging RIGHT (no previous card)', () => {
+    expect(dragOutcome(150, 400, 0, 3)).toBe('snap');
+  });
+
+  it('dragOutcome snaps at the last index when dragging LEFT (no next card)', () => {
+    expect(dragOutcome(-150, 400, 2, 3)).toBe('snap');
   });
 
   it('stackLayers renders one edge per extra card, capped at MAX_STACK_LAYERS', () => {

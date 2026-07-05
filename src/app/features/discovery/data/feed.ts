@@ -456,6 +456,32 @@ export function clampQueueIndex(index: number, length: number): number {
   return Math.min(Math.max(index, 0), length - 1);
 }
 
+/** Fraction of the card width a horizontal drag must clear to commit a navigation. */
+export const DRAG_COMMIT_FRACTION = 0.3;
+/** Absolute floor (px) for the commit threshold, so a very narrow card still needs a real drag. */
+export const DRAG_COMMIT_MIN_PX = 90;
+
+/**
+ * Resolves a horizontal drag on the active card into a navigation outcome:
+ * dragging LEFT (negative delta) goes to the `'next'` card, RIGHT (positive)
+ * to the `'prev'` one. Returns `'snap'` (spring back to center, no navigation)
+ * when the drag is below the commit threshold — max of {@link DRAG_COMMIT_MIN_PX}
+ * and {@link DRAG_COMMIT_FRACTION} of the card width — or when it would run past a
+ * boundary (can't go prev at index 0, can't go next at the last card). Pure so the
+ * gesture's decision rule is unit-testable without a DOM.
+ */
+export function dragOutcome(
+  deltaX: number,
+  width: number,
+  index: number,
+  length: number,
+): 'next' | 'prev' | 'snap' {
+  const threshold = Math.max(DRAG_COMMIT_MIN_PX, width * DRAG_COMMIT_FRACTION);
+  if (Math.abs(deltaX) < threshold) return 'snap';
+  if (deltaX < 0) return index < length - 1 ? 'next' : 'snap';
+  return index > 0 ? 'prev' : 'snap';
+}
+
 /** Most decorative "deck" edges rendered behind the active suggestion card. */
 export const MAX_STACK_LAYERS = 3;
 
