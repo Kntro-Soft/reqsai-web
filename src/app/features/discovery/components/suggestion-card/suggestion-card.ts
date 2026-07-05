@@ -130,22 +130,35 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           }
         }
 
-        <!-- Acceptance criteria preview (defensive: only when present, array or string) -->
+        <!-- Acceptance criteria preview: structured Given/When/Then per item, an
+             optional scenario as a subtle heading. Only when a valid one exists. -->
         @if (!editing() && criteria().length > 0) {
           <div class="mt-3">
             <p class="mb-1.5 text-[11px] font-medium uppercase text-muted-foreground">
               {{ 'discovery.suggestion.criteria' | transloco }}
             </p>
-            <ul class="flex flex-col gap-1.5" data-testid="suggestion-criteria">
+            <ul class="flex flex-col gap-2" data-testid="suggestion-criteria">
               @for (criterion of criteria(); track $index) {
-                <li class="flex items-start gap-2 text-xs leading-relaxed">
-                  <span
-                    class="mt-0.5 grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px] border border-primary/50 text-primary"
-                    aria-hidden="true"
-                  >
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                  </span>
-                  <span>{{ criterion }}</span>
+                <li
+                  class="rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-xs leading-relaxed"
+                >
+                  @if (criterion.scenario) {
+                    <p class="mb-0.5 font-medium text-foreground">{{ criterion.scenario }}</p>
+                  }
+                  <p class="text-muted-foreground">
+                    <span class="font-semibold text-primary">{{
+                      'discovery.suggestion.criteriaGiven' | transloco
+                    }}</span>
+                    {{ criterion.given }} ·
+                    <span class="font-semibold text-primary">{{
+                      'discovery.suggestion.criteriaWhen' | transloco
+                    }}</span>
+                    {{ criterion.when }} ·
+                    <span class="font-semibold text-primary">{{
+                      'discovery.suggestion.criteriaThen' | transloco
+                    }}</span>
+                    {{ criterion.then }}
+                  </p>
                 </li>
               }
             </ul>

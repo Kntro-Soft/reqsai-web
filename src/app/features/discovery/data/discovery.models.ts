@@ -151,25 +151,40 @@ export interface SuggestionResponse {
   resolvedAt?: string | null;
   /**
    * Proposed acceptance criteria (NEW_STORY) or the scenario/criterion to add
-   * (EDGE_CASE), previewed as a checklist on the card. Shape is still settling on
-   * a parallel backend branch — may arrive as a string array or a single newline-
-   * joined string, and is absent on older deployments. Normalize through
+   * (EDGE_CASE), previewed on the card. Each item is a structured Given/When/Then
+   * with an optional scenario heading. Absent on older deployments and the shape
+   * may still be settling on a parallel backend branch, so normalize through
    * {@link suggestionCriteria} before rendering.
    */
-  draftCriteria?: string[] | string | null;
+  draftCriteria?: AcceptanceCriterion[] | null;
+}
+
+/** A structured acceptance criterion: Given/When/Then plus an optional scenario heading. */
+export interface AcceptanceCriterion {
+  scenario?: string | null;
+  given: string;
+  when: string;
+  then: string;
 }
 
 /**
- * Normalizes a suggestion's proposed criteria into a clean string list. Accepts a
- * string array, a newline-joined string, or nothing; trims blank lines and common
- * bullet prefixes so a checklist preview renders uniformly regardless of the
- * backend's (still-settling) shape.
+ * Defensively coerces a suggestion's proposed criteria into a clean list. Tolerates
+ * an absent/null value or malformed entries, keeping only items whose given/when/then
+ * are all non-empty (trimmed); the optional scenario is preserved when present.
  */
-export function suggestionCriteria(raw: string[] | string | null | undefined): string[] {
-  const lines = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(/\r?\n/) : [];
-  return lines
-    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim())
-    .filter((line) => line.length > 0);
+export function suggestionCriteria(
+  raw: AcceptanceCriterion[] | null | undefined,
+): AcceptanceCriterion[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((c): c is AcceptanceCriterion => !!c && typeof c === 'object')
+    .map((c) => ({
+      scenario: typeof c.scenario === 'string' && c.scenario.trim() ? c.scenario.trim() : null,
+      given: typeof c.given === 'string' ? c.given.trim() : '',
+      when: typeof c.when === 'string' ? c.when.trim() : '',
+      then: typeof c.then === 'string' ? c.then.trim() : '',
+    }))
+    .filter((c) => c.given.length > 0 && c.when.length > 0 && c.then.length > 0);
 }
 
 /** Accept payload; every field optional — omitted/null keeps the original draft. */
@@ -247,8 +262,8 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
-  /** Proposed acceptance criteria/scenario; see {@link SuggestionResponse.draftCriteria}. */
-  draftCriteria?: string[] | string | null;
+  /** Proposed acceptance criteria; see {@link SuggestionResponse.draftCriteria}. */
+  draftCriteria?: AcceptanceCriterion[] | null;
 }
 
 export type SessionRealtimeMessage =
