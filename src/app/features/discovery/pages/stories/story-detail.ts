@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
@@ -73,7 +81,10 @@ import {
       </div>
 
       @if (state() === 'loading') {
-        <section class="flex flex-col gap-4 rounded-2xl border border-border p-5" data-testid="story-detail-skeleton">
+        <section
+          class="flex flex-col gap-4 rounded-2xl border border-border p-5"
+          data-testid="story-detail-skeleton"
+        >
           <hlm-skeleton class="h-10 w-full max-w-sm rounded-md" />
           <hlm-skeleton class="h-24 w-full rounded-md" />
           <hlm-skeleton class="h-24 w-full rounded-md" />
@@ -82,7 +93,11 @@ import {
         <p class="text-sm text-destructive">{{ 'storyForm.loadError' | transloco }}</p>
       } @else {
         <!-- Core fields -->
-        <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-4 rounded-2xl border border-border p-5">
+        <form
+          [formGroup]="form"
+          (ngSubmit)="save()"
+          class="flex flex-col gap-4 rounded-2xl border border-border p-5"
+        >
           <div class="flex flex-col gap-1.5">
             <label hlmLabel for="title">{{ 'storyForm.fieldTitle' | transloco }}</label>
             <input hlmInput id="title" formControlName="title" data-testid="story-title" />
@@ -113,7 +128,14 @@ import {
             </div>
             <div class="flex flex-col gap-1.5">
               <label hlmLabel for="points">{{ 'storyForm.fieldPoints' | transloco }}</label>
-              <input hlmInput id="points" type="number" min="0" class="w-28" formControlName="storyPoints" />
+              <input
+                hlmInput
+                id="points"
+                type="number"
+                min="0"
+                class="w-28"
+                formControlName="storyPoints"
+              />
             </div>
             <button
               hlmBtn
@@ -138,20 +160,32 @@ import {
         <section class="flex flex-col gap-3 rounded-2xl border border-border p-5">
           <div class="flex items-center justify-between">
             <h2 class="text-base font-semibold">{{ 'storyForm.criteriaTitle' | transloco }}</h2>
-            <button hlmBtn size="sm" variant="outline" type="button" (click)="addRow()" data-testid="criteria-add">
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="addRow()"
+              data-testid="criteria-add"
+            >
               <hlm-icon name="lucidePlus" size="14px" />
               {{ 'storyForm.criteriaAdd' | transloco }}
             </button>
           </div>
 
           @if (criteria().length === 0) {
-            <p class="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+            <p
+              class="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground"
+            >
               {{ 'storyForm.criteriaEmpty' | transloco }}
             </p>
           }
 
           @for (row of criteria(); track $index; let i = $index) {
-            <div class="flex flex-col gap-2.5 rounded-xl border border-border bg-muted/20 p-3" data-testid="criteria-row">
+            <div
+              class="flex flex-col gap-2.5 rounded-xl border border-border bg-muted/20 p-3"
+              data-testid="criteria-row"
+            >
               <div class="flex items-start gap-2">
                 <input
                   hlmInput
@@ -174,15 +208,33 @@ import {
               <div class="grid gap-2 sm:grid-cols-3">
                 <label hlmLabel class="flex flex-col gap-1 text-xs">
                   {{ 'storyForm.criteriaGiven' | transloco }}
-                  <textarea hlmInput rows="2" [value]="row.given" (input)="patch(i, 'given', $any($event.target).value)" data-testid="criteria-given"></textarea>
+                  <textarea
+                    hlmInput
+                    rows="2"
+                    [value]="row.given"
+                    (input)="patch(i, 'given', $any($event.target).value)"
+                    data-testid="criteria-given"
+                  ></textarea>
                 </label>
                 <label hlmLabel class="flex flex-col gap-1 text-xs">
                   {{ 'storyForm.criteriaWhen' | transloco }}
-                  <textarea hlmInput rows="2" [value]="row.when" (input)="patch(i, 'when', $any($event.target).value)" data-testid="criteria-when"></textarea>
+                  <textarea
+                    hlmInput
+                    rows="2"
+                    [value]="row.when"
+                    (input)="patch(i, 'when', $any($event.target).value)"
+                    data-testid="criteria-when"
+                  ></textarea>
                 </label>
                 <label hlmLabel class="flex flex-col gap-1 text-xs">
                   {{ 'storyForm.criteriaThen' | transloco }}
-                  <textarea hlmInput rows="2" [value]="row.then" (input)="patch(i, 'then', $any($event.target).value)" data-testid="criteria-then"></textarea>
+                  <textarea
+                    hlmInput
+                    rows="2"
+                    [value]="row.then"
+                    (input)="patch(i, 'then', $any($event.target).value)"
+                    data-testid="criteria-then"
+                  ></textarea>
                 </label>
               </div>
               <div class="flex justify-end">
@@ -198,7 +250,9 @@ import {
                   @if (rowBusy() === i) {
                     <hlm-spinner class="h-4 w-4" />
                   }
-                  {{ (row.id ? 'storyForm.criteriaUpdate' : 'storyForm.criteriaCreate') | transloco }}
+                  {{
+                    (row.id ? 'storyForm.criteriaUpdate' : 'storyForm.criteriaCreate') | transloco
+                  }}
                 </button>
               </div>
             </div>

@@ -55,8 +55,12 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
           {{ 'storyForm.back' | transloco }}
         </a>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight">{{ 'storyForm.createTitle' | transloco }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground">{{ 'storyForm.createSubtitle' | transloco }}</p>
+          <h1 class="text-2xl font-bold tracking-tight">
+            {{ 'storyForm.createTitle' | transloco }}
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ 'storyForm.createSubtitle' | transloco }}
+          </p>
         </div>
       </div>
 
@@ -238,9 +242,10 @@ export class StoryCreate {
     }
     forkJoin(
       requests.map((req, index) =>
-        this.api
-          .addCriterion(this.projectId(), storyId, req)
-          .pipe(map(() => null as number | null), catchError(() => of(index))),
+        this.api.addCriterion(this.projectId(), storyId, req).pipe(
+          map(() => null as number | null),
+          catchError(() => of(index)),
+        ),
       ),
     ).subscribe((results) => {
       const failed = results.filter((r): r is number => r !== null);

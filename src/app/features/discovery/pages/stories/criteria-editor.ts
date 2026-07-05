@@ -35,7 +35,9 @@ import { CriterionRow, emptyCriterionRow } from './story-form.helpers';
       </div>
 
       @if (rows().length === 0) {
-        <p class="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        <p
+          class="rounded-xl border border-dashed border-border px-3 py-4 text-sm text-muted-foreground"
+        >
           {{ 'storyForm.criteriaEmpty' | transloco }}
         </p>
       }
