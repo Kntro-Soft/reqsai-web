@@ -130,7 +130,9 @@ describe('draftToEditable', () => {
     const model = draftToEditable(
       suggestion({
         type: 'EDGE_CASE',
-        draftAcceptanceCriteria: [{ scenario: 'Empty cart', given: 'no items', when: 'checkout', then: 'blocked' }],
+        draftAcceptanceCriteria: [
+          { scenario: 'Empty cart', given: 'no items', when: 'checkout', then: 'blocked' },
+        ],
       }),
     );
     expect(model.criteria).toEqual([

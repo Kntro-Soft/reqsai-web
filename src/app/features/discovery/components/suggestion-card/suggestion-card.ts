@@ -100,19 +100,25 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
                   <p class="text-sm font-medium">{{ cur.title }}</p>
                   <dl class="mt-2 flex flex-col gap-1.5">
                     <div class="flex items-baseline gap-2">
-                      <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <dt
+                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
                         {{ 'discovery.suggestion.role' | transloco }}
                       </dt>
                       <dd class="text-xs leading-snug text-foreground">{{ cur.role }}</dd>
                     </div>
                     <div class="flex items-baseline gap-2">
-                      <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <dt
+                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
                         {{ 'discovery.suggestion.action' | transloco }}
                       </dt>
                       <dd class="text-xs leading-snug text-foreground">{{ cur.action }}</dd>
                     </div>
                     <div class="flex items-baseline gap-2">
-                      <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <dt
+                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                      >
                         {{ 'discovery.suggestion.benefit' | transloco }}
                       </dt>
                       <dd class="text-xs leading-snug text-muted-foreground">{{ cur.benefit }}</dd>
@@ -332,22 +338,30 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         </p>
         <dl class="mt-2 flex flex-col gap-1.5">
           <div class="flex items-baseline gap-2">
-            <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
               {{ 'discovery.suggestion.role' | transloco }}
             </dt>
             <dd class="text-sm leading-snug text-foreground">{{ suggestion().draftRole }}</dd>
           </div>
           <div class="flex items-baseline gap-2">
-            <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
               {{ 'discovery.suggestion.action' | transloco }}
             </dt>
             <dd class="text-sm leading-snug text-foreground">{{ suggestion().draftAction }}</dd>
           </div>
           <div class="flex items-baseline gap-2">
-            <dt class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
               {{ 'discovery.suggestion.benefit' | transloco }}
             </dt>
-            <dd class="text-sm leading-snug text-muted-foreground">{{ suggestion().draftBenefit }}</dd>
+            <dd class="text-sm leading-snug text-muted-foreground">
+              {{ suggestion().draftBenefit }}
+            </dd>
           </div>
         </dl>
       }
