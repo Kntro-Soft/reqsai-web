@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   OnDestroy,
   OnInit,
@@ -39,6 +40,7 @@ import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { MockSuggestionService } from '../../data/mock-suggestion.service';
 import { SpeakerDisplay } from '../../data/feed';
+import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
   AcceptSuggestionRequest,
   SessionTranscriptSegmentMessage,
@@ -271,13 +273,18 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                        session's messages are on screen, WhatsApp/iMessage-style). -->
                   <div class="sticky top-0 z-10 -mx-1 flex items-center gap-3 py-1.5">
                     <span class="h-px flex-1 bg-border"></span>
+                    @let sessionAt = block.session.startedAt ?? block.session.createdAt;
                     <span
                       class="rounded-full border border-border bg-card/85 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+                      [title]="sessionAt | date: 'd MMM y, HH:mm'"
                     >
                       {{ 'discovery.sessionSeparator' | transloco }}
-                      {{
-                        block.session.startedAt ?? block.session.createdAt | date: 'MMM d · HH:mm'
-                      }}
+                      @let sessionTime = timeLabel(sessionAt);
+                      @if (sessionTime.kind === 'relative') {
+                        {{ sessionTime.key | transloco: sessionTime.params }}
+                      } @else {
+                        {{ sessionAt | date: 'MMM d · HH:mm' }}
+                      }
                       @if (
                         block.session.storiesGeneratedCount !== null &&
                         block.session.storiesGeneratedCount !== undefined
@@ -321,12 +328,17 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             </span>
                           }
                           <div
-                            class="rounded-2xl px-3.5 py-2"
+                            class="group rounded-2xl px-3.5 py-2"
                             [class]="segmentBubbleClass(speaker)"
                             [class.opacity-60]="!item.segment.isFinal"
                           >
                             <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
-                            <p class="mt-0.5 text-[11px] text-muted-foreground">
+                            <!-- Segments keep the meeting's internal clock (absolute HH:mm),
+                                 revealed on hover; full datetime in the tooltip. -->
+                            <p
+                              class="mt-0.5 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                              [title]="item.segment.occurredAt | date: 'd MMM y, HH:mm'"
+                            >
                               {{ item.segment.occurredAt | date: 'HH:mm' }}
                             </p>
                           </div>
@@ -334,7 +346,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       }
                       @case ('decision') {
                         <div
-                          class="flex w-full max-w-[80%] flex-col gap-2 self-center rounded-2xl border px-3.5 py-2.5 text-sm"
+                          class="group flex w-full max-w-[80%] flex-col gap-2 self-center rounded-2xl border px-3.5 py-2.5 text-sm"
                           [class]="decisionClass(item.decision.outcome)"
                           [class.opacity-75]="item.decision.outcome === 'DISMISSED'"
                           data-testid="decision-entry"
@@ -391,15 +403,24 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             </p>
                           }
 
-                          <!-- Timestamp bottom-right, chat-style. -->
-                          <span class="self-end text-[11px] opacity-70">
-                            {{ item.decision.occurredAt | date: 'HH:mm' }}
+                          <!-- Relative time bottom-right, revealed on hover; full
+                               datetime in the tooltip, absolute fallback ≥ 7d. -->
+                          @let decisionTime = timeLabel(item.decision.occurredAt);
+                          <span
+                            class="self-end text-[11px] opacity-0 transition-opacity group-hover:opacity-100"
+                            [title]="item.decision.occurredAt | date: 'd MMM y, HH:mm'"
+                          >
+                            @if (decisionTime.kind === 'relative') {
+                              {{ decisionTime.key | transloco: decisionTime.params }}
+                            } @else {
+                              {{ item.decision.occurredAt | date: 'd MMM' }}
+                            }
                           </span>
                         </div>
                       }
                       @case ('story') {
                         <div
-                          class="rounded-2xl border border-border bg-card p-3.5"
+                          class="group rounded-2xl border border-border bg-card p-3.5"
                           data-testid="feed-story"
                         >
                           <span
@@ -419,9 +440,19 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             >.
                           </p>
                           <div class="mt-1 flex items-center gap-2">
-                            @if (item.story.createdAt) {
-                              <p class="text-[11px] text-muted-foreground">
-                                {{ item.story.createdAt | date: 'HH:mm' }}
+                            @if (item.story.createdAt; as storyAt) {
+                              <!-- Relative time revealed on hover (like decisions);
+                                   full datetime tooltip, absolute fallback ≥ 7d. -->
+                              @let storyTime = timeLabel(storyAt);
+                              <p
+                                class="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                                [title]="storyAt | date: 'd MMM y, HH:mm'"
+                              >
+                                @if (storyTime.kind === 'relative') {
+                                  {{ storyTime.key | transloco: storyTime.params }}
+                                } @else {
+                                  {{ storyAt | date: 'd MMM' }}
+                                }
                               </p>
                             }
                             <button
@@ -564,6 +595,7 @@ export class DiscoveryChat implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   /** DEV-ONLY mock suggestion generator (no-op in production). */
   protected readonly mock = inject(MockSuggestionService);
 
@@ -574,6 +606,11 @@ export class DiscoveryChat implements OnInit, OnDestroy {
   protected readonly focusStoryId = signal<string | null>(null);
   /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
   protected readonly atBottom = signal(true);
+  /**
+   * A coarse clock ticked every 60s, so the feed's relative timestamps ("5m ago")
+   * age forward while the page stays open. Read by {@link timeLabel}.
+   */
+  protected readonly now = signal(Date.now());
 
   /** Controls the "leave while recording" confirmation modal (in-app nav guard). */
   protected readonly leaveOpen = signal(false);
@@ -644,6 +681,10 @@ export class DiscoveryChat implements OnInit, OnDestroy {
   });
 
   constructor() {
+    // Age the relative timestamps forward while the page is open (60s cadence is
+    // plenty for "Nm ago" granularity). Cleared on destroy so no timer leaks.
+    const ticker = setInterval(() => this.now.set(Date.now()), 60_000);
+    this.destroyRef.onDestroy(() => clearInterval(ticker));
     // Scroll a freshly focused session into view (history row click / new session).
     effect(() => {
       const sessionId = this.store.focusSessionId();
@@ -808,6 +849,16 @@ export class DiscoveryChat implements OnInit, OnDestroy {
     this.leaveOpen.set(false);
     this.leaveResolver?.(leave);
     this.leaveResolver = null;
+  }
+
+  /**
+   * The relative-time label for a feed timestamp, evaluated against the ticking
+   * {@link now} clock so it refreshes as the page ages. Returns a tagged union:
+   * `relative` carries a Transloco key/params the template renders; `absolute`
+   * signals the template to fall back to the `date` pipe (items ≥ 7 days old).
+   */
+  protected timeLabel(iso: string): RelativeTime {
+    return relativeTime(iso, this.now());
   }
 
   protected decisionClass(outcome: 'ACCEPTED' | 'DISMISSED'): string {
