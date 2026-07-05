@@ -47,11 +47,16 @@ const COLLAPSE_THRESHOLD = 3;
             <button
               type="button"
               (click)="collapsed.set(false)"
-              class="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-primary/40 bg-card px-3.5 py-1.5 text-sm font-medium text-primary shadow-lg transition-colors hover:bg-primary/10"
+              class="queue-badge pointer-events-auto inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/25 transition-transform hover:scale-[1.03]"
               data-testid="queue-badge"
             >
-              <hlm-icon name="lucideSparkles" size="14px" />
-              {{ 'discovery.queue.pendingBadge' | transloco: { count: store.queue().length } }}
+              <hlm-icon name="lucideSparkles" size="15px" />
+              <span
+                class="grid h-5 min-w-5 place-items-center rounded-full bg-primary-foreground px-1.5 text-[11px] font-bold leading-none text-primary"
+                data-testid="queue-badge-count"
+                >{{ store.queue().length }}</span
+              >
+              {{ 'discovery.queue.pendingBadgeLabel' | transloco }}
             </button>
           </div>
         } @else {
@@ -98,16 +103,20 @@ const COLLAPSE_THRESHOLD = 3;
               </div>
             </div>
 
-            @if (store.currentSuggestion(); as suggestion) {
-              <app-suggestion-card
-                [suggestion]="suggestion"
-                [targetStory]="targetStory(suggestion)"
-                [canDecide]="canDecide()"
-                [busy]="store.deciding().includes(suggestion.id)"
-                (accept)="decideAccept.emit({ suggestion, body: $event })"
-                (dismiss)="decideDismiss.emit(suggestion)"
-                (openTarget)="openTarget.emit($event)"
-              />
+            <!-- Keyed by id so navigating the carousel remounts the card, replaying
+                 the subtle entrance animation for each new suggestion shown. -->
+            @for (suggestion of currentAsList(); track suggestion.id) {
+              <div class="card-swap">
+                <app-suggestion-card
+                  [suggestion]="suggestion"
+                  [targetStory]="targetStory(suggestion)"
+                  [canDecide]="canDecide()"
+                  [busy]="store.deciding().includes(suggestion.id)"
+                  (accept)="decideAccept.emit({ suggestion, body: $event })"
+                  (dismiss)="decideDismiss.emit(suggestion)"
+                  (openTarget)="openTarget.emit($event)"
+                />
+              </div>
             }
           </div>
         }
@@ -118,6 +127,22 @@ const COLLAPSE_THRESHOLD = 3;
           .queue-card {
             animation: queue-in 160ms ease-out;
           }
+          .queue-badge {
+            animation: queue-badge-pulse 1.8s ease-in-out infinite;
+          }
+          .card-swap {
+            animation: card-swap-in 140ms ease-out;
+          }
+        }
+        @keyframes card-swap-in {
+          from {
+            opacity: 0.35;
+            transform: scale(0.985);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
         @keyframes queue-in {
           from {
@@ -127,6 +152,17 @@ const COLLAPSE_THRESHOLD = 3;
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+        @keyframes queue-badge-pulse {
+          0%,
+          100% {
+            box-shadow: 0 10px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.25));
+          }
+          50% {
+            box-shadow:
+              0 10px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.25)),
+              0 0 0 6px color-mix(in srgb, var(--primary) 22%, transparent);
           }
         }
       </style>
@@ -151,6 +187,12 @@ export class DecisionQueue {
     const length = this.store.queue().length;
     if (length === 0) return 0;
     return Math.min(this.store.queueIndex(), length - 1);
+  });
+
+  /** The current suggestion as a 0-or-1 element list, so a keyed @for can remount it on change. */
+  protected readonly currentAsList = computed(() => {
+    const current = this.store.currentSuggestion();
+    return current ? [current] : [];
   });
 
   constructor() {
