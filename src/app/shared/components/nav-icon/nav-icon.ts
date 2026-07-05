@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { provideIcons } from '@ng-icons/core';
 import {
   lucideBell,
+  lucideBookMarked,
   lucideChartLine,
   lucideCreditCard,
   lucideFolder,
@@ -12,6 +13,7 @@ import {
   lucideMic,
   lucidePalette,
   lucidePlug,
+  lucideRuler,
   lucideSettings,
   lucideShield,
   lucideSlidersHorizontal,
@@ -29,6 +31,8 @@ const NAV_ICONS: Record<string, string> = {
   projects: 'lucideFolder',
   sessions: 'lucideMic',
   stories: 'lucideList',
+  glossary: 'lucideBookMarked',
+  constraints: 'lucideRuler',
   members: 'lucideUsers',
   settings: 'lucideSettings',
   // Settings sub-nav.
@@ -57,6 +61,8 @@ const NAV_ICONS: Record<string, string> = {
       lucideFolder,
       lucideMic,
       lucideList,
+      lucideBookMarked,
+      lucideRuler,
       lucideUsers,
       lucideSettings,
       lucideShield,

@@ -302,6 +302,8 @@ export class Shell {
     { seg: 'overview' },
     { seg: 'sessions' },
     { seg: 'stories' },
+    { seg: 'glossary' },
+    { seg: 'constraints' },
     { seg: 'settings' },
   ];
   private readonly projectSettingsSegs: { seg: string; soon?: boolean }[] = [

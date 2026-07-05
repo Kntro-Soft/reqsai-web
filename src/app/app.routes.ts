@@ -214,6 +214,20 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
           },
+          {
+            path: 'glossary',
+            title: 'titles.glossary',
+            loadComponent: () =>
+              import('./features/discovery/pages/glossary/glossary').then((m) => m.ProjectGlossary),
+          },
+          {
+            path: 'constraints',
+            title: 'titles.constraints',
+            loadComponent: () =>
+              import('./features/discovery/pages/constraints/constraints').then(
+                (m) => m.ProjectConstraints,
+              ),
+          },
           // Members moved under Settings; keep the old path working.
           { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },
           {
