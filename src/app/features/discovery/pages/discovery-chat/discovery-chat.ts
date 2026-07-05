@@ -405,9 +405,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           @if (item.decision.label) {
                             <p
                               class="leading-relaxed"
-                              [class.text-muted-foreground]="
-                                item.decision.outcome === 'DISMISSED'
-                              "
+                              [class.text-muted-foreground]="item.decision.outcome === 'DISMISSED'"
                               [class.line-through]="item.decision.outcome === 'DISMISSED'"
                               data-testid="decision-label"
                             >
