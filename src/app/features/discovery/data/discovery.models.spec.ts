@@ -186,13 +186,16 @@ describe('editableToAcceptRequest', () => {
     ]);
   });
 
-  it('omits editedAcceptanceCriteria for UPDATE_STORY (criteria are not edited there)', () => {
+  it('collects UPDATE_STORY edited criteria (content AND criteria are edited there)', () => {
     const s = suggestion({ type: 'UPDATE_STORY' });
     const req = editableToAcceptRequest(s, {
       ...draftToEditable(s),
-      criteria: [{ scenario: 'x', given: 'a', when: 'b', then: 'c' }],
+      criteria: [
+        { scenario: 'x', given: 'a', when: 'b', then: 'c' },
+        { scenario: '', given: 'd', when: '', then: 'f' },
+      ],
     });
-    expect(req.editedAcceptanceCriteria).toBeUndefined();
+    expect(req.editedAcceptanceCriteria).toEqual([{ scenario: 'x', given: 'a', when: 'b', then: 'c' }]);
   });
 
   it('projects an EDGE_CASE criterion onto both flat fields and the structured list', () => {

@@ -64,6 +64,14 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           >
             {{ 'discovery.suggestion.priority.' + displayPriority() | transloco }}
           </span>
+          @if (displayStoryPoints() !== null) {
+            <span
+              class="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              data-testid="suggestion-points"
+            >
+              {{ 'discovery.panel.points' | transloco: { n: displayStoryPoints() } }}
+            </span>
+          }
         }
         @if (suggestion().relatedTopic; as topic) {
           <span
@@ -137,6 +145,10 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
                 <ng-container [ngTemplateOutlet]="storyBody" />
               </div>
             </div>
+            <!-- UPDATE_STORY edits BOTH the story content AND its acceptance
+                 criteria (product-owner confirmed): keep the criteria editor
+                 prominent below the before/after diff. -->
+            <ng-container [ngTemplateOutlet]="criteriaEditor" />
           }
           @case ('EDGE_CASE') {
             <!-- A new criterion to add to an existing story (read-only target). -->
@@ -260,52 +272,71 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
     <!-- Story body: editable story fields (NEW_STORY / UPDATE_STORY proposed side). -->
     <ng-template #storyBody>
       @if (editing()) {
-        <div class="flex flex-col gap-2.5">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-muted-foreground">{{
+        <div class="flex flex-col gap-3">
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground">{{
               'discovery.suggestion.titleField' | transloco
             }}</span>
-            <input
+            <textarea
               hlmInput
-              class="h-9"
+              rows="2"
+              class="min-h-[3rem] resize-y leading-relaxed"
               [ngModel]="model().title"
               (ngModelChange)="patch({ title: $event })"
               data-testid="edit-title"
-            />
+            ></textarea>
+          </label>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-muted-foreground">{{
+                'discovery.suggestion.role' | transloco
+              }}</span>
+              <textarea
+                hlmInput
+                rows="2"
+                class="min-h-[3.5rem] resize-y leading-relaxed"
+                [placeholder]="'discovery.suggestion.role' | transloco"
+                [ngModel]="model().role"
+                (ngModelChange)="patch({ role: $event })"
+                data-testid="edit-role"
+              ></textarea>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-muted-foreground">{{
+                'discovery.suggestion.action' | transloco
+              }}</span>
+              <textarea
+                hlmInput
+                rows="2"
+                class="min-h-[3.5rem] resize-y leading-relaxed"
+                [placeholder]="'discovery.suggestion.action' | transloco"
+                [ngModel]="model().action"
+                (ngModelChange)="patch({ action: $event })"
+                data-testid="edit-action"
+              ></textarea>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-muted-foreground">{{
+                'discovery.suggestion.benefit' | transloco
+              }}</span>
+              <textarea
+                hlmInput
+                rows="2"
+                class="min-h-[3.5rem] resize-y leading-relaxed"
+                [placeholder]="'discovery.suggestion.benefit' | transloco"
+                [ngModel]="model().benefit"
+                (ngModelChange)="patch({ benefit: $event })"
+                data-testid="edit-benefit"
+              ></textarea>
+            </label>
           </div>
-          <div class="grid gap-2 sm:grid-cols-3">
-            <input
-              hlmInput
-              class="h-9"
-              [placeholder]="'discovery.suggestion.role' | transloco"
-              [ngModel]="model().role"
-              (ngModelChange)="patch({ role: $event })"
-              data-testid="edit-role"
-            />
-            <input
-              hlmInput
-              class="h-9"
-              [placeholder]="'discovery.suggestion.action' | transloco"
-              [ngModel]="model().action"
-              (ngModelChange)="patch({ action: $event })"
-              data-testid="edit-action"
-            />
-            <input
-              hlmInput
-              class="h-9"
-              [placeholder]="'discovery.suggestion.benefit' | transloco"
-              [ngModel]="model().benefit"
-              (ngModelChange)="patch({ benefit: $event })"
-              data-testid="edit-benefit"
-            />
-          </div>
-          <div class="flex items-end gap-2">
-            <div class="flex flex-col gap-1">
-              <span class="text-xs text-muted-foreground">{{
+          <div class="flex items-end gap-3">
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-muted-foreground">{{
                 'discovery.suggestion.priorityField' | transloco
               }}</span>
               <select
-                class="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                class="h-10 rounded-md border border-input bg-background px-2.5 text-sm"
                 [ngModel]="model().priority"
                 (ngModelChange)="patch({ priority: $event })"
                 data-testid="edit-priority"
@@ -316,20 +347,20 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
                   </option>
                 }
               </select>
-            </div>
-            <div class="flex flex-col gap-1">
-              <span class="text-xs text-muted-foreground">{{
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-muted-foreground">{{
                 'discovery.suggestion.points' | transloco
               }}</span>
               <input
                 hlmInput
-                class="h-9 w-20"
+                class="h-10 w-24"
                 type="number"
                 [ngModel]="model().storyPoints"
                 (ngModelChange)="patch({ storyPoints: $event })"
                 data-testid="edit-points"
               />
-            </div>
+            </label>
           </div>
         </div>
       } @else {
@@ -447,40 +478,44 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
     <!-- Shared editable G/W/T fields for one criterion at the given index. -->
     <ng-template #criterionFields let-criterion="criterion" let-index="index">
-      <div class="flex flex-col gap-1.5">
-        <input
+      <div class="flex flex-col gap-2">
+        <textarea
           hlmInput
-          class="h-8 text-xs"
+          rows="2"
+          class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
           [placeholder]="'discovery.suggestion.scenario' | transloco"
           [ngModel]="criterion.scenario"
           (ngModelChange)="patchCriterion(index, { scenario: $event })"
           data-testid="criterion-scenario"
-        />
-        <div class="grid gap-1.5 sm:grid-cols-3">
-          <input
+        ></textarea>
+        <div class="grid gap-2 sm:grid-cols-3">
+          <textarea
             hlmInput
-            class="h-8 text-xs"
+            rows="2"
+            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
             [placeholder]="'discovery.suggestion.criteriaGiven' | transloco"
             [ngModel]="criterion.given"
             (ngModelChange)="patchCriterion(index, { given: $event })"
             data-testid="criterion-given"
-          />
-          <input
+          ></textarea>
+          <textarea
             hlmInput
-            class="h-8 text-xs"
+            rows="2"
+            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
             [placeholder]="'discovery.suggestion.criteriaWhen' | transloco"
             [ngModel]="criterion.when"
             (ngModelChange)="patchCriterion(index, { when: $event })"
             data-testid="criterion-when"
-          />
-          <input
+          ></textarea>
+          <textarea
             hlmInput
-            class="h-8 text-xs"
+            rows="2"
+            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
             [placeholder]="'discovery.suggestion.criteriaThen' | transloco"
             [ngModel]="criterion.then"
             (ngModelChange)="patchCriterion(index, { then: $event })"
             data-testid="criterion-then"
-          />
+          ></textarea>
         </div>
       </div>
     </ng-template>
@@ -519,6 +554,15 @@ export class SuggestionCard {
   /** Priority shown on the header chip — the edited value while editing, else the draft. */
   protected readonly displayPriority = computed<SuggestionPriority>(() =>
     this.editing() ? this.model().priority : (this.suggestion().draftPriority ?? 'MEDIUM'),
+  );
+
+  /**
+   * Story points shown on the header chip (next to priority) — the edited value
+   * while editing, else the draft. Null when the suggestion carries none, so the
+   * chip is hidden (e.g. EDGE_CASE / UPDATE_STORY without points).
+   */
+  protected readonly displayStoryPoints = computed<number | null>(() =>
+    this.editing() ? this.model().storyPoints : this.suggestion().draftStoryPoints,
   );
 
   /** Questions are "resolved", not "accepted" — accepting just records them as addressed. */

@@ -327,8 +327,9 @@ export function editableToAcceptRequest(
   if (edited.storyPoints != null && edited.storyPoints !== suggestion.draftStoryPoints) {
     request.editedStoryPoints = edited.storyPoints;
   }
-  // NEW_STORY carries an editable criteria list; UPDATE_STORY does not edit criteria.
-  if (suggestion.type === 'NEW_STORY') {
+  // NEW_STORY and UPDATE_STORY both carry an editable criteria list (the
+  // product owner confirmed UPDATE_STORY edits content AND its criteria).
+  if (suggestion.type === 'NEW_STORY' || suggestion.type === 'UPDATE_STORY') {
     const criteria = edited.criteria
       .map(cleanCriterion)
       .filter((c): c is AcceptanceCriterion => c !== null);
