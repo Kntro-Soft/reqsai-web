@@ -855,6 +855,7 @@
     },
     "queue": {
       "pendingBadge": "{{count}} sugerencias pendientes",
+      "pendingBadgeLabel": "sugerencias pendientes",
       "counter": "{{n}} de {{m}}",
       "prev": "Sugerencia anterior",
       "next": "Sugerencia siguiente",
@@ -875,6 +876,10 @@
       },
       "current": "Actual",
       "proposed": "Propuesta",
+      "updates": "Actualiza:",
+      "forStory": "Para la historia:",
+      "scenarioToAdd": "Escenario a agregar",
+      "criteria": "Criterios de aceptación",
       "storyNotFound": "Historia no encontrada.",
       "viewTarget": "Ver historia objetivo",
       "accept": "Aceptar",

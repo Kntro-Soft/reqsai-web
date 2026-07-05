@@ -855,6 +855,7 @@
     },
     "queue": {
       "pendingBadge": "{{count}} suggestions pending",
+      "pendingBadgeLabel": "pending suggestions",
       "counter": "{{n}} of {{m}}",
       "prev": "Previous suggestion",
       "next": "Next suggestion",
@@ -875,6 +876,10 @@
       },
       "current": "Current",
       "proposed": "Proposed",
+      "updates": "Updates:",
+      "forStory": "For story:",
+      "scenarioToAdd": "Scenario to add",
+      "criteria": "Acceptance criteria",
       "storyNotFound": "Story not found.",
       "viewTarget": "View target story",
       "accept": "Accept",

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   linkedSignal,
   output,
@@ -10,12 +11,13 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideSparkles } from '@ng-icons/lucide';
+import { lucideCircleHelp, lucideSparkles } from '@ng-icons/lucide';
 import {
   AcceptSuggestionRequest,
   DisplayStory,
   SuggestionPriority,
   SuggestionResponse,
+  suggestionCriteria,
 } from '../../data/discovery.models';
 import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
 
@@ -31,17 +33,22 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon, HlmSpinner, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideSparkles })],
+  viewProviders: [provideIcons({ lucideCircleHelp, lucideSparkles })],
   template: `
     <div
-      class="rounded-2xl border border-primary/30 bg-card p-4 shadow-lg"
+      class="flex max-h-[70vh] flex-col rounded-2xl border border-primary/30 bg-card shadow-lg"
       data-testid="suggestion-card"
     >
-      <div class="mb-2 flex flex-wrap items-center gap-2">
+      <!-- Header: type + priority + related topic -->
+      <div class="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 pb-2.5 pt-3.5">
         <span
           class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
         >
-          <hlm-icon name="lucideSparkles" size="12px" />
+          @if (suggestion().type === 'CLARIFYING_QUESTION') {
+            <hlm-icon name="lucideCircleHelp" size="12px" />
+          } @else {
+            <hlm-icon name="lucideSparkles" size="12px" />
+          }
           {{ 'discovery.suggestion.type.' + suggestion().type | transloco }}
         </span>
         @if (suggestion().type !== 'CLARIFYING_QUESTION') {
@@ -53,61 +60,112 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           </span>
         }
         @if (suggestion().relatedTopic; as topic) {
-          <span class="rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+          <span
+            class="max-w-[14rem] truncate rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground"
+            [title]="topic"
+          >
             {{ topic }}
           </span>
         }
       </div>
 
-      @switch (suggestion().type) {
-        @case ('CLARIFYING_QUESTION') {
-          <p class="text-sm leading-relaxed">{{ suggestion().question }}</p>
-        }
-        @case ('UPDATE_STORY') {
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-xl border border-border bg-background/40 p-3">
-              <p class="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
-                {{ 'discovery.suggestion.current' | transloco }}
-              </p>
-              @if (targetStory(); as cur) {
-                <p class="text-sm font-medium">{{ cur.title }}</p>
-                <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  {{ 'discovery.story.as' | transloco }} {{ cur.role
-                  }}{{ 'discovery.story.want' | transloco }} {{ cur.action
-                  }}{{ 'discovery.story.soThat' | transloco }} {{ cur.benefit }}.
+      <!-- Body (scrolls when long) -->
+      <div class="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        @switch (suggestion().type) {
+          @case ('CLARIFYING_QUESTION') {
+            <p class="text-sm leading-relaxed">{{ suggestion().question }}</p>
+          }
+          @case ('UPDATE_STORY') {
+            <!-- "Updates: <target title>" -->
+            <p class="mb-2.5 text-sm">
+              <span class="font-medium text-muted-foreground"
+                >{{ 'discovery.suggestion.updates' | transloco }} </span
+              ><span class="font-medium text-foreground">{{
+                targetStory()?.title ?? ('discovery.suggestion.storyNotFound' | transloco)
+              }}</span>
+            </p>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div class="rounded-xl border border-border bg-background/40 p-3">
+                <p class="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
+                  {{ 'discovery.suggestion.current' | transloco }}
                 </p>
-              } @else {
-                <p class="text-xs text-muted-foreground">
-                  {{ 'discovery.suggestion.storyNotFound' | transloco }}
+                @if (targetStory(); as cur) {
+                  <p class="text-sm font-medium">{{ cur.title }}</p>
+                  <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {{ 'discovery.story.as' | transloco }} {{ cur.role
+                    }}{{ 'discovery.story.want' | transloco }} {{ cur.action
+                    }}{{ 'discovery.story.soThat' | transloco }} {{ cur.benefit }}.
+                  </p>
+                } @else {
+                  <p class="text-xs text-muted-foreground">
+                    {{ 'discovery.suggestion.storyNotFound' | transloco }}
+                  </p>
+                }
+              </div>
+              <div class="rounded-xl border border-primary/40 p-3">
+                <p class="mb-1 text-[11px] font-medium uppercase text-primary">
+                  {{ 'discovery.suggestion.proposed' | transloco }}
                 </p>
-              }
+                <ng-container [ngTemplateOutlet]="storyBody" />
+              </div>
             </div>
+          }
+          @case ('EDGE_CASE') {
+            @if (targetStory(); as cur) {
+              <p class="mb-2.5 text-sm">
+                <span class="font-medium text-muted-foreground"
+                  >{{ 'discovery.suggestion.forStory' | transloco }} </span
+                ><span class="font-medium text-foreground">{{ cur.title }}</span>
+              </p>
+            }
             <div class="rounded-xl border border-primary/40 p-3">
               <p class="mb-1 text-[11px] font-medium uppercase text-primary">
-                {{ 'discovery.suggestion.proposed' | transloco }}
+                {{ 'discovery.suggestion.scenarioToAdd' | transloco }}
               </p>
               <ng-container [ngTemplateOutlet]="storyBody" />
             </div>
+          }
+          @default {
+            <ng-container [ngTemplateOutlet]="storyBody" />
+          }
+        }
+
+        <!-- Acceptance criteria preview (defensive: only when present, array or string) -->
+        @if (!editing() && criteria().length > 0) {
+          <div class="mt-3">
+            <p class="mb-1.5 text-[11px] font-medium uppercase text-muted-foreground">
+              {{ 'discovery.suggestion.criteria' | transloco }}
+            </p>
+            <ul class="flex flex-col gap-1.5" data-testid="suggestion-criteria">
+              @for (criterion of criteria(); track $index) {
+                <li class="flex items-start gap-2 text-xs leading-relaxed">
+                  <span
+                    class="mt-0.5 grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px] border border-primary/50 text-primary"
+                    aria-hidden="true"
+                  >
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  <span>{{ criterion }}</span>
+                </li>
+              }
+            </ul>
           </div>
         }
-        @default {
-          <ng-container [ngTemplateOutlet]="storyBody" />
-        }
-      }
 
-      @if (suggestion().targetStoryId && suggestion().type !== 'NEW_STORY') {
-        <button
-          type="button"
-          class="mt-2 text-xs font-medium text-primary hover:underline"
-          (click)="openTarget.emit(suggestion().targetStoryId!)"
-          data-testid="suggestion-open-target"
-        >
-          {{ 'discovery.suggestion.viewTarget' | transloco }}
-        </button>
-      }
+        @if (suggestion().targetStoryId && suggestion().type !== 'NEW_STORY') {
+          <button
+            type="button"
+            class="mt-2.5 text-xs font-medium text-primary hover:underline"
+            (click)="openTarget.emit(suggestion().targetStoryId!)"
+            data-testid="suggestion-open-target"
+          >
+            {{ 'discovery.suggestion.viewTarget' | transloco }}
+          </button>
+        }
+      </div>
 
       @if (canDecide()) {
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 border-t border-border/70 px-4 py-3">
           <button
             hlmBtn
             size="sm"
@@ -232,15 +290,33 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         </div>
       } @else {
         <p class="text-sm font-medium">{{ eTitle() }}</p>
-        <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-          {{ 'discovery.story.as' | transloco }}
-          <span class="text-foreground">{{ eRole() }}</span
-          >{{ 'discovery.story.want' | transloco }}
-          <span class="text-foreground">{{ eAction() }}</span
-          >{{ 'discovery.story.soThat' | transloco }}
-          <span class="text-foreground">{{ eBenefit() }}</span
-          >.
-        </p>
+        <!-- Como / quiero / para — each part on its own labelled row. -->
+        <dl class="mt-2 flex flex-col gap-1.5">
+          <div class="flex items-baseline gap-2">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
+              {{ 'discovery.suggestion.role' | transloco }}
+            </dt>
+            <dd class="text-sm leading-snug text-foreground">{{ eRole() }}</dd>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
+              {{ 'discovery.suggestion.action' | transloco }}
+            </dt>
+            <dd class="text-sm leading-snug text-foreground">{{ eAction() }}</dd>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <dt
+              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
+            >
+              {{ 'discovery.suggestion.benefit' | transloco }}
+            </dt>
+            <dd class="text-sm leading-snug text-muted-foreground">{{ eBenefit() }}</dd>
+          </div>
+        </dl>
       }
     </ng-template>
   `,
@@ -259,6 +335,9 @@ export class SuggestionCard {
 
   protected readonly editing = signal(false);
   protected readonly priorities = PRIORITIES;
+
+  /** Proposed acceptance criteria, normalized (array or newline string) for the checklist preview. */
+  protected readonly criteria = computed(() => suggestionCriteria(this.suggestion().draftCriteria));
 
   protected readonly eTitle = linkedSignal(() => this.suggestion().draftTitle ?? '');
   protected readonly eRole = linkedSignal(() => this.suggestion().draftRole ?? '');
