@@ -725,4 +725,89 @@ describe('DiscoveryChatStore', () => {
       expect(seqOne?.kind === 'segment' && seqOne.segment.text).toBe('live final for seq 1');
     });
   });
+
+  describe('stopped-block global chronological ordering', () => {
+    it('interleaves segments and decisions by absolute time (not grouped)', () => {
+      // Real case: a STOPPED session with recorded segments spoken 21:18–21:20
+      // and decisions resolved 21:19–21:22. They must weave by time, not render
+      // as "all decisions, then all segments".
+      flushInit([session({ status: 'STOPPED' })]);
+      http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([
+        { sequence: 0, text: 's@21:18', speakerLabel: 'A', startMs: 0, endMs: 900, occurredAt: '2026-07-04T21:18:00Z' },
+        { sequence: 1, text: 's@21:19', speakerLabel: 'A', startMs: 1000, endMs: 1900, occurredAt: '2026-07-04T21:19:30Z' },
+        { sequence: 2, text: 's@21:20', speakerLabel: 'A', startMs: 2000, endMs: 2900, occurredAt: '2026-07-04T21:20:00Z' },
+      ]);
+      http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: 'joined' });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      // Two accepted decisions, resolved between/after the segments.
+      http
+        .expectOne(
+          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([
+          suggestion({ id: 'd-1', status: 'ACCEPTED', resolvedStoryId: null, resolvedAt: '2026-07-04T21:19:00Z' }),
+          suggestion({ id: 'd-2', status: 'ACCEPTED', resolvedStoryId: null, resolvedAt: '2026-07-04T21:22:00Z' }),
+        ]);
+      http
+        .expectOne(
+          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
+      http.verify();
+
+      const items = store.blocks()[0].items;
+      // Global time order: s@21:18, d@21:19, s@21:19:30, s@21:20, d@21:22.
+      // Crucially a decision resolved 21:19 lands BETWEEN the 21:18 and 21:19:30
+      // segments rather than being grouped ahead of every segment.
+      expect(items.map((i) => i.kind)).toEqual([
+        'segment',
+        'decision',
+        'segment',
+        'segment',
+        'decision',
+      ]);
+      // No timeless paragraph fallback leaks in (structured segments were used).
+      expect(items.some((i) => i.kind === 'paragraph')).toBe(false);
+    });
+
+    it('keeps the anchored/paragraph path for the string fallback (no segments)', () => {
+      // A STOPPED session on an older backend: /segments 404s → joined string.
+      flushInit([session({ status: 'STOPPED' })]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/segments')
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      http
+        .expectOne('/api/sessions/sess-1/transcript')
+        .flush({ sessionId: 'sess-1', transcript: 'line one\nline two' });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      http
+        .expectOne(
+          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([]);
+      http
+        .expectOne(
+          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
+      http.verify();
+
+      const items = store.blocks()[0].items;
+      // The string still renders as paragraphs (no structured segments to sort).
+      expect(items.filter((i) => i.kind === 'paragraph')).toHaveLength(2);
+      expect(items.some((i) => i.kind === 'segment')).toBe(false);
+    });
+  });
 });

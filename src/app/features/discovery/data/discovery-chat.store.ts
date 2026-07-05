@@ -579,6 +579,12 @@ export class DiscoveryChatStore {
         // The structured segments supersede the joined string; keep the string
         // only as the fallback when segments were unavailable or empty.
         transcript: hasSegments ? null : transcript,
+        // With structured segments loaded every part carries a real absolute
+        // time, so merge the whole block by time (segments spoken-at, decisions
+        // resolved-at, stories created-at) instead of the anchor-sequence
+        // grouping — that grouping was only needed for the timeless string
+        // fallback, which stays on the anchored/paragraph path (flag left false).
+        chronological: hasSegments || b.chronological,
         stories,
         // Keep decisions recorded live while the fetch was in flight.
         decisions: [
