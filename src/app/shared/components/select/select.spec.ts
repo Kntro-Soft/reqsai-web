@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Select, SelectOption } from './select';
 
 describe('Select', () => {
@@ -7,7 +7,7 @@ describe('Select', () => {
     { value: 'es-419', label: 'Español (Latinoamérica)' },
   ];
 
-  function render(inputs: Partial<{ compactLabel: string }> = {}) {
+  function build(inputs: Partial<{ compactLabel: string }> = {}): ComponentFixture<Select> {
     const fixture = TestBed.createComponent(Select);
     fixture.componentRef.setInput('options', options);
     fixture.componentRef.setInput('size', 'sm');
@@ -16,7 +16,18 @@ describe('Select', () => {
       fixture.componentRef.setInput('compactLabel', inputs.compactLabel);
     }
     fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
+    return fixture;
+  }
+
+  function render(inputs: Partial<{ compactLabel: string }> = {}) {
+    return build(inputs).nativeElement as HTMLElement;
+  }
+
+  /** Opens the dropdown and returns its overlay panel (rendered into the body). */
+  function openPanel(fixture: ComponentFixture<Select>): HTMLElement {
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button')!.click();
+    fixture.detectChanges();
+    return document.querySelector<HTMLElement>('[role="listbox"]')!;
   }
 
   it('shows only the selected label in the trigger by default', () => {
@@ -50,5 +61,37 @@ describe('Select', () => {
     const trigger = el.querySelector('button')!;
     expect(trigger.className).toContain('min-w-[7rem]');
     expect(trigger.className).not.toContain('sm:min-w-[7rem]');
+  });
+
+  it('gives the dropdown panel a readable min-width (capped to viewport) when compact, keeping FULL option labels', () => {
+    const fixture = build({ compactLabel: 'ES' });
+    const panel = openPanel(fixture);
+
+    // The panel renders into the CDK overlay container, appended to the body.
+    expect(panel).not.toBeNull();
+    // Panel width is independent of the compact trigger: its own min-width, capped
+    // so it never overflows a narrow (~375px) viewport, and stays scrollable.
+    expect(panel.className).toContain('min-w-[12rem]');
+    expect(panel.className).toContain('max-w-[calc(100vw-2rem)]');
+    // The options themselves keep their FULL names — the abbreviation is trigger-only.
+    const optionLabels = Array.from(document.querySelectorAll('[role="option"]')).map((o) =>
+      o.textContent?.trim(),
+    );
+    expect(optionLabels).toContain('Español (Latinoamérica)');
+    expect(optionLabels).not.toContain('ES');
+
+    fixture.destroy();
+  });
+
+  it('keeps the panel synced to the trigger width (w-full) without a compactLabel', () => {
+    const fixture = build();
+    const panel = openPanel(fixture);
+
+    expect(panel).not.toBeNull();
+    // Desktop behavior unchanged: the panel fills the trigger-synced overlay width.
+    expect(panel.className).toContain('w-full');
+    expect(panel.className).not.toContain('min-w-[12rem]');
+
+    fixture.destroy();
   });
 });

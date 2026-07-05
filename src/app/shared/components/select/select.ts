@@ -58,7 +58,7 @@ const BELOW_START: ConnectedPosition[] = [
       [cdkConnectedOverlayOrigin]="origin"
       [cdkConnectedOverlayOpen]="open()"
       [cdkConnectedOverlayPositions]="positions"
-      [cdkConnectedOverlayWidth]="triggerWidth()"
+      [cdkConnectedOverlayWidth]="overlayWidth()"
       (attach)="onAttach()"
       (overlayOutsideClick)="open.set(false)"
       (overlayKeydown)="onKeydown($event)"
@@ -66,7 +66,8 @@ const BELOW_START: ConnectedPosition[] = [
     >
       <div
         role="listbox"
-        class="w-full overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+        class="overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
+        [class]="panelSizeClass()"
       >
         @if (searchable()) {
           <div class="mb-1 px-0.5">
@@ -131,6 +132,26 @@ export class Select {
   /** Overlay panel width, synced to the trigger so the option list matches the select's width. */
   protected readonly triggerWidth = signal(0);
   protected readonly filter = signal('');
+  /**
+   * The width handed to the CDK overlay. Normally the trigger's own width so the
+   * panel lines up with the control. With a {@link compactLabel} the trigger can
+   * be very narrow on mobile, which would clip the full option names — so we hand
+   * the overlay no fixed width and let {@link panelSizeClass} give the panel its
+   * own readable min-width instead. Empty string = size to content.
+   */
+  protected readonly overlayWidth = computed<number | string>(() =>
+    this.compactLabel() ? '' : this.triggerWidth(),
+  );
+  /**
+   * Panel sizing classes. Without a compact trigger the panel fills the overlay's
+   * trigger-synced width (`w-full`). With a {@link compactLabel} the overlay has
+   * no fixed width, so the panel takes a readable min-width (fits the longest
+   * language name) capped to the viewport and stays scrollable — independent of
+   * the narrow compact trigger.
+   */
+  protected readonly panelSizeClass = computed(() =>
+    this.compactLabel() ? 'min-w-[12rem] max-w-[calc(100vw-2rem)]' : 'w-full',
+  );
   protected readonly selectedLabel = computed(
     () => this.options().find((o) => o.value === this.value())?.label ?? '',
   );
