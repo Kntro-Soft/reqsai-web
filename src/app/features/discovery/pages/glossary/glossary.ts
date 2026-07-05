@@ -385,8 +385,8 @@ export class ProjectGlossary implements OnInit {
     }
     this.state.set('loading');
     this.api.listGlossaryTerms(orgId, this.projectId()).subscribe({
-      next: (terms) => {
-        this.terms.set(terms);
+      next: (page) => {
+        this.terms.set(page.content);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),

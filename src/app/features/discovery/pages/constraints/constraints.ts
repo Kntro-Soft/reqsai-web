@@ -375,8 +375,8 @@ export class ProjectConstraints implements OnInit {
     }
     this.state.set('loading');
     this.api.listConstraints(orgId, this.projectId()).subscribe({
-      next: (constraints) => {
-        this.constraints.set(constraints);
+      next: (page) => {
+        this.constraints.set(page.content);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),

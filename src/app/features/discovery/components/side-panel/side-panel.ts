@@ -30,6 +30,13 @@ export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
 export type StorySort = 'priority' | 'recent';
 
 /**
+ * Page size the read-only Glossary/Constraints quick views request. The list
+ * endpoints are paginated; the panel filters the first page in-memory, so it asks
+ * for a generous chunk rather than wiring full pagination into a quick view.
+ */
+const QUICK_VIEW_SIZE = 100;
+
+/**
  * Collapsible right side panel of the discovery chat: Stories (project
  * backlog), Info (project fact sheet), Glossary and Constraints, each with a
  * small filter. Rendered as a column on wide screens; the page overlays it on
@@ -525,9 +532,11 @@ export class SidePanel {
       return;
     }
     this.glossaryState.set('loading');
-    this.contextApi.listGlossaryTerms(orgId, this.projectId()).subscribe({
-      next: (terms) => {
-        this.glossary.set(terms);
+    // Read-only quick view: pull a generous first page and filter in-panel; the
+    // list endpoint is paginated, so read `.content` off the PageResponse.
+    this.contextApi.listGlossaryTerms(orgId, this.projectId(), { size: QUICK_VIEW_SIZE }).subscribe({
+      next: (page) => {
+        this.glossary.set(page.content);
         this.glossaryState.set('ready');
       },
       error: () => this.glossaryState.set('error'),
@@ -541,9 +550,10 @@ export class SidePanel {
       return;
     }
     this.constraintsState.set('loading');
-    this.contextApi.listConstraints(orgId, this.projectId()).subscribe({
-      next: (constraints) => {
-        this.constraints.set(constraints);
+    // Read-only quick view: pull a generous first page and filter in-panel.
+    this.contextApi.listConstraints(orgId, this.projectId(), { size: QUICK_VIEW_SIZE }).subscribe({
+      next: (page) => {
+        this.constraints.set(page.content);
         this.constraintsState.set('ready');
       },
       error: () => this.constraintsState.set('error'),
