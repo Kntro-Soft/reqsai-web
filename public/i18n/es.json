@@ -816,6 +816,11 @@
     "generatedStory": "Historia generada",
     "speaker": "Usuario {{n}}",
     "goToStory": "Ir a la historia",
+    "mock": {
+      "on": "Simulación on",
+      "off": "Simulación",
+      "hint": "Solo desarrollo: inyecta sugerencias de ejemplo para previsualizar la revisión."
+    },
     "pendingPrevious": "{{count}} pendientes de sesiones anteriores",
     "story": {
       "as": "Como ",

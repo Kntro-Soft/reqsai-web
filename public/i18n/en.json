@@ -816,6 +816,11 @@
     "generatedStory": "Generated story",
     "speaker": "Speaker {{n}}",
     "goToStory": "Go to story",
+    "mock": {
+      "on": "Mock on",
+      "off": "Mock",
+      "hint": "Dev only: inject sample suggestions to preview the review UX."
+    },
     "pendingPrevious": "{{count}} pending from previous sessions",
     "story": {
       "as": "As ",
