@@ -821,9 +821,8 @@
       "soThat": ", so that "
     },
     "decision": {
-      "accepted": "Story accepted",
-      "dismissed": "Suggestion dismissed",
-      "question": "Clarifying question"
+      "accepted": "Accepted",
+      "dismissed": "Dismissed"
     },
     "composer": {
       "placeholder": "Message discovery…",

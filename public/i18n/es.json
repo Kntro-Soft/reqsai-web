@@ -821,9 +821,8 @@
       "soThat": ", para "
     },
     "decision": {
-      "accepted": "Historia aceptada",
-      "dismissed": "Sugerencia descartada",
-      "question": "Pregunta de aclaración"
+      "accepted": "Aceptada",
+      "dismissed": "Descartada"
     },
     "composer": {
       "placeholder": "Escribe a discovery…",

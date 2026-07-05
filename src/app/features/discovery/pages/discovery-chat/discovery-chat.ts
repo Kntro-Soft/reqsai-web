@@ -278,19 +278,22 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           data-testid="decision-entry"
                         >
                           <span class="inline-flex items-center gap-1.5 font-medium">
-                            @switch (item.decision.type) {
-                              @case ('CLARIFYING_QUESTION') {
-                                <hlm-icon name="lucideCircleHelp" size="14px" />
-                              }
-                              @default {
-                                @if (item.decision.outcome === 'ACCEPTED') {
-                                  <hlm-icon name="lucideCheck" size="14px" />
-                                } @else {
-                                  <hlm-icon name="lucideX" size="14px" />
-                                }
-                              }
+                            @if (item.decision.outcome === 'ACCEPTED') {
+                              <hlm-icon name="lucideCheck" size="14px" />
+                              {{ 'discovery.decision.accepted' | transloco }}
+                            } @else {
+                              <hlm-icon name="lucideX" size="14px" />
+                              {{ 'discovery.decision.dismissed' | transloco }}
                             }
-                            {{ decisionLabel(item.decision.type, item.decision.outcome) }}
+                          </span>
+                          <span
+                            class="ml-1.5 inline-flex items-center rounded-full border border-border bg-background/60 px-1.5 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wide"
+                            data-testid="decision-type"
+                          >
+                            @if (item.decision.type === 'CLARIFYING_QUESTION') {
+                              <hlm-icon name="lucideCircleHelp" size="10px" class="mr-1" />
+                            }
+                            {{ 'discovery.suggestion.type.' + item.decision.type | transloco }}
                           </span>
                           @if (item.decision.label) {
                             <span class="ml-1 text-muted-foreground">— {{ item.decision.label }}</span>
@@ -676,15 +679,6 @@ export class DiscoveryChat implements OnInit {
     return outcome === 'ACCEPTED'
       ? 'border-emerald-500/30 bg-emerald-500/10'
       : 'border-border bg-secondary/60 text-muted-foreground';
-  }
-
-  protected decisionLabel(type: string, outcome: 'ACCEPTED' | 'DISMISSED'): string {
-    if (type === 'CLARIFYING_QUESTION') {
-      return this.transloco.translate('discovery.decision.question');
-    }
-    return this.transloco.translate(
-      outcome === 'ACCEPTED' ? 'discovery.decision.accepted' : 'discovery.decision.dismissed',
-    );
   }
 
   /** Recording language: the org's meeting language, defaulting to Spanish (Peru). */
