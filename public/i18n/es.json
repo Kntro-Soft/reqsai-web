@@ -816,6 +816,13 @@
     "generatedStory": "Historia generada",
     "speaker": "Usuario {{n}}",
     "goToStory": "Ir a la historia",
+    "time": {
+      "justNow": "hace un momento",
+      "minutes": "hace {{n}} min",
+      "hours": "hace {{n}} h",
+      "yesterday": "ayer",
+      "days": "hace {{n}} días"
+    },
     "mock": {
       "on": "Simulación on",
       "off": "Simulación",

@@ -816,6 +816,13 @@
     "generatedStory": "Generated story",
     "speaker": "Speaker {{n}}",
     "goToStory": "Go to story",
+    "time": {
+      "justNow": "just now",
+      "minutes": "{{n}}m ago",
+      "hours": "{{n}}h ago",
+      "yesterday": "yesterday",
+      "days": "{{n}}d ago"
+    },
     "mock": {
       "on": "Mock on",
       "off": "Mock",
