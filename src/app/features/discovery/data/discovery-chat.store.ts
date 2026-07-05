@@ -634,7 +634,7 @@ export class DiscoveryChatStore {
     const key = `project:${projectId}`;
     if (this.topicSubscriptions.has(key)) return;
     const sub = this.realtime
-      .watch<ProjectSessionLifecycleMessage>(`projects/${projectId}`)
+      .watch<ProjectSessionLifecycleMessage>(`projects/${projectId}/sessions`)
       .subscribe((message) => this.applyProjectLifecycle(message));
     this.topicSubscriptions.set(key, sub);
   }
