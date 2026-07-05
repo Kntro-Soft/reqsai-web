@@ -42,6 +42,7 @@ import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { DISCOVERY_LANGUAGES } from '../../data/discovery-languages';
+import { languageStorageKey, resolveInitialLanguage } from '../../data/language-preference';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -114,7 +115,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 [searchable]="true"
                 [options]="languageOptions()"
                 [value]="language()"
-                (valueChange)="language.set($event)"
+                (valueChange)="setLanguage($event)"
                 [ariaLabel]="'discovery.language.label' | transloco"
                 [searchPlaceholder]="'discovery.language.search' | transloco"
                 [emptyText]="'discovery.language.empty' | transloco"
@@ -501,8 +502,13 @@ export class DiscoveryChat implements OnInit {
   protected readonly canRecord = this.canManage;
   protected readonly canDecide = this.canManage;
 
-  /** Meeting language for the next session — defaults to the org's, editable until recording starts. */
-  protected readonly language = linkedSignal(() => this.projectLanguage());
+  /**
+   * Meeting language for the next session, editable until recording starts.
+   * Precedence: the user's per-project localStorage override > org default.
+   */
+  protected readonly language = linkedSignal(() =>
+    resolveInitialLanguage(this.storedLanguage(), this.projectLanguage()),
+  );
   protected readonly languageOptions = computed<SelectOption[]>(() => {
     const base = DISCOVERY_LANGUAGES.map((l) => ({ value: l.code, label: l.label }));
     const current = this.language();
@@ -681,12 +687,31 @@ export class DiscoveryChat implements OnInit {
       : 'border-border bg-secondary/60 text-muted-foreground';
   }
 
-  /** Recording language: the org's meeting language, defaulting to Spanish (Peru). */
-  private projectLanguage(): string {
+  /** Picks a language and persists it as this user's per-project override. */
+  protected setLanguage(code: string): void {
+    this.language.set(code);
+    try {
+      localStorage.setItem(languageStorageKey(this.projectId()), code);
+    } catch {
+      // Storage can be unavailable (private mode / quota); the in-memory value still applies.
+    }
+  }
+
+  /** This user's stored per-project language override, or null when absent/unreadable. */
+  private storedLanguage(): string | null {
+    try {
+      return localStorage.getItem(languageStorageKey(this.projectId()));
+    } catch {
+      return null;
+    }
+  }
+
+  /** The org's configured meeting language, or null when unset. */
+  private projectLanguage(): string | null {
     const org = this.workspace
       .organizations()
       .find((o) => o.id === this.auth.organizationId());
-    return org?.meetingLanguage || 'es-PE';
+    return org?.meetingLanguage || null;
   }
 
   private defaultTitle(): string {
