@@ -78,6 +78,9 @@ export type StorySort = 'createdAt' | 'title' | 'priority' | 'status';
 /** Sort direction accepted by the project backlog list endpoint. */
 export type StorySortDirection = 'ASC' | 'DESC';
 
+/** The review statuses the backend filters stories by (list endpoint `status` param). */
+export type StoryStatus = 'DRAFT' | 'APPROVED' | 'REJECTED' | 'MERGED' | 'EXPORTED';
+
 /** Request body to manually create a user story (POST /projects/{projectId}/stories). */
 export interface CreateUserStoryRequest {
   title: string;
@@ -87,6 +90,56 @@ export interface CreateUserStoryRequest {
   priority: StoryPriority;
   /** Optional effort estimate; omit for none. */
   storyPoints?: number | null;
+}
+
+/**
+ * Request body to edit an existing story's core fields (PUT
+ * /projects/{projectId}/stories/{storyId}). Same shape as create.
+ */
+export type UpdateUserStoryRequest = CreateUserStoryRequest;
+
+/**
+ * Optional server-side filters for the project backlog list endpoint. Every field
+ * is optional; an omitted one leaves that dimension unrestricted. `createdAfter`
+ * is inclusive, `createdBefore` exclusive — both ISO-8601 instants.
+ */
+export interface StoryListFilters {
+  page?: number;
+  size?: number;
+  sortBy?: StorySort;
+  sortDirection?: StorySortDirection;
+  search?: string;
+  status?: StoryStatus;
+  priority?: StoryPriority;
+  createdAfter?: string;
+  createdBefore?: string;
+}
+
+/**
+ * A persisted acceptance criterion resource (criteria REST). Carries its own `id`
+ * so the detail/edit page can PUT/DELETE it individually — unlike the display-only
+ * {@link AcceptanceCriterion} used for suggestion previews and side-panel cards.
+ */
+export interface AcceptanceCriterionResponse {
+  id: string;
+  storyId: string;
+  scenario: string | null;
+  given: string;
+  when: string;
+  then: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/**
+ * Request body to add/replace an acceptance criterion (POST/PUT
+ * /stories/{storyId}/criteria). `scenario` is optional (null clears it on update).
+ */
+export interface AcceptanceCriterionRequest {
+  scenario?: string | null;
+  given: string;
+  when: string;
+  then: string;
 }
 
 /** A generated/backlog user story (REST), normalized for display alongside live ones. */
@@ -103,8 +156,15 @@ export interface UserStoryResponse {
   status: string;
   /** When the story was created (ISO 8601); optional on older backends. */
   createdAt?: string | null;
-  /** The story's Given/When/Then acceptance criteria; absent on older backends. */
-  acceptanceCriteria?: AcceptanceCriterion[] | null;
+  /** When the story was last updated (ISO 8601); optional on older backends. */
+  updatedAt?: string | null;
+  /**
+   * The story's Given/When/Then acceptance criteria; absent on older backends.
+   * Each item may be a persisted {@link AcceptanceCriterionResponse} (carries an
+   * `id`, from the story detail endpoint) or a bare display {@link AcceptanceCriterion}
+   * (from realtime/older payloads) — consumers that need the id must narrow.
+   */
+  acceptanceCriteria?: (AcceptanceCriterionResponse | AcceptanceCriterion)[] | null;
 }
 
 export interface ProcessTranscriptResponse {

@@ -3,18 +3,46 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import {
   AcceptSuggestionRequest,
+  AcceptanceCriterionRequest,
+  AcceptanceCriterionResponse,
   CreateDiscoverySessionRequest,
   CreateUserStoryRequest,
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
-  StorySort,
-  StorySortDirection,
+  StoryListFilters,
   SuggestionResponse,
   SuggestionStatus,
   TranscriptResponse,
+  UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+
+/**
+ * Builds the query params for the project backlog list endpoint from the optional
+ * filters. Only set keys are emitted, so an unset filter falls back to the backend
+ * default (newest first, unrestricted). Exported as a pure helper for unit tests.
+ */
+export function buildStoryListParams(filters: StoryListFilters): HttpParams {
+  let params = new HttpParams();
+  const setNum = (key: string, value: number | undefined): void => {
+    if (value !== undefined && value !== null) params = params.set(key, value);
+  };
+  const setStr = (key: string, value: string | undefined): void => {
+    const trimmed = value?.trim();
+    if (trimmed) params = params.set(key, trimmed);
+  };
+  setNum('page', filters.page);
+  setNum('size', filters.size);
+  setStr('sortBy', filters.sortBy);
+  setStr('sortDirection', filters.sortDirection);
+  setStr('search', filters.search);
+  setStr('status', filters.status);
+  setStr('priority', filters.priority);
+  setStr('createdAfter', filters.createdAfter);
+  setStr('createdBefore', filters.createdBefore);
+  return params;
+}
 
 /** Default segment page size for the cursor-paginated segments endpoint. */
 export const SEGMENT_PAGE_SIZE = 50;
@@ -106,27 +134,23 @@ export class DiscoveryApiService {
 
   /**
    * The project's whole backlog (AI-generated across sessions + manual stories),
-   * paginated. Backend sort fields: createdAt | title | priority | status;
-   * direction ASC | DESC. Omitted params fall back to the backend defaults
-   * (newest first).
+   * paginated. All filtering/sorting/pagination runs server-side: sort fields
+   * createdAt | title | priority | status (direction ASC | DESC), plus optional
+   * text search, status/priority filters and a createdAt range. Omitted filters
+   * fall back to the backend defaults (newest first, unrestricted).
    */
   listProjectStories(
     projectId: string,
-    options: {
-      page?: number;
-      size?: number;
-      sortBy?: StorySort;
-      sortDirection?: StorySortDirection;
-    } = {},
+    filters: StoryListFilters = {},
   ): Observable<PageResponse<UserStoryResponse>> {
-    let params = new HttpParams();
-    if (options.page !== undefined) params = params.set('page', options.page);
-    if (options.size !== undefined) params = params.set('size', options.size);
-    if (options.sortBy) params = params.set('sortBy', options.sortBy);
-    if (options.sortDirection) params = params.set('sortDirection', options.sortDirection);
     return this.http.get<PageResponse<UserStoryResponse>>(`/api/projects/${projectId}/stories`, {
-      params,
+      params: buildStoryListParams(filters),
     });
+  }
+
+  /** A single story by id, including its acceptance criteria (GET /stories/{id}). */
+  getStory(projectId: string, storyId: string): Observable<UserStoryResponse> {
+    return this.http.get<UserStoryResponse>(`/api/projects/${projectId}/stories/${storyId}`);
   }
 
   /**
@@ -137,6 +161,58 @@ export class DiscoveryApiService {
    */
   createStory(projectId: string, request: CreateUserStoryRequest): Observable<UserStoryResponse> {
     return this.http.post<UserStoryResponse>(`/api/projects/${projectId}/stories`, request);
+  }
+
+  /**
+   * Edits a story's core fields (PUT /projects/{projectId}/stories/{storyId}).
+   * A straight field update — it does not re-run duplicate detection. 404 if the
+   * story does not exist in the tenant/project.
+   */
+  updateStory(
+    projectId: string,
+    storyId: string,
+    request: UpdateUserStoryRequest,
+  ): Observable<UserStoryResponse> {
+    return this.http.put<UserStoryResponse>(
+      `/api/projects/${projectId}/stories/${storyId}`,
+      request,
+    );
+  }
+
+  // ---- Acceptance criteria (story detail/edit) ----
+
+  private criteriaBase(projectId: string, storyId: string): string {
+    return `/api/projects/${projectId}/stories/${storyId}/criteria`;
+  }
+
+  /** Adds a Given/When/Then criterion to a story (POST .../criteria). */
+  addCriterion(
+    projectId: string,
+    storyId: string,
+    request: AcceptanceCriterionRequest,
+  ): Observable<AcceptanceCriterionResponse> {
+    return this.http.post<AcceptanceCriterionResponse>(
+      this.criteriaBase(projectId, storyId),
+      request,
+    );
+  }
+
+  /** Replaces all fields of an existing criterion (PUT .../criteria/{criterionId}). */
+  updateCriterion(
+    projectId: string,
+    storyId: string,
+    criterionId: string,
+    request: AcceptanceCriterionRequest,
+  ): Observable<AcceptanceCriterionResponse> {
+    return this.http.put<AcceptanceCriterionResponse>(
+      `${this.criteriaBase(projectId, storyId)}/${criterionId}`,
+      request,
+    );
+  }
+
+  /** Permanently removes a criterion from a story (DELETE .../criteria/{criterionId}). */
+  deleteCriterion(projectId: string, storyId: string, criterionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.criteriaBase(projectId, storyId)}/${criterionId}`);
   }
 
   // ---- AI suggestion review ----
