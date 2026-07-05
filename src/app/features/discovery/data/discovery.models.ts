@@ -234,3 +234,20 @@ export type SessionRealtimeMessage =
   | SessionStoryGeneratedMessage
   | SessionProcessingFailedMessage
   | SessionSuggestionMessage;
+
+// ---- Realtime (project-level lifecycle topic /topic/projects/{id}) ----
+
+/**
+ * A session lifecycle event broadcast on the project topic, so every project
+ * member learns about sessions started/stopped by others without polling.
+ * Being added by a parallel backend branch — consumers must subscribe
+ * defensively: the topic may not exist yet, and any field besides `sessionId`
+ * may be absent on older payloads.
+ */
+export interface ProjectSessionLifecycleMessage {
+  sessionId: string;
+  status?: SessionStatus | string | null;
+  title?: string | null;
+  language?: string | null;
+  startedAt?: string | null;
+}

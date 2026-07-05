@@ -824,6 +824,9 @@
       "accepted": "Accepted",
       "dismissed": "Dismissed"
     },
+    "live": {
+      "banner": "Live session in progress — {{language}}"
+    },
     "composer": {
       "placeholder": "Message discovery…",
       "comingSoon": "Text to pipeline is coming soon.",

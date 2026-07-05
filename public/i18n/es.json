@@ -824,6 +824,9 @@
       "accepted": "Aceptada",
       "dismissed": "Descartada"
     },
+    "live": {
+      "banner": "Sesión en vivo en curso — {{language}}"
+    },
     "composer": {
       "placeholder": "Escribe a discovery…",
       "comingSoon": "La entrada de texto llegará pronto.",

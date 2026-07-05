@@ -99,15 +99,17 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             </p>
           </div>
           <div class="flex shrink-0 items-center gap-1.5">
-            <!-- Meeting language: editable until a session is recording, then locked. -->
-            @if (recording.isActive()) {
+            <!-- Meeting language: editable until a session is live, then locked to
+                 the SESSION's language so every viewer sees the actual meeting
+                 language rather than their own preference. -->
+            @if (liveLanguageLabel(); as lockedLabel) {
               <span
                 class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-secondary/50 px-2.5 text-xs font-medium text-muted-foreground"
                 [title]="'discovery.language.locked' | transloco"
                 data-testid="discovery-language-locked"
               >
                 <hlm-icon name="lucideLanguages" size="14px" />
-                {{ languageLabel() }}
+                {{ lockedLabel }}
               </span>
             } @else {
               <app-select
@@ -146,14 +148,28 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           </div>
         </div>
 
-        <!-- Persistent session bar (sticky) -->
-        @if (recording.isActive()) {
+        <!-- Persistent session bar (sticky) — exclusive to users who can record. -->
+        @if (canRecord() && recording.isActive()) {
           <div class="sticky top-0 z-20 mb-2">
             <app-session-bar
               (pauseSession)="pause()"
               (resumeSession)="resume()"
               (stopSession)="stop()"
             />
+          </div>
+        } @else if (liveLanguageLabel(); as liveLabel) {
+          <!-- Viewers get a subtle indicator instead of the recorder's controls. -->
+          <div
+            class="mb-2 flex items-center gap-2.5 rounded-xl border border-border bg-card/70 px-3 py-2 text-sm"
+            data-testid="live-session-banner"
+          >
+            <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
+              <span
+                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60"
+              ></span>
+              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+            </span>
+            {{ 'discovery.live.banner' | transloco: { language: liveLabel } }}
           </div>
         }
 
@@ -516,9 +532,22 @@ export class DiscoveryChat implements OnInit {
       ? base
       : [{ value: current, label: current }, ...base];
   });
-  protected readonly languageLabel = computed(
-    () => DISCOVERY_LANGUAGES.find((l) => l.code === this.language())?.label ?? this.language(),
-  );
+  /**
+   * The language of the session currently live on this project, or null when
+   * nothing is live: the tracked recording session's first (recorder and
+   * attached tabs), else the project-topic broadcast one (viewers).
+   */
+  protected readonly liveLanguage = computed<string | null>(() => {
+    const own = this.recording.session();
+    if (own) return own.language || null;
+    return this.store.liveSession()?.language || null;
+  });
+  /** Endonym label for the live session's language (falls back to the raw code). */
+  protected readonly liveLanguageLabel = computed<string | null>(() => {
+    const code = this.liveLanguage();
+    if (!code) return null;
+    return DISCOVERY_LANGUAGES.find((l) => l.code === code)?.label ?? code;
+  });
 
   constructor() {
     // Scroll a freshly focused session into view (history row click / new session).

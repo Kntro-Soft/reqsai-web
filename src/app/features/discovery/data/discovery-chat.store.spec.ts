@@ -277,4 +277,63 @@ describe('DiscoveryChatStore', () => {
     // Chronological: the 12:05 segment renders before the 12:15 decision.
     expect(block.items.map((i) => i.kind)).toEqual(['segment', 'decision']);
   });
+
+  it('adds a block and tracks the live session from a project lifecycle broadcast', () => {
+    flushInit([]);
+    http
+      .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+      .flush(page<SuggestionResponse>([]));
+
+    realtime.watch('projects/proj-1').next({
+      sessionId: 'live-1',
+      status: 'RECORDING',
+      title: 'Weekly sync',
+      language: 'en-US',
+      startedAt: '2026-07-04T15:00:00Z',
+    });
+
+    // The synthesized block loads like any live block.
+    http.expectOne('/api/sessions/live-1/transcript').flush({ sessionId: 'live-1', transcript: null });
+    http.expectOne('/api/sessions/live-1/stories').flush(page<UserStoryResponse>([]));
+    http
+      .expectOne(
+        (r) => r.url === '/api/sessions/live-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+      )
+      .flush([]);
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/api/sessions/live-1/suggestions' && r.params.get('status') === 'DISMISSED',
+      )
+      .flush([]);
+    http
+      .expectOne((r) => r.url === '/api/sessions/live-1/suggestions' && !r.params.has('status'))
+      .flush([]);
+    http.verify();
+
+    expect(store.liveSession()?.id).toBe('live-1');
+    expect(store.liveSession()?.language).toBe('en-US');
+    expect(store.blocks().some((b) => b.session.id === 'live-1')).toBe(true);
+    // The per-session topic was wired for follow-up events.
+    expect(realtime.topics.has('sessions/live-1')).toBe(true);
+
+    // Stop: the live flag clears and the block status refreshes.
+    realtime.watch('projects/proj-1').next({ sessionId: 'live-1', status: 'STOPPED' });
+    expect(store.liveSession()).toBeNull();
+    expect(store.blocks().find((b) => b.session.id === 'live-1')?.session.status).toBe('STOPPED');
+  });
+
+  it('tolerates malformed or unknown project lifecycle payloads', () => {
+    flushInit([]);
+    http
+      .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+      .flush(page<SuggestionResponse>([]));
+
+    realtime.watch('projects/proj-1').next({} as never);
+    realtime.watch('projects/proj-1').next({ sessionId: 'live-9', status: 'SOMETHING_NEW' });
+
+    http.verify();
+    expect(store.liveSession()).toBeNull();
+    expect(store.blocks()).toHaveLength(0);
+  });
 });

@@ -8,6 +8,7 @@ import {
   AcceptSuggestionRequest,
   DiscoverySessionResponse,
   DisplayStory,
+  ProjectSessionLifecycleMessage,
   SessionEventType,
   SessionProcessingFailedMessage,
   SessionRealtimeMessage,
@@ -53,6 +54,17 @@ const STATUS_BY_EVENT: Partial<Record<SessionEventType, SessionStatus>> = {
 
 /** Statuses that never emit further realtime events — their content is loaded as a static timeline. */
 const HISTORICAL_STATUSES: readonly SessionStatus[] = ['COMPLETED', 'FAILED'];
+
+/** Every status the client understands; unknown broadcast values are ignored. */
+const KNOWN_STATUSES: readonly SessionStatus[] = [
+  'DRAFT',
+  'RECORDING',
+  'PAUSED',
+  'STOPPED',
+  'PROCESSING',
+  'COMPLETED',
+  'FAILED',
+];
 
 /** Normalizes a REST user story into the chat's display shape. */
 function toDisplayStory(story: UserStoryResponse): DisplayStory {
@@ -102,6 +114,8 @@ export class DiscoveryChatStore {
   private readonly _pendingPrevious = signal<SuggestionResponse[]>([]);
   private readonly _projectStories = signal<DisplayStory[]>([]);
   private readonly _focusSessionId = signal<string | null>(null);
+  /** Session currently broadcast as live (RECORDING/PAUSED) on this project, if any. */
+  private readonly _liveSessionId = signal<string | null>(null);
 
   readonly state = this._state.asReadonly();
   readonly queue = this._queue.asReadonly();
@@ -109,6 +123,20 @@ export class DiscoveryChatStore {
   readonly pendingPrevious = this._pendingPrevious.asReadonly();
   /** Session id the feed should scroll to (set by history/409 flows). */
   readonly focusSessionId = this._focusSessionId.asReadonly();
+
+  /**
+   * The project's live (RECORDING/PAUSED) session as known to the feed, or
+   * null. Fed by the project lifecycle topic and per-session status events, so
+   * viewers see someone else's meeting (language included) without recording.
+   */
+  readonly liveSession = computed<DiscoverySessionResponse | null>(() => {
+    const id = this._liveSessionId();
+    if (!id) return null;
+    const session = this._blocks().find((b) => b.session.id === id)?.session ?? null;
+    return session && (session.status === 'RECORDING' || session.status === 'PAUSED')
+      ? session
+      : null;
+  });
 
   /** The topmost (oldest loaded) block still has older segments to page in. */
   private readonly hasOlderSegments = computed(() => {
@@ -159,6 +187,10 @@ export class DiscoveryChatStore {
     this.reset();
     this.projectId = projectId;
     this._state.set('loading');
+    // Project-wide lifecycle events (sessions started/stopped by anyone). The
+    // topic is being added by a parallel backend branch: if nothing ever
+    // arrives, everything below still works exactly as before.
+    this.subscribeProjectTopic(projectId);
 
     this.api.listSessions(projectId, 0, PAGE_SIZE).subscribe({
       next: (page) => {
@@ -173,6 +205,7 @@ export class DiscoveryChatStore {
           // A session that is still live anywhere becomes the tracked one.
           if (newest.status === 'RECORDING' || newest.status === 'PAUSED') {
             this.recording.attach(newest);
+            this._liveSessionId.set(newest.id);
           }
         }
         this._state.set('ready');
@@ -203,6 +236,7 @@ export class DiscoveryChatStore {
     this._pendingPrevious.set([]);
     this._projectStories.set([]);
     this._focusSessionId.set(null);
+    this._liveSessionId.set(null);
   }
 
   /**
@@ -251,6 +285,9 @@ export class DiscoveryChatStore {
     this.cacheSizeSignal.set(this.sessionsCache.length);
     this.appendBlock(session, 'newest');
     this._focusSessionId.set(session.id);
+    if (session.status === 'RECORDING' || session.status === 'PAUSED') {
+      this._liveSessionId.set(session.id);
+    }
   }
 
   /**
@@ -275,6 +312,7 @@ export class DiscoveryChatStore {
         this.appendBlock(session, 'sorted');
         if (session.status === 'RECORDING' || session.status === 'PAUSED') {
           this.recording.attach(session);
+          this._liveSessionId.set(session.id);
         }
         this._focusSessionId.set(session.id);
       },
@@ -539,6 +577,74 @@ export class DiscoveryChatStore {
     this.topicSubscriptions.set(sessionId, sub);
   }
 
+  private subscribeProjectTopic(projectId: string): void {
+    const key = `project:${projectId}`;
+    if (this.topicSubscriptions.has(key)) return;
+    const sub = this.realtime
+      .watch<ProjectSessionLifecycleMessage>(`projects/${projectId}`)
+      .subscribe((message) => this.applyProjectLifecycle(message));
+    this.topicSubscriptions.set(key, sub);
+  }
+
+  /**
+   * Applies a project-level session lifecycle broadcast. Defensive by design:
+   * payloads missing everything but `sessionId` and unknown statuses are
+   * tolerated, and a session the feed does not know yet is added from the
+   * broadcast fields alone (so viewers see the meeting without a fetch).
+   */
+  applyProjectLifecycle(message: ProjectSessionLifecycleMessage | null | undefined): void {
+    if (!message || typeof message.sessionId !== 'string' || message.sessionId.length === 0) {
+      return;
+    }
+    const sessionId = message.sessionId;
+    const status = KNOWN_STATUSES.find((s) => s === message.status) ?? null;
+
+    if (status === 'RECORDING' || status === 'PAUSED') {
+      this._liveSessionId.set(sessionId);
+      if (this._blocks().some((b) => b.session.id === sessionId)) {
+        this.updateBlock(sessionId, (b) => ({
+          ...b,
+          session: {
+            ...b.session,
+            status,
+            language: message.language || b.session.language,
+            startedAt: message.startedAt ?? b.session.startedAt,
+          },
+        }));
+        return;
+      }
+      // A session someone else just started: synthesize it from the broadcast,
+      // append it as the newest block and wire its per-session topic.
+      const now = new Date().toISOString();
+      const session: DiscoverySessionResponse = {
+        id: sessionId,
+        projectId: this.projectId ?? '',
+        title: message.title ?? '',
+        language: message.language ?? '',
+        status,
+        startedAt: message.startedAt ?? now,
+        endedAt: null,
+        audioDurationMs: 0,
+        processingError: null,
+        createdAt: message.startedAt ?? now,
+        updatedAt: message.startedAt ?? now,
+      };
+      if (!this.sessionsCache.some((s) => s.id === sessionId)) {
+        this.sessionsCache = [session, ...this.sessionsCache];
+        this.cacheSizeSignal.set(this.sessionsCache.length);
+      }
+      this.appendBlock(session, 'newest');
+      return;
+    }
+
+    // Stopped / settling / finished: drop the live flag and refresh the block.
+    if (this._liveSessionId() === sessionId) this._liveSessionId.set(null);
+    if (!status || !this._blocks().some((b) => b.session.id === sessionId)) return;
+    this.updateBlock(sessionId, (b) => ({ ...b, session: { ...b.session, status } }));
+    this.recording.syncStatus(sessionId, status);
+    if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
+  }
+
   /** Applies an incoming realtime message to the owning block / queue. */
   applyRealtime(message: SessionRealtimeMessage): void {
     const sessionId = message.sessionId;
@@ -613,6 +719,13 @@ export class DiscoveryChatStore {
         },
       }));
       this.recording.syncStatus(sessionId, status);
+      // Keep the project-level live flag in sync even when the lifecycle
+      // reaches us only through the per-session topic.
+      if (status === 'RECORDING' || status === 'PAUSED') {
+        this._liveSessionId.set(sessionId);
+      } else if (this._liveSessionId() === sessionId) {
+        this._liveSessionId.set(null);
+      }
       // A block created while the session was live never fetched its persisted
       // timeline. Once the session settles, reload it as a historical block so
       // segments and resolved decisions survive exactly like after a reload.
