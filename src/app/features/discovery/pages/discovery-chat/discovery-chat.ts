@@ -33,9 +33,14 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
-import { DiscoveryChatStore } from '../../data/discovery-chat.store';
+import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
-import { AcceptSuggestionRequest, SuggestionResponse } from '../../data/discovery.models';
+import { SpeakerDisplay } from '../../data/feed';
+import {
+  AcceptSuggestionRequest,
+  SessionTranscriptSegmentMessage,
+  SuggestionResponse,
+} from '../../data/discovery.models';
 import { SessionBar } from '../../components/session-bar/session-bar';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SidePanel } from '../../components/side-panel/side-panel';
@@ -278,14 +283,32 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                         </div>
                       }
                       @case ('segment') {
+                        @let speaker = speakerFor(block, item.segment);
                         <div
-                          class="max-w-[80%] rounded-2xl bg-secondary px-3.5 py-2"
-                          [class.opacity-60]="!item.segment.isFinal"
+                          class="flex max-w-[80%] flex-col"
+                          [class.self-end]="speaker?.side === 'right'"
+                          [class.items-end]="speaker?.side === 'right'"
+                          data-testid="segment-bubble"
+                          [attr.data-side]="speaker?.side ?? 'left'"
                         >
-                          <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
-                          <p class="mt-0.5 text-[11px] text-muted-foreground">
-                            {{ item.segment.occurredAt | date: 'HH:mm' }}
-                          </p>
+                          @if (speaker) {
+                            <span
+                              class="mb-0.5 px-1 text-[11px] font-medium text-muted-foreground"
+                              data-testid="segment-speaker"
+                            >
+                              {{ 'discovery.speaker' | transloco: { n: speaker.index } }}
+                            </span>
+                          }
+                          <div
+                            class="rounded-2xl px-3.5 py-2"
+                            [class]="segmentBubbleClass(speaker)"
+                            [class.opacity-60]="!item.segment.isFinal"
+                          >
+                            <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
+                            <p class="mt-0.5 text-[11px] text-muted-foreground">
+                              {{ item.segment.occurredAt | date: 'HH:mm' }}
+                            </p>
+                          </div>
                         </div>
                       }
                       @case ('decision') {
@@ -714,6 +737,24 @@ export class DiscoveryChat implements OnInit {
     return outcome === 'ACCEPTED'
       ? 'border-emerald-500/30 bg-emerald-500/10'
       : 'border-border bg-secondary/60 text-muted-foreground';
+  }
+
+  /**
+   * The stable speaker display for a segment, or undefined when the session has
+   * no diarization (no labeled segments) — in which case every bubble keeps the
+   * default single-column left layout.
+   */
+  protected speakerFor(
+    block: RenderBlock,
+    segment: SessionTranscriptSegmentMessage,
+  ): SpeakerDisplay | undefined {
+    const label = segment.speakerLabel?.trim();
+    return label ? block.speakers.get(label) : undefined;
+  }
+
+  /** Bubble styling per side: the right (2nd) speaker gets the primary tint to read as "the other side". */
+  protected segmentBubbleClass(speaker: SpeakerDisplay | undefined): string {
+    return speaker?.side === 'right' ? 'bg-primary/10' : 'bg-secondary';
   }
 
   /** Picks a language and persists it as this user's per-project override. */

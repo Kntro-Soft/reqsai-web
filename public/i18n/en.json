@@ -814,6 +814,7 @@
     "sessionStories": "{{count}} stories",
     "sessionDefaultTitle": "Discovery session — {{date}}",
     "generatedStory": "Generated story",
+    "speaker": "Speaker {{n}}",
     "pendingPrevious": "{{count}} pending from previous sessions",
     "story": {
       "as": "As ",

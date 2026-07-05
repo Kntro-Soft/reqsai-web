@@ -24,7 +24,9 @@ import {
 import {
   FeedItem,
   SessionBlock,
+  SpeakerDisplay,
   addToQueue,
+  assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
   historicalSegmentToMessage,
@@ -92,6 +94,12 @@ export interface RenderBlock {
   session: DiscoverySessionResponse;
   items: FeedItem[];
   loaded: boolean;
+  /**
+   * Distinct speaker labels of this block's segments, each mapped to a stable
+   * numbered/side display (diarization). Empty when no segment carried a label,
+   * so the feed keeps its single-column left layout for unlabeled transcripts.
+   */
+  speakers: Map<string, SpeakerDisplay>;
 }
 
 /**
@@ -180,6 +188,7 @@ export class DiscoveryChatStore {
       session: block.session,
       items: buildSessionItems(block),
       loaded: block.loaded,
+      speakers: assignSpeakerSides(block.segments),
     })),
   );
 

@@ -814,6 +814,7 @@
     "sessionStories": "{{count}} historias",
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Historia generada",
+    "speaker": "Usuario {{n}}",
     "pendingPrevious": "{{count}} pendientes de sesiones anteriores",
     "story": {
       "as": "Como ",
