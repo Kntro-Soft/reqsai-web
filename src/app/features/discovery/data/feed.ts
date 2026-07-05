@@ -285,6 +285,79 @@ function buildChronologicalItems(
     .map((entry) => entry.item);
 }
 
+// ---- Speaker display (diarization) ----
+
+/** A speaker's stable display assignment: a 1-based number and a feed side. */
+export interface SpeakerDisplay {
+  /** 1-based index in first-seen order (drives the "Speaker N" label). */
+  index: number;
+  /** Which side of the feed this speaker's bubbles sit on. */
+  side: 'left' | 'right';
+}
+
+/**
+ * Assigns each distinct non-empty `speakerLabel` a stable display: numbered in
+ * first-seen order, alternating side (1st→left, 2nd→right, 3rd→left, …). Returns
+ * an empty map when no segment carries a usable label (diarization off), so the
+ * feed keeps its single-column left layout rather than faking alternation.
+ */
+export function assignSpeakerSides(
+  segments: readonly { speakerLabel: string | null }[],
+): Map<string, SpeakerDisplay> {
+  const map = new Map<string, SpeakerDisplay>();
+  for (const segment of segments) {
+    const label = segment.speakerLabel?.trim();
+    if (!label || map.has(label)) continue;
+    const index = map.size + 1;
+    map.set(label, { index, side: index % 2 === 1 ? 'left' : 'right' });
+  }
+  return map;
+}
+
+// ---- Priority ordering (side-panel sort) ----
+
+/** Sort weight for a story priority — higher is more urgent, unknown values sink. */
+export function priorityRank(priority: string | null | undefined): number {
+  switch ((priority ?? '').toUpperCase()) {
+    case 'CRITICAL':
+      return 4;
+    case 'HIGH':
+      return 3;
+    case 'MEDIUM':
+      return 2;
+    case 'LOW':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Comparator ordering stories by priority (CRITICAL → HIGH → MEDIUM → LOW),
+ * breaking ties by most-recent `createdAt` so the panel's default sort is stable.
+ */
+export function comparePriority(
+  a: { priority: string; createdAt?: string | null },
+  b: { priority: string; createdAt?: string | null },
+): number {
+  const byPriority = priorityRank(b.priority) - priorityRank(a.priority);
+  if (byPriority !== 0) return byPriority;
+  return compareRecent(a, b);
+}
+
+/** Comparator ordering stories by most-recent `createdAt` first; undated ones sink. */
+export function compareRecent(
+  a: { createdAt?: string | null },
+  b: { createdAt?: string | null },
+): number {
+  const ta = a.createdAt ? Date.parse(a.createdAt) : Number.NaN;
+  const tb = b.createdAt ? Date.parse(b.createdAt) : Number.NaN;
+  if (Number.isNaN(ta) && Number.isNaN(tb)) return 0;
+  if (Number.isNaN(ta)) return 1;
+  if (Number.isNaN(tb)) return -1;
+  return tb - ta;
+}
+
 // ---- Decide resilience ----
 
 /**

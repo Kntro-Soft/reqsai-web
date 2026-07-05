@@ -19,6 +19,7 @@ import {
   SessionTranscriptSegmentMessage,
   SuggestionResponse,
   UserStoryResponse,
+  suggestionCriteria,
 } from './discovery.models';
 import {
   FeedItem,
@@ -82,6 +83,7 @@ function toDisplayStory(story: UserStoryResponse): DisplayStory {
     priority: story.priority,
     storyPoints: story.storyPoints,
     createdAt: story.createdAt ?? null,
+    acceptanceCriteria: suggestionCriteria(story.acceptanceCriteria),
   };
 }
 
@@ -752,6 +754,7 @@ export class DiscoveryChatStore {
                   priority: story.priority,
                   storyPoints: story.storyPoints,
                   createdAt: story.occurredAt,
+                  acceptanceCriteria: [],
                 },
               ],
             },

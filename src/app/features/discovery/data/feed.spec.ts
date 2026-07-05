@@ -1,13 +1,17 @@
 import {
   DecisionEntry,
   addToQueue,
+  assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
+  comparePriority,
+  compareRecent,
   historicalSegmentToMessage,
   isTransientDecideStatus,
   lastSequence,
   lowestSequence,
   normalizeSegmentPage,
+  priorityRank,
   removeFromQueue,
   toDecisionEntry,
   transcriptToItems,
@@ -30,6 +34,7 @@ function displayStory(overrides: Partial<DisplayStory> = {}): DisplayStory {
     priority: 'MEDIUM',
     storyPoints: 3,
     createdAt: null,
+    acceptanceCriteria: [],
     ...overrides,
   };
 }
@@ -243,17 +248,7 @@ describe('buildSessionItems', () => {
       transcript: 'Earlier recording.',
       segments: [segment(0), segment(1)],
       decisions: [decision({ anchorSequence: 0 })],
-      stories: [
-        {
-          id: 'story-2',
-          title: 'Other',
-          role: 'user',
-          action: 'act',
-          benefit: 'win',
-          priority: 'LOW',
-          storyPoints: null,
-        },
-      ],
+      stories: [displayStory({ id: 'story-2', title: 'Other', priority: 'LOW', storyPoints: null })],
     });
     expect(items.map((i) => i.kind)).toEqual([
       'paragraph',
@@ -292,17 +287,7 @@ describe('buildSessionItems', () => {
       transcript: null,
       segments: [],
       decisions: [decision({ storyId: 'story-1' })],
-      stories: [
-        {
-          id: 'story-1',
-          title: 'Covered',
-          role: 'r',
-          action: 'a',
-          benefit: 'b',
-          priority: 'HIGH',
-          storyPoints: 5,
-        },
-      ],
+      stories: [displayStory({ id: 'story-1', title: 'Covered', priority: 'HIGH', storyPoints: 5 })],
     });
     expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
   });
@@ -313,17 +298,7 @@ describe('buildSessionItems', () => {
       transcript: null,
       segments: [],
       decisions: [decision({ outcome: 'DISMISSED', storyId: 'story-1' })],
-      stories: [
-        {
-          id: 'story-1',
-          title: 'Kept',
-          role: 'r',
-          action: 'a',
-          benefit: 'b',
-          priority: 'HIGH',
-          storyPoints: 5,
-        },
-      ],
+      stories: [displayStory({ id: 'story-1', title: 'Kept', priority: 'HIGH', storyPoints: 5 })],
     });
     expect(items.filter((i) => i.kind === 'story')).toHaveLength(1);
   });
@@ -373,6 +348,23 @@ describe('buildSessionItems', () => {
       expect(items.map((i) => i.kind)).toEqual(['segment', 'story']);
     });
 
+    it('slots a story between the segments that bracket its createdAt', () => {
+      const items = buildSessionItems({
+        session,
+        transcript: null,
+        chronological: true,
+        segments: [
+          segment(0, { text: 'before', occurredAt: '2026-07-04T13:45:00Z' }),
+          segment(1, { text: 'after', occurredAt: '2026-07-04T13:47:00Z' }),
+        ],
+        decisions: [],
+        stories: [displayStory({ id: 'story-mid', createdAt: '2026-07-04T13:46:00Z' })],
+      });
+      expect(items.map((i) => i.kind)).toEqual(['segment', 'story', 'segment']);
+      expect(items[0].kind === 'segment' && items[0].segment.text).toBe('before');
+      expect(items[2].kind === 'segment' && items[2].segment.text).toBe('after');
+    });
+
     it('still hides stories already shown as an accepted decision', () => {
       const items = buildSessionItems({
         session,
@@ -386,6 +378,74 @@ describe('buildSessionItems', () => {
       });
       expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
     });
+  });
+});
+
+describe('assignSpeakerSides', () => {
+  it('is empty when no segment carries a usable label (diarization off)', () => {
+    const map = assignSpeakerSides([{ speakerLabel: null }, { speakerLabel: '  ' }]);
+    expect(map.size).toBe(0);
+  });
+
+  it('numbers speakers in first-seen order and alternates their side', () => {
+    const map = assignSpeakerSides([
+      { speakerLabel: 'spk_a' },
+      { speakerLabel: 'spk_b' },
+      { speakerLabel: 'spk_a' },
+      { speakerLabel: 'spk_c' },
+    ]);
+    expect(map.get('spk_a')).toEqual({ index: 1, side: 'left' });
+    expect(map.get('spk_b')).toEqual({ index: 2, side: 'right' });
+    expect(map.get('spk_c')).toEqual({ index: 3, side: 'left' });
+  });
+
+  it('trims labels and treats whitespace-padded duplicates as one speaker', () => {
+    const map = assignSpeakerSides([{ speakerLabel: 'A' }, { speakerLabel: ' A ' }]);
+    expect(map.size).toBe(1);
+    expect(map.get('A')).toEqual({ index: 1, side: 'left' });
+  });
+});
+
+describe('priority ordering', () => {
+  it('ranks CRITICAL highest and unknown lowest', () => {
+    expect(priorityRank('CRITICAL')).toBeGreaterThan(priorityRank('HIGH'));
+    expect(priorityRank('HIGH')).toBeGreaterThan(priorityRank('MEDIUM'));
+    expect(priorityRank('MEDIUM')).toBeGreaterThan(priorityRank('LOW'));
+    expect(priorityRank('LOW')).toBeGreaterThan(priorityRank('???'));
+    expect(priorityRank(null)).toBe(0);
+  });
+
+  it('comparePriority sorts CRITICAL → HIGH → MEDIUM → LOW', () => {
+    const sorted = [
+      displayStory({ id: 'a', priority: 'LOW' }),
+      displayStory({ id: 'b', priority: 'CRITICAL' }),
+      displayStory({ id: 'c', priority: 'MEDIUM' }),
+      displayStory({ id: 'd', priority: 'HIGH' }),
+    ]
+      .sort(comparePriority)
+      .map((s) => s.priority);
+    expect(sorted).toEqual(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
+  });
+
+  it('comparePriority breaks ties by most-recent createdAt', () => {
+    const sorted = [
+      displayStory({ id: 'older', priority: 'HIGH', createdAt: '2026-07-04T10:00:00Z' }),
+      displayStory({ id: 'newer', priority: 'HIGH', createdAt: '2026-07-04T12:00:00Z' }),
+    ]
+      .sort(comparePriority)
+      .map((s) => s.id);
+    expect(sorted).toEqual(['newer', 'older']);
+  });
+
+  it('compareRecent orders newest first and sinks undated stories', () => {
+    const sorted = [
+      displayStory({ id: 'undated', createdAt: null }),
+      displayStory({ id: 'old', createdAt: '2026-07-04T10:00:00Z' }),
+      displayStory({ id: 'new', createdAt: '2026-07-04T12:00:00Z' }),
+    ]
+      .sort(compareRecent)
+      .map((s) => s.id);
+    expect(sorted).toEqual(['new', 'old', 'undated']);
   });
 });
 

@@ -83,6 +83,8 @@ export interface UserStoryResponse {
   status: string;
   /** When the story was created (ISO 8601); optional on older backends. */
   createdAt?: string | null;
+  /** The story's Given/When/Then acceptance criteria; absent on older backends. */
+  acceptanceCriteria?: AcceptanceCriterion[] | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -104,6 +106,12 @@ export interface DisplayStory {
    * the feed. Null when the source (older REST payloads) carried no timestamp.
    */
   createdAt?: string | null;
+  /**
+   * The story's Given/When/Then acceptance criteria, shown in the side panel's
+   * expanded story card. Empty when the source carried none (STORY_GENERATED
+   * events, older REST payloads).
+   */
+  acceptanceCriteria: AcceptanceCriterion[];
 }
 
 export interface PageResponse<T> {
