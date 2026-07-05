@@ -534,13 +534,15 @@ export class SidePanel {
     this.glossaryState.set('loading');
     // Read-only quick view: pull a generous first page and filter in-panel; the
     // list endpoint is paginated, so read `.content` off the PageResponse.
-    this.contextApi.listGlossaryTerms(orgId, this.projectId(), { size: QUICK_VIEW_SIZE }).subscribe({
-      next: (page) => {
-        this.glossary.set(page.content);
-        this.glossaryState.set('ready');
-      },
-      error: () => this.glossaryState.set('error'),
-    });
+    this.contextApi
+      .listGlossaryTerms(orgId, this.projectId(), { size: QUICK_VIEW_SIZE })
+      .subscribe({
+        next: (page) => {
+          this.glossary.set(page.content);
+          this.glossaryState.set('ready');
+        },
+        error: () => this.glossaryState.set('error'),
+      });
   }
 
   private loadConstraints(): void {

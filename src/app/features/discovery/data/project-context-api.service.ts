@@ -17,8 +17,10 @@ export interface ContextListOptions {
  */
 export function buildContextListParams(options: ContextListOptions): HttpParams {
   let params = new HttpParams();
-  if (options.page !== undefined && options.page !== null) params = params.set('page', options.page);
-  if (options.size !== undefined && options.size !== null) params = params.set('size', options.size);
+  if (options.page !== undefined && options.page !== null)
+    params = params.set('page', options.page);
+  if (options.size !== undefined && options.size !== null)
+    params = params.set('size', options.size);
   const search = options.search?.trim();
   if (search) params = params.set('search', search);
   return params;
