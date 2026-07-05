@@ -120,7 +120,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 data-testid="discovery-language-locked"
               >
                 <hlm-icon name="lucideLanguages" size="14px" />
-                {{ lockedLabel }}
+                <span class="hidden sm:inline">{{ lockedLabel }}</span>
+                <span class="sm:hidden">{{ liveLanguageAbbrev() }}</span>
               </span>
             } @else {
               <app-select
@@ -129,6 +130,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 [options]="languageOptions()"
                 [value]="language()"
                 (valueChange)="setLanguage($event)"
+                [compactLabel]="languageAbbrevValue()"
                 [ariaLabel]="'discovery.language.label' | transloco"
                 [searchPlaceholder]="'discovery.language.search' | transloco"
                 [emptyText]="'discovery.language.empty' | transloco"
@@ -140,21 +142,27 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               hlmBtn
               variant="outline"
               size="sm"
+              class="gap-0 px-2 sm:gap-2 sm:px-3"
+              [attr.aria-label]="'discovery.history.button' | transloco"
+              [title]="'discovery.history.button' | transloco"
               data-testid="discovery-history"
             >
               <hlm-icon name="lucideHistory" size="15px" />
-              {{ 'discovery.history.button' | transloco }}
+              <span class="hidden sm:inline">{{ 'discovery.history.button' | transloco }}</span>
             </a>
             <button
               type="button"
               hlmBtn
               variant="outline"
               size="sm"
+              class="gap-0 px-2 sm:gap-2 sm:px-3"
               (click)="panelOpen.set(!panelOpen())"
+              [attr.aria-label]="'discovery.panel.toggle' | transloco"
+              [title]="'discovery.panel.toggle' | transloco"
               data-testid="discovery-panel-toggle"
             >
               <hlm-icon name="lucidePanelRight" size="15px" />
-              {{ 'discovery.panel.toggle' | transloco }}
+              <span class="hidden sm:inline">{{ 'discovery.panel.toggle' | transloco }}</span>
             </button>
             <!-- DEV-ONLY mock suggestion toggle: never rendered in production. -->
             @if (mock.available) {
@@ -163,11 +171,15 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 hlmBtn
                 [variant]="mock.running() ? 'default' : 'outline'"
                 size="sm"
+                class="gap-0 px-2 sm:gap-2 sm:px-3"
                 (click)="mock.toggle()"
+                [attr.aria-label]="'discovery.mock.hint' | transloco"
                 [title]="'discovery.mock.hint' | transloco"
                 data-testid="discovery-mock-toggle"
               >
-                🧪 {{ (mock.running() ? 'discovery.mock.on' : 'discovery.mock.off') | transloco }}
+                🧪<span class="hidden sm:inline">{{
+                  (mock.running() ? 'discovery.mock.on' : 'discovery.mock.off') | transloco
+                }}</span>
               </button>
             }
           </div>
@@ -679,6 +691,21 @@ export class DiscoveryChat implements OnInit, OnDestroy {
     if (!code) return null;
     return DISCOVERY_LANGUAGES.find((l) => l.code === code)?.label ?? code;
   });
+  /**
+   * Uppercased primary subtag of the live session's language, for the mobile
+   * abbreviation in the locked badge (e.g. `es-419` → "ES", `pt-BR` → "PT").
+   */
+  protected readonly liveLanguageAbbrev = computed<string | null>(() => {
+    const code = this.liveLanguage();
+    return code ? this.languageAbbrev(code) : null;
+  });
+  /** Uppercased primary subtag of the editable language, for the select's mobile trigger. */
+  protected readonly languageAbbrevValue = computed(() => this.languageAbbrev(this.language()));
+
+  /** The language code before any region subtag, uppercased (`es-419` → "ES"). */
+  private languageAbbrev(code: string): string {
+    return code.split('-')[0].toUpperCase();
+  }
 
   constructor() {
     // Age the relative timestamps forward while the page is open (60s cadence is
