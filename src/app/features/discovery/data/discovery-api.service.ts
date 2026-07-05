@@ -4,9 +4,12 @@ import { Observable, map } from 'rxjs';
 import {
   AcceptSuggestionRequest,
   CreateDiscoverySessionRequest,
+  CreateUserStoryRequest,
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
+  StorySort,
+  StorySortDirection,
   SuggestionResponse,
   SuggestionStatus,
   TranscriptResponse,
@@ -101,9 +104,39 @@ export class DiscoveryApiService {
     return this.http.get<PageResponse<UserStoryResponse>>(`/api/sessions/${sessionId}/stories`);
   }
 
-  /** The project's whole backlog (AI-generated across sessions + manual stories). */
-  listProjectStories(projectId: string): Observable<PageResponse<UserStoryResponse>> {
-    return this.http.get<PageResponse<UserStoryResponse>>(`/api/projects/${projectId}/stories`);
+  /**
+   * The project's whole backlog (AI-generated across sessions + manual stories),
+   * paginated. Backend sort fields: createdAt | title | priority | status;
+   * direction ASC | DESC. Omitted params fall back to the backend defaults
+   * (newest first).
+   */
+  listProjectStories(
+    projectId: string,
+    options: {
+      page?: number;
+      size?: number;
+      sortBy?: StorySort;
+      sortDirection?: StorySortDirection;
+    } = {},
+  ): Observable<PageResponse<UserStoryResponse>> {
+    let params = new HttpParams();
+    if (options.page !== undefined) params = params.set('page', options.page);
+    if (options.size !== undefined) params = params.set('size', options.size);
+    if (options.sortBy) params = params.set('sortBy', options.sortBy);
+    if (options.sortDirection) params = params.set('sortDirection', options.sortDirection);
+    return this.http.get<PageResponse<UserStoryResponse>>(`/api/projects/${projectId}/stories`, {
+      params,
+    });
+  }
+
+  /**
+   * Manually creates a user story in the project backlog (POST
+   * /projects/{projectId}/stories), saved as a DRAFT. On a near-duplicate the
+   * backend responds 409 with a DUPLICATE_USER_STORY ProblemDetail whose
+   * `detail` carries the similarity score.
+   */
+  createStory(projectId: string, request: CreateUserStoryRequest): Observable<UserStoryResponse> {
+    return this.http.post<UserStoryResponse>(`/api/projects/${projectId}/stories`, request);
   }
 
   // ---- AI suggestion review ----

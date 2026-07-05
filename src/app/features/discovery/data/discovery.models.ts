@@ -69,6 +69,26 @@ export interface CreateDiscoverySessionRequest {
   language: string;
 }
 
+/** Backlog priority accepted by the manual story-create endpoint. */
+export type StoryPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+/** Sortable columns of the project backlog (POST params on the list endpoint). */
+export type StorySort = 'createdAt' | 'title' | 'priority' | 'status';
+
+/** Sort direction accepted by the project backlog list endpoint. */
+export type StorySortDirection = 'ASC' | 'DESC';
+
+/** Request body to manually create a user story (POST /projects/{projectId}/stories). */
+export interface CreateUserStoryRequest {
+  title: string;
+  role: string;
+  action: string;
+  benefit: string;
+  priority: StoryPriority;
+  /** Optional effort estimate; omit for none. */
+  storyPoints?: number | null;
+}
+
 /** A generated/backlog user story (REST), normalized for display alongside live ones. */
 export interface UserStoryResponse {
   id: string;
