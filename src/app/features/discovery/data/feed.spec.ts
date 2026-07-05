@@ -1,6 +1,7 @@
 import {
   DecisionEntry,
   addToQueue,
+  anchorSequenceForSuggestion,
   assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
@@ -129,6 +130,39 @@ describe('upsertSegment', () => {
     let list = upsertSegment([], segment(2));
     list = upsertSegment(list, segment(1));
     expect(list.map((s) => s.sequence)).toEqual([1, 2]);
+  });
+
+  it('stamps a live segment lacking occurredAt with the client arrival time', () => {
+    const live = segment(1, { occurredAt: '' });
+    const list = upsertSegment([], live, '2026-07-04T12:34:56Z');
+    expect(list[0].occurredAt).toBe('2026-07-04T12:34:56Z');
+  });
+
+  it('never overwrites a historical segment that already carries occurredAt', () => {
+    const list = upsertSegment([], segment(1, { occurredAt: '2026-07-04T09:00:00Z' }), '2030-01-01T00:00:00Z');
+    expect(list[0].occurredAt).toBe('2026-07-04T09:00:00Z');
+  });
+});
+
+describe('anchorSequenceForSuggestion', () => {
+  it('falls back to the last sequence when the suggestion has no createdAt', () => {
+    expect(anchorSequenceForSuggestion([segment(0), segment(1)], null)).toBe(1);
+  });
+
+  it('anchors to the last segment at or before the suggestion createdAt (not accept time)', () => {
+    const segments = [
+      segment(0, { occurredAt: '2026-07-04T12:00:00Z' }),
+      segment(1, { occurredAt: '2026-07-04T12:00:30Z' }),
+      segment(2, { occurredAt: '2026-07-04T12:01:00Z' }),
+    ];
+    // Suggestion proposed at 12:00:40 — later segments (seq 2, arriving after
+    // accept) must NOT push the decision to the bottom.
+    expect(anchorSequenceForSuggestion(segments, '2026-07-04T12:00:40Z')).toBe(1);
+  });
+
+  it('anchors before any segment when the suggestion predates them all', () => {
+    const segments = [segment(3, { occurredAt: '2026-07-04T12:05:00Z' })];
+    expect(anchorSequenceForSuggestion(segments, '2026-07-04T12:00:00Z')).toBe(-1);
   });
 });
 

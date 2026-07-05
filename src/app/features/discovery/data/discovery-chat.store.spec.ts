@@ -465,4 +465,87 @@ describe('DiscoveryChatStore', () => {
       expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
     });
   });
+
+  describe('live-block decision anchoring (task 2c)', () => {
+    /** Boots one RECORDING session whose live block finished loading (no segments yet). */
+    function bootLive(): void {
+      flushInit([session({ status: 'RECORDING', endedAt: null })]);
+      http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: null });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      http
+        .expectOne(
+          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([]);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([]);
+      http.expectOne((r) => r.url === '/api/projects/proj-1/suggestions').flush(page<SuggestionResponse>([]));
+    }
+
+    function liveSegment(sequence: number, occurredAt: string) {
+      return {
+        sessionId: 'sess-1',
+        type: 'TRANSCRIPT_SEGMENT' as const,
+        occurredAt,
+        sequence,
+        speakerLabel: null,
+        text: `segment ${sequence}`,
+        startMs: sequence * 1000,
+        endMs: sequence * 1000 + 900,
+        isFinal: true,
+      };
+    }
+
+    it('orders an accepted decision by its suggestion time, not accept time', () => {
+      bootLive();
+      const topic = realtime.watch('sessions/sess-1');
+
+      // Two live segments arrive, then a third much later.
+      topic.next(liveSegment(0, '2026-07-04T12:00:00Z'));
+      topic.next(liveSegment(1, '2026-07-04T12:00:30Z'));
+
+      // A suggestion proposed at 12:00:40 (between seq 1 and a future seq 2).
+      const pending = suggestion({
+        status: 'PENDING',
+        createdAt: '2026-07-04T12:00:40Z',
+        updatedAt: '2026-07-04T12:00:40Z',
+      });
+      // Seed the queue directly (id has no mock prefix, so decide still hits HTTP).
+      store.enqueueMock(pending);
+
+      // A later segment lands BEFORE we accept — the old code would anchor here.
+      topic.next(liveSegment(2, '2026-07-04T12:05:00Z'));
+
+      store.decide(pending, 'ACCEPTED');
+      http.expectOne('/api/sessions/sess-1/suggestions/sug-1/accept').flush(
+        suggestion({ status: 'ACCEPTED', createdAt: '2026-07-04T12:00:40Z' }),
+      );
+      http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
+      http.verify();
+
+      // The decision sits after seq 1 and before seq 2 — at the suggestion's
+      // moment — rather than being pushed to the bottom after seq 2.
+      const kinds = store.blocks()[0].items.map((i) => i.kind);
+      expect(kinds).toEqual(['segment', 'segment', 'decision', 'segment']);
+    });
+
+    it('stamps a live segment lacking occurredAt so its bubble still has a time', () => {
+      bootLive();
+      const topic = realtime.watch('sessions/sess-1');
+      topic.next(liveSegment(0, ''));
+
+      const segments = store.blocks()[0].items.filter((i) => i.kind === 'segment');
+      expect(segments).toHaveLength(1);
+      const stamped = segments[0].kind === 'segment' ? segments[0].segment.occurredAt : '';
+      expect(stamped).toBeTruthy();
+      expect(Number.isNaN(Date.parse(stamped))).toBe(false);
+    });
+  });
 });

@@ -26,12 +26,12 @@ import {
   SessionBlock,
   SpeakerDisplay,
   addToQueue,
+  anchorSequenceForSuggestion,
   assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
   historicalSegmentToMessage,
   isTransientDecideStatus,
-  lastSequence,
   lowestSequence,
   normalizeSegmentPage,
   removeFromQueue,
@@ -844,7 +844,11 @@ export class DiscoveryChatStore {
     // Decisions on sessions not currently in the feed (e.g. chip items from an
     // unloaded session) simply have nowhere to render — that is fine.
     if (!block || block.decisions.some((d) => d.id === suggestion.id)) return;
-    const entry = toDecisionEntry(suggestion, outcome, lastSequence(block.segments), occurredAt);
+    // Anchor the decision at the transcript moment of the SUGGESTION it resolves
+    // (its createdAt), not the accept-time latest sequence — so an accepted
+    // story lands chronologically among the segments instead of at the bottom.
+    const anchor = anchorSequenceForSuggestion(block.segments, suggestion.createdAt);
+    const entry = toDecisionEntry(suggestion, outcome, anchor, occurredAt);
     this.updateBlock(suggestion.sessionId, (b) => ({ ...b, decisions: [...b.decisions, entry] }));
   }
 

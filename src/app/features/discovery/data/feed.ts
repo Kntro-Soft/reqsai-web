@@ -139,12 +139,21 @@ export function transcriptToItems(sessionId: string, transcript: string | null):
     .map((text, index) => ({ kind: 'paragraph' as const, id: `${sessionId}:p${index}`, text }));
 }
 
-/** Upserts a live segment by sequence (a hypothesis is replaced by its final), keeping ascending order. */
+/**
+ * Upserts a live segment by sequence (a hypothesis is replaced by its final),
+ * keeping ascending order. Live WebSocket segments may arrive without an
+ * `occurredAt` (only the historical `/segments` payload guarantees one), which
+ * leaves the bubble's time blank; when it is missing we stamp the client arrival
+ * time so every bubble always shows a timestamp. Historical segments always
+ * carry a real `occurredAt` and are never overwritten.
+ */
 export function upsertSegment(
   segments: readonly SessionTranscriptSegmentMessage[],
   segment: SessionTranscriptSegmentMessage,
+  arrivalTime: string = new Date().toISOString(),
 ): SessionTranscriptSegmentMessage[] {
-  return [...segments.filter((s) => s.sequence !== segment.sequence), segment].sort(
+  const stamped = segment.occurredAt ? segment : { ...segment, occurredAt: arrivalTime };
+  return [...segments.filter((s) => s.sequence !== stamped.sequence), stamped].sort(
     (a, b) => a.sequence - b.sequence,
   );
 }
@@ -152,6 +161,37 @@ export function upsertSegment(
 /** The highest final segment sequence, or -1 when there are none (decision anchor). */
 export function lastSequence(segments: readonly SessionTranscriptSegmentMessage[]): number {
   return segments.reduce((max, s) => Math.max(max, s.sequence), -1);
+}
+
+/**
+ * The anchor sequence a decision should take in a LIVE block, so it lands at the
+ * transcript moment of the SUGGESTION it resolves rather than at accept time.
+ *
+ * We place it right after the last segment whose `occurredAt` is at or before
+ * the suggestion's own `createdAt` (the moment the AI proposed it). This keeps
+ * an accepted story sitting chronologically among the segments instead of being
+ * pushed to the bottom by the accept-time latest sequence.
+ *
+ * Falls back to {@link lastSequence} only when the suggestion carries no usable
+ * time — the best signal available, matching the old behavior. When the time IS
+ * valid but earlier than every segment, the decision anchors before them all
+ * (-1). NOTE: this relies on `suggestion.createdAt`; if the backend later
+ * exposes the originating segment sequence directly, prefer that.
+ */
+export function anchorSequenceForSuggestion(
+  segments: readonly SessionTranscriptSegmentMessage[],
+  suggestionCreatedAt: string | null | undefined,
+): number {
+  const at = suggestionCreatedAt ? Date.parse(suggestionCreatedAt) : Number.NaN;
+  if (Number.isNaN(at)) return lastSequence(segments);
+  let anchor = -1;
+  for (const segment of segments) {
+    const segTime = Date.parse(segment.occurredAt);
+    if (!Number.isNaN(segTime) && segTime <= at) {
+      anchor = Math.max(anchor, segment.sequence);
+    }
+  }
+  return anchor;
 }
 
 /** Builds a decision entry from a resolved suggestion, anchored after the current last segment. */
