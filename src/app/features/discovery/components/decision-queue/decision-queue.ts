@@ -23,11 +23,19 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { DiscoveryChatStore } from '../../data/discovery-chat.store';
+import { stackLayers } from '../../data/feed';
 import { SuggestionCard } from '../suggestion-card/suggestion-card';
 import { HlmIcon } from '../../../../shared/ui';
 
 /** Above this many pending cards the queue collapses into a compact badge. */
 const COLLAPSE_THRESHOLD = 3;
+
+/** Per-depth down/right offset (px) of each decorative deck edge behind the card. */
+const STACK_OFFSET_PX = 6;
+/** Per-depth scale reduction of each deck edge (deeper edges sit slightly smaller). */
+const STACK_SCALE_STEP = 0.025;
+/** Per-depth opacity reduction of each deck edge (deeper edges fade back). */
+const STACK_FADE_STEP = 0.22;
 
 /**
  * The decision queue: pending AI suggestions as floating, non-modal cards
@@ -69,14 +77,9 @@ const COLLAPSE_THRESHOLD = 3;
           </div>
         } @else {
           <div class="queue-card pointer-events-auto relative">
-            <!-- Top bar: counter on the left, a clear minimize control centered. -->
-            <div class="mb-1.5 flex items-center justify-between px-1">
-              <span class="text-xs font-medium text-muted-foreground" data-testid="queue-counter">
-                {{
-                  'discovery.queue.counter'
-                    | transloco: { n: safeIndex() + 1, m: store.queue().length }
-                }}
-              </span>
+            <!-- Top bar: just a clear minimize control (the counter now lives in
+                 the folded-corner tab on the card itself). -->
+            <div class="mb-1.5 flex items-center justify-end px-1">
               <button
                 type="button"
                 (click)="collapsed.set(true)"
@@ -96,7 +99,7 @@ const COLLAPSE_THRESHOLD = 3;
                 type="button"
                 (click)="prev()"
                 [disabled]="safeIndex() === 0"
-                class="queue-nav absolute -left-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
+                class="queue-nav absolute -left-5 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
                 [attr.aria-label]="'discovery.queue.prev' | transloco"
                 data-testid="queue-prev"
               >
@@ -106,7 +109,7 @@ const COLLAPSE_THRESHOLD = 3;
                 type="button"
                 (click)="next()"
                 [disabled]="safeIndex() >= store.queue().length - 1"
-                class="queue-nav absolute -right-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
+                class="queue-nav absolute -right-5 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
                 [attr.aria-label]="'discovery.queue.next' | transloco"
                 data-testid="queue-next"
               >
@@ -114,32 +117,74 @@ const COLLAPSE_THRESHOLD = 3;
               </button>
             }
 
-            <!-- Keyed by id so navigating the carousel remounts the card, replaying
-                 the subtle entrance animation for each new suggestion shown. -->
-            @for (suggestion of currentAsList(); track suggestion.id) {
-              <div class="card-swap">
-                <app-suggestion-card
-                  [suggestion]="suggestion"
-                  [targetStory]="targetStory(suggestion)"
-                  [canDecide]="canDecide()"
-                  [busy]="store.deciding().includes(suggestion.id)"
-                  (accept)="decideAccept.emit({ suggestion, body: $event })"
-                  (dismiss)="decideDismiss.emit(suggestion)"
-                  (openTarget)="openTarget.emit($event)"
-                />
-              </div>
-            }
+            <!-- The stacked "deck": decorative card edges behind the active card,
+                 one per remaining pending suggestion (capped), conveying depth.
+                 Purely visual — aria-hidden, no pointer events. -->
+            <div class="deck relative">
+              @for (layer of stackLayers(); track layer) {
+                <div
+                  aria-hidden="true"
+                  class="deck-layer absolute inset-x-0 top-0 h-full rounded-xl border border-border bg-card shadow-md"
+                  [style.transform]="layerTransform(layer)"
+                  [style.opacity]="layerOpacity(layer)"
+                  [style.zIndex]="layer"
+                  data-testid="queue-stack-layer"
+                ></div>
+              }
+
+              <!-- Keyed by id so navigating the carousel remounts the card, replaying
+                   the subtle entrance animation for each new suggestion shown. -->
+              @for (suggestion of currentAsList(); track suggestion.id) {
+                <div class="card-swap relative z-10">
+                  <!-- Folded-corner tab: the "n de m" counter, clearly detached
+                       from the card body in the top-left corner. -->
+                  <span
+                    class="queue-tab absolute -left-1.5 -top-2.5 z-20 inline-flex items-center rounded-md rounded-bl-sm bg-primary px-2.5 py-1 text-[11px] font-bold leading-none text-primary-foreground shadow-md shadow-primary/30"
+                    data-testid="queue-counter"
+                  >
+                    {{
+                      'discovery.queue.counter'
+                        | transloco: { n: safeIndex() + 1, m: store.queue().length }
+                    }}
+                  </span>
+                  <app-suggestion-card
+                    [suggestion]="suggestion"
+                    [targetStory]="targetStory(suggestion)"
+                    [canDecide]="canDecide()"
+                    [busy]="store.deciding().includes(suggestion.id)"
+                    (accept)="decideAccept.emit({ suggestion, body: $event })"
+                    (dismiss)="decideDismiss.emit(suggestion)"
+                    (openTarget)="openTarget.emit($event)"
+                  />
+                </div>
+              }
+            </div>
           </div>
         }
       </div>
 
       <style>
+        /* Folded-corner "dog-ear" behind the counter tab, for the tucked look. */
+        .queue-tab::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 100%;
+          border-width: 0 5px 5px 0;
+          border-style: solid;
+          border-color: transparent
+            color-mix(in srgb, var(--primary) 55%, black) transparent transparent;
+        }
         @media (prefers-reduced-motion: reduce) {
           .queue-nav {
             transition: none;
           }
           .queue-nav:hover {
             transform: translateY(-50%);
+          }
+          /* The deck is a static offset stack — nothing to animate. */
+          .card-swap {
+            animation: none;
           }
         }
         @media (prefers-reduced-motion: no-preference) {
@@ -213,6 +258,28 @@ export class DecisionQueue {
     const current = this.store.currentSuggestion();
     return current ? [current] : [];
   });
+
+  /**
+   * The decorative deck edges to render behind the active card, as 1-based depth
+   * indices `[1, 2, …]` (deepest last). Derived from the queue length by the pure
+   * {@link stackLayers} helper: one edge per remaining pending card, capped, and
+   * empty when a single suggestion (or none) remains.
+   */
+  protected readonly stackLayers = computed(() =>
+    Array.from({ length: stackLayers(this.store.queue().length) }, (_, i) => i + 1),
+  );
+
+  /** Progressive down/right offset + slight scale-down for a deck edge at `depth`. */
+  protected layerTransform(depth: number): string {
+    const shift = depth * STACK_OFFSET_PX;
+    const scale = 1 - depth * STACK_SCALE_STEP;
+    return `translate(${shift}px, ${shift}px) scale(${scale})`;
+  }
+
+  /** Deeper edges fade out, so the stack reads as receding behind the card. */
+  protected layerOpacity(depth: number): number {
+    return Math.max(0, 1 - depth * STACK_FADE_STEP);
+  }
 
   constructor() {
     // Auto-collapse when the queue grows beyond the threshold (but never

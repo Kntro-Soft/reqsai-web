@@ -114,4 +114,28 @@ describe('DecisionQueue', () => {
     expect(el.querySelector('[data-testid="queue-badge-count"]')?.textContent?.trim()).toBe('4');
     expect(el.querySelector('[data-testid="suggestion-card"]')).toBeNull();
   });
+
+  it('shows the "n de m" counter in the corner tab of the active card', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const el = render();
+
+    const tab = el.querySelector('[data-testid="queue-counter"]');
+    expect(tab).not.toBeNull();
+    // The Transloco test module has no messages, so it echoes the key; the point
+    // is the counter lives in a dedicated tab element, not overlapping the body.
+    expect(tab?.classList.contains('queue-tab')).toBe(true);
+  });
+
+  it('renders no decorative stack behind a single pending card', () => {
+    store.setQueue([suggestion()]);
+    const el = render();
+    expect(el.querySelectorAll('[data-testid="queue-stack-layer"]')).toHaveLength(0);
+  });
+
+  it('renders one stack edge per remaining pending card behind the active one', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' }), suggestion({ id: 'c' })]);
+    const el = render();
+    // Three pending → two edges behind the top card.
+    expect(el.querySelectorAll('[data-testid="queue-stack-layer"]')).toHaveLength(2);
+  });
 });
