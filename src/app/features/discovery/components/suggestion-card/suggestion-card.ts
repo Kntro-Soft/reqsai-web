@@ -350,7 +350,7 @@ export class SuggestionCard {
   protected readonly priorities = PRIORITIES;
 
   /** Proposed acceptance criteria, normalized (array or newline string) for the checklist preview. */
-  protected readonly criteria = computed(() => suggestionCriteria(this.suggestion().draftCriteria));
+  protected readonly criteria = computed(() => suggestionCriteria(this.suggestion().draftAcceptanceCriteria));
 
   protected readonly eTitle = linkedSignal(() => this.suggestion().draftTitle ?? '');
   protected readonly eRole = linkedSignal(() => this.suggestion().draftRole ?? '');

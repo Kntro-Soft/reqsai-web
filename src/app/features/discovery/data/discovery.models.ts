@@ -156,7 +156,7 @@ export interface SuggestionResponse {
    * may still be settling on a parallel backend branch, so normalize through
    * {@link suggestionCriteria} before rendering.
    */
-  draftCriteria?: AcceptanceCriterion[] | null;
+  draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
 }
 
 /** A structured acceptance criterion: Given/When/Then plus an optional scenario heading. */
@@ -262,8 +262,8 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
-  /** Proposed acceptance criteria; see {@link SuggestionResponse.draftCriteria}. */
-  draftCriteria?: AcceptanceCriterion[] | null;
+  /** Proposed acceptance criteria; see {@link SuggestionResponse.draftAcceptanceCriteria}. */
+  draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
 }
 
 export type SessionRealtimeMessage =
