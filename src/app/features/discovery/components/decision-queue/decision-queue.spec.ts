@@ -100,19 +100,56 @@ describe('DecisionQueue', () => {
     expect(el.querySelector('[data-testid="queue-badge"]')).toBeNull();
   });
 
-  it('collapses to a prominent badge with the live count beyond three pending', () => {
+  it('stays expanded when a fourth suggestion arrives (never auto-minimizes)', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' }), suggestion({ id: 'c' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // A fourth pending suggestion arrives (3 → 4) — the overlay must NOT collapse.
     store.setQueue([
       suggestion({ id: 'a' }),
       suggestion({ id: 'b' }),
       suggestion({ id: 'c' }),
       suggestion({ id: 'd' }),
     ]);
-    const el = render();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[data-testid="queue-badge"]')).toBeNull();
+    expect(el.querySelector('[data-testid="suggestion-card"]')).not.toBeNull();
+  });
+
+  it('collapses to a badge with the live count only on the explicit minimize action', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' }), suggestion({ id: 'c' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // No badge until the user clicks minimize.
+    expect(el.querySelector('[data-testid="queue-badge"]')).toBeNull();
+    el.querySelector<HTMLButtonElement>('[data-testid="queue-collapse"]')!.click();
+    fixture.detectChanges();
 
     const badge = el.querySelector('[data-testid="queue-badge"]');
     expect(badge).not.toBeNull();
-    expect(el.querySelector('[data-testid="queue-badge-count"]')?.textContent?.trim()).toBe('4');
+    expect(el.querySelector('[data-testid="queue-badge-count"]')?.textContent?.trim()).toBe('3');
     expect(el.querySelector('[data-testid="suggestion-card"]')).toBeNull();
+  });
+
+  it('once minimized, stays minimized while more suggestions arrive (count keeps rising)', () => {
+    store.setQueue([suggestion({ id: 'a' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    el.querySelector<HTMLButtonElement>('[data-testid="queue-collapse"]')!.click();
+    fixture.detectChanges();
+
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' }), suggestion({ id: 'c' })]);
+    fixture.detectChanges();
+
+    expect(el.querySelector('[data-testid="queue-badge"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="queue-badge-count"]')?.textContent?.trim()).toBe('3');
   });
 
   it('shows the "n de m" counter in the corner tab of the active card', () => {

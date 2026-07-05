@@ -27,9 +27,6 @@ import { stackLayers } from '../../data/feed';
 import { SuggestionCard } from '../suggestion-card/suggestion-card';
 import { HlmIcon } from '../../../../shared/ui';
 
-/** Above this many pending cards the queue collapses into a compact badge. */
-const COLLAPSE_THRESHOLD = 3;
-
 /** Per-depth down/right offset (px) of each decorative deck edge behind the card. */
 const STACK_OFFSET_PX = 6;
 /** Per-depth scale reduction of each deck edge (deeper edges sit slightly smaller). */
@@ -40,10 +37,11 @@ const STACK_FADE_STEP = 0.22;
 /**
  * The decision queue: pending AI suggestions as floating, non-modal cards
  * anchored top-center over the feed. One card at a time with prev/next arrows
- * and an "n of m" counter; when more than three are pending it collapses to a
- * compact badge that expands on click. While a decision is in flight the card
- * stays visible with a spinner and disabled actions, and leaves only once the
- * store confirms the resolution.
+ * (or a horizontal drag) and an "n of m" counter. The user can minimize it to a
+ * compact badge that expands on click; new suggestions only bump the count and
+ * never change that state. While a decision is in flight the card stays visible
+ * with a spinner and disabled actions, and leaves only once the store confirms
+ * the resolution.
  */
 @Component({
   selector: 'app-decision-queue',
@@ -282,16 +280,11 @@ export class DecisionQueue {
   }
 
   constructor() {
-    // Auto-collapse when the queue grows beyond the threshold (but never
-    // re-expand on its own — that is the user's call).
-    let previousLength = 0;
+    // Minimizing is exclusively the user's action (the minimize button): adding
+    // suggestions never changes the collapsed/expanded state. We only reset back
+    // to expanded once the queue empties, so it opens expanded next time.
     effect(() => {
-      const length = this.store.queue().length;
-      if (length > COLLAPSE_THRESHOLD && previousLength <= COLLAPSE_THRESHOLD) {
-        this.collapsed.set(true);
-      }
-      if (length === 0) this.collapsed.set(false);
-      previousLength = length;
+      if (this.store.queue().length === 0) this.collapsed.set(false);
     });
   }
 
