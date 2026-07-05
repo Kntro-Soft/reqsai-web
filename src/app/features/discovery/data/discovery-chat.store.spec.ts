@@ -284,7 +284,7 @@ describe('DiscoveryChatStore', () => {
       .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
       .flush(page<SuggestionResponse>([]));
 
-    realtime.watch('projects/proj-1').next({
+    realtime.watch('projects/proj-1/sessions').next({
       sessionId: 'live-1',
       status: 'RECORDING',
       title: 'Weekly sync',
@@ -318,7 +318,7 @@ describe('DiscoveryChatStore', () => {
     expect(realtime.topics.has('sessions/live-1')).toBe(true);
 
     // Stop: the live flag clears and the block status refreshes.
-    realtime.watch('projects/proj-1').next({ sessionId: 'live-1', status: 'STOPPED' });
+    realtime.watch('projects/proj-1/sessions').next({ sessionId: 'live-1', status: 'STOPPED' });
     expect(store.liveSession()).toBeNull();
     expect(store.blocks().find((b) => b.session.id === 'live-1')?.session.status).toBe('STOPPED');
   });
@@ -329,8 +329,8 @@ describe('DiscoveryChatStore', () => {
       .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
       .flush(page<SuggestionResponse>([]));
 
-    realtime.watch('projects/proj-1').next({} as never);
-    realtime.watch('projects/proj-1').next({ sessionId: 'live-9', status: 'SOMETHING_NEW' });
+    realtime.watch('projects/proj-1/sessions').next({} as never);
+    realtime.watch('projects/proj-1/sessions').next({ sessionId: 'live-9', status: 'SOMETHING_NEW' });
 
     http.verify();
     expect(store.liveSession()).toBeNull();
