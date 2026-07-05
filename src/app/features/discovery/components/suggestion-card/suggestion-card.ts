@@ -17,7 +17,7 @@ import {
   SuggestionPriority,
   SuggestionResponse,
 } from '../../data/discovery.models';
-import { HlmButton, HlmIcon, HlmInput } from '../../../../shared/ui';
+import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
 
 const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
@@ -30,7 +30,7 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 @Component({
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon, TranslocoPipe],
+  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon, HlmSpinner, TranslocoPipe],
   viewProviders: [provideIcons({ lucideSparkles })],
   template: `
     <div
@@ -112,9 +112,13 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
             hlmBtn
             size="sm"
             type="button"
+            [disabled]="busy()"
             (click)="onAccept()"
             data-testid="suggestion-accept"
           >
+            @if (busy()) {
+              <hlm-spinner class="h-3.5 w-3.5" />
+            }
             {{ 'discovery.suggestion.accept' | transloco }}
           </button>
           @if (suggestion().type !== 'CLARIFYING_QUESTION') {
@@ -123,6 +127,7 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
               size="sm"
               variant="outline"
               type="button"
+              [disabled]="busy()"
               (click)="editing.set(!editing())"
             >
               {{
@@ -135,6 +140,7 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
             size="sm"
             variant="outline"
             type="button"
+            [disabled]="busy()"
             (click)="dismiss.emit()"
             data-testid="suggestion-dismiss"
           >
@@ -244,6 +250,8 @@ export class SuggestionCard {
   readonly targetStory = input<DisplayStory | undefined>(undefined);
   /** False renders the card read-only (viewer without decide rights). */
   readonly canDecide = input(true);
+  /** True while this suggestion's accept/dismiss (incl. its retry) is in flight. */
+  readonly busy = input(false);
   readonly accept = output<AcceptSuggestionRequest>();
   readonly dismiss = output<void>();
   /** Asks the page to reveal the target story in the side panel. */

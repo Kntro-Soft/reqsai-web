@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, Subscription, forkJoin, of, tap } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, ReplaySubject, Subscription, forkJoin, of, tap, throwError, timer } from 'rxjs';
+import { catchError, map, retry } from 'rxjs/operators';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { DiscoveryApiService } from './discovery-api.service';
 import { SessionRecordingService } from './session-recording.service';
@@ -26,6 +27,7 @@ import {
   buildSessionItems,
   clampQueueIndex,
   historicalSegmentToMessage,
+  isTransientDecideStatus,
   lastSequence,
   lowestSequence,
   normalizeSegmentPage,
@@ -36,6 +38,9 @@ import {
 
 /** Sessions fetched per page while scrolling back through history. */
 const PAGE_SIZE = 10;
+
+/** Delay before the single automatic retry of a transiently failed accept/dismiss. */
+export const DECIDE_RETRY_DELAY_MS = 600;
 
 /** Statuses that can still produce realtime events worth subscribing to. */
 const LIVE_STATUSES: readonly SessionStatus[] = ['DRAFT', 'RECORDING', 'PAUSED', 'STOPPED', 'PROCESSING'];
@@ -116,11 +121,15 @@ export class DiscoveryChatStore {
   private readonly _focusSessionId = signal<string | null>(null);
   /** Session currently broadcast as live (RECORDING/PAUSED) on this project, if any. */
   private readonly _liveSessionId = signal<string | null>(null);
+  /** Suggestion ids with an accept/dismiss in flight (drives the card spinner). */
+  private readonly _deciding = signal<readonly string[]>([]);
 
   readonly state = this._state.asReadonly();
   readonly queue = this._queue.asReadonly();
   readonly queueIndex = this._queueIndex.asReadonly();
   readonly pendingPrevious = this._pendingPrevious.asReadonly();
+  /** Suggestion ids with an accept/dismiss (plus its automatic retry) in flight. */
+  readonly deciding = this._deciding.asReadonly();
   /** Session id the feed should scroll to (set by history/409 flows). */
   readonly focusSessionId = this._focusSessionId.asReadonly();
 
@@ -237,6 +246,7 @@ export class DiscoveryChatStore {
     this._projectStories.set([]);
     this._focusSessionId.set(null);
     this._liveSessionId.set(null);
+    this._deciding.set([]);
   }
 
   /**
@@ -330,7 +340,22 @@ export class DiscoveryChatStore {
     this._queueIndex.set(clampQueueIndex(index, this._queue().length));
   }
 
-  /** Accepts or dismisses the suggestion; the feed gains an immutable decision entry. */
+  /**
+   * Accepts or dismisses the suggestion; the feed gains an immutable decision
+   * entry. Resilient by construction:
+   *
+   * - transient failures (network drop, 5xx) are retried ONCE after
+   *   {@link DECIDE_RETRY_DELAY_MS} — the endpoints are idempotent, so a commit
+   *   whose response was lost resurfaces as a 409 on the retry;
+   * - a 409 (already resolved — by someone else, or by our own earlier request
+   *   whose response never arrived) converges the UI exactly like a success:
+   *   card removed, decision recorded, backlog refreshed — then the error is
+   *   still propagated so the caller can toast;
+   * - all UI side effects run on the store's own subscription, so a caller
+   *   unsubscribing mid-flight can never leave the queue stale. The returned
+   *   observable replays the settled result to late subscribers without ever
+   *   re-issuing the request.
+   */
   decide(
     suggestion: SuggestionResponse,
     outcome: 'ACCEPTED' | 'DISMISSED',
@@ -340,13 +365,41 @@ export class DiscoveryChatStore {
       outcome === 'ACCEPTED'
         ? this.api.acceptSuggestion(suggestion.sessionId, suggestion.id, body)
         : this.api.dismissSuggestion(suggestion.sessionId, suggestion.id);
-    return call.pipe(
-      tap((resolved) => {
-        this.removeQueued(suggestion.id);
-        this.recordDecision(resolved.status === 'DISMISSED' ? 'DISMISSED' : 'ACCEPTED', resolved);
-        if (outcome === 'ACCEPTED') this.refreshProjectStories();
-      }),
-    );
+    this._deciding.update((ids) => (ids.includes(suggestion.id) ? ids : [...ids, suggestion.id]));
+    const clearDeciding = (): void =>
+      this._deciding.update((ids) => ids.filter((id) => id !== suggestion.id));
+
+    const result = new ReplaySubject<SuggestionResponse>(1);
+    call
+      .pipe(
+        retry({
+          count: 1,
+          delay: (error: unknown) =>
+            error instanceof HttpErrorResponse && isTransientDecideStatus(error.status)
+              ? timer(DECIDE_RETRY_DELAY_MS)
+              : throwError(() => error),
+        }),
+        tap((resolved) => {
+          clearDeciding();
+          this.removeQueued(suggestion.id);
+          this.recordDecision(
+            resolved.status === 'DISMISSED' ? 'DISMISSED' : 'ACCEPTED',
+            resolved,
+          );
+          if (outcome === 'ACCEPTED') this.refreshProjectStories();
+        }),
+        catchError((error: unknown) => {
+          clearDeciding();
+          if (error instanceof HttpErrorResponse && error.status === 409) {
+            this.removeQueued(suggestion.id);
+            this.recordDecision(outcome, { ...suggestion, status: outcome });
+            if (outcome === 'ACCEPTED') this.refreshProjectStories();
+          }
+          return throwError(() => error);
+        }),
+      )
+      .subscribe(result);
+    return result.asObservable();
   }
 
   /** Drops a suggestion someone else already resolved (409) without feed changes. */

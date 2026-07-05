@@ -27,7 +27,9 @@ const COLLAPSE_THRESHOLD = 3;
  * The decision queue: pending AI suggestions as floating, non-modal cards
  * anchored top-center over the feed. One card at a time with prev/next arrows
  * and an "n of m" counter; when more than three are pending it collapses to a
- * compact badge that expands on click. Decisions animate the card out.
+ * compact badge that expands on click. While a decision is in flight the card
+ * stays visible with a spinner and disabled actions, and leaves only once the
+ * store confirms the resolution.
  */
 @Component({
   selector: 'app-decision-queue',
@@ -53,7 +55,7 @@ const COLLAPSE_THRESHOLD = 3;
             </button>
           </div>
         } @else {
-          <div class="queue-card pointer-events-auto" [class.queue-card-leaving]="leaving()">
+          <div class="queue-card pointer-events-auto">
             <div class="mb-1.5 flex items-center justify-between px-1">
               <span class="text-xs font-medium text-muted-foreground">
                 {{
@@ -101,8 +103,9 @@ const COLLAPSE_THRESHOLD = 3;
                 [suggestion]="suggestion"
                 [targetStory]="targetStory(suggestion)"
                 [canDecide]="canDecide()"
-                (accept)="onAccept(suggestion, $event)"
-                (dismiss)="onDismiss(suggestion)"
+                [busy]="store.deciding().includes(suggestion.id)"
+                (accept)="decideAccept.emit({ suggestion, body: $event })"
+                (dismiss)="decideDismiss.emit(suggestion)"
                 (openTarget)="openTarget.emit($event)"
               />
             }
@@ -115,9 +118,6 @@ const COLLAPSE_THRESHOLD = 3;
           .queue-card {
             animation: queue-in 160ms ease-out;
           }
-          .queue-card-leaving {
-            animation: queue-out 160ms ease-in forwards;
-          }
         }
         @keyframes queue-in {
           from {
@@ -127,16 +127,6 @@ const COLLAPSE_THRESHOLD = 3;
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        @keyframes queue-out {
-          from {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.97);
           }
         }
       </style>
@@ -156,7 +146,6 @@ export class DecisionQueue {
   readonly openTarget = output<string>();
 
   protected readonly collapsed = signal(false);
-  protected readonly leaving = signal(false);
 
   protected readonly safeIndex = computed(() => {
     const length = this.store.queue().length;
@@ -188,23 +177,5 @@ export class DecisionQueue {
 
   protected targetStory(suggestion: SuggestionResponse): DisplayStory | undefined {
     return suggestion.targetStoryId ? this.store.findStory(suggestion.targetStoryId) : undefined;
-  }
-
-  protected onAccept(suggestion: SuggestionResponse, body: AcceptSuggestionRequest): void {
-    this.animateOut(() => this.decideAccept.emit({ suggestion, body }));
-  }
-
-  protected onDismiss(suggestion: SuggestionResponse): void {
-    this.animateOut(() => this.decideDismiss.emit(suggestion));
-  }
-
-  /** Plays the short leave animation, then hands the decision to the page. */
-  private animateOut(done: () => void): void {
-    if (this.leaving()) return;
-    this.leaving.set(true);
-    setTimeout(() => {
-      this.leaving.set(false);
-      done();
-    }, 160);
   }
 }

@@ -285,6 +285,17 @@ function buildChronologicalItems(
     .map((entry) => entry.item);
 }
 
+// ---- Decide resilience ----
+
+/**
+ * True for HTTP statuses worth ONE automatic accept/dismiss retry: network
+ * failures (status 0) and server errors (5xx). Everything else — notably 409
+ * SUGGESTION_ALREADY_RESOLVED and other client errors — surfaces immediately.
+ */
+export function isTransientDecideStatus(status: number): boolean {
+  return status === 0 || (status >= 500 && status <= 599);
+}
+
 // ---- Decision queue (pending suggestions) ----
 
 /** Adds a pending suggestion to the queue unless it is already there. */

@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
-import { DiscoveryChatStore } from './discovery-chat.store';
+import { DECIDE_RETRY_DELAY_MS, DiscoveryChatStore } from './discovery-chat.store';
 import {
   DiscoverySessionResponse,
   PageResponse,
@@ -335,5 +335,116 @@ describe('DiscoveryChatStore', () => {
     http.verify();
     expect(store.liveSession()).toBeNull();
     expect(store.blocks()).toHaveLength(0);
+  });
+
+  describe('decide', () => {
+    /** Boots one completed session whose queue holds a single pending suggestion. */
+    function setupWithPending(): SuggestionResponse {
+      const pending = suggestion({ status: 'PENDING' });
+      flushInit([session()]);
+      http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([]);
+      http.expectOne('/api/sessions/sess-1/transcript').flush({
+        sessionId: 'sess-1',
+        transcript: null,
+      });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([]);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([pending]);
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
+      return pending;
+    }
+
+    const ACCEPT_URL = '/api/sessions/sess-1/suggestions/sug-1/accept';
+    const DISMISS_URL = '/api/sessions/sess-1/suggestions/sug-1/dismiss';
+
+    it('applies the side effects even when the caller never subscribes', () => {
+      const pending = setupWithPending();
+      expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+
+      store.decide(pending, 'ACCEPTED');
+      expect(store.deciding()).toContain('sug-1');
+
+      http.expectOne(ACCEPT_URL).flush(suggestion({ status: 'ACCEPTED' }));
+      http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
+      http.verify();
+
+      expect(store.queue()).toHaveLength(0);
+      expect(store.deciding()).toHaveLength(0);
+      const decisions = store.blocks()[0].items.filter((i) => i.kind === 'decision');
+      expect(decisions).toHaveLength(1);
+    });
+
+    it('treats a 409 as an already-applied decision and converges the feed', () => {
+      const pending = setupWithPending();
+      const errors: unknown[] = [];
+
+      store.decide(pending, 'DISMISSED').subscribe({ error: (e) => errors.push(e) });
+      http
+        .expectOne(DISMISS_URL)
+        .flush({ code: 'SUGGESTION_ALREADY_RESOLVED' }, { status: 409, statusText: 'Conflict' });
+      http.verify();
+
+      // The caller still hears about it (info toast), but the UI has converged.
+      expect(errors).toHaveLength(1);
+      expect(store.queue()).toHaveLength(0);
+      expect(store.deciding()).toHaveLength(0);
+      const decisions = store.blocks()[0].items.filter((i) => i.kind === 'decision');
+      expect(decisions).toHaveLength(1);
+      expect(decisions[0].kind === 'decision' && decisions[0].decision.outcome).toBe('DISMISSED');
+    });
+
+    it('retries once after a transient failure', async () => {
+      const pending = setupWithPending();
+      const results: SuggestionResponse[] = [];
+
+      store.decide(pending, 'ACCEPTED').subscribe({
+        next: (r) => results.push(r),
+        error: () => undefined,
+      });
+      http.expectOne(ACCEPT_URL).flush(null, { status: 500, statusText: 'Server Error' });
+
+      // Not surfaced yet: the retry is pending and the spinner keeps running.
+      expect(store.deciding()).toContain('sug-1');
+      http.expectNone(ACCEPT_URL);
+
+      await new Promise((resolve) => setTimeout(resolve, DECIDE_RETRY_DELAY_MS + 100));
+
+      http.expectOne(ACCEPT_URL).flush(suggestion({ status: 'ACCEPTED' }));
+      http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
+      http.verify();
+
+      expect(results[0]?.status).toBe('ACCEPTED');
+      expect(store.queue()).toHaveLength(0);
+      expect(store.deciding()).toHaveLength(0);
+    });
+
+    it('does not retry non-transient failures', () => {
+      const pending = setupWithPending();
+      const errors: unknown[] = [];
+
+      store.decide(pending, 'ACCEPTED').subscribe({ error: (e) => errors.push(e) });
+      http.expectOne(ACCEPT_URL).flush(null, { status: 400, statusText: 'Bad Request' });
+      http.verify();
+
+      expect(errors).toHaveLength(1);
+      expect(store.deciding()).toHaveLength(0);
+      // The card stays queued so the user can decide again.
+      expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+    });
   });
 });

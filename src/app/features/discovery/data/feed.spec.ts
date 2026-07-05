@@ -4,6 +4,7 @@ import {
   buildSessionItems,
   clampQueueIndex,
   historicalSegmentToMessage,
+  isTransientDecideStatus,
   lastSequence,
   lowestSequence,
   normalizeSegmentPage,
@@ -385,6 +386,22 @@ describe('buildSessionItems', () => {
       });
       expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
     });
+  });
+});
+
+describe('isTransientDecideStatus', () => {
+  it('flags network failures and server errors as transient', () => {
+    expect(isTransientDecideStatus(0)).toBe(true);
+    expect(isTransientDecideStatus(500)).toBe(true);
+    expect(isTransientDecideStatus(503)).toBe(true);
+    expect(isTransientDecideStatus(599)).toBe(true);
+  });
+
+  it('never retries client errors — 409 must surface immediately', () => {
+    expect(isTransientDecideStatus(400)).toBe(false);
+    expect(isTransientDecideStatus(403)).toBe(false);
+    expect(isTransientDecideStatus(404)).toBe(false);
+    expect(isTransientDecideStatus(409)).toBe(false);
   });
 });
 
