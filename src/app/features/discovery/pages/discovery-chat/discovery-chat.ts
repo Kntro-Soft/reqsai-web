@@ -3,7 +3,6 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  OnDestroy,
   OnInit,
   computed,
   effect,
@@ -38,7 +37,6 @@ import { ToastService } from '../../../../shared/toast/toast.service';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
-import { MockSuggestionService } from '../../data/mock-suggestion.service';
 import { SpeakerDisplay } from '../../data/feed';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
@@ -164,24 +162,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               <hlm-icon name="lucidePanelRight" size="15px" />
               <span class="hidden sm:inline">{{ 'discovery.panel.toggle' | transloco }}</span>
             </button>
-            <!-- DEV-ONLY mock suggestion toggle: never rendered in production. -->
-            @if (mock.available) {
-              <button
-                type="button"
-                hlmBtn
-                [variant]="mock.running() ? 'default' : 'outline'"
-                size="sm"
-                class="gap-0 px-2 sm:gap-2 sm:px-3"
-                (click)="mock.toggle()"
-                [attr.aria-label]="'discovery.mock.hint' | transloco"
-                [title]="'discovery.mock.hint' | transloco"
-                data-testid="discovery-mock-toggle"
-              >
-                🧪<span class="hidden sm:inline">{{
-                  (mock.running() ? 'discovery.mock.on' : 'discovery.mock.off') | transloco
-                }}</span>
-              </button>
-            }
           </div>
         </div>
 
@@ -596,7 +576,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     </app-modal>
   `,
 })
-export class DiscoveryChat implements OnInit, OnDestroy {
+export class DiscoveryChat implements OnInit {
   protected readonly store = inject(DiscoveryChatStore);
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
@@ -606,8 +586,6 @@ export class DiscoveryChat implements OnInit, OnDestroy {
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  /** DEV-ONLY mock suggestion generator (no-op in production). */
-  protected readonly mock = inject(MockSuggestionService);
 
   readonly projectId = input.required<string>();
 
@@ -772,14 +750,6 @@ export class DiscoveryChat implements OnInit, OnDestroy {
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
     if (focus) this.store.showSession(focus);
-    // DEV-ONLY: ?mock=1 auto-starts the mock suggestion generator (ignored in prod).
-    if (this.mock.available && this.route.snapshot.queryParamMap.get('mock') === '1') {
-      this.mock.start();
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.mock.stop();
   }
 
   /** Lazy-loads older sessions when the feed is scrolled near the top, preserving scroll position. */

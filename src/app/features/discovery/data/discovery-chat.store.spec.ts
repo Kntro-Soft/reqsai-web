@@ -3,11 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
-import {
-  DECIDE_RETRY_DELAY_MS,
-  DiscoveryChatStore,
-  MOCK_SUGGESTION_PREFIX,
-} from './discovery-chat.store';
+import { DECIDE_RETRY_DELAY_MS, DiscoveryChatStore } from './discovery-chat.store';
 import {
   DiscoverySessionResponse,
   PageResponse,
@@ -435,20 +431,6 @@ describe('DiscoveryChatStore', () => {
       expect(decisions[0].kind === 'decision' && decisions[0].decision.outcome).toBe('DISMISSED');
     });
 
-    it('resolves a dev-only mock suggestion locally without any HTTP call', () => {
-      const mock = suggestion({ id: `${MOCK_SUGGESTION_PREFIX}1`, status: 'PENDING' });
-      store.enqueueMock(mock);
-      expect(store.queue().map((s) => s.id)).toEqual([`${MOCK_SUGGESTION_PREFIX}1`]);
-
-      const results: SuggestionResponse[] = [];
-      store.decide(mock, 'ACCEPTED').subscribe((r) => results.push(r));
-
-      // No accept/dismiss request is issued for a mock suggestion.
-      http.verify();
-      expect(results[0]?.status).toBe('ACCEPTED');
-      expect(store.queue()).toHaveLength(0);
-    });
-
     it('retries once after a transient failure', async () => {
       const pending = setupWithPending();
       const results: SuggestionResponse[] = [];
@@ -540,14 +522,28 @@ describe('DiscoveryChatStore', () => {
       topic.next(liveSegment(0, '2026-07-04T12:00:00Z'));
       topic.next(liveSegment(1, '2026-07-04T12:00:30Z'));
 
-      // A suggestion proposed at 12:00:40 (between seq 1 and a future seq 2).
-      const pending = suggestion({
+      // A suggestion proposed at 12:00:40 (between seq 1 and a future seq 2),
+      // delivered over the realtime topic so it lands in the decision queue.
+      store.applyRealtime({
+        type: 'SUGGESTION_GENERATED',
+        sessionId: 'sess-1',
+        occurredAt: '2026-07-04T12:00:40Z',
+        suggestionId: 'sug-1',
+        suggestionType: 'NEW_STORY',
         status: 'PENDING',
-        createdAt: '2026-07-04T12:00:40Z',
-        updatedAt: '2026-07-04T12:00:40Z',
+        draftTitle: null,
+        draftRole: null,
+        draftAction: null,
+        draftBenefit: null,
+        draftPriority: null,
+        draftStoryPoints: null,
+        relatedTopic: null,
+        targetStoryId: null,
+        question: null,
+        resolvedStoryId: null,
+        draftAcceptanceCriteria: null,
       });
-      // Seed the queue directly (id has no mock prefix, so decide still hits HTTP).
-      store.enqueueMock(pending);
+      const pending = store.queue()[0];
 
       // A later segment lands BEFORE we accept — the old code would anchor here.
       topic.next(liveSegment(2, '2026-07-04T12:05:00Z'));

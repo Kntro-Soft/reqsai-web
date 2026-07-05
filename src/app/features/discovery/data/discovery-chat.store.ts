@@ -55,13 +55,6 @@ const PAGE_SIZE = 10;
 /** Delay before the single automatic retry of a transiently failed accept/dismiss. */
 export const DECIDE_RETRY_DELAY_MS = 600;
 
-/**
- * Id prefix that marks a dev-only mock suggestion (see MockSuggestionService).
- * The store recognizes it to resolve accept/dismiss locally, never calling the
- * backend. Production code never mints ids with this prefix.
- */
-export const MOCK_SUGGESTION_PREFIX = 'mock-';
-
 /** Statuses that can still produce realtime events worth subscribing to. */
 const LIVE_STATUSES: readonly SessionStatus[] = [
   'DRAFT',
@@ -395,13 +388,6 @@ export class DiscoveryChatStore {
     outcome: 'ACCEPTED' | 'DISMISSED',
     body: AcceptSuggestionRequest = {},
   ): Observable<SuggestionResponse> {
-    // Dev-only mock suggestions never hit the backend: resolve them locally so
-    // the accept/dismiss UX can be previewed without a live session. Guarded by
-    // the id prefix set by the mock generator (see MockSuggestionService).
-    if (suggestion.id.startsWith(MOCK_SUGGESTION_PREFIX)) {
-      this.removeQueued(suggestion.id);
-      return of({ ...suggestion, status: outcome });
-    }
     const call =
       outcome === 'ACCEPTED'
         ? this.api.acceptSuggestion(suggestion.sessionId, suggestion.id, body)
@@ -438,15 +424,6 @@ export class DiscoveryChatStore {
       )
       .subscribe(result);
     return result.asObservable();
-  }
-
-  /**
-   * Dev-only: pushes a mock suggestion into the decision queue (de-duplicated by
-   * id) exactly as a realtime SUGGESTION_GENERATED would. Used solely by the
-   * mock generator to preview the suggestion UX; production never calls this.
-   */
-  enqueueMock(suggestion: SuggestionResponse): void {
-    this._queue.update((queue) => addToQueue(queue, suggestion));
   }
 
   /** Drops a suggestion someone else already resolved (409) without feed changes. */
