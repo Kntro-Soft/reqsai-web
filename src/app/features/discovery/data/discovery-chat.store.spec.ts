@@ -3,7 +3,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
-import { DECIDE_RETRY_DELAY_MS, DiscoveryChatStore } from './discovery-chat.store';
+import {
+  DECIDE_RETRY_DELAY_MS,
+  DiscoveryChatStore,
+  MOCK_SUGGESTION_PREFIX,
+} from './discovery-chat.store';
 import {
   DiscoverySessionResponse,
   PageResponse,
@@ -406,6 +410,20 @@ describe('DiscoveryChatStore', () => {
       const decisions = store.blocks()[0].items.filter((i) => i.kind === 'decision');
       expect(decisions).toHaveLength(1);
       expect(decisions[0].kind === 'decision' && decisions[0].decision.outcome).toBe('DISMISSED');
+    });
+
+    it('resolves a dev-only mock suggestion locally without any HTTP call', () => {
+      const mock = suggestion({ id: `${MOCK_SUGGESTION_PREFIX}1`, status: 'PENDING' });
+      store.enqueueMock(mock);
+      expect(store.queue().map((s) => s.id)).toEqual([`${MOCK_SUGGESTION_PREFIX}1`]);
+
+      const results: SuggestionResponse[] = [];
+      store.decide(mock, 'ACCEPTED').subscribe((r) => results.push(r));
+
+      // No accept/dismiss request is issued for a mock suggestion.
+      http.verify();
+      expect(results[0]?.status).toBe('ACCEPTED');
+      expect(store.queue()).toHaveLength(0);
     });
 
     it('retries once after a transient failure', async () => {
