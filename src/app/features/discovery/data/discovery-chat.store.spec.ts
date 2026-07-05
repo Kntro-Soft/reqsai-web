@@ -11,6 +11,7 @@ import {
 import {
   DiscoverySessionResponse,
   PageResponse,
+  SessionSegmentResponse,
   SuggestionResponse,
   UserStoryResponse,
 } from './discovery.models';
@@ -154,7 +155,8 @@ describe('DiscoveryChatStore', () => {
     http.expectOne('/api/sessions/sess-1/stories').flush(page([story()]));
     http
       .expectOne(
-        (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        (r) =>
+          r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
       )
       .flush([suggestion()]);
     http
@@ -163,7 +165,12 @@ describe('DiscoveryChatStore', () => {
           r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
       )
       .flush([
-        suggestion({ id: 'sug-2', status: 'DISMISSED', draftTitle: 'Out of scope', type: 'EDGE_CASE' }),
+        suggestion({
+          id: 'sug-2',
+          status: 'DISMISSED',
+          draftTitle: 'Out of scope',
+          type: 'EDGE_CASE',
+        }),
       ]);
     // Newest block also pulls its pending suggestions into the queue.
     http
@@ -188,7 +195,9 @@ describe('DiscoveryChatStore', () => {
   it('loads resolved decisions for a still-settling session (reload while STOPPED)', () => {
     flushInit([session({ status: 'STOPPED' })]);
 
-    // Live block: transcript + stories + resolved decisions (no segments endpoint).
+    // Live block also fetches its structured segments (empty here → string fallback).
+    http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([]);
+    // Live block: transcript + stories + resolved decisions.
     http.expectOne('/api/sessions/sess-1/transcript').flush({
       sessionId: 'sess-1',
       transcript: 'We need invoice export.',
@@ -196,7 +205,8 @@ describe('DiscoveryChatStore', () => {
     http.expectOne('/api/sessions/sess-1/stories').flush(page([story()]));
     http
       .expectOne(
-        (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        (r) =>
+          r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
       )
       .flush([suggestion()]);
     http
@@ -222,11 +232,15 @@ describe('DiscoveryChatStore', () => {
     flushInit([session({ status: 'PROCESSING' })]);
 
     // Live block load, nothing resolved yet.
-    http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: null });
+    http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([]);
+    http
+      .expectOne('/api/sessions/sess-1/transcript')
+      .flush({ sessionId: 'sess-1', transcript: null });
     http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
     http
       .expectOne(
-        (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        (r) =>
+          r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
       )
       .flush([]);
     http
@@ -260,11 +274,14 @@ describe('DiscoveryChatStore', () => {
           occurredAt: '2026-07-04T12:05:00Z',
         },
       ]);
-    http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: null });
+    http
+      .expectOne('/api/sessions/sess-1/transcript')
+      .flush({ sessionId: 'sess-1', transcript: null });
     http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
     http
       .expectOne(
-        (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        (r) =>
+          r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
       )
       .flush([suggestion()]);
     http
@@ -296,12 +313,16 @@ describe('DiscoveryChatStore', () => {
       startedAt: '2026-07-04T15:00:00Z',
     });
 
-    // The synthesized block loads like any live block.
-    http.expectOne('/api/sessions/live-1/transcript').flush({ sessionId: 'live-1', transcript: null });
+    // The synthesized block loads like any live block (segments first, empty here).
+    http.expectOne((r) => r.url === '/api/sessions/live-1/segments').flush([]);
+    http
+      .expectOne('/api/sessions/live-1/transcript')
+      .flush({ sessionId: 'live-1', transcript: null });
     http.expectOne('/api/sessions/live-1/stories').flush(page<UserStoryResponse>([]));
     http
       .expectOne(
-        (r) => r.url === '/api/sessions/live-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        (r) =>
+          r.url === '/api/sessions/live-1/suggestions' && r.params.get('status') === 'ACCEPTED',
       )
       .flush([]);
     http
@@ -334,7 +355,9 @@ describe('DiscoveryChatStore', () => {
       .flush(page<SuggestionResponse>([]));
 
     realtime.watch('projects/proj-1/sessions').next({} as never);
-    realtime.watch('projects/proj-1/sessions').next({ sessionId: 'live-9', status: 'SOMETHING_NEW' });
+    realtime
+      .watch('projects/proj-1/sessions')
+      .next({ sessionId: 'live-9', status: 'SOMETHING_NEW' });
 
     http.verify();
     expect(store.liveSession()).toBeNull();
@@ -470,11 +493,15 @@ describe('DiscoveryChatStore', () => {
     /** Boots one RECORDING session whose live block finished loading (no segments yet). */
     function bootLive(): void {
       flushInit([session({ status: 'RECORDING', endedAt: null })]);
-      http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: null });
+      http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([]);
+      http
+        .expectOne('/api/sessions/sess-1/transcript')
+        .flush({ sessionId: 'sess-1', transcript: null });
       http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
       http
         .expectOne(
-          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
         )
         .flush([]);
       http
@@ -486,7 +513,9 @@ describe('DiscoveryChatStore', () => {
       http
         .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
         .flush([]);
-      http.expectOne((r) => r.url === '/api/projects/proj-1/suggestions').flush(page<SuggestionResponse>([]));
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
     }
 
     function liveSegment(sequence: number, occurredAt: string) {
@@ -524,9 +553,9 @@ describe('DiscoveryChatStore', () => {
       topic.next(liveSegment(2, '2026-07-04T12:05:00Z'));
 
       store.decide(pending, 'ACCEPTED');
-      http.expectOne('/api/sessions/sess-1/suggestions/sug-1/accept').flush(
-        suggestion({ status: 'ACCEPTED', createdAt: '2026-07-04T12:00:40Z' }),
-      );
+      http
+        .expectOne('/api/sessions/sess-1/suggestions/sug-1/accept')
+        .flush(suggestion({ status: 'ACCEPTED', createdAt: '2026-07-04T12:00:40Z' }));
       http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
       http.verify();
 
@@ -546,6 +575,154 @@ describe('DiscoveryChatStore', () => {
       const stamped = segments[0].kind === 'segment' ? segments[0].segment.occurredAt : '';
       expect(stamped).toBeTruthy();
       expect(Number.isNaN(Date.parse(stamped))).toBe(false);
+    });
+  });
+
+  describe('live-block recorded segments (task A)', () => {
+    /**
+     * Flushes the init + live-block round for a RECORDING session, letting the
+     * caller decide how the `/segments` and `/transcript` endpoints answer.
+     */
+    function flushLiveBlock(opts: {
+      segments: SessionSegmentResponse[];
+      segmentsStatus?: number;
+      transcript: string | null;
+    }): void {
+      flushInit([session({ status: 'RECORDING', endedAt: null })]);
+      const segReq = http.expectOne((r) => r.url === '/api/sessions/sess-1/segments');
+      if (opts.segmentsStatus) {
+        segReq.flush(null, { status: opts.segmentsStatus, statusText: 'Not Found' });
+      } else {
+        segReq.flush(opts.segments);
+      }
+      http
+        .expectOne('/api/sessions/sess-1/transcript')
+        .flush({ sessionId: 'sess-1', transcript: opts.transcript });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([]);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
+    }
+
+    const recorded = [
+      {
+        sequence: 0,
+        text: 'We need invoice export.',
+        speakerLabel: 'A',
+        startMs: 0,
+        endMs: 900,
+        occurredAt: '2026-07-04T12:05:00Z',
+      },
+      {
+        sequence: 1,
+        text: 'And a PDF format.',
+        speakerLabel: 'B',
+        startMs: 1000,
+        endMs: 1900,
+        occurredAt: '2026-07-04T12:05:30Z',
+      },
+    ];
+
+    it('renders the recorded transcript as timed segment bubbles and nulls the string', () => {
+      flushLiveBlock({
+        segments: recorded,
+        transcript: 'We need invoice export.\nAnd a PDF format.',
+      });
+      http.verify();
+
+      const items = store.blocks()[0].items;
+      const segments = items.filter((i) => i.kind === 'segment');
+      expect(segments).toHaveLength(2);
+      // Every recorded bubble carries its real occurredAt (drives HH:mm display).
+      const times = segments.map((i) => (i.kind === 'segment' ? i.segment.occurredAt : ''));
+      expect(times).toEqual(['2026-07-04T12:05:00Z', '2026-07-04T12:05:30Z']);
+      // The joined string fallback must NOT also render (no duplicated paragraphs).
+      expect(items.some((i) => i.kind === 'paragraph')).toBe(false);
+    });
+
+    it('falls back to the joined transcript string when /segments 404s (older backend)', () => {
+      flushLiveBlock({ segments: [], segmentsStatus: 404, transcript: 'Persisted line one.' });
+      http.verify();
+
+      const items = store.blocks()[0].items;
+      expect(items.some((i) => i.kind === 'segment')).toBe(false);
+      const paragraphs = items.filter((i) => i.kind === 'paragraph');
+      expect(paragraphs).toHaveLength(1);
+      expect(paragraphs[0].kind === 'paragraph' && paragraphs[0].text).toBe('Persisted line one.');
+    });
+
+    it('falls back to the string when /segments returns an empty page', () => {
+      flushLiveBlock({ segments: [], transcript: 'Only the string exists.' });
+      http.verify();
+
+      const items = store.blocks()[0].items;
+      expect(items.some((i) => i.kind === 'segment')).toBe(false);
+      expect(items.filter((i) => i.kind === 'paragraph')).toHaveLength(1);
+    });
+
+    it('a live WS segment at an existing sequence replaces the historical one (no duplication)', () => {
+      // A live segment for seq 1 arrives BEFORE the /segments response is flushed.
+      flushInit([session({ status: 'RECORDING', endedAt: null })]);
+      const topic = realtime.watch('sessions/sess-1');
+      topic.next({
+        sessionId: 'sess-1',
+        type: 'TRANSCRIPT_SEGMENT',
+        occurredAt: '2026-07-04T12:06:00Z',
+        sequence: 1,
+        speakerLabel: 'B',
+        text: 'live final for seq 1',
+        startMs: 1000,
+        endMs: 1900,
+        isFinal: true,
+      });
+
+      // Now the recorded segments (incl. its own seq 1) arrive.
+      http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush(recorded);
+      http
+        .expectOne('/api/sessions/sess-1/transcript')
+        .flush({ sessionId: 'sess-1', transcript: 'joined string' });
+      http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+        )
+        .flush([]);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+        )
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/suggestions' && !r.params.has('status'))
+        .flush([]);
+      http
+        .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+        .flush(page<SuggestionResponse>([]));
+      http.verify();
+
+      const segments = store.blocks()[0].items.filter((i) => i.kind === 'segment');
+      // Exactly one bubble per sequence — no duplicate at seq 1.
+      expect(segments).toHaveLength(2);
+      const seqOne = segments.find((i) => i.kind === 'segment' && i.segment.sequence === 1);
+      // The LIVE final text wins over the historical one at the same sequence.
+      expect(seqOne?.kind === 'segment' && seqOne.segment.text).toBe('live final for seq 1');
     });
   });
 });

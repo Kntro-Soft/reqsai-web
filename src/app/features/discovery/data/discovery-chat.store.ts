@@ -1,6 +1,15 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, ReplaySubject, Subscription, forkJoin, of, tap, throwError, timer } from 'rxjs';
+import {
+  Observable,
+  ReplaySubject,
+  Subscription,
+  forkJoin,
+  of,
+  tap,
+  throwError,
+  timer,
+} from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
 import { DiscoveryApiService } from './discovery-api.service';
@@ -33,6 +42,7 @@ import {
   historicalSegmentToMessage,
   isTransientDecideStatus,
   lowestSequence,
+  mergeHistoricalUnderLive,
   normalizeSegmentPage,
   removeFromQueue,
   toDecisionEntry,
@@ -53,7 +63,13 @@ export const DECIDE_RETRY_DELAY_MS = 600;
 export const MOCK_SUGGESTION_PREFIX = 'mock-';
 
 /** Statuses that can still produce realtime events worth subscribing to. */
-const LIVE_STATUSES: readonly SessionStatus[] = ['DRAFT', 'RECORDING', 'PAUSED', 'STOPPED', 'PROCESSING'];
+const LIVE_STATUSES: readonly SessionStatus[] = [
+  'DRAFT',
+  'RECORDING',
+  'PAUSED',
+  'STOPPED',
+  'PROCESSING',
+];
 
 /** Maps a realtime event to the session status it implies (segment/story carry no status). */
 const STATUS_BY_EVENT: Partial<Record<SessionEventType, SessionStatus>> = {
@@ -407,10 +423,7 @@ export class DiscoveryChatStore {
         tap((resolved) => {
           clearDeciding();
           this.removeQueued(suggestion.id);
-          this.recordDecision(
-            resolved.status === 'DISMISSED' ? 'DISMISSED' : 'ACCEPTED',
-            resolved,
-          );
+          this.recordDecision(resolved.status === 'DISMISSED' ? 'DISMISSED' : 'ACCEPTED', resolved);
           if (outcome === 'ACCEPTED') this.refreshProjectStories();
         }),
         catchError((error: unknown) => {
@@ -515,22 +528,30 @@ export class DiscoveryChatStore {
     }
     if (position === 'newest') {
       this.api.listSuggestions(session.id).subscribe({
-        next: (pending) =>
-          this._queue.update((queue) => pending.reduce(addToQueue, [...queue])),
+        next: (pending) => this._queue.update((queue) => pending.reduce(addToQueue, [...queue])),
         error: () => undefined,
       });
     }
   }
 
   /**
-   * Live / in-progress block: the joined transcript string plus stories. Live
-   * segments arrive over the realtime topic and merge by sequence. Decisions
+   * Live / in-progress block: the already-recorded transcript as structured,
+   * timestamped segments plus stories. Live segments arriving over the realtime
+   * topic merge by sequence on top (a real final segment replaces the historical
+   * one at the same sequence). When the `/segments` endpoint is unavailable
+   * (older backend 404, or no persisted rows yet) it falls back to the joined
+   * transcript string, which renders as timeless paragraph bubbles. Decisions
    * already resolved on the session (e.g. the page was reloaded between STOP
    * and COMPLETED, or another user decided before we joined) are fetched too,
    * so the timeline never loses past accept/dismiss markers.
    */
   private loadLiveBlock(session: DiscoverySessionResponse): void {
     forkJoin({
+      segmentPage: this.api.listSessionSegments(session.id).pipe(
+        map(normalizeSegmentPage),
+        map((page) => ({ page, ok: true as const })),
+        catchError(() => of({ page: { segments: [], hasMore: false }, ok: false as const })),
+      ),
       transcript: this.api.getTranscript(session.id).pipe(
         map((r) => r.transcript),
         catchError(() => of(null)),
@@ -540,10 +561,24 @@ export class DiscoveryChatStore {
         catchError(() => of([] as DisplayStory[])),
       ),
       decisions: this.loadResolvedDecisions(session.id),
-    }).subscribe(({ transcript, stories, decisions }) => {
+    }).subscribe(({ segmentPage, transcript, stories, decisions }) => {
+      // Use structured segments only when the endpoint answered AND returned
+      // rows; otherwise keep the joined string so nothing regresses on an older
+      // backend or an empty page.
+      const hasSegments = segmentPage.ok && segmentPage.page.segments.length > 0;
+      const historical = hasSegments
+        ? segmentPage.page.segments.map((s) => historicalSegmentToMessage(session.id, s))
+        : [];
       this.updateBlock(session.id, (b) => ({
         ...b,
-        transcript,
+        // Merge the recorded segments UNDER any live WS segments already present:
+        // a live final segment at a sequence supersedes the historical one (live
+        // wins), so we only add historical segments whose sequence has no live
+        // segment yet. Keeps a single ascending series with each segment's stamp.
+        segments: mergeHistoricalUnderLive(b.segments, historical),
+        // The structured segments supersede the joined string; keep the string
+        // only as the fallback when segments were unavailable or empty.
+        transcript: hasSegments ? null : transcript,
         stories,
         // Keep decisions recorded live while the fetch was in flight.
         decisions: [
@@ -880,9 +915,7 @@ export class DiscoveryChatStore {
   }
 
   private updateBlock(sessionId: string, fn: (block: SessionBlock) => SessionBlock): void {
-    this._blocks.update((blocks) =>
-      blocks.map((b) => (b.session.id === sessionId ? fn(b) : b)),
-    );
+    this._blocks.update((blocks) => blocks.map((b) => (b.session.id === sessionId ? fn(b) : b)));
   }
 
   private suggestionFromMessage(m: SessionSuggestionMessage): SuggestionResponse {
