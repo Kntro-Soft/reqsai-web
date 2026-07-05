@@ -815,6 +815,7 @@
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Historia generada",
     "speaker": "Usuario {{n}}",
+    "goToStory": "Ir a la historia",
     "pendingPrevious": "{{count}} pendientes de sesiones anteriores",
     "story": {
       "as": "Como ",
@@ -916,6 +917,12 @@
       "filter": "Filtrar…",
       "toggle": "Panel",
       "close": "Cerrar panel",
+      "sortBy": "Orden:",
+      "sort": {
+        "priority": "Prioridad",
+        "recent": "Reciente"
+      },
+      "points": "{{n}} pts",
       "storiesEmpty": "Aún no hay historias.",
       "glossaryEmpty": "No hay términos en el glosario.",
       "constraintsEmpty": "No hay restricciones.",

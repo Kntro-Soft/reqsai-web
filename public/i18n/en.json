@@ -815,6 +815,7 @@
     "sessionDefaultTitle": "Discovery session — {{date}}",
     "generatedStory": "Generated story",
     "speaker": "Speaker {{n}}",
+    "goToStory": "Go to story",
     "pendingPrevious": "{{count}} pending from previous sessions",
     "story": {
       "as": "As ",
@@ -916,6 +917,12 @@
       "filter": "Filter…",
       "toggle": "Panel",
       "close": "Close panel",
+      "sortBy": "Sort:",
+      "sort": {
+        "priority": "Priority",
+        "recent": "Recent"
+      },
+      "points": "{{n}} pts",
       "storiesEmpty": "No stories yet.",
       "glossaryEmpty": "No glossary terms.",
       "constraintsEmpty": "No constraints.",

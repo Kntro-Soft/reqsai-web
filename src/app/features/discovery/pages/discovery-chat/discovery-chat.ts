@@ -19,6 +19,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
+  lucideArrowUpRight,
   lucideCheck,
   lucideCircleHelp,
   lucideClock,
@@ -77,6 +78,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
   viewProviders: [
     provideIcons({
       lucideArrowDown,
+      lucideArrowUpRight,
       lucideCheck,
       lucideCircleHelp,
       lucideClock,
@@ -187,9 +189,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             data-testid="pending-previous-chip"
           >
             <hlm-icon name="lucideClock" size="14px" />
-            {{
-              'discovery.pendingPrevious' | transloco: { count: store.pendingPrevious().length }
-            }}
+            {{ 'discovery.pendingPrevious' | transloco: { count: store.pendingPrevious().length } }}
           </button>
         }
 
@@ -259,8 +259,13 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       class="rounded-full border border-border bg-card/85 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
                     >
                       {{ 'discovery.sessionSeparator' | transloco }}
-                      {{ block.session.startedAt ?? block.session.createdAt | date: 'MMM d · HH:mm' }}
-                      @if (block.session.storiesGeneratedCount !== null && block.session.storiesGeneratedCount !== undefined) {
+                      {{
+                        block.session.startedAt ?? block.session.createdAt | date: 'MMM d · HH:mm'
+                      }}
+                      @if (
+                        block.session.storiesGeneratedCount !== null &&
+                        block.session.storiesGeneratedCount !== undefined
+                      ) {
                         ·
                         {{
                           'discovery.sessionStories'
@@ -336,11 +341,26 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             {{ 'discovery.suggestion.type.' + item.decision.type | transloco }}
                           </span>
                           @if (item.decision.label) {
-                            <span class="ml-1 text-muted-foreground">— {{ item.decision.label }}</span>
+                            <span class="ml-1 text-muted-foreground"
+                              >— {{ item.decision.label }}</span
+                            >
                           }
                           <span class="ml-2 text-[11px] opacity-70">
                             {{ item.decision.occurredAt | date: 'HH:mm' }}
                           </span>
+                          @if (item.decision.storyId) {
+                            <button
+                              type="button"
+                              (click)="focusStory(item.decision.storyId)"
+                              class="ml-1.5 inline-flex items-center gap-1 align-middle text-[11px] font-medium text-primary hover:underline"
+                              [attr.aria-label]="'discovery.goToStory' | transloco"
+                              [title]="'discovery.goToStory' | transloco"
+                              data-testid="decision-go-to-story"
+                            >
+                              <hlm-icon name="lucideArrowUpRight" size="12px" />
+                              {{ 'discovery.goToStory' | transloco }}
+                            </button>
+                          }
                         </div>
                       }
                       @case ('story') {
@@ -364,11 +384,24 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             <span class="text-foreground">{{ item.story.benefit }}</span
                             >.
                           </p>
-                          @if (item.story.createdAt) {
-                            <p class="mt-1 text-[11px] text-muted-foreground">
-                              {{ item.story.createdAt | date: 'HH:mm' }}
-                            </p>
-                          }
+                          <div class="mt-1 flex items-center gap-2">
+                            @if (item.story.createdAt) {
+                              <p class="text-[11px] text-muted-foreground">
+                                {{ item.story.createdAt | date: 'HH:mm' }}
+                              </p>
+                            }
+                            <button
+                              type="button"
+                              (click)="focusStory(item.story.id)"
+                              class="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                              [attr.aria-label]="'discovery.goToStory' | transloco"
+                              [title]="'discovery.goToStory' | transloco"
+                              data-testid="story-go-to-story"
+                            >
+                              <hlm-icon name="lucideArrowUpRight" size="12px" />
+                              {{ 'discovery.goToStory' | transloco }}
+                            </button>
+                          </div>
                         </div>
                       }
                     }
@@ -441,10 +474,12 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       <!-- Side panel: full-screen modal on mobile, fixed-width column on desktop.
            The header "Panel" button toggles it on every breakpoint. -->
       @if (panelOpen()) {
-        <aside
-          class="fixed inset-0 z-40 md:static md:z-auto md:min-h-0 md:w-[340px] md:shrink-0"
-        >
-          <app-side-panel [projectId]="projectId()" [(open)]="panelOpen" [(focusStoryId)]="focusStoryId" />
+        <aside class="fixed inset-0 z-40 md:static md:z-auto md:min-h-0 md:w-[340px] md:shrink-0">
+          <app-side-panel
+            [projectId]="projectId()"
+            [(open)]="panelOpen"
+            [(focusStoryId)]="focusStoryId"
+          />
         </aside>
       }
     </div>
@@ -645,12 +680,10 @@ export class DiscoveryChat implements OnInit {
     const granted = await this.recorder.requestPermission();
     if (!granted) return;
     const language = this.language();
-    this.recording
-      .start(this.projectId(), { title: this.defaultTitle(), language })
-      .subscribe({
-        next: (session) => this.store.addNewSession(session),
-        error: (err: HttpErrorResponse) => this.handleStartError(err),
-      });
+    this.recording.start(this.projectId(), { title: this.defaultTitle(), language }).subscribe({
+      next: (session) => this.store.addNewSession(session),
+      error: (err: HttpErrorResponse) => this.handleStartError(err),
+    });
   }
 
   private handleStartError(err: HttpErrorResponse): void {
@@ -778,9 +811,7 @@ export class DiscoveryChat implements OnInit {
 
   /** The org's configured meeting language, or null when unset. */
   private projectLanguage(): string | null {
-    const org = this.workspace
-      .organizations()
-      .find((o) => o.id === this.auth.organizationId());
+    const org = this.workspace.organizations().find((o) => o.id === this.auth.organizationId());
     return org?.meetingLanguage || null;
   }
 
