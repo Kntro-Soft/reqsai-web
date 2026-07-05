@@ -41,9 +41,15 @@ const BELOW_START: ConnectedPosition[] = [
       [attr.aria-label]="ariaLabel()"
       aria-haspopup="listbox"
       class="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      [class]="size() === 'sm' ? 'h-8 min-w-[7rem]' : 'h-10 min-w-[9rem]'"
+      [class]="triggerSizeClass()"
     >
-      <span class="truncate">{{ selectedLabel() }}</span>
+      @if (compactLabel(); as compact) {
+        <!-- Full label from sm: up, the caller-supplied short form below it. -->
+        <span class="hidden truncate sm:inline">{{ selectedLabel() }}</span>
+        <span class="truncate sm:hidden">{{ compact }}</span>
+      } @else {
+        <span class="truncate">{{ selectedLabel() }}</span>
+      }
       <hlm-icon name="lucideChevronDown" size="14px" class="shrink-0 text-muted-foreground" />
     </button>
 
@@ -109,6 +115,13 @@ export class Select {
   readonly searchable = input(false);
   readonly searchPlaceholder = input('Search…');
   readonly emptyText = input('No results');
+  /**
+   * Optional short trigger label shown below the `sm` breakpoint (e.g. a language
+   * code) while the full {@link selectedLabel} shows from `sm:` up. When set, the
+   * trigger also drops its wide mobile min-width so it stays compact. The dropdown
+   * options are unaffected.
+   */
+  readonly compactLabel = input<string>('');
 
   private readonly triggerBtn = viewChild<ElementRef<HTMLButtonElement>>('triggerBtn');
   private readonly filterInput = viewChild<ElementRef<HTMLInputElement>>('filterInput');
@@ -121,6 +134,19 @@ export class Select {
   protected readonly selectedLabel = computed(
     () => this.options().find((o) => o.value === this.value())?.label ?? '',
   );
+  /**
+   * Trigger sizing: normally a per-size min-width so the pill reads as a control.
+   * With a {@link compactLabel} the mobile min-width is dropped (only re-applied
+   * from `sm:` up) so the short code doesn't force a wide, half-empty trigger.
+   */
+  protected readonly triggerSizeClass = computed(() => {
+    const sm = this.size() === 'sm';
+    if (this.compactLabel()) {
+      // Mobile stays as narrow as the content; the full min-width kicks in at sm:.
+      return sm ? 'h-8 sm:min-w-[7rem]' : 'h-10 sm:min-w-[9rem]';
+    }
+    return sm ? 'h-8 min-w-[7rem]' : 'h-10 min-w-[9rem]';
+  });
   /** Options after the optional filter, matched on label or code. */
   protected readonly visibleOptions = computed(() => {
     const q = this.filter().trim().toLowerCase();
