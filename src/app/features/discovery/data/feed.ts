@@ -455,3 +455,17 @@ export function clampQueueIndex(index: number, length: number): number {
   if (length === 0) return 0;
   return Math.min(Math.max(index, 0), length - 1);
 }
+
+/** Most decorative "deck" edges rendered behind the active suggestion card. */
+export const MAX_STACK_LAYERS = 3;
+
+/**
+ * How many decorative stacked-card edges to render behind the active suggestion
+ * card, to convey the depth of the remaining queue: one edge per pending card
+ * beyond the one on top, capped at {@link MAX_STACK_LAYERS}. Zero when a single
+ * suggestion (or none) remains — a lone card shows no stack behind it.
+ */
+export function stackLayers(queueLength: number): number {
+  if (queueLength <= 1) return 0;
+  return Math.min(queueLength - 1, MAX_STACK_LAYERS);
+}

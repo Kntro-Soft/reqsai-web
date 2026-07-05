@@ -11,10 +11,12 @@ import {
   isTransientDecideStatus,
   lastSequence,
   lowestSequence,
+  MAX_STACK_LAYERS,
   mergeHistoricalUnderLive,
   normalizeSegmentPage,
   priorityRank,
   removeFromQueue,
+  stackLayers,
   toDecisionEntry,
   transcriptToItems,
   upsertSegment,
@@ -542,5 +544,17 @@ describe('decision queue helpers', () => {
     expect(clampQueueIndex(2, 2)).toBe(1);
     expect(clampQueueIndex(-1, 3)).toBe(0);
     expect(clampQueueIndex(1, 3)).toBe(1);
+  });
+
+  it('stackLayers renders one edge per extra card, capped at MAX_STACK_LAYERS', () => {
+    // No stack behind a single card (or an empty queue).
+    expect(stackLayers(0)).toBe(0);
+    expect(stackLayers(1)).toBe(0);
+    // One edge per pending card beyond the top one.
+    expect(stackLayers(2)).toBe(1);
+    expect(stackLayers(3)).toBe(2);
+    expect(stackLayers(4)).toBe(MAX_STACK_LAYERS);
+    // Never more than the cap, however deep the queue.
+    expect(stackLayers(50)).toBe(MAX_STACK_LAYERS);
   });
 });
