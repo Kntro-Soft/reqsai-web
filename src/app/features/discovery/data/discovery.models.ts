@@ -149,6 +149,27 @@ export interface SuggestionResponse {
    * branch; absent on older deployments, so consumers fall back to `updatedAt`.
    */
   resolvedAt?: string | null;
+  /**
+   * Proposed acceptance criteria (NEW_STORY) or the scenario/criterion to add
+   * (EDGE_CASE), previewed as a checklist on the card. Shape is still settling on
+   * a parallel backend branch — may arrive as a string array or a single newline-
+   * joined string, and is absent on older deployments. Normalize through
+   * {@link suggestionCriteria} before rendering.
+   */
+  draftCriteria?: string[] | string | null;
+}
+
+/**
+ * Normalizes a suggestion's proposed criteria into a clean string list. Accepts a
+ * string array, a newline-joined string, or nothing; trims blank lines and common
+ * bullet prefixes so a checklist preview renders uniformly regardless of the
+ * backend's (still-settling) shape.
+ */
+export function suggestionCriteria(raw: string[] | string | null | undefined): string[] {
+  const lines = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(/\r?\n/) : [];
+  return lines
+    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim())
+    .filter((line) => line.length > 0);
 }
 
 /** Accept payload; every field optional — omitted/null keeps the original draft. */
@@ -226,6 +247,8 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
+  /** Proposed acceptance criteria/scenario; see {@link SuggestionResponse.draftCriteria}. */
+  draftCriteria?: string[] | string | null;
 }
 
 export type SessionRealtimeMessage =

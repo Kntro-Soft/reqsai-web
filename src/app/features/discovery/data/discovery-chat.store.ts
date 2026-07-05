@@ -863,6 +863,7 @@ export class DiscoveryChatStore {
       targetStoryId: m.targetStoryId,
       question: m.question,
       resolvedStoryId: m.resolvedStoryId,
+      draftCriteria: m.draftCriteria ?? null,
       createdAt: m.occurredAt,
       updatedAt: m.occurredAt,
     };
