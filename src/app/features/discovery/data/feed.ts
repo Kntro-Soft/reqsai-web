@@ -158,6 +158,28 @@ export function upsertSegment(
   );
 }
 
+/**
+ * Merges a live/paused session's recorded `historical` segments UNDER the live
+ * WebSocket segments already present: a live segment at a sequence wins (a real
+ * final segment supersedes the persisted one), so only historical segments whose
+ * sequence has no live counterpart are added. The result is deduped by sequence
+ * and kept ascending. Used when a live block loads its persisted transcript while
+ * live segments may already have merged in.
+ */
+export function mergeHistoricalUnderLive(
+  live: readonly SessionTranscriptSegmentMessage[],
+  historical: readonly SessionTranscriptSegmentMessage[],
+): SessionTranscriptSegmentMessage[] {
+  const seen = new Set(live.map((s) => s.sequence));
+  const merged = [...live];
+  for (const segment of historical) {
+    if (seen.has(segment.sequence)) continue;
+    seen.add(segment.sequence);
+    merged.push(segment);
+  }
+  return merged.sort((a, b) => a.sequence - b.sequence);
+}
+
 /** The highest final segment sequence, or -1 when there are none (decision anchor). */
 export function lastSequence(segments: readonly SessionTranscriptSegmentMessage[]): number {
   return segments.reduce((max, s) => Math.max(max, s.sequence), -1);

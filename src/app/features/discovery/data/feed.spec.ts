@@ -11,6 +11,7 @@ import {
   isTransientDecideStatus,
   lastSequence,
   lowestSequence,
+  mergeHistoricalUnderLive,
   normalizeSegmentPage,
   priorityRank,
   removeFromQueue,
@@ -141,6 +142,28 @@ describe('upsertSegment', () => {
   it('never overwrites a historical segment that already carries occurredAt', () => {
     const list = upsertSegment([], segment(1, { occurredAt: '2026-07-04T09:00:00Z' }), '2030-01-01T00:00:00Z');
     expect(list[0].occurredAt).toBe('2026-07-04T09:00:00Z');
+  });
+});
+
+describe('mergeHistoricalUnderLive', () => {
+  it('adds recorded segments the live stream has not covered, ascending', () => {
+    const live = [segment(2, { text: 'live 2' })];
+    const historical = [segment(0, { text: 'rec 0' }), segment(1, { text: 'rec 1' })];
+    const merged = mergeHistoricalUnderLive(live, historical);
+    expect(merged.map((s) => s.sequence)).toEqual([0, 1, 2]);
+  });
+
+  it('keeps the LIVE segment when a sequence exists in both (live wins, no duplicate)', () => {
+    const live = [segment(1, { text: 'live final' })];
+    const historical = [segment(1, { text: 'recorded' })];
+    const merged = mergeHistoricalUnderLive(live, historical);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].text).toBe('live final');
+  });
+
+  it('returns just the recorded segments when no live segments exist yet', () => {
+    const merged = mergeHistoricalUnderLive([], [segment(1), segment(0)]);
+    expect(merged.map((s) => s.sequence)).toEqual([0, 1]);
   });
 });
 
