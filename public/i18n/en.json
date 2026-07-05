@@ -866,7 +866,8 @@
       "counter": "{{n}} of {{m}}",
       "prev": "Previous suggestion",
       "next": "Next suggestion",
-      "collapse": "Collapse"
+      "collapse": "Collapse",
+      "minimize": "Minimize"
     },
     "suggestion": {
       "type": {

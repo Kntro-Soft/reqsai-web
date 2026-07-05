@@ -10,7 +10,13 @@ import {
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight, lucideSparkles, lucideX } from '@ng-icons/lucide';
+import {
+  lucideChevronLeft,
+  lucideChevronRight,
+  lucideMinus,
+  lucideSparkles,
+  lucideX,
+} from '@ng-icons/lucide';
 import {
   AcceptSuggestionRequest,
   DisplayStory,
@@ -35,11 +41,13 @@ const COLLAPSE_THRESHOLD = 3;
   selector: 'app-decision-queue',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SuggestionCard, HlmIcon, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideSparkles, lucideX })],
+  viewProviders: [
+    provideIcons({ lucideChevronLeft, lucideChevronRight, lucideMinus, lucideSparkles, lucideX }),
+  ],
   template: `
     @if (store.queue().length > 0) {
       <div
-        class="pointer-events-none fixed left-1/2 top-20 z-30 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2"
+        class="pointer-events-none fixed left-1/2 top-16 z-30 w-[min(44rem,calc(100vw-2rem))] -translate-x-1/2"
         data-testid="decision-queue"
       >
         @if (collapsed()) {
@@ -60,48 +68,51 @@ const COLLAPSE_THRESHOLD = 3;
             </button>
           </div>
         } @else {
-          <div class="queue-card pointer-events-auto">
+          <div class="queue-card pointer-events-auto relative">
+            <!-- Top bar: counter on the left, a clear minimize control centered. -->
             <div class="mb-1.5 flex items-center justify-between px-1">
-              <span class="text-xs font-medium text-muted-foreground">
+              <span class="text-xs font-medium text-muted-foreground" data-testid="queue-counter">
                 {{
                   'discovery.queue.counter'
                     | transloco: { n: safeIndex() + 1, m: store.queue().length }
                 }}
               </span>
-              <div class="flex items-center gap-1">
-                @if (store.queue().length > 1) {
-                  <button
-                    type="button"
-                    (click)="prev()"
-                    [disabled]="safeIndex() === 0"
-                    class="grid h-7 w-7 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                    [attr.aria-label]="'discovery.queue.prev' | transloco"
-                    data-testid="queue-prev"
-                  >
-                    <hlm-icon name="lucideChevronLeft" size="15px" />
-                  </button>
-                  <button
-                    type="button"
-                    (click)="next()"
-                    [disabled]="safeIndex() >= store.queue().length - 1"
-                    class="grid h-7 w-7 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                    [attr.aria-label]="'discovery.queue.next' | transloco"
-                    data-testid="queue-next"
-                  >
-                    <hlm-icon name="lucideChevronRight" size="15px" />
-                  </button>
-                }
-                <button
-                  type="button"
-                  (click)="collapsed.set(true)"
-                  class="grid h-7 w-7 place-items-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-                  [attr.aria-label]="'discovery.queue.collapse' | transloco"
-                  data-testid="queue-collapse"
-                >
-                  <hlm-icon name="lucideX" size="15px" />
-                </button>
-              </div>
+              <button
+                type="button"
+                (click)="collapsed.set(true)"
+                class="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
+                [attr.aria-label]="'discovery.queue.minimize' | transloco"
+                [title]="'discovery.queue.minimize' | transloco"
+                data-testid="queue-collapse"
+              >
+                <hlm-icon name="lucideMinus" size="16px" />
+                {{ 'discovery.queue.minimize' | transloco }}
+              </button>
             </div>
+
+            <!-- Big, RED navigation arrows anchored at the vertical center sides. -->
+            @if (store.queue().length > 1) {
+              <button
+                type="button"
+                (click)="prev()"
+                [disabled]="safeIndex() === 0"
+                class="queue-nav absolute -left-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
+                [attr.aria-label]="'discovery.queue.prev' | transloco"
+                data-testid="queue-prev"
+              >
+                <hlm-icon name="lucideChevronLeft" size="24px" />
+              </button>
+              <button
+                type="button"
+                (click)="next()"
+                [disabled]="safeIndex() >= store.queue().length - 1"
+                class="queue-nav absolute -right-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
+                [attr.aria-label]="'discovery.queue.next' | transloco"
+                data-testid="queue-next"
+              >
+                <hlm-icon name="lucideChevronRight" size="24px" />
+              </button>
+            }
 
             <!-- Keyed by id so navigating the carousel remounts the card, replaying
                  the subtle entrance animation for each new suggestion shown. -->
@@ -123,6 +134,14 @@ const COLLAPSE_THRESHOLD = 3;
       </div>
 
       <style>
+        @media (prefers-reduced-motion: reduce) {
+          .queue-nav {
+            transition: none;
+          }
+          .queue-nav:hover {
+            transform: translateY(-50%);
+          }
+        }
         @media (prefers-reduced-motion: no-preference) {
           .queue-card {
             animation: queue-in 160ms ease-out;
