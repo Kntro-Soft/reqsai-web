@@ -399,7 +399,10 @@ export class DiscoveryChatStore {
 
   /**
    * Live / in-progress block: the joined transcript string plus stories. Live
-   * segments arrive over the realtime topic and merge by sequence.
+   * segments arrive over the realtime topic and merge by sequence. Decisions
+   * already resolved on the session (e.g. the page was reloaded between STOP
+   * and COMPLETED, or another user decided before we joined) are fetched too,
+   * so the timeline never loses past accept/dismiss markers.
    */
   private loadLiveBlock(session: DiscoverySessionResponse): void {
     forkJoin({
@@ -411,8 +414,19 @@ export class DiscoveryChatStore {
         map((page) => page.content.map(toDisplayStory)),
         catchError(() => of([] as DisplayStory[])),
       ),
-    }).subscribe(({ transcript, stories }) => {
-      this.updateBlock(session.id, (b) => ({ ...b, transcript, stories, loaded: true }));
+      decisions: this.loadResolvedDecisions(session.id),
+    }).subscribe(({ transcript, stories, decisions }) => {
+      this.updateBlock(session.id, (b) => ({
+        ...b,
+        transcript,
+        stories,
+        // Keep decisions recorded live while the fetch was in flight.
+        decisions: [
+          ...decisions,
+          ...b.decisions.filter((d) => !decisions.some((r) => r.id === d.id)),
+        ],
+        loaded: true,
+      }));
     });
   }
 
@@ -599,7 +613,24 @@ export class DiscoveryChatStore {
         },
       }));
       this.recording.syncStatus(sessionId, status);
+      // A block created while the session was live never fetched its persisted
+      // timeline. Once the session settles, reload it as a historical block so
+      // segments and resolved decisions survive exactly like after a reload.
+      if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
     }
+  }
+
+  /**
+   * Converts a live block into a historical (chronological) one after its
+   * session reached COMPLETED/FAILED: flips the merge mode and re-fetches the
+   * persisted segments, resolved decisions and stories. No-op for blocks that
+   * were already loaded as historical.
+   */
+  private upgradeToHistorical(sessionId: string): void {
+    const block = this._blocks().find((b) => b.session.id === sessionId);
+    if (!block || block.chronological) return;
+    this.updateBlock(sessionId, (b) => ({ ...b, chronological: true }));
+    this.loadHistoricalBlock(block.session);
   }
 
   /** Appends an immutable decision entry to the suggestion's session block. */
