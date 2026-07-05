@@ -23,7 +23,7 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { DiscoveryChatStore } from '../../data/discovery-chat.store';
-import { stackLayers } from '../../data/feed';
+import { dragOutcome, stackLayers } from '../../data/feed';
 import { SuggestionCard } from '../suggestion-card/suggestion-card';
 import { HlmIcon } from '../../../../shared/ui';
 
@@ -33,6 +33,13 @@ const STACK_OFFSET_PX = 6;
 const STACK_SCALE_STEP = 0.025;
 /** Per-depth opacity reduction of each deck edge (deeper edges fade back). */
 const STACK_FADE_STEP = 0.22;
+
+/** Max rotation (deg) applied to the card at a full-width drag, for the Tinder tilt. */
+const DRAG_MAX_ROTATE_DEG = 8;
+/** How far off-screen (px) the card flings when a drag commits to prev/next. */
+const DRAG_FLING_PX = 600;
+/** Horizontal delta (px) past which a gesture is treated as a swipe (not a page scroll). */
+const DRAG_HORIZONTAL_LOCK_PX = 8;
 
 /**
  * The decision queue: pending AI suggestions as floating, non-modal cards
@@ -133,7 +140,12 @@ const STACK_FADE_STEP = 0.22;
               <!-- Keyed by id so navigating the carousel remounts the card, replaying
                    the subtle entrance animation for each new suggestion shown. -->
               @for (suggestion of currentAsList(); track suggestion.id) {
-                <div class="card-swap relative z-10">
+                <div
+                  class="card-swap relative z-10"
+                  [class.card-dragging]="dragging()"
+                  [style.transform]="cardTransform()"
+                  data-testid="queue-card"
+                >
                   <!-- Folded-corner tab: the "n de m" counter, clearly detached
                        from the card body in the top-left corner. -->
                   <span
@@ -145,6 +157,26 @@ const STACK_FADE_STEP = 0.22;
                         | transloco: { n: safeIndex() + 1, m: store.queue().length }
                     }}
                   </span>
+                  <!-- Dedicated drag strip across the TOP of the card: navigating by
+                       dragging never conflicts with the card's own buttons/inputs.
+                       Pointer Events (with capture) drive it identically on mouse and
+                       touch; touch-action pan-y keeps vertical page scroll working. -->
+                  @if (store.queue().length > 1) {
+                    <div
+                      class="queue-drag absolute inset-x-0 -top-1 z-30 flex h-7 cursor-grab touch-pan-y items-center justify-center rounded-t-xl"
+                      [class.cursor-grabbing]="dragging()"
+                      role="button"
+                      tabindex="-1"
+                      [attr.aria-label]="'discovery.queue.dragHint' | transloco"
+                      (pointerdown)="onDragStart($event)"
+                      (pointermove)="onDragMove($event)"
+                      (pointerup)="onDragEnd($event)"
+                      (pointercancel)="onDragCancel($event)"
+                      data-testid="queue-drag"
+                    >
+                      <span class="h-1 w-9 rounded-full bg-border" aria-hidden="true"></span>
+                    </div>
+                  }
                   <app-suggestion-card
                     [suggestion]="suggestion"
                     [targetStory]="targetStory(suggestion)"
@@ -170,8 +202,8 @@ const STACK_FADE_STEP = 0.22;
           top: 100%;
           border-width: 0 5px 5px 0;
           border-style: solid;
-          border-color: transparent
-            color-mix(in srgb, var(--primary) 55%, black) transparent transparent;
+          border-color: transparent color-mix(in srgb, var(--primary) 55%, black) transparent
+            transparent;
         }
         @media (prefers-reduced-motion: reduce) {
           .queue-nav {
@@ -184,6 +216,10 @@ const STACK_FADE_STEP = 0.22;
           .card-swap {
             animation: none;
           }
+          /* No spring/fling under reduced motion: the card snaps instantly. */
+          .card-swap {
+            transition: none;
+          }
         }
         @media (prefers-reduced-motion: no-preference) {
           .queue-card {
@@ -194,6 +230,14 @@ const STACK_FADE_STEP = 0.22;
           }
           .card-swap {
             animation: card-swap-in 140ms ease-out;
+          }
+          /* While the pointer holds the card it follows instantly; on release the
+             card springs back (or flings out) with an eased transform transition. */
+          .card-swap {
+            transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+          .card-swap.card-dragging {
+            transition: none;
           }
         }
         @keyframes card-swap-in {
@@ -279,6 +323,114 @@ export class DecisionQueue {
     return Math.max(0, 1 - depth * STACK_FADE_STEP);
   }
 
+  // ---- Tinder-style drag-to-navigate ----
+
+  /** True while a pointer is dragging the active card (suppresses the snap transition). */
+  protected readonly dragging = signal(false);
+  /** Live horizontal drag delta (px): negative = left/next, positive = right/prev. */
+  private readonly dragX = signal(0);
+  /** The pending drag gesture's mutable state, or null when idle. */
+  private drag: {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    width: number;
+    /** True once the movement is clearly horizontal — from then on it's a swipe. */
+    horizontal: boolean;
+    target: HTMLElement;
+  } | null = null;
+
+  /** The active card's transform: follow the pointer with a proportional Tinder tilt. */
+  protected readonly cardTransform = computed(() => {
+    const dx = this.dragX();
+    if (dx === 0) return '';
+    if (this.prefersReducedMotion()) return `translateX(${dx}px)`;
+    const width = this.drag?.width || 1;
+    const rotate = Math.max(-DRAG_MAX_ROTATE_DEG, Math.min(DRAG_MAX_ROTATE_DEG, (dx / width) * 20));
+    return `translateX(${dx}px) rotate(${rotate}deg)`;
+  });
+
+  private prefersReducedMotion(): boolean {
+    return (
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  }
+
+  protected onDragStart(event: PointerEvent): void {
+    // A lone card has nowhere to navigate — ignore drags entirely.
+    if (this.store.queue().length <= 1) return;
+    const target = event.currentTarget as HTMLElement;
+    this.drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      width: target.getBoundingClientRect().width,
+      horizontal: false,
+      target,
+    };
+    target.setPointerCapture(event.pointerId);
+  }
+
+  protected onDragMove(event: PointerEvent): void {
+    const drag = this.drag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    // Lock the gesture to horizontal once it clearly moves sideways; until then a
+    // vertical drag is left alone so the page can still scroll (touch-action: pan-y).
+    if (!drag.horizontal) {
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      if (Math.abs(dx) < DRAG_HORIZONTAL_LOCK_PX) return;
+      drag.horizontal = true;
+      this.dragging.set(true);
+    }
+    // Now committed to a horizontal swipe: take over from page scroll and follow.
+    event.preventDefault();
+    this.dragX.set(dx);
+  }
+
+  protected onDragEnd(event: PointerEvent): void {
+    const drag = this.drag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const dx = this.dragX();
+    const outcome = dragOutcome(dx, drag.width, this.safeIndex(), this.store.queue().length);
+    this.releaseDrag(drag, event.pointerId);
+
+    if (outcome === 'snap') {
+      this.dragX.set(0);
+      return;
+    }
+    // Fling the card out in the drag direction, then swap to the target card and
+    // reset. Under reduced motion there is no fling — switch instantly.
+    if (this.prefersReducedMotion()) {
+      this.dragX.set(0);
+      this.navigate(outcome);
+      return;
+    }
+    this.dragX.set(dx < 0 ? -DRAG_FLING_PX : DRAG_FLING_PX);
+    this.navigate(outcome);
+    // The keyed @for remounts the new card at rest; clear the delta on the next frame.
+    setTimeout(() => this.dragX.set(0), 0);
+  }
+
+  protected onDragCancel(event: PointerEvent): void {
+    const drag = this.drag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    this.releaseDrag(drag, event.pointerId);
+    this.dragX.set(0);
+  }
+
+  private releaseDrag(
+    drag: NonNullable<DecisionQueue['drag']>,
+    pointerId: number,
+  ): void {
+    if (drag.target.hasPointerCapture(pointerId)) {
+      drag.target.releasePointerCapture(pointerId);
+    }
+    this.dragging.set(false);
+    this.drag = null;
+  }
+
   constructor() {
     // Minimizing is exclusively the user's action (the minimize button): adding
     // suggestions never changes the collapsed/expanded state. We only reset back
@@ -286,6 +438,12 @@ export class DecisionQueue {
     effect(() => {
       if (this.store.queue().length === 0) this.collapsed.set(false);
     });
+  }
+
+  /** Applies a committed drag outcome as a carousel navigation. */
+  private navigate(outcome: 'next' | 'prev'): void {
+    if (outcome === 'next') this.next();
+    else this.prev();
   }
 
   protected prev(): void {

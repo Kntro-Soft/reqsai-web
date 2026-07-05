@@ -874,7 +874,8 @@
       "prev": "Previous suggestion",
       "next": "Next suggestion",
       "collapse": "Collapse",
-      "minimize": "Minimize"
+      "minimize": "Minimize",
+      "dragHint": "Drag to browse suggestions"
     },
     "suggestion": {
       "type": {

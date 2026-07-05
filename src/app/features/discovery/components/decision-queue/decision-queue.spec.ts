@@ -175,4 +175,18 @@ describe('DecisionQueue', () => {
     // Three pending → two edges behind the top card.
     expect(el.querySelectorAll('[data-testid="queue-stack-layer"]')).toHaveLength(2);
   });
+
+  it('offers the top drag handle only when more than one suggestion is pending', () => {
+    store.setQueue([suggestion()]);
+    const el = render();
+    // A lone card has nowhere to navigate — no drag handle.
+    expect(el.querySelector('[data-testid="queue-drag"]')).toBeNull();
+
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const el2 = render();
+    const handle = el2.querySelector('[data-testid="queue-drag"]');
+    expect(handle).not.toBeNull();
+    // pan-y keeps vertical page scroll working while a horizontal drag swipes.
+    expect(handle?.classList.contains('touch-pan-y')).toBe(true);
+  });
 });

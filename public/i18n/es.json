@@ -874,7 +874,8 @@
       "prev": "Sugerencia anterior",
       "next": "Sugerencia siguiente",
       "collapse": "Contraer",
-      "minimize": "Minimizar"
+      "minimize": "Minimizar",
+      "dragHint": "Arrastra para navegar las sugerencias"
     },
     "suggestion": {
       "type": {
