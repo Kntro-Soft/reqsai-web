@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   OnInit,
-  computed,
   inject,
   input,
   signal,
@@ -45,9 +45,10 @@ const MENU_POS: ConnectedPosition[] = [
 const MAX_DESCRIPTION = 500;
 
 /**
- * The project constraints as a Members-style table: an add card, a client-side
- * search over the description, and per-row edit (PUT) / delete (DELETE) with a
- * confirm modal. A duplicate description fails 409 and surfaces a clear message.
+ * The project constraints as a Members-style table: an add card, a debounced
+ * server-side search over the description, real server pagination, and per-row
+ * edit (PUT) / delete (DELETE) with a confirm modal. A duplicate description
+ * fails 409 and surfaces a clear message.
  */
 @Component({
   selector: 'app-project-constraints',
@@ -131,7 +132,7 @@ const MAX_DESCRIPTION = 500;
         <input
           type="text"
           [value]="query()"
-          (input)="query.set($any($event.target).value)"
+          (input)="onSearch($any($event.target).value)"
           [placeholder]="'constraintsPage.searchPlaceholder' | transloco"
           class="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           autocomplete="off"
@@ -153,15 +154,12 @@ const MAX_DESCRIPTION = 500;
         </div>
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'constraintsPage.loadError' | transloco }}</p>
-      } @else if (rows().length === 0) {
+      } @else if (constraints().length === 0) {
         <p
           class="rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
           data-testid="constraints-empty"
         >
-          {{
-            (constraints().length === 0 ? 'constraintsPage.emptyBody' : 'constraintsPage.noMatches')
-              | transloco
-          }}
+          {{ (query() ? 'constraintsPage.noMatches' : 'constraintsPage.emptyBody') | transloco }}
         </p>
       } @else {
         <div class="overflow-hidden rounded-2xl border border-border">
@@ -172,17 +170,23 @@ const MAX_DESCRIPTION = 500;
                   {{ 'constraintsPage.colDescription' | transloco }}
                 </th>
                 <th class="px-3 py-2.5 whitespace-nowrap font-medium">
+                  {{ 'constraintsPage.colCreated' | transloco }}
+                </th>
+                <th class="px-3 py-2.5 whitespace-nowrap font-medium">
                   {{ 'constraintsPage.colUpdated' | transloco }}
                 </th>
                 <th class="w-12 px-3 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
-              @for (c of rows(); track c.id) {
+              @for (c of constraints(); track c.id) {
                 <tr class="border-b border-border last:border-0" data-testid="constraint-row">
                   <td class="px-4 py-3 align-top leading-relaxed">{{ c.description }}</td>
                   <td class="px-3 py-3 align-top whitespace-nowrap text-muted-foreground">
-                    {{ formatDate(c.updatedAt ?? c.createdAt) }}
+                    {{ formatDate(c.createdAt) }}
+                  </td>
+                  <td class="px-3 py-3 align-top whitespace-nowrap text-muted-foreground">
+                    {{ formatDate(c.updatedAt) }}
                   </td>
                   <td class="px-3 py-3 text-right align-top">
                     <button
@@ -233,6 +237,38 @@ const MAX_DESCRIPTION = 500;
             </tbody>
           </table>
         </div>
+
+        @if (totalPages() > 1) {
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm text-muted-foreground">
+              {{ 'constraintsPage.pageOf' | transloco: { page: page() + 1, total: totalPages() } }}
+            </span>
+            <div class="flex gap-2">
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                [disabled]="page() === 0 || state() === 'loading'"
+                (click)="goToPage(page() - 1)"
+                data-testid="constraints-prev"
+              >
+                {{ 'constraintsPage.prev' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
+                (click)="goToPage(page() + 1)"
+                data-testid="constraints-next"
+              >
+                {{ 'constraintsPage.next' | transloco }}
+              </button>
+            </div>
+          </div>
+        }
       }
 
       <!-- Edit -->
@@ -322,7 +358,7 @@ const MAX_DESCRIPTION = 500;
     </div>
   `,
 })
-export class ProjectConstraints implements OnInit {
+export class ProjectConstraints implements OnInit, OnDestroy {
   private readonly api = inject(ProjectContextApiService);
   private readonly auth = inject(AuthStore);
   private readonly fb = inject(FormBuilder);
@@ -334,11 +370,16 @@ export class ProjectConstraints implements OnInit {
   protected readonly skeletonRows = [0, 1, 2, 3];
   protected readonly menuPositions = MENU_POS;
   protected readonly maxDescription = MAX_DESCRIPTION;
+  protected readonly pageSize = 20;
 
   protected readonly constraints = signal<ProjectConstraintResponse[]>([]);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly query = signal('');
+  protected readonly page = signal(0);
+  protected readonly totalPages = signal(1);
   protected readonly menuFor = signal<string | null>(null);
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly submitting = signal(false);
   protected readonly formError = signal<string | null>(null);
@@ -357,13 +398,27 @@ export class ProjectConstraints implements OnInit {
     description: ['', [Validators.required, Validators.maxLength(MAX_DESCRIPTION)]],
   });
 
-  protected readonly rows = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    if (!q) return this.constraints();
-    return this.constraints().filter((c) => c.description.toLowerCase().includes(q));
-  });
-
   ngOnInit(): void {
+    this.load();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  }
+
+  /** Debounced server-side search: resets to the first page and reloads. */
+  protected onSearch(value: string): void {
+    this.query.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.page.set(0);
+      this.load();
+    }, 300);
+  }
+
+  protected goToPage(next: number): void {
+    if (next < 0 || next >= this.totalPages()) return;
+    this.page.set(next);
     this.load();
   }
 
@@ -374,13 +429,20 @@ export class ProjectConstraints implements OnInit {
       return;
     }
     this.state.set('loading');
-    this.api.listConstraints(orgId, this.projectId()).subscribe({
-      next: (page) => {
-        this.constraints.set(page.content);
-        this.state.set('ready');
-      },
-      error: () => this.state.set('error'),
-    });
+    this.api
+      .listConstraints(orgId, this.projectId(), {
+        page: this.page(),
+        size: this.pageSize,
+        search: this.query(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.constraints.set(res.content);
+          this.totalPages.set(Math.max(1, res.page.totalPages));
+          this.state.set('ready');
+        },
+        error: () => this.state.set('error'),
+      });
   }
 
   protected add(): void {
@@ -392,11 +454,13 @@ export class ProjectConstraints implements OnInit {
       description: this.form.getRawValue().description.trim(),
     };
     this.api.createConstraint(orgId, this.projectId(), body).subscribe({
-      next: (created) => {
+      next: () => {
         this.submitting.set(false);
-        this.constraints.update((list) => [created, ...list]);
         this.form.reset();
         this.toast.success(this.transloco.translate('constraintsPage.created'));
+        // Newest-first, paginated server-side: reload the first page.
+        this.page.set(0);
+        this.load();
       },
       error: (err: unknown) => {
         this.submitting.set(false);
@@ -450,9 +514,11 @@ export class ProjectConstraints implements OnInit {
     this.api.deleteConstraint(orgId, this.projectId(), target.id).subscribe({
       next: () => {
         this.actioning.set(false);
-        this.constraints.update((list) => list.filter((c) => c.id !== target.id));
         this.deleteOpen.set(false);
         this.toast.success(this.transloco.translate('constraintsPage.deleted'));
+        // Reload the page: a delete may empty the last page, so step back if so.
+        if (this.constraints().length === 1 && this.page() > 0) this.page.set(this.page() - 1);
+        this.load();
       },
       error: () => {
         this.actioning.set(false);
