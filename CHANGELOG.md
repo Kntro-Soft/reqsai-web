@@ -137,6 +137,13 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   EN/ES key parity (CI gate); removed `transloco-keys-manager` and silenced startup
   "Missing translation" warnings.
 
+### Fixed
+
+- **i18n — Spanish mojibake** (`bugfix/es-json-mojibake`): repaired 390 corrupted accented strings in
+  `public/i18n/es.json` (e.g. "ElicitaciÃ³n con IA" → "Elicitación con IA") that resulted from a UTF-8
+  payload being re-decoded as CP1252 during a rebase resolution. Reversed the double-encoding on the
+  affected values only; `en.json` was unaffected and locale key parity is preserved.
+
 ---
 
 ## [0.0.1] — 2026-06-16
