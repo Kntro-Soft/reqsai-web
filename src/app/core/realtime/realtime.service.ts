@@ -55,7 +55,9 @@ export class RealtimeService {
 }
 
 function brokerUrl(): string {
-  if (environment.wsUrl) return `${environment.wsUrl}/ws`;
+  // Namespaced under /ws/stomp (not the bare /ws) so it doesn't collide with the Angular dev server's
+  // own live-reload WebSocket, which silently swallows a proxied /ws upgrade in development.
+  if (environment.wsUrl) return `${environment.wsUrl}/ws/stomp`;
   const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${scheme}://${location.host}/ws`;
+  return `${scheme}://${location.host}/ws/stomp`;
 }

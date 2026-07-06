@@ -147,7 +147,14 @@ export type Permission =
   | 'GLOSSARY_TERM_DELETE'
   // Constraints
   | 'CONSTRAINT_READ'
-  | 'CONSTRAINT_WRITE';
+  | 'CONSTRAINT_WRITE'
+  // Discovery sessions (sessions are permanent history — no delete permission)
+  | 'SESSION_READ'
+  | 'SESSION_RUN'
+  | 'SESSION_DECIDE'
+  // User stories
+  | 'STORY_READ'
+  | 'STORY_WRITE';
 
 /** All permissions, in display order. */
 export const PERMISSIONS: readonly Permission[] = [
@@ -171,6 +178,11 @@ export const PERMISSIONS: readonly Permission[] = [
   'GLOSSARY_TERM_DELETE',
   'CONSTRAINT_READ',
   'CONSTRAINT_WRITE',
+  'SESSION_READ',
+  'SESSION_RUN',
+  'SESSION_DECIDE',
+  'STORY_READ',
+  'STORY_WRITE',
 ];
 
 /** Permissions grouped by resource, for the role editor UI (group header = `projectRoles.resource.<key>`). */
@@ -194,6 +206,11 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     permissions: ['GLOSSARY_READ', 'GLOSSARY_TERM_WRITE', 'GLOSSARY_TERM_DELETE'],
   },
   { resourceKey: 'constraint', permissions: ['CONSTRAINT_READ', 'CONSTRAINT_WRITE'] },
+  {
+    resourceKey: 'session',
+    permissions: ['SESSION_READ', 'SESSION_RUN', 'SESSION_DECIDE'],
+  },
+  { resourceKey: 'story', permissions: ['STORY_READ', 'STORY_WRITE'] },
 ];
 
 /** A dynamic, per-project role bundling a set of permissions. */

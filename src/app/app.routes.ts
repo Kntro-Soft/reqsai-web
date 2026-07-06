@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
+import { recordingLeaveGuard } from './features/discovery/guards/recording-leave.guard';
 
 export const routes: Routes = [
   // Default landing: the launch dispatcher routes by organization count.
@@ -192,24 +193,52 @@ export const routes: Routes = [
               ),
           },
           {
+            // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
-            title: 'titles.sessions',
+            title: 'titles.discovery',
+            canDeactivate: [recordingLeaveGuard],
             loadComponent: () =>
-              import('./features/discovery/pages/sessions/sessions').then((m) => m.Sessions),
+              import('./features/discovery/pages/discovery-chat/discovery-chat').then(
+                (m) => m.DiscoveryChat,
+              ),
           },
           {
-            path: 'sessions/:sessionId',
-            title: 'titles.session',
+            path: 'sessions/history',
+            title: 'titles.history',
             loadComponent: () =>
-              import('./features/discovery/pages/session-detail/session-detail').then(
-                (m) => m.SessionDetail,
-              ),
+              import('./features/discovery/pages/history/history').then((m) => m.DiscoveryHistory),
           },
           {
             path: 'stories',
             title: 'titles.stories',
             loadComponent: () =>
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
+          },
+          {
+            path: 'stories/new',
+            title: 'titles.newStory',
+            loadComponent: () =>
+              import('./features/discovery/pages/stories/story-form').then((m) => m.StoryCreate),
+          },
+          {
+            path: 'stories/:storyId',
+            title: 'titles.story',
+            loadComponent: () =>
+              import('./features/discovery/pages/stories/story-detail').then((m) => m.StoryDetail),
+          },
+          {
+            path: 'glossary',
+            title: 'titles.glossary',
+            loadComponent: () =>
+              import('./features/discovery/pages/glossary/glossary').then((m) => m.ProjectGlossary),
+          },
+          {
+            path: 'constraints',
+            title: 'titles.constraints',
+            loadComponent: () =>
+              import('./features/discovery/pages/constraints/constraints').then(
+                (m) => m.ProjectConstraints,
+              ),
           },
           // Members moved under Settings; keep the old path working.
           { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },

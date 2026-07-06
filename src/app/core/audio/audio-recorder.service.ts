@@ -2,9 +2,18 @@ import { Injectable, inject, signal } from '@angular/core';
 import { AuthStore } from '../auth/auth.store';
 import { environment } from '../../../environments/environment';
 
+/** Number of bars exposed by the live input-level meter. */
+const LEVEL_BARS = 12;
+/** How often the level meter refreshes (ms) — cheap enough to leave running. */
+const LEVEL_INTERVAL_MS = 100;
+
 /**
  * Handles browser microphone recording, Web Audio downsampling to 16kHz 16-bit Mono PCM,
  * and real-time binary WebSocket streaming to the backend STT endpoint `/ws/stt`.
+ *
+ * `error` holds an i18n key (`discovery.rec.*`) — the UI translates it, so this
+ * service stays locale-agnostic. `levels` is a small AnalyserNode-driven input
+ * meter (0..1 per bar) for a real waveform while streaming.
  */
 @Injectable({ providedIn: 'root' })
 export class AudioRecorderService {
@@ -13,11 +22,16 @@ export class AudioRecorderService {
   private mediaStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
   private audioWorkletNode: AudioWorkletNode | null = null;
+  private analyser: AnalyserNode | null = null;
+  private levelTimer: ReturnType<typeof setInterval> | null = null;
   private webSocket: WebSocket | null = null;
   private pcmBufferAccumulator: number[] = [];
 
+  /** i18n key of the current error, or null. */
   readonly error = signal<string | null>(null);
   readonly streaming = signal(false);
+  /** Live input levels (0..1 per bar); empty while not streaming. */
+  readonly levels = signal<readonly number[]>([]);
 
   /**
    * Request microphone permission. Returns true if granted.
@@ -31,9 +45,7 @@ export class AudioRecorderService {
       return true;
     } catch (err) {
       console.error('Microphone permission denied/failed:', err);
-      this.error.set(
-        'Permiso de micrófono denegado. Por favor, habilítalo en los ajustes de tu navegador.',
-      );
+      this.error.set('discovery.rec.micDenied');
       return false;
     }
   }
@@ -47,7 +59,7 @@ export class AudioRecorderService {
 
     const token = this.auth.accessToken();
     if (!token) {
-      this.error.set('Sesión de usuario no válida.');
+      this.error.set('discovery.rec.invalidUserSession');
       return;
     }
 
@@ -69,7 +81,7 @@ export class AudioRecorderService {
 
       this.webSocket.onerror = (e) => {
         console.error('STT WebSocket error:', e);
-        this.error.set('Error de conexión con el servidor de transcripción.');
+        this.error.set('discovery.rec.wsError');
         this.stopStreaming();
       };
 
@@ -77,13 +89,13 @@ export class AudioRecorderService {
         this.streaming.set(false);
         if (event.code !== 1000 && event.code !== 1005) {
           console.warn(`STT WebSocket closed abnormally: ${event.code} (${event.reason})`);
-          this.error.set(`Conexión de transcripción cerrada: ${event.reason || 'Error de red'}`);
+          this.error.set('discovery.rec.wsClosed');
         }
         this.stopStreaming();
       };
     } catch (err) {
       console.error('Failed to start streaming:', err);
-      this.error.set('No se pudo inicializar la grabación.');
+      this.error.set('discovery.rec.initFailed');
       this.stopStreaming();
     }
   }
@@ -93,6 +105,13 @@ export class AudioRecorderService {
    */
   stopStreaming(): void {
     this.streaming.set(false);
+
+    if (this.levelTimer !== null) {
+      clearInterval(this.levelTimer);
+      this.levelTimer = null;
+    }
+    this.analyser = null;
+    this.levels.set([]);
 
     if (this.audioWorkletNode) {
       this.audioWorkletNode.disconnect();
@@ -135,6 +154,12 @@ export class AudioRecorderService {
           .webkitAudioContext;
       this.audioContext = new AudioCtx();
       const source = this.audioContext.createMediaStreamSource(this.mediaStream);
+
+      // Small analyser tap for the UI level meter (real waveform, no fakery).
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = 64;
+      source.connect(this.analyser);
+      this.startLevelMeter();
 
       // Define AudioWorklet inline to keep code self-contained and run on audio thread
       const workletCode = `
@@ -191,9 +216,28 @@ export class AudioRecorderService {
       };
     } catch (err) {
       console.error('Audio processing initialization failed:', err);
-      this.error.set('No se pudo inicializar el procesador de audio local.');
+      this.error.set('discovery.rec.audioInitFailed');
       this.stopStreaming();
     }
+  }
+
+  /** Publishes ~10 fps of averaged frequency bins while the analyser is alive. */
+  private startLevelMeter(): void {
+    if (this.levelTimer !== null) clearInterval(this.levelTimer);
+    const data = new Uint8Array(this.analyser?.frequencyBinCount ?? 0);
+    this.levelTimer = setInterval(() => {
+      const analyser = this.analyser;
+      if (!analyser) return;
+      analyser.getByteFrequencyData(data);
+      const binsPerBar = Math.max(1, Math.floor(data.length / LEVEL_BARS));
+      const bars: number[] = [];
+      for (let bar = 0; bar < LEVEL_BARS; bar++) {
+        let sum = 0;
+        for (let i = 0; i < binsPerBar; i++) sum += data[bar * binsPerBar + i] ?? 0;
+        bars.push(sum / binsPerBar / 255);
+      }
+      this.levels.set(bars);
+    }, LEVEL_INTERVAL_MS);
   }
 }
 

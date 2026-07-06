@@ -24,6 +24,7 @@ import { UserMenu } from '../../shared/components/user-menu/user-menu';
 import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 import { CommandPalette } from '../../shared/components/command-palette/command-palette';
 import { ToastHost } from '../../shared/toast/toast-host';
+import { RecordingMinibar } from '../../features/discovery/components/recording-minibar/recording-minibar';
 import { HlmIcon } from '../../shared/ui';
 
 interface NavItem {
@@ -78,6 +79,7 @@ interface Crumb {
     NavIcon,
     CommandPalette,
     ToastHost,
+    RecordingMinibar,
     HlmIcon,
     TranslocoPipe,
   ],
@@ -225,7 +227,7 @@ interface Crumb {
         </header>
 
         <main class="flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
-          <div class="mx-auto w-full max-w-5xl">
+          <div class="mx-auto flex h-full w-full max-w-5xl flex-col">
             <router-outlet />
           </div>
         </main>
@@ -234,6 +236,7 @@ interface Crumb {
 
     <app-command-palette [(open)]="paletteOpen" />
     <app-toast-host />
+    <app-recording-minibar />
   `,
   styles: [
     `
@@ -299,6 +302,8 @@ export class Shell {
     { seg: 'overview' },
     { seg: 'sessions' },
     { seg: 'stories' },
+    { seg: 'glossary' },
+    { seg: 'constraints' },
     { seg: 'settings' },
   ];
   private readonly projectSettingsSegs: { seg: string; soon?: boolean }[] = [
