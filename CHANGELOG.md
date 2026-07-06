@@ -13,6 +13,21 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
+  Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
+  the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps
+  (absolute meeting time on segments, relative "hace X" on decisions), a History view with infinite scroll,
+  and a per-session meeting-language selector broadcast to viewers. Pending AI suggestions surface in a
+  floating **decision queue** (Tinder-style drag between cards, stacked-card deck, corner counter, minimize)
+  with per-type **edit-before-accept** (NEW_STORY / UPDATE_STORY / EDGE_CASE / CLARIFYING_QUESTION) and
+  structured Given/When/Then acceptance criteria. A collapsible **side panel** exposes the project's
+  stories / info / glossary / constraints, with jump-from-chat-to-story and a flash highlight.
+- **Discovery — backlog, glossary & constraints management** (`feature/discovery-session-control`): new nav
+  and **server-side paginated, searchable, filterable tables** (Members-style) for Historias, Glosario and
+  Restricciones, with manual create surfacing backend duplicate detection (similarity % for stories), a
+  dedicated story **create** and **detail/edit** page (acceptance-criteria editor via the criteria API),
+  and mobile polish — icon-only header with abbreviated language, internally-scrolling tables (horizontal
+  scroll + sticky header) and a side panel closed by default on mobile.
 - **Workspace — project access control UI** (`feature/project-admin-ui`): split project settings into a
   **Roles** page and a dedicated **create/edit role** page whose permission editor is a searchable,
   collapsible matrix (groups collapsed by default with expand-all/collapse-all, tri-state select-all per
