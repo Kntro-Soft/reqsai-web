@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmCard,
@@ -137,10 +138,12 @@ export class SignUp {
       next: () => void this.router.navigate(['/auth/verify-email'], { queryParams: { email } }),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
+        // Bespoke "email already registered" copy for the 409 points the user at
+        // sign-in; everything else resolves centrally by code/status.
         this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 409 ? 'auth.errors.emailExists' : 'auth.errors.signUpGeneric',
-          ),
+          err.status === 409
+            ? this.transloco.translate('auth.errors.emailExists')
+            : messageForError(err, this.transloco),
         );
       },
     });
