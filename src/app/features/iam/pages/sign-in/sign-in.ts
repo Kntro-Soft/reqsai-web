@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmCard,
@@ -134,9 +135,11 @@ export class SignIn {
   }
 
   private messageFor(err: HttpErrorResponse): string {
+    // Bespoke copy kept for the two expected auth outcomes: "invalid credentials"
+    // and "unverified" read better here than the generic per-code/status message.
     if (err.status === 401) return this.transloco.translate('auth.errors.invalidCredentials');
     // Backend returns 403 ACCOUNT_NOT_ACTIVE when the email is unverified.
     if (err.status === 403) return this.transloco.translate('auth.errors.unverified');
-    return this.transloco.translate('auth.errors.generic');
+    return messageForError(err, this.transloco);
   }
 }

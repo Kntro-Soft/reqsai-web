@@ -120,6 +120,16 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed
 
+- **Core — centralized backend error handling** (`feature/frontend-error-handling`): a shared
+  `messageForError` helper resolves backend errors by their machine-readable `code` against a single
+  top-level `errors.<CODE>` i18n block (network / per-status / generic fallback chain). Extended from the
+  workspace and IAM account/invitation pages to the discovery/Captura pages (chat session & decision
+  errors, story create/edit and acceptance-criteria errors, glossary and constraint create/update/delete)
+  and the IAM auth pages (sign-in, sign-up, verify-email, reset-password, change-password) — the generic
+  fallback branch now routes through `messageForError`, while genuinely auth-specific copy is kept where
+  it reads better (invalid credentials, unverified account, invalid/expired links, wrong current password)
+  and the story duplicate-similarity **percentage** UX is preserved. Removed the per-feature error strings
+  this supersedes, keeping strict EN/ES key parity.
 - **UI — Vercel/Geist visual overhaul of existing pages** (`feature/ui-redesign`): redesigned the
   organization members list into a compact table with a styled role select, organization settings into
   per-field cards, the terms & privacy gate into a full-page scroll-to-accept flow, and

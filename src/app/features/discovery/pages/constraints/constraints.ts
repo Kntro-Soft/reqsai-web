@@ -24,9 +24,9 @@ import {
   ProjectConstraintResponse,
   ProjectContextApiService,
 } from '../../data/project-context-api.service';
-import { isConflict } from '../../data/duplicate-error';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmIcon,
@@ -474,7 +474,7 @@ export class ProjectConstraints implements OnInit, OnDestroy {
       },
       error: (err: unknown) => {
         this.submitting.set(false);
-        const message = this.errorMessage(err, 'constraintsPage.errorCreate');
+        const message = messageForError(err, this.transloco);
         this.formError.set(message);
         this.toast.error(message);
       },
@@ -506,7 +506,7 @@ export class ProjectConstraints implements OnInit, OnDestroy {
       },
       error: (err: unknown) => {
         this.actioning.set(false);
-        this.editError.set(this.errorMessage(err, 'constraintsPage.errorUpdate'));
+        this.editError.set(messageForError(err, this.transloco));
       },
     });
   }
@@ -530,18 +530,12 @@ export class ProjectConstraints implements OnInit, OnDestroy {
         if (this.constraints().length === 1 && this.page() > 0) this.page.set(this.page() - 1);
         this.load();
       },
-      error: () => {
+      error: (err) => {
         this.actioning.set(false);
         this.deleteOpen.set(false);
-        this.toast.error(this.transloco.translate('constraintsPage.errorDelete'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
-  }
-
-  /** Maps an error to a message; a 409 duplicate surfaces the "already exists" copy. */
-  private errorMessage(err: unknown, fallbackKey: string): string {
-    if (isConflict(err)) return this.transloco.translate('constraintsPage.errorDuplicate');
-    return this.transloco.translate(fallbackKey);
   }
 
   protected formatDate(iso: string | null | undefined): string {

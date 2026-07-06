@@ -15,6 +15,7 @@ import {
 } from '../../data/duplicate-error';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../shared/ui';
 import { CriteriaEditor } from './criteria-editor';
@@ -273,6 +274,6 @@ export class StoryCreate {
         ? this.transloco.translate('stories.errorDuplicate', { percent })
         : this.transloco.translate('stories.errorDuplicateNoScore');
     }
-    return this.transloco.translate('stories.errorCreate');
+    return messageForError(err, this.transloco);
   }
 }

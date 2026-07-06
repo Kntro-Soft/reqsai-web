@@ -19,6 +19,7 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { ChipInput } from '../../../../shared/components/chip-input/chip-input';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmIcon,
@@ -480,11 +481,7 @@ export class ProjectSettings implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.saving.set(null);
-          const message = this.transloco.translate(
-            err.status === 400
-              ? 'projectSettings.errorValidation'
-              : 'projectSettings.errorGeneric',
-          );
+          const message = messageForError(err, this.transloco);
           this.errorMessage.set(message);
           this.toast.error(message);
         },
@@ -507,11 +504,7 @@ export class ProjectSettings implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.uploadingAvatar.set(false);
-        this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 400 ? 'orgSettings.logoError' : 'projectSettings.errorGeneric',
-          ),
-        );
+        this.errorMessage.set(messageForError(err, this.transloco));
       },
     });
   }

@@ -7,6 +7,7 @@ import { AuthService } from '../../../../../core/auth/auth.service';
 import { AuthStore } from '../../../../../core/auth/auth.store';
 import { Avatar } from '../../../../../shared/components/avatar/avatar';
 import { ToastService } from '../../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../../core/errors/error-message';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../../shared/ui';
 
 const MAX_AVATAR_BYTES = 1_000_000;
@@ -148,9 +149,9 @@ export class AccountProfile {
         this.profileSaved.set(true);
         this.toast.success(this.transloco.translate('toast.profileSaved'));
       },
-      error: () => {
+      error: (err) => {
         this.savingProfile.set(false);
-        this.toast.error(this.transloco.translate('account.errorGeneric'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -171,9 +172,9 @@ export class AccountProfile {
         this.uploading.set(false);
         this.avatarVersion.set(Date.now());
       },
-      error: () => {
+      error: (err) => {
         this.uploading.set(false);
-        this.avatarError.set(this.transloco.translate('account.errorGeneric'));
+        this.avatarError.set(messageForError(err, this.transloco));
       },
     });
   }

@@ -26,6 +26,7 @@ import {
 } from '../../data/duplicate-error';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import {
   HlmButton,
@@ -382,9 +383,9 @@ export class StoryDetail implements OnInit {
         this.criteria.update((list) => list.filter((_, i) => i !== index));
         this.toast.success(this.transloco.translate('storyForm.criteriaDeleted'));
       },
-      error: () => {
+      error: (err) => {
         this.rowBusy.set(null);
-        this.toast.error(this.transloco.translate('storyForm.criteriaError'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -410,9 +411,9 @@ export class StoryDetail implements OnInit {
         );
         this.toast.success(this.transloco.translate('storyForm.criteriaSaved'));
       },
-      error: () => {
+      error: (err) => {
         this.rowBusy.set(null);
-        this.toast.error(this.transloco.translate('storyForm.criteriaError'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -425,6 +426,6 @@ export class StoryDetail implements OnInit {
         ? this.transloco.translate('stories.errorDuplicate', { percent })
         : this.transloco.translate('stories.errorDuplicateNoScore');
     }
-    return this.transloco.translate('storyForm.saveError');
+    return messageForError(err, this.transloco);
   }
 }

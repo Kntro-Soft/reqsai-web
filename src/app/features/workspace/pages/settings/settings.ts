@@ -32,6 +32,7 @@ import { Select, SelectOption } from '../../../../shared/components/select/selec
 import { Modal } from '../../../../shared/components/modal/modal';
 import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmIcon,
@@ -816,9 +817,7 @@ export class OrgSettings {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(null);
-        const message = this.transloco.translate(
-          err.status === 400 ? 'orgSettings.errorValidation' : 'orgSettings.errorGeneric',
-        );
+        const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
       },
@@ -842,11 +841,7 @@ export class OrgSettings {
       },
       error: (err: HttpErrorResponse) => {
         this.uploadingAvatar.set(false);
-        this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 400 ? 'orgSettings.logoError' : 'orgSettings.errorGeneric',
-          ),
-        );
+        this.errorMessage.set(messageForError(err, this.transloco));
       },
     });
   }
@@ -896,9 +891,9 @@ export class OrgSettings {
         this.workspace.loadOrganizations();
         this.toast.success(this.transloco.translate('toast.ownershipTransferred'));
       },
-      error: () => {
+      error: (err) => {
         this.transferring.set(false);
-        const message = this.transloco.translate('orgSettings.errorGeneric');
+        const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
       },
@@ -915,9 +910,9 @@ export class OrgSettings {
         this.toast.success(this.transloco.translate('toast.orgDeleted'));
         this.leaveToLaunch();
       },
-      error: () => {
+      error: (err) => {
         this.deleting.set(false);
-        const message = this.transloco.translate('orgSettings.errorGeneric');
+        const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
       },
@@ -934,9 +929,9 @@ export class OrgSettings {
         this.toast.success(this.transloco.translate('toast.orgLeft'));
         this.leaveToLaunch();
       },
-      error: () => {
+      error: (err) => {
         this.leaving.set(false);
-        const message = this.transloco.translate('orgSettings.errorGeneric');
+        const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
       },

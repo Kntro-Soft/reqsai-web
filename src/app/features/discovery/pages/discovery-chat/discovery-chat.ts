@@ -34,6 +34,7 @@ import {
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
@@ -782,24 +783,24 @@ export class DiscoveryChat implements OnInit {
       if (activeId) this.store.showSession(activeId);
       return;
     }
-    this.toast.error(this.transloco.translate('discovery.errors.startFailed'));
+    this.toast.error(messageForError(err, this.transloco));
   }
 
   protected pause(): void {
     this.recording.pause()?.subscribe({
-      error: () => this.toast.error(this.transloco.translate('discovery.errors.transitionFailed')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
   protected resume(): void {
     this.recording.resume()?.subscribe({
-      error: () => this.toast.error(this.transloco.translate('discovery.errors.transitionFailed')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
   protected stop(): void {
     this.recording.stop()?.subscribe({
-      error: () => this.toast.error(this.transloco.translate('discovery.errors.transitionFailed')),
+      error: (err) => this.toast.error(messageForError(err, this.transloco)),
     });
   }
 
@@ -826,7 +827,7 @@ export class DiscoveryChat implements OnInit {
       this.toast.info(this.transloco.translate('discovery.errors.alreadyResolved'));
       return;
     }
-    this.toast.error(this.transloco.translate('discovery.errors.decideFailed'));
+    this.toast.error(messageForError(err, this.transloco));
   }
 
   protected focusStory(storyId: string): void {

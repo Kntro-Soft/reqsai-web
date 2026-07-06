@@ -16,6 +16,7 @@ import { MemberResponse } from '../../data/workspace.models';
 import { InlineEntity } from '../../../../shared/components/inline-entity/inline-entity';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -330,9 +331,9 @@ export class ProjectDanger implements OnInit {
         this.toast.success(this.transloco.translate('toast.projectArchived'));
         this.leaveToProjects();
       },
-      error: () => {
+      error: (err) => {
         this.archiving.set(false);
-        this.toast.error(this.transloco.translate('projectDanger.errorGeneric'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -348,9 +349,9 @@ export class ProjectDanger implements OnInit {
         this.toast.success(this.transloco.translate('toast.projectRestored'));
         if (orgId) this.workspace.loadProjects(orgId);
       },
-      error: () => {
+      error: (err) => {
         this.restoring.set(false);
-        this.toast.error(this.transloco.translate('projectDanger.errorGeneric'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }
@@ -370,9 +371,9 @@ export class ProjectDanger implements OnInit {
         this.toast.success(this.transloco.translate('toast.projectDeleted'));
         this.leaveToProjects();
       },
-      error: () => {
+      error: (err) => {
         this.deleting.set(false);
-        this.toast.error(this.transloco.translate('projectDanger.errorGeneric'));
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }

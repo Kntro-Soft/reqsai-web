@@ -18,6 +18,7 @@ import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, ProjectRoleResponse } from '../../data/workspace.models';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -267,13 +268,7 @@ export class ProjectRoles implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.deleting.set(false);
         this.deleteOpen.set(false);
-        this.toast.error(
-          this.transloco.translate(
-            err.status === 409 || err.status === 400
-              ? 'projectRoles.errorInUse'
-              : 'projectRoles.errorDelete',
-          ),
-        );
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { messageForError } from '../../../../core/errors/error-message';
 import {
   HlmButton,
   HlmCard,
@@ -137,12 +138,12 @@ export class VerifyEmail implements OnInit {
       next: () => this.state.set('success'),
       error: (err: HttpErrorResponse) => {
         this.state.set('error');
+        // A 400/401 means the verification link is invalid/expired — a bespoke
+        // "request a new link" message is clearer than the generic code copy.
         this.errorMessage.set(
-          this.transloco.translate(
-            err.status === 400 || err.status === 401
-              ? 'auth.errors.verifyLinkInvalid'
-              : 'auth.errors.verifyGeneric',
-          ),
+          err.status === 400 || err.status === 401
+            ? this.transloco.translate('auth.errors.verifyLinkInvalid')
+            : messageForError(err, this.transloco),
         );
       },
     });

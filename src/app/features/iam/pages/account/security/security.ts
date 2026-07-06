@@ -5,6 +5,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import { lucideCheck } from '@ng-icons/lucide';
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { messageForError } from '../../../../../core/errors/error-message';
 import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSpinner } from '../../../../../shared/ui';
 
 /** Account · Security: the change-password card. */
@@ -102,12 +103,12 @@ export class AccountSecurity {
       },
       error: (err: HttpErrorResponse) => {
         this.savingPassword.set(false);
+        // A 400/401 means the current password was wrong — a bespoke message is
+        // clearer than the generic code copy; everything else resolves centrally.
         this.passwordError.set(
-          this.transloco.translate(
-            err.status === 400 || err.status === 401
-              ? 'account.passwordWrong'
-              : 'account.errorGeneric',
-          ),
+          err.status === 400 || err.status === 401
+            ? this.transloco.translate('account.passwordWrong')
+            : messageForError(err, this.transloco),
         );
       },
     });
