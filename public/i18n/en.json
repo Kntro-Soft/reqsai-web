@@ -179,8 +179,7 @@
     "appearance": "Appearance",
     "appearanceDesc": "Theme and language for this device.",
     "save": "Save",
-    "saved": "Saved.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "saved": "Saved."
   },
   "auth": {
     "brand": {
@@ -200,14 +199,10 @@
     "errors": {
       "invalidCredentials": "Incorrect email or password.",
       "unverified": "Verify your email before signing in.",
-      "generic": "Could not sign in. Please try again.",
       "emailExists": "An account with that email already exists.",
-      "signUpGeneric": "Could not create the account. Please try again.",
       "passwordMismatch": "Passwords don't match.",
       "resetLinkInvalid": "The link is invalid or expired. Request a new one.",
-      "resetGeneric": "Could not update the password. Please try again.",
-      "verifyLinkInvalid": "The link is invalid or expired. Resend the verification email.",
-      "verifyGeneric": "Could not verify. Please try again."
+      "verifyLinkInvalid": "The link is invalid or expired. Resend the verification email."
     },
     "signIn": {
       "title": "Sign in",
@@ -778,7 +773,6 @@
     "createdBefore": "To",
     "clearDates": "Clear dates",
     "created": "Story added.",
-    "errorCreate": "Could not create the story. Please try again.",
     "errorDuplicate": "A similar story already exists ({{percent}}% similar).",
     "errorDuplicateNoScore": "A similar story already exists.",
     "priority": {
@@ -816,7 +810,6 @@
     "created": "Story created.",
     "save": "Save changes",
     "saved": "Story updated.",
-    "saveError": "Could not save the story. Please try again.",
     "criteriaTitle": "Acceptance criteria",
     "criteriaAdd": "Add criterion",
     "criteriaEmpty": "No acceptance criteria yet.",
@@ -829,7 +822,6 @@
     "criteriaUpdate": "Save",
     "criteriaSaved": "Criterion saved.",
     "criteriaDeleted": "Criterion removed.",
-    "criteriaError": "Could not save the criterion. Please try again.",
     "criteriaIncomplete": "Fill in Given, When and Then for each criterion.",
     "criteriaPartial": "Story created, but {{count}} criterion(s) could not be saved. Add them here."
   },
@@ -866,11 +858,7 @@
     "deleteTitle": "Delete term",
     "deleteBefore": "This will permanently delete",
     "deleteAfter": "from the glossary.",
-    "menuAria": "Term actions",
-    "errorCreate": "Could not add the term. Please try again.",
-    "errorUpdate": "Could not update the term. Please try again.",
-    "errorDelete": "Could not delete the term. Please try again.",
-    "errorDuplicate": "That term already exists."
+    "menuAria": "Term actions"
   },
   "constraintsPage": {
     "title": "Constraints",
@@ -902,11 +890,7 @@
     "deleteTitle": "Delete constraint",
     "deleteBefore": "This will permanently delete this constraint.",
     "deleteAfter": "",
-    "menuAria": "Constraint actions",
-    "errorCreate": "Could not add the constraint. Please try again.",
-    "errorUpdate": "Could not update the constraint. Please try again.",
-    "errorDelete": "Could not delete the constraint. Please try again.",
-    "errorDuplicate": "That constraint already exists."
+    "menuAria": "Constraint actions"
   },
   "projectRoleForm": {
     "back": "Back to roles",
@@ -1122,10 +1106,7 @@
       "colQuestions": "Questions"
     },
     "errors": {
-      "startFailed": "Could not start the recording. Please try again.",
       "alreadyActive": "A session is already active. Opening it now.",
-      "transitionFailed": "Could not update the session. Please try again.",
-      "decideFailed": "Could not save your decision. Please try again.",
       "alreadyResolved": "Someone already decided on this suggestion."
     },
     "leaveGuard": {
