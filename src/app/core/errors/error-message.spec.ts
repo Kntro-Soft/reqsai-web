@@ -39,6 +39,13 @@ describe('messageForError', () => {
     expect(messageForError(err, transloco)).toBe(DICT['errors.http.409']);
   });
 
+  it('falls back to the 409 tier for an untranslated conflict code (e.g. auth/discovery)', () => {
+    // Codes like SESSION_ALREADY_ACTIVE / ACCOUNT_ALREADY_EXISTS are not in the
+    // central block, so a page routing its generic branch here gets the status tier.
+    const err = httpError(409, { code: 'SESSION_ALREADY_ACTIVE' });
+    expect(messageForError(err, transloco)).toBe(DICT['errors.http.409']);
+  });
+
   it('falls back to the status tier when there is no code at all', () => {
     const err = httpError(500, {});
     expect(messageForError(err, transloco)).toBe(DICT['errors.http.500']);
