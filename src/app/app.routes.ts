@@ -124,8 +124,9 @@ export const routes: Routes = [
             path: 'integrations',
             title: 'titles.integrations',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.integrations', icon: 'lucidePlug' },
+              import('./features/workspace/pages/org-integrations/org-integrations').then(
+                (m) => m.OrgIntegrations,
+              ),
           },
           {
             path: 'usage',

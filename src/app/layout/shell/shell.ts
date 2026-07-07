@@ -295,7 +295,7 @@ export class Shell {
     { seg: 'general' },
     { seg: 'members' },
     { seg: 'billing' },
-    { seg: 'integrations', soon: true },
+    { seg: 'integrations' },
     { seg: 'usage' },
   ];
   private readonly projectRootSegs: { seg: string }[] = [
