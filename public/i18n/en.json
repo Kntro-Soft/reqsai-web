@@ -105,6 +105,62 @@
     "title": "Coming soon",
     "subtitle": "This section isn't available yet. It's on the roadmap â€” check back soon."
   },
+  "billing": {
+    "loadError": "We couldn't load your subscription. Only the organization owner can manage billing.",
+    "planName": {
+      "FREE": "Free",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled",
+      "PAST_DUE": "Past due",
+      "TRIALING": "Trial"
+    },
+    "free": "Free",
+    "perMonth": "/ month",
+    "current": "Current plan",
+    "included": "Included",
+    "freeDesc": "You're on the free plan.",
+    "renewsOn": "Renews on {{date}}.",
+    "cancelsOn": "Cancels on {{date}}. You keep access until then.",
+    "reactivate": "Reactivate",
+    "cancel": "Cancel plan",
+    "keepPlan": "Keep plan",
+    "upgradeTo": "Upgrade to {{plan}}",
+    "feature": {
+      "tokens": "{{count}} AI tokens / month",
+      "projects": "{{count}} projects",
+      "members": "{{count}} members",
+      "documents": "{{count}} documents per project",
+      "glossary": "{{count}} glossary terms per project"
+    },
+    "upgradeModalTitle": "Confirm upgrade",
+    "upgradeModalBody": "Upgrade to {{plan}} for {{price}} per month? Your new limits apply immediately.",
+    "confirmUpgrade": "Upgrade",
+    "upgradeSuccess": "Your plan was upgraded.",
+    "cancelModalTitle": "Cancel subscription?",
+    "cancelModalBody": "Your plan stays active until {{date}}, then reverts to Free. You can reactivate any time before then.",
+    "cancelSuccess": "Your subscription was cancelled.",
+    "reactivateSuccess": "Your subscription was reactivated.",
+    "checkout": {
+      "successTitle": "Payment received",
+      "successBody": "Thanks! Your subscription is being activated and will be ready in a moment.",
+      "cancelTitle": "Checkout cancelled",
+      "cancelBody": "No charge was made. You can pick a plan again whenever you're ready.",
+      "backToBilling": "Back to billing"
+    }
+  },
+  "usage": {
+    "loadError": "We couldn't load your usage. Only the organization owner can view it.",
+    "tokensTitle": "AI tokens",
+    "period": "{{start}} - {{end}}",
+    "remaining": "{{count}} tokens remaining",
+    "exhausted": "You've used your monthly token allowance. Upgrade your plan for more.",
+    "planTitle": "Current plan",
+    "managePlan": "Manage plan"
+  },
   "userMenu": {
     "ariaLabel": "User menu",
     "personalAccount": "Personal account",
@@ -1120,6 +1176,12 @@
     "ORGANIZATION_NOT_FOUND": "That organization no longer exists.",
     "ORGANIZATION_SLUG_ALREADY_EXISTS": "That organization name is already taken.",
     "ORGANIZATION_EDIT_PERMISSION_DENIED": "You don't have permission to edit this organization.",
+    "SUBSCRIPTION_NOT_FOUND": "We couldn't find a subscription for this organization.",
+    "SUBSCRIPTION_ALREADY_EXISTS": "This organization already has a subscription.",
+    "INVALID_PLAN_CHANGE": "That plan change isn't allowed.",
+    "INVALID_SUBSCRIPTION_STATE": "Your subscription isn't in a state that allows this action.",
+    "PLAN_NOT_PURCHASABLE": "That plan can't be purchased.",
+    "PAYMENT_GATEWAY_ERROR": "The payment provider couldn't process the request. Please try again.",
     "INVALID_GENERATION_SETTINGS": "Those generation settings are invalid.",
     "GLOSSARY_NOT_FOUND": "That glossary no longer exists.",
     "GLOSSARY_TERM_NOT_FOUND": "That glossary term no longer exists.",
