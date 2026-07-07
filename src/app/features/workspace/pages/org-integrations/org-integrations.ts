@@ -386,7 +386,8 @@ export class OrgIntegrations {
   protected readonly tokenOpen = signal(false);
 
   /** Where users mint an Atlassian API token (opens in a new tab). */
-  protected readonly apiTokenUrl = 'https://id.atlassian.net/manage/api-tokens';
+  protected readonly apiTokenUrl =
+    'https://id.atlassian.com/manage-profile/security/api-tokens';
 
   protected readonly orgId = computed(() => this.store.organizationId());
 
