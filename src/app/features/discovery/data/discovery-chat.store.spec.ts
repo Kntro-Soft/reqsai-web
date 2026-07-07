@@ -728,25 +728,62 @@ describe('DiscoveryChatStore', () => {
       // and decisions resolved 21:19–21:22. They must weave by time, not render
       // as "all decisions, then all segments".
       flushInit([session({ status: 'STOPPED' })]);
-      http.expectOne((r) => r.url === '/api/sessions/sess-1/segments').flush([
-        { sequence: 0, text: 's@21:18', speakerLabel: 'A', startMs: 0, endMs: 900, occurredAt: '2026-07-04T21:18:00Z' },
-        { sequence: 1, text: 's@21:19', speakerLabel: 'A', startMs: 1000, endMs: 1900, occurredAt: '2026-07-04T21:19:30Z' },
-        { sequence: 2, text: 's@21:20', speakerLabel: 'A', startMs: 2000, endMs: 2900, occurredAt: '2026-07-04T21:20:00Z' },
-      ]);
-      http.expectOne('/api/sessions/sess-1/transcript').flush({ sessionId: 'sess-1', transcript: 'joined' });
+      http
+        .expectOne((r) => r.url === '/api/sessions/sess-1/segments')
+        .flush([
+          {
+            sequence: 0,
+            text: 's@21:18',
+            speakerLabel: 'A',
+            startMs: 0,
+            endMs: 900,
+            occurredAt: '2026-07-04T21:18:00Z',
+          },
+          {
+            sequence: 1,
+            text: 's@21:19',
+            speakerLabel: 'A',
+            startMs: 1000,
+            endMs: 1900,
+            occurredAt: '2026-07-04T21:19:30Z',
+          },
+          {
+            sequence: 2,
+            text: 's@21:20',
+            speakerLabel: 'A',
+            startMs: 2000,
+            endMs: 2900,
+            occurredAt: '2026-07-04T21:20:00Z',
+          },
+        ]);
+      http
+        .expectOne('/api/sessions/sess-1/transcript')
+        .flush({ sessionId: 'sess-1', transcript: 'joined' });
       http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
       // Two accepted decisions, resolved between/after the segments.
       http
         .expectOne(
-          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
         )
         .flush([
-          suggestion({ id: 'd-1', status: 'ACCEPTED', resolvedStoryId: null, resolvedAt: '2026-07-04T21:19:00Z' }),
-          suggestion({ id: 'd-2', status: 'ACCEPTED', resolvedStoryId: null, resolvedAt: '2026-07-04T21:22:00Z' }),
+          suggestion({
+            id: 'd-1',
+            status: 'ACCEPTED',
+            resolvedStoryId: null,
+            resolvedAt: '2026-07-04T21:19:00Z',
+          }),
+          suggestion({
+            id: 'd-2',
+            status: 'ACCEPTED',
+            resolvedStoryId: null,
+            resolvedAt: '2026-07-04T21:22:00Z',
+          }),
         ]);
       http
         .expectOne(
-          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
         )
         .flush([]);
       http
@@ -784,12 +821,14 @@ describe('DiscoveryChatStore', () => {
       http.expectOne('/api/sessions/sess-1/stories').flush(page<UserStoryResponse>([]));
       http
         .expectOne(
-          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'ACCEPTED',
         )
         .flush([]);
       http
         .expectOne(
-          (r) => r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
+          (r) =>
+            r.url === '/api/sessions/sess-1/suggestions' && r.params.get('status') === 'DISMISSED',
         )
         .flush([]);
       http

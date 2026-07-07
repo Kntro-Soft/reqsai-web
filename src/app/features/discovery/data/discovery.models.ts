@@ -1,13 +1,7 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
 export type SessionStatus =
-  | 'DRAFT'
-  | 'RECORDING'
-  | 'PAUSED'
-  | 'STOPPED'
-  | 'PROCESSING'
-  | 'COMPLETED'
-  | 'FAILED';
+  'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
 export interface DiscoverySessionResponse {
   id: string;
