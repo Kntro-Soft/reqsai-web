@@ -277,7 +277,9 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
         <div class="flex shrink-0 items-center justify-between gap-3">
           <div class="flex flex-col text-sm text-muted-foreground">
             <span>{{ 'stories.total' | transloco: { count: total() } }}</span>
-            <span>{{ 'stories.pageOf' | transloco: { page: page() + 1, total: totalPages() } }}</span>
+            <span>{{
+              'stories.pageOf' | transloco: { page: page() + 1, total: totalPages() }
+            }}</span>
           </div>
           <div class="flex gap-2">
             <button
