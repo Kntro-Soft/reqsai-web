@@ -42,3 +42,15 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Claude Code (local session config and project memory — not for the repo)
+.claude/
+memory/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Local screenshot captures (scripts/shots.mjs)
+/shots/

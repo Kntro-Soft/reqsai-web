@@ -1,0 +1,59 @@
+# Dependabot opens its PRs from branches named:
+#   dependabot/<ecosystem>/<target-branch>/<group-or-dependency>
+# e.g. dependabot/npm_and_yarn/develop/minor-and-patch
+#      dependabot/github-actions/develop/actions
+# (the <target-branch> segment appears because we set target-branch: develop.)
+
+version: 2
+updates:
+  # npm / bun dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "angular-*"
+          - "@angular-eslint/*"
+      spartan:
+        patterns:
+          - "@spartan-ng/*"
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Base image in the Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "ci(deps)"

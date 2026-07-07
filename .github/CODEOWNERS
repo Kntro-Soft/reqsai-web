@@ -1,0 +1,31 @@
+# CODEOWNERS — Kntro-Soft / reqsai-web
+#
+# Owners are automatically requested as reviewers on every PR that touches
+# files matching their pattern. Each bounded context is owned by its developer;
+# cross-cutting concerns are owned by the Tech Lead.
+#
+# Format: <pattern>  @<github-username>
+
+# ─── Global fallback (Tech Lead) ────────────────────────────────────────────
+*                                               @jhosepmyr
+
+# ─── Core & shared infrastructure ───────────────────────────────────────────
+/src/app/core/                                  @jhosepmyr
+/src/app/shared/                                @jhosepmyr
+/src/app/layout/                                @jhosepmyr
+
+# ─── Feature modules (mirrors backend bounded contexts) ─────────────────────
+/src/app/features/iam/                          @Kyrubi
+/src/app/features/billing/                      @VarBus
+/src/app/features/workspace/                    @salimramirez
+/src/app/features/discovery/                    @jhosepmyr @Eric396
+
+# ─── Build, CI/CD, governance ───────────────────────────────────────────────
+/angular.json                                   @jhosepmyr
+/package.json                                   @jhosepmyr
+/bun.lock                                       @jhosepmyr
+/Dockerfile                                     @jhosepmyr
+/nginx.conf                                     @jhosepmyr
+/compose.yaml                                   @jhosepmyr
+/.github/                                       @jhosepmyr
+/docs/                                          @jhosepmyr

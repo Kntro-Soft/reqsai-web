@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/app/app.css",
+    "src/styles.css",
+    "src/app/shared/ui/index.ts",
+    "src/environments/environment.ts"
+  ],
+  "ignore": ["proxy.conf.js"],
+  "ignoreDependencies": [
+    "@spartan-ng/cli",
+    "eslint-config-prettier",
+    "lint-staged"
+  ]
+}

@@ -1,0 +1,82 @@
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+// require('dotenv').config();
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  testDir: './e2e',
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env['CI'],
+  /* Retry on CI only */
+  retries: process.env['CI'] ? 2 : 0,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env['CI'] ? 1 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: 'html',
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200',
+
+    /* Pin the UI language and timezone so the suite is deterministic regardless of
+     * the host/CI locale. The app resolves its language from navigator.language
+     * (Playwright's `locale`), so es-PE boots the Spanish UI the specs assert
+     * against; the fixed timezone keeps locale-aware date output stable too. */
+    locale: 'es-PE',
+    timezoneId: 'America/Lima',
+
+    /* Capture a trace + screenshot for every test so the HTML report shows each
+     * page visually (open it with `bunx playwright show-report`). Or watch tests
+     * run live with `bunx playwright test --ui`. */
+    trace: 'on',
+    screenshot: 'on',
+  },
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // Firefox/WebKit are enabled once their browser binaries are installed
+    // (`npx playwright install firefox webkit`). Chromium is the default gate.
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
+
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
+
+    /* Test against branded browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    // },
+    // {
+    //   name: 'Google Chrome',
+    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    // },
+  ],
+});
