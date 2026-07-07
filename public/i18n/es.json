@@ -623,6 +623,7 @@
     "audioRetentionHint": "Usa -1 para conservar sin límite.",
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
+    "ownerOnlyHint": "Solo el propietario de la organización puede editar esta configuración.",
     "errorValidation": "Revisa los datos e intenta de nuevo.",
     "errorGeneric": "No se pudieron guardar los cambios.",
     "transferModalTitle": "Transferir propiedad",

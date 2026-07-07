@@ -117,7 +117,8 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
             <button
               type="button"
               (click)="fileInput.click()"
-              class="group relative shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [disabled]="!isOwner()"
+              class="group relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring enabled:cursor-pointer"
               [attr.aria-label]="'orgSettings.logoUpload' | transloco"
             >
               <app-avatar
@@ -127,11 +128,13 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 [size]="64"
                 [circle]="true"
               />
-              <span
-                class="absolute inset-0 grid place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <hlm-icon name="lucideUpload" size="18px" />
-              </span>
+              @if (isOwner()) {
+                <span
+                  class="absolute inset-0 grid place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <hlm-icon name="lucideUpload" size="18px" />
+                </span>
+              }
             </button>
             <input
               #fileInput
@@ -151,6 +154,15 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
             </span>
           </div>
         </section>
+
+        @if (!isOwner()) {
+          <p
+            class="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground"
+            data-testid="org-settings-readonly-hint"
+          >
+            {{ 'orgSettings.ownerOnlyHint' | transloco }}
+          </p>
+        }
 
         <div [formGroup]="form" class="flex flex-col gap-6">
           <!-- Name -->
@@ -177,18 +189,20 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                     {{ 'orgSettings.saved' | transloco }}
                   </span>
                 }
-                <button
-                  hlmBtn
-                  size="sm"
-                  type="button"
-                  (click)="saveField('name')"
-                  [disabled]="saving() === 'name' || form.controls.name.invalid || !dirtyName()"
-                >
-                  @if (saving() === 'name') {
-                    <hlm-spinner class="h-4 w-4" />
-                  }
-                  {{ 'orgSettings.save' | transloco }}
-                </button>
+                @if (isOwner()) {
+                  <button
+                    hlmBtn
+                    size="sm"
+                    type="button"
+                    (click)="saveField('name')"
+                    [disabled]="saving() === 'name' || form.controls.name.invalid || !dirtyName()"
+                  >
+                    @if (saving() === 'name') {
+                      <hlm-spinner class="h-4 w-4" />
+                    }
+                    {{ 'orgSettings.save' | transloco }}
+                  </button>
+                }
               </div>
             </div>
           </section>
@@ -204,12 +218,20 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                   {{ 'orgSettings.languageDesc' | transloco }}
                 </p>
               </div>
-              <app-select
-                [options]="languageOptions"
-                [value]="form.controls.meetingLanguage.value"
-                (valueChange)="form.controls.meetingLanguage.setValue($event)"
-                [ariaLabel]="'orgSettings.meetingLanguage' | transloco"
-              />
+              @if (isOwner()) {
+                <app-select
+                  [options]="languageOptions"
+                  [value]="form.controls.meetingLanguage.value"
+                  (valueChange)="form.controls.meetingLanguage.setValue($event)"
+                  [ariaLabel]="'orgSettings.meetingLanguage' | transloco"
+                />
+              } @else {
+                <div
+                  class="flex h-10 max-w-[9rem] items-center rounded-md border border-input bg-muted/40 px-3 text-sm text-muted-foreground"
+                >
+                  {{ selectedLanguageLabel() }}
+                </div>
+              }
             </div>
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
@@ -220,18 +242,20 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                   {{ 'orgSettings.saved' | transloco }}
                 </span>
               }
-              <button
-                hlmBtn
-                size="sm"
-                type="button"
-                (click)="saveField('meetingLanguage')"
-                [disabled]="saving() === 'meetingLanguage' || !dirtyLanguage()"
-              >
-                @if (saving() === 'meetingLanguage') {
-                  <hlm-spinner class="h-4 w-4" />
-                }
-                {{ 'orgSettings.save' | transloco }}
-              </button>
+              @if (isOwner()) {
+                <button
+                  hlmBtn
+                  size="sm"
+                  type="button"
+                  (click)="saveField('meetingLanguage')"
+                  [disabled]="saving() === 'meetingLanguage' || !dirtyLanguage()"
+                >
+                  @if (saving() === 'meetingLanguage') {
+                    <hlm-spinner class="h-4 w-4" />
+                  }
+                  {{ 'orgSettings.save' | transloco }}
+                </button>
+              }
             </div>
           </section>
 
@@ -263,22 +287,24 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                   {{ 'orgSettings.saved' | transloco }}
                 </span>
               }
-              <button
-                hlmBtn
-                size="sm"
-                type="button"
-                (click)="saveField('audioRetentionDays')"
-                [disabled]="
-                  saving() === 'audioRetentionDays' ||
-                  form.controls.audioRetentionDays.invalid ||
-                  !dirtyRetention()
-                "
-              >
-                @if (saving() === 'audioRetentionDays') {
-                  <hlm-spinner class="h-4 w-4" />
-                }
-                {{ 'orgSettings.save' | transloco }}
-              </button>
+              @if (isOwner()) {
+                <button
+                  hlmBtn
+                  size="sm"
+                  type="button"
+                  (click)="saveField('audioRetentionDays')"
+                  [disabled]="
+                    saving() === 'audioRetentionDays' ||
+                    form.controls.audioRetentionDays.invalid ||
+                    !dirtyRetention()
+                  "
+                >
+                  @if (saving() === 'audioRetentionDays') {
+                    <hlm-spinner class="h-4 w-4" />
+                  }
+                  {{ 'orgSettings.save' | transloco }}
+                </button>
+              }
             </div>
           </section>
         </div>
@@ -694,6 +720,11 @@ export class OrgSettings {
     const uid = this.store.user()?.id;
     return !!uid && this.ownerId() === uid;
   });
+  /** The chosen meeting-language option's label, for the non-owner read-only display. */
+  protected readonly selectedLanguageLabel = computed(() => {
+    const value = this.form.controls.meetingLanguage.value;
+    return LANGUAGE_OPTIONS.find((o) => o.value === value)?.label ?? LANGUAGE_OPTIONS[0].label;
+  });
   /** The org's ACTIVE members — the transfer candidates. */
   protected readonly activeMembers = computed(() =>
     this.members().filter((m) => m.status === 'ACTIVE'),
@@ -782,6 +813,8 @@ export class OrgSettings {
           audioRetentionDays: org.audioRetentionDays,
         });
         this.initial.set(this.form.getRawValue());
+        // Non-owners may VIEW the org settings but not edit them: lock the fields.
+        if (!this.isOwner()) this.form.disable({ emitEvent: false });
         this.state.set('ready');
       },
       error: () => this.state.set('error'),

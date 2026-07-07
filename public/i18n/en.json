@@ -623,6 +623,7 @@
     "audioRetentionHint": "Use -1 to keep indefinitely.",
     "saved": "Changes saved.",
     "save": "Save changes",
+    "ownerOnlyHint": "Only the organization owner can edit these settings.",
     "errorValidation": "Check the data and try again.",
     "errorGeneric": "Could not save the changes.",
     "transferModalTitle": "Transfer ownership",
