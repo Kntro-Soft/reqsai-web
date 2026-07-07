@@ -27,6 +27,19 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   **Push to Jira** action on the story detail page (opens the created issue) and a **Push all to Jira**
   action on the backlog list (toasts pushed/failed counts), plus the `IntegrationsApiService`, DTOs, and
   the new `errors.*` codes (`INTEGRATION_*`, `JIRA_*`) so `messageForError` localizes backend failures.
+- **Integrations — Connect with Atlassian (OAuth 2.0)** (`feature/integrations-jira`): a primary
+  **Connect with Atlassian** button on the Organization Integrations page that full-page-redirects to the
+  Atlassian consent screen and returns to a new chrome-less `settings/integrations/jira/callback` route
+  (`JiraOAuthCallback`) which exchanges the authorization `code` for a saved connection — rendering a
+  **site picker** when the account has multiple Atlassian sites, and falling back to sign-in on a lost
+  session. The button disables with an explanatory tooltip when the server reports
+  `JIRA_OAUTH_NOT_CONFIGURED` (never hard-erroring the page). The existing **API-token** form is kept as a
+  collapsible fallback, improved with a **"Create your API token"** link and per-field tooltips; the
+  connected-state card now labels the method (**OAuth** vs **API token**) and shows the email only when
+  present. Adds `credentialType`/nullable `email` to `IntegrationConnectionResponse`, the OAuth DTOs +
+  `getJiraAuthorizeUrl`/`completeJiraOAuth` service methods, and the new `errors.*` codes
+  (`JIRA_OAUTH_NOT_CONFIGURED`, `JIRA_OAUTH_STATE_INVALID`, `JIRA_OAUTH_EXCHANGE_FAILED`). No OAuth token is
+  ever held client-side.
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps
