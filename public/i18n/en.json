@@ -1176,6 +1176,56 @@
       "leave": "Leave anyway"
     }
   },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect Reqs-AI to your external tools.",
+    "loadError": "We couldn't load your integrations. Please try again.",
+    "jira": {
+      "title": "Jira",
+      "description": "Connect a Jira site so you can push user stories as issues.",
+      "connect": "Connect",
+      "connected": "Jira connected.",
+      "test": "Test connection",
+      "disconnect": "Disconnect",
+      "disconnected": "Jira disconnected.",
+      "disconnectTitle": "Disconnect Jira?",
+      "disconnectBody": "This removes the Jira connection and any project mappings that use it. You can reconnect later.",
+      "siteUrl": "Site URL",
+      "email": "Email",
+      "apiToken": "API token",
+      "apiTokenHint": "Create an API token in your Atlassian account. It is sent securely and never shown again.",
+      "projectKey": "Jira project",
+      "issueType": "Issue type",
+      "statusConnected": "Connected",
+      "statusError": "Connection error",
+      "lastVerified": "Last verified",
+      "testOk": "Connection is working.",
+      "testOkNamed": "Connection is working — signed in as {{name}}."
+    },
+    "project": {
+      "subtitle": "Map this project to a Jira project so stories can be pushed as issues.",
+      "mappingDescription": "Choose the Jira project and issue type new stories are created as.",
+      "connection": "Connection",
+      "noConnection": "No Jira connection exists for this organization yet.",
+      "goToOrg": "Connect Jira in organization settings",
+      "noProjects": "No Jira projects found",
+      "noIssueTypes": "No issue types found",
+      "save": "Save mapping",
+      "saved": "Jira mapping saved.",
+      "clear": "Clear mapping",
+      "cleared": "Jira mapping cleared.",
+      "clearTitle": "Clear Jira mapping?",
+      "clearBody": "This removes the project's Jira mapping. You won't be able to push stories until you map it again."
+    },
+    "push": {
+      "pushStory": "Push to Jira",
+      "pushAll": "Push all to Jira",
+      "pushed": "Pushed to Jira as {{key}}.",
+      "pushedAll": "Pushed {{pushed}} stories to Jira ({{failed}} failed).",
+      "notConfigured": "No Jira mapping is configured for this project. Set it up in the project integration settings first.",
+      "pushError": "We couldn't push to Jira. Please try again."
+    }
+  },
   "errors": {
     "ORGANIZATION_NOT_FOUND": "That organization no longer exists.",
     "ORGANIZATION_SLUG_ALREADY_EXISTS": "That organization name is already taken.",
@@ -1256,6 +1306,14 @@
     "EDGE_CASE_WITHOUT_TARGET": "This edge case needs an existing story to attach to.",
     "SESSION_ACCESS_DENIED": "You don't have access to this session.",
     "SESSION_ALREADY_ACTIVE": "There's already an active session.",
+    "INTEGRATION_CONNECTION_NOT_FOUND": "That integration connection no longer exists.",
+    "INTEGRATION_ALREADY_CONNECTED": "This organization already has a Jira connection.",
+    "INTEGRATION_TARGET_NOT_CONFIGURED": "This project isn't mapped to Jira yet. Configure it in the project integration settings.",
+    "JIRA_AUTH_FAILED": "Jira rejected those credentials. Check the email and API token.",
+    "JIRA_UNREACHABLE": "We couldn't reach Jira. Check the site URL and try again.",
+    "JIRA_PROJECT_NOT_FOUND": "That Jira project no longer exists or is not accessible.",
+    "JIRA_PUSH_FAILED": "We couldn't push to Jira. Please try again.",
+    "INTEGRATION_ENCRYPTION_ERROR": "We couldn't securely store those credentials. Please try again.",
     "http": {
       "400": "Please check your input and try again.",
       "401": "Your session has expired. Please sign in again.",

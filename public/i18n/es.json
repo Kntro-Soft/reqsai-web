@@ -1176,6 +1176,56 @@
       "leave": "Salir de todos modos"
     }
   },
+  "integrations": {
+    "title": "Integraciones",
+    "subtitle": "Conecta Reqs-AI con tus herramientas externas.",
+    "loadError": "No pudimos cargar tus integraciones. Inténtalo de nuevo.",
+    "jira": {
+      "title": "Jira",
+      "description": "Conecta un sitio de Jira para enviar historias de usuario como incidencias.",
+      "connect": "Conectar",
+      "connected": "Jira conectado.",
+      "test": "Probar conexión",
+      "disconnect": "Desconectar",
+      "disconnected": "Jira desconectado.",
+      "disconnectTitle": "¿Desconectar Jira?",
+      "disconnectBody": "Esto elimina la conexión con Jira y los mapeos de proyecto que la usan. Podrás reconectar más tarde.",
+      "siteUrl": "URL del sitio",
+      "email": "Correo electrónico",
+      "apiToken": "Token de API",
+      "apiTokenHint": "Crea un token de API en tu cuenta de Atlassian. Se envía de forma segura y no se vuelve a mostrar.",
+      "projectKey": "Proyecto de Jira",
+      "issueType": "Tipo de incidencia",
+      "statusConnected": "Conectado",
+      "statusError": "Error de conexión",
+      "lastVerified": "Última verificación",
+      "testOk": "La conexión funciona.",
+      "testOkNamed": "La conexión funciona: sesión iniciada como {{name}}."
+    },
+    "project": {
+      "subtitle": "Asocia este proyecto a un proyecto de Jira para enviar historias como incidencias.",
+      "mappingDescription": "Elige el proyecto de Jira y el tipo de incidencia con que se crean las nuevas historias.",
+      "connection": "Conexión",
+      "noConnection": "Todavía no existe una conexión con Jira para esta organización.",
+      "goToOrg": "Conectar Jira en la configuración de la organización",
+      "noProjects": "No se encontraron proyectos de Jira",
+      "noIssueTypes": "No se encontraron tipos de incidencia",
+      "save": "Guardar mapeo",
+      "saved": "Mapeo de Jira guardado.",
+      "clear": "Quitar mapeo",
+      "cleared": "Mapeo de Jira eliminado.",
+      "clearTitle": "¿Quitar el mapeo de Jira?",
+      "clearBody": "Esto elimina el mapeo de Jira del proyecto. No podrás enviar historias hasta volver a asociarlo."
+    },
+    "push": {
+      "pushStory": "Enviar a Jira",
+      "pushAll": "Enviar todo a Jira",
+      "pushed": "Enviado a Jira como {{key}}.",
+      "pushedAll": "Se enviaron {{pushed}} historias a Jira ({{failed}} con error).",
+      "notConfigured": "Este proyecto no tiene un mapeo de Jira configurado. Configúralo primero en la configuración de integración del proyecto.",
+      "pushError": "No pudimos enviar a Jira. Inténtalo de nuevo."
+    }
+  },
   "errors": {
     "ORGANIZATION_NOT_FOUND": "Esa organización ya no existe.",
     "ORGANIZATION_SLUG_ALREADY_EXISTS": "Ese nombre de organización ya está en uso.",
@@ -1256,6 +1306,14 @@
     "EDGE_CASE_WITHOUT_TARGET": "Este caso límite necesita una historia existente a la cual asociarse.",
     "SESSION_ACCESS_DENIED": "No tienes acceso a esta sesión.",
     "SESSION_ALREADY_ACTIVE": "Ya hay una sesión activa.",
+    "INTEGRATION_CONNECTION_NOT_FOUND": "Esa conexión de integración ya no existe.",
+    "INTEGRATION_ALREADY_CONNECTED": "Esta organización ya tiene una conexión con Jira.",
+    "INTEGRATION_TARGET_NOT_CONFIGURED": "Este proyecto aún no está asociado a Jira. Configúralo en la configuración de integración del proyecto.",
+    "JIRA_AUTH_FAILED": "Jira rechazó esas credenciales. Revisa el correo y el token de API.",
+    "JIRA_UNREACHABLE": "No pudimos conectar con Jira. Revisa la URL del sitio e inténtalo de nuevo.",
+    "JIRA_PROJECT_NOT_FOUND": "Ese proyecto de Jira ya no existe o no es accesible.",
+    "JIRA_PUSH_FAILED": "No pudimos enviar a Jira. Inténtalo de nuevo.",
+    "INTEGRATION_ENCRYPTION_ERROR": "No pudimos guardar esas credenciales de forma segura. Inténtalo de nuevo.",
     "http": {
       "400": "Revisa los datos e inténtalo de nuevo.",
       "401": "Tu sesión ha caducado. Inicia sesión de nuevo.",
