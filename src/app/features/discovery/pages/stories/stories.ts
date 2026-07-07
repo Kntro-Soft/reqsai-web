@@ -10,9 +10,14 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideSearch } from '@ng-icons/lucide';
+import { lucidePlus, lucideSearch, lucideUpload } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
+import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
+import { ToastService } from '../../../../shared/toast/toast.service';
+import { messageForError } from '../../../../core/errors/error-message';
+import { HttpErrorResponse } from '@angular/common/http';
+import { HlmSpinner } from '../../../../shared/ui';
 import {
   StoryListFilters,
   StoryPriority,
@@ -38,8 +43,17 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
 @Component({
   selector: 'app-project-stories',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Select, HlmButton, HlmIcon, HlmInput, HlmSkeleton, TranslocoPipe],
-  viewProviders: [provideIcons({ lucidePlus, lucideSearch })],
+  imports: [
+    RouterLink,
+    Select,
+    HlmButton,
+    HlmIcon,
+    HlmInput,
+    HlmSkeleton,
+    HlmSpinner,
+    TranslocoPipe,
+  ],
+  viewProviders: [provideIcons({ lucidePlus, lucideSearch, lucideUpload })],
   host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-6">
@@ -48,10 +62,28 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
         </div>
-        <a hlmBtn size="sm" [routerLink]="['new']" data-testid="stories-new">
-          <hlm-icon name="lucidePlus" size="15px" />
-          {{ 'stories.new' | transloco }}
-        </a>
+        <div class="flex shrink-0 items-center gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="pushAll()"
+            [disabled]="pushingAll()"
+            data-testid="stories-push-all"
+          >
+            @if (pushingAll()) {
+              <hlm-spinner class="h-4 w-4" />
+            } @else {
+              <hlm-icon name="lucideUpload" size="15px" />
+            }
+            {{ 'integrations.push.pushAll' | transloco }}
+          </button>
+          <a hlmBtn size="sm" [routerLink]="['new']" data-testid="stories-new">
+            <hlm-icon name="lucidePlus" size="15px" />
+            {{ 'stories.new' | transloco }}
+          </a>
+        </div>
       </div>
 
       <!-- Filters + sort -->
@@ -252,10 +284,14 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
 })
 export class ProjectStories implements OnInit, OnDestroy {
   private readonly api = inject(DiscoveryApiService);
+  private readonly integrations = inject(IntegrationsApiService);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
   readonly projectId = input.required<string>();
+
+  protected readonly pushingAll = signal(false);
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
   protected readonly pageSize = 20;
@@ -365,6 +401,41 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   protected openDetail(story: UserStoryResponse): void {
     void this.router.navigate(['/projects', this.projectId(), 'stories', story.id]);
+  }
+
+  /**
+   * Pushes every eligible story to Jira and toasts the pushed/failed counts. A
+   * missing project mapping (INTEGRATION_TARGET_NOT_CONFIGURED) gets a helpful
+   * message pointing to the project's integration settings.
+   */
+  protected pushAll(): void {
+    if (this.pushingAll()) return;
+    this.pushingAll.set(true);
+    this.integrations.pushAllStories(this.projectId()).subscribe({
+      next: (result) => {
+        this.pushingAll.set(false);
+        this.toast.success(
+          this.transloco.translate('integrations.push.pushedAll', {
+            pushed: result.pushed,
+            failed: result.failed,
+          }),
+        );
+      },
+      error: (err: unknown) => {
+        this.pushingAll.set(false);
+        this.toast.error(this.pushAllErrorMessage(err));
+      },
+    });
+  }
+
+  private pushAllErrorMessage(err: unknown): string {
+    if (
+      err instanceof HttpErrorResponse &&
+      (err.error as { code?: unknown } | null)?.code === 'INTEGRATION_TARGET_NOT_CONFIGURED'
+    ) {
+      return this.transloco.translate('integrations.push.notConfigured');
+    }
+    return messageForError(err, this.transloco);
   }
 
   private resetAndLoad(): void {
