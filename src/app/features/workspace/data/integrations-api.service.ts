@@ -2,12 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  AuthorizeUrlResponse,
   CreateJiraConnectionRequest,
   IntegrationConnectionResponse,
   JiraIssueTypeResponse,
+  JiraOAuthCallbackRequest,
   JiraProjectResponse,
   JiraPushAllResponse,
   JiraPushResultResponse,
+  OAuthCallbackResult,
   ProjectJiraTargetResponse,
   TestConnectionResponse,
   UpsertProjectJiraTargetRequest,
@@ -61,6 +64,33 @@ export class IntegrationsApiService {
     request: CreateJiraConnectionRequest,
   ): Observable<IntegrationConnectionResponse> {
     return this.http.post<IntegrationConnectionResponse>(`${this.orgBase(orgId)}/jira`, request);
+  }
+
+  // --- Atlassian OAuth 2.0 ---
+
+  /**
+   * Get the Atlassian consent URL to redirect the browser to, plus the signed
+   * anti-forgery `state`. Errors with `JIRA_OAUTH_NOT_CONFIGURED` when the server
+   * has no Atlassian OAuth app configured.
+   */
+  getJiraAuthorizeUrl(orgId: string): Observable<AuthorizeUrlResponse> {
+    return this.http.get<AuthorizeUrlResponse>(`${this.orgBase(orgId)}/jira/oauth/authorize-url`);
+  }
+
+  /**
+   * Exchange the Atlassian authorization `code` (+ `state`) for a saved connection.
+   * Returns either the saved {@link IntegrationConnectionResponse} or, when the
+   * account has multiple sites, a `{ sites }` picker (nothing saved yet — re-call
+   * with a chosen `cloudId`). No token is ever held client-side.
+   */
+  completeJiraOAuth(
+    orgId: string,
+    request: JiraOAuthCallbackRequest,
+  ): Observable<OAuthCallbackResult> {
+    return this.http.post<OAuthCallbackResult>(
+      `${this.orgBase(orgId)}/jira/oauth/callback`,
+      request,
+    );
   }
 
   /** Verify a connection; resolves the linked Jira account name when it succeeds. */

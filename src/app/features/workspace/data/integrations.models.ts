@@ -14,16 +14,27 @@ export type IntegrationProvider = 'JIRA';
 export type IntegrationStatus = 'CONNECTED' | 'ERROR';
 
 /**
- * An organization-level integration connection. Never carries the API token — it
- * is encrypted server-side and only ever sent TO the backend on create.
+ * How the connection's credentials were obtained: a manually pasted API token or
+ * an Atlassian OAuth 2.0 authorization. OAuth connections may have a null `email`
+ * (Atlassian doesn't always expose the account email).
+ */
+export type IntegrationCredentialType = 'API_TOKEN' | 'OAUTH2';
+
+/**
+ * An organization-level integration connection. Never carries the API token or
+ * OAuth tokens — they are encrypted server-side and only ever sent TO the backend
+ * on create / exchange.
  */
 export interface IntegrationConnectionResponse {
   id: string;
   organizationId: string;
   provider: IntegrationProvider;
   siteUrl: string;
-  email: string;
+  /** The Atlassian account email. Null for OAuth connections that don't expose it. */
+  email: string | null;
   status: IntegrationStatus;
+  /** Whether this connection was created via a manual API token or Atlassian OAuth. */
+  credentialType: IntegrationCredentialType;
   /** ISO instant of the last successful verification, or null if never verified. */
   lastVerifiedAt: string | null;
   createdAt: string;
@@ -85,4 +96,55 @@ export interface JiraPushAllResponse {
   results: JiraPushResultResponse[];
   pushed: number;
   failed: number;
+}
+
+// --- Atlassian OAuth 2.0 ---
+
+/**
+ * The Atlassian consent URL to redirect the browser to, plus the signed anti-forgery
+ * `state` that round-trips through the redirect. The `state` is NOT a secret — the
+ * backend signs and verifies it — so it may be stashed client-side purely to
+ * double-check on return.
+ */
+export interface AuthorizeUrlResponse {
+  url: string;
+  state: string;
+}
+
+/**
+ * Body for exchanging the Atlassian authorization `code` (and `state`) for a saved
+ * connection. When the account has multiple Atlassian sites the first call returns a
+ * site picker and nothing is saved; the caller re-POSTs with the chosen `cloudId`.
+ */
+export interface JiraOAuthCallbackRequest {
+  code: string;
+  state: string;
+  cloudId?: string;
+}
+
+/** One Atlassian site (cloud instance) the authorized account can access. */
+export interface JiraSiteResponse {
+  cloudId: string;
+  url: string;
+  name: string;
+}
+
+/** The site-picker branch of the callback: multiple sites, nothing saved yet. */
+export interface JiraSitesResponse {
+  sites: JiraSiteResponse[];
+}
+
+/**
+ * The two shapes the OAuth callback can return: a saved {@link IntegrationConnectionResponse}
+ * or a {@link JiraSitesResponse} site picker. Discriminate with {@link isSitesResult}.
+ */
+export type OAuthCallbackResult = IntegrationConnectionResponse | JiraSitesResponse;
+
+/**
+ * Type guard discriminating the OAuth callback result: `true` when the backend
+ * returned a site picker (multiple Atlassian sites, nothing saved), `false` when it
+ * returned a saved connection. Pure and exported so it is unit-tested without HTTP.
+ */
+export function isSitesResult(result: OAuthCallbackResult): result is JiraSitesResponse {
+  return Array.isArray((result as JiraSitesResponse).sites);
 }
