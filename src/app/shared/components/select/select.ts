@@ -37,13 +37,16 @@ const BELOW_START: ConnectedPosition[] = [
       #origin="cdkOverlayOrigin"
       #triggerBtn
       (click)="toggle()"
+      [disabled]="disabled()"
       [attr.aria-expanded]="open()"
       [attr.aria-label]="ariaLabel()"
       aria-haspopup="listbox"
-      class="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      class="flex items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring enabled:cursor-pointer enabled:hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
       [class]="triggerSizeClass()"
     >
-      @if (compactLabel(); as compact) {
+      @if (disabled() && disabledLabel()) {
+        <span class="truncate text-muted-foreground">{{ disabledLabel() }}</span>
+      } @else if (compactLabel(); as compact) {
         <!-- Full label from sm: up, the caller-supplied short form below it. -->
         <span class="hidden truncate sm:inline">{{ selectedLabel() }}</span>
         <span class="truncate sm:hidden">{{ compact }}</span>
@@ -112,6 +115,10 @@ export class Select {
   readonly value = model<string>('');
   readonly ariaLabel = input<string>('');
   readonly size = input<'sm' | 'md'>('md');
+  /** When true the trigger is inert (can't open) and shows {@link disabledLabel} if set. */
+  readonly disabled = input(false);
+  /** Optional placeholder text shown on the trigger while {@link disabled}. */
+  readonly disabledLabel = input<string>('');
   /** Show a filter box inside the dropdown that narrows the options by label or code. */
   readonly searchable = input(false);
   readonly searchPlaceholder = input('Search…');
@@ -179,6 +186,7 @@ export class Select {
 
   /** Measure the trigger before opening so the overlay panel adopts its exact width. */
   protected toggle(): void {
+    if (this.disabled()) return;
     const el = this.triggerBtn()?.nativeElement;
     if (el) this.triggerWidth.set(el.offsetWidth);
     const opening = !this.open();

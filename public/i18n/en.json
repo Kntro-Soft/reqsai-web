@@ -1241,6 +1241,7 @@
       "goToOrg": "Connect Jira in organization settings",
       "noProjects": "No Jira projects found",
       "noIssueTypes": "No issue types found",
+      "selectProjectFirst": "Select a Jira project first",
       "save": "Save mapping",
       "saved": "Jira mapping saved.",
       "clear": "Clear mapping",

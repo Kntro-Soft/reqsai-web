@@ -115,14 +115,22 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
               @if (loadingIssueTypes()) {
                 <hlm-skeleton class="h-10 w-full max-w-xs rounded-md" />
               } @else {
+                <!-- Cascade: disabled until a Jira project is chosen (its types load first). -->
                 <app-select
                   class="max-w-xs"
                   [options]="issueTypeOptions()"
-                  [value]="issueTypeName()"
-                  (valueChange)="issueTypeName.set($event)"
+                  [value]="issueTypeId()"
+                  (valueChange)="issueTypeId.set($event)"
+                  [disabled]="!hasProject()"
+                  [disabledLabel]="'integrations.project.selectProjectFirst' | transloco"
                   [ariaLabel]="'integrations.jira.issueType' | transloco"
                   [emptyText]="'integrations.project.noIssueTypes' | transloco"
                 />
+                @if (!hasProject()) {
+                  <p class="text-xs text-muted-foreground" data-testid="issue-type-cascade-hint">
+                    {{ 'integrations.project.selectProjectFirst' | transloco }}
+                  </p>
+                }
               }
             </div>
 
@@ -219,7 +227,13 @@ export class ProjectIntegrations implements OnInit {
 
   protected readonly connectionId = signal('');
   protected readonly jiraProjectKey = signal('');
-  protected readonly issueTypeName = signal('');
+  /**
+   * The chosen issue type's Jira id — the select's bound value. Ids are unique per
+   * project, so binding on the id (not the name) avoids duplicate-key clashes when
+   * Jira returns several types sharing a display name. The saved target still stores
+   * the NAME, resolved from this id via {@link issueTypeName}.
+   */
+  protected readonly issueTypeId = signal('');
 
   protected readonly connectionOptions = computed<SelectOption[]>(() =>
     this.connections().map((c) => ({ value: c.id, label: c.siteUrl })),
@@ -227,9 +241,29 @@ export class ProjectIntegrations implements OnInit {
   protected readonly projectOptions = computed<SelectOption[]>(() =>
     this.jiraProjects().map((p) => ({ value: p.key, label: `${p.name} (${p.key})` })),
   );
-  protected readonly issueTypeOptions = computed<SelectOption[]>(() =>
-    this.issueTypes().map((t) => ({ value: t.name, label: t.name })),
+  /**
+   * Issue-type options keyed by unique id (value) with the name as the label.
+   * Deduped defensively by name so a backend that repeats a type still yields a
+   * single option — and, with the id as the value, no duplicate select keys (NG0955).
+   */
+  protected readonly issueTypeOptions = computed<SelectOption[]>(() => {
+    const seen = new Set<string>();
+    const options: SelectOption[] = [];
+    for (const t of this.issueTypes()) {
+      if (seen.has(t.name)) continue;
+      seen.add(t.name);
+      options.push({ value: t.id, label: t.name });
+    }
+    return options;
+  });
+
+  /** The chosen issue type's NAME (what the target stores), resolved from the id. */
+  protected readonly issueTypeName = computed(
+    () => this.issueTypes().find((t) => t.id === this.issueTypeId())?.name ?? '',
   );
+
+  /** Whether a Jira project is selected — gates the issue-type select's cascade. */
+  protected readonly hasProject = computed(() => !!this.jiraProjectKey());
 
   /** Save is enabled once a connection, a Jira project and an issue type are all chosen. */
   protected readonly canSave = computed(
@@ -263,13 +297,14 @@ export class ProjectIntegrations implements OnInit {
         this.target.set(target);
         this.connectionId.set(target.connectionId);
         this.jiraProjectKey.set(target.jiraProjectKey);
-        this.issueTypeName.set(target.issueTypeName);
         this.state.set('ready');
         this.loadProjects(orgId, target.connectionId);
-        this.loadIssueTypes(orgId, target.connectionId, target.jiraProjectKey);
+        // The target stores the issue-type NAME; once the types load, map it to the id.
+        this.loadIssueTypes(orgId, target.connectionId, target.jiraProjectKey, target.issueTypeName);
       },
+      // 404 is EXPECTED when no target is configured yet — handle it silently as the
+      // "no target" state (no toast, no error UI); only real failures set 'error'.
       error: (err: HttpErrorResponse) => {
-        // 404 → no target yet; default to the first connection and load its projects.
         if (err.status === 404) {
           const first = connections[0];
           this.connectionId.set(first.id);
@@ -288,7 +323,7 @@ export class ProjectIntegrations implements OnInit {
     this.connectionId.set(connectionId);
     // A different connection invalidates the project/issue-type selection.
     this.jiraProjectKey.set('');
-    this.issueTypeName.set('');
+    this.issueTypeId.set('');
     this.jiraProjects.set([]);
     this.issueTypes.set([]);
     this.loadProjects(orgId, connectionId);
@@ -298,7 +333,8 @@ export class ProjectIntegrations implements OnInit {
     const orgId = this.store.organizationId();
     if (!orgId || projectKey === this.jiraProjectKey()) return;
     this.jiraProjectKey.set(projectKey);
-    this.issueTypeName.set('');
+    // Changing the Jira project invalidates the previously chosen issue type.
+    this.issueTypeId.set('');
     this.issueTypes.set([]);
     this.loadIssueTypes(orgId, this.connectionId(), projectKey);
   }
@@ -319,12 +355,27 @@ export class ProjectIntegrations implements OnInit {
     });
   }
 
-  private loadIssueTypes(orgId: string, connectionId: string, projectKey: string): void {
+  /**
+   * Loads the issue types for a Jira project. Only runs when a project is chosen —
+   * the cascade guarantee behind the disabled issue-type select. When {@link selectName}
+   * is given (priming from an existing target, which stores the name), the matching
+   * type's id is selected once the list arrives.
+   */
+  private loadIssueTypes(
+    orgId: string,
+    connectionId: string,
+    projectKey: string,
+    selectName?: string,
+  ): void {
     if (!projectKey) return;
     this.loadingIssueTypes.set(true);
     this.api.listJiraIssueTypes(orgId, connectionId, projectKey).subscribe({
       next: (types) => {
         this.issueTypes.set(types);
+        if (selectName) {
+          const match = types.find((t) => t.name === selectName);
+          if (match) this.issueTypeId.set(match.id);
+        }
         this.loadingIssueTypes.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -371,7 +422,7 @@ export class ProjectIntegrations implements OnInit {
         this.clearOpen.set(false);
         this.target.set(null);
         this.jiraProjectKey.set('');
-        this.issueTypeName.set('');
+        this.issueTypeId.set('');
         this.toast.success(this.transloco.translate('integrations.project.cleared'));
       },
       error: (err: HttpErrorResponse) => {

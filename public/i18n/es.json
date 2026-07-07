@@ -1241,6 +1241,7 @@
       "goToOrg": "Conectar Jira en la configuración de la organización",
       "noProjects": "No se encontraron proyectos de Jira",
       "noIssueTypes": "No se encontraron tipos de incidencia",
+      "selectProjectFirst": "Primero selecciona un proyecto de Jira",
       "save": "Guardar mapeo",
       "saved": "Mapeo de Jira guardado.",
       "clear": "Quitar mapeo",
