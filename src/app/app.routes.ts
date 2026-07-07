@@ -305,6 +305,14 @@ export const routes: Routes = [
                   ),
               },
               {
+                path: 'integrations',
+                title: 'titles.integrations',
+                loadComponent: () =>
+                  import(
+                    './features/workspace/pages/project-integrations/project-integrations'
+                  ).then((m) => m.ProjectIntegrations),
+              },
+              {
                 path: 'danger',
                 title: 'titles.danger',
                 loadComponent: () =>

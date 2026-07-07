@@ -310,6 +310,7 @@ export class Shell {
     { seg: 'general' },
     { seg: 'roles' },
     { seg: 'members' },
+    { seg: 'integrations' },
     { seg: 'danger' },
   ];
   private readonly accountSegs: { seg: string; soon?: boolean }[] = [
