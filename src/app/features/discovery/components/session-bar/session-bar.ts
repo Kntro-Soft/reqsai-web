@@ -4,6 +4,8 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideCircle, lucidePause, lucidePlay, lucideSquare } from '@ng-icons/lucide';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { SessionRecordingService } from '../../data/session-recording.service';
+import { DiscoveryChatStore } from '../../data/discovery-chat.store';
+import { ActiveParticipants } from '../active-participants/active-participants';
 import { HlmButton, HlmIcon } from '../../../../shared/ui';
 
 /** Formats elapsed milliseconds as m:ss / h:mm:ss. */
@@ -26,7 +28,7 @@ export function formatElapsed(ms: number): string {
 @Component({
   selector: 'app-session-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmButton, HlmIcon, TranslocoPipe],
+  imports: [HlmButton, HlmIcon, TranslocoPipe, ActiveParticipants],
   viewProviders: [provideIcons({ lucideCircle, lucidePause, lucidePlay, lucideSquare })],
   template: `
     @if (recording.session(); as session) {
@@ -75,6 +77,13 @@ export function formatElapsed(ms: number): string {
           <div class="flex-1"></div>
         }
 
+        <!-- Who else is viewing this live session. -->
+        @if (store.activeParticipants(); as participants) {
+          @if (participants.length > 0) {
+            <app-active-participants [participants]="participants" [size]="24" class="mr-1" />
+          }
+        }
+
         @if (recording.status() === 'RECORDING') {
           <button
             hlmBtn
@@ -120,6 +129,7 @@ export function formatElapsed(ms: number): string {
 export class SessionBar {
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
+  protected readonly store = inject(DiscoveryChatStore);
 
   readonly pauseSession = output<void>();
   readonly resumeSession = output<void>();
