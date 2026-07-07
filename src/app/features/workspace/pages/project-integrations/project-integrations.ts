@@ -45,7 +45,10 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
       </div>
 
       @if (state() === 'loading') {
-        <section class="overflow-hidden rounded-2xl border border-border" data-testid="project-integrations-skeleton">
+        <section
+          class="overflow-hidden rounded-2xl border border-border"
+          data-testid="project-integrations-skeleton"
+        >
           <div class="flex flex-col gap-3 p-5">
             <hlm-skeleton class="h-5 w-40" />
             <hlm-skeleton class="h-10 w-full max-w-xs rounded-md" />
@@ -82,7 +85,9 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 
             @if (connections().length > 1) {
               <div class="flex flex-col gap-1.5">
-                <span class="text-sm font-medium leading-none">{{ 'integrations.project.connection' | transloco }}</span>
+                <span class="text-sm font-medium leading-none">{{
+                  'integrations.project.connection' | transloco
+                }}</span>
                 <app-select
                   class="max-w-xs"
                   [options]="connectionOptions()"
@@ -94,7 +99,9 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
             }
 
             <div class="flex flex-col gap-1.5">
-              <span class="text-sm font-medium leading-none">{{ 'integrations.jira.projectKey' | transloco }}</span>
+              <span class="text-sm font-medium leading-none">{{
+                'integrations.jira.projectKey' | transloco
+              }}</span>
               @if (loadingProjects()) {
                 <hlm-skeleton class="h-10 w-full max-w-xs rounded-md" />
               } @else {
@@ -111,7 +118,9 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <span class="text-sm font-medium leading-none">{{ 'integrations.jira.issueType' | transloco }}</span>
+              <span class="text-sm font-medium leading-none">{{
+                'integrations.jira.issueType' | transloco
+              }}</span>
               @if (loadingIssueTypes()) {
                 <hlm-skeleton class="h-10 w-full max-w-xs rounded-md" />
               } @else {
@@ -141,7 +150,9 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
             }
           </div>
 
-          <div class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">
+          <div
+            class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
+          >
             @if (target()) {
               <button
                 hlmBtn
@@ -300,7 +311,12 @@ export class ProjectIntegrations implements OnInit {
         this.state.set('ready');
         this.loadProjects(orgId, target.connectionId);
         // The target stores the issue-type NAME; once the types load, map it to the id.
-        this.loadIssueTypes(orgId, target.connectionId, target.jiraProjectKey, target.issueTypeName);
+        this.loadIssueTypes(
+          orgId,
+          target.connectionId,
+          target.jiraProjectKey,
+          target.issueTypeName,
+        );
       },
       // 404 is EXPECTED when no target is configured yet — handle it silently as the
       // "no target" state (no toast, no error UI); only real failures set 'error'.

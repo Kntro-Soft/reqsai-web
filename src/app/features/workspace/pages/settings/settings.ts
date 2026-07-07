@@ -172,7 +172,9 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 <label hlmLabel for="name" class="text-base font-semibold">
                   {{ 'orgSettings.name' | transloco }}
                 </label>
-                <p class="text-sm text-muted-foreground">{{ 'orgSettings.nameDesc' | transloco }}</p>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'orgSettings.nameDesc' | transloco }}
+                </p>
               </div>
               <input hlmInput id="name" formControlName="name" class="max-w-md" />
             </div>
@@ -184,7 +186,10 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
               </span>
               <div class="flex items-center gap-2">
                 @if (savedField() === 'name') {
-                  <span class="flex items-center gap-1 text-xs text-emerald-500" data-testid="settings-saved">
+                  <span
+                    class="flex items-center gap-1 text-xs text-emerald-500"
+                    data-testid="settings-saved"
+                  >
                     <hlm-icon name="lucideCheck" size="13px" />
                     {{ 'orgSettings.saved' | transloco }}
                   </span>
@@ -348,13 +353,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
             >
-              <button
-                hlmBtn
-                size="sm"
-                variant="outline"
-                type="button"
-                (click)="openTransfer()"
-              >
+              <button hlmBtn size="sm" variant="outline" type="button" (click)="openTransfer()">
                 {{ 'orgSettings.transferCta' | transloco }}
               </button>
             </div>
@@ -366,7 +365,9 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
               <h2 class="text-base font-semibold text-destructive">
                 {{ 'orgSettings.delete' | transloco }}
               </h2>
-              <p class="text-sm text-muted-foreground">{{ 'orgSettings.deleteDesc' | transloco }}</p>
+              <p class="text-sm text-muted-foreground">
+                {{ 'orgSettings.deleteDesc' | transloco }}
+              </p>
             </div>
             <div
               class="flex items-center justify-between gap-2 border-t border-destructive/30 bg-destructive/5 px-5 py-3"
@@ -374,13 +375,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
               <span class="text-xs text-muted-foreground">
                 {{ 'orgSettings.deleteHint' | transloco }}
               </span>
-              <button
-                hlmBtn
-                size="sm"
-                variant="destructive"
-                type="button"
-                (click)="openDelete()"
-              >
+              <button hlmBtn size="sm" variant="destructive" type="button" (click)="openDelete()">
                 {{ 'orgSettings.delete' | transloco }}
               </button>
             </div>
@@ -489,7 +484,9 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                               [circle]="true"
                             />
                             <span class="flex min-w-0 flex-1 flex-col">
-                              <span class="truncate font-medium">{{ m.displayName || m.email }}</span>
+                              <span class="truncate font-medium">{{
+                                m.displayName || m.email
+                              }}</span>
                               @if (m.displayName) {
                                 <span class="truncate text-xs text-muted-foreground">{{
                                   m.email
@@ -758,8 +755,7 @@ export class OrgSettings {
   private bold(text: string): string {
     const escaped = text.replace(
       /[&<>"']/g,
-      (c) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
     );
     return `<strong>${escaped}</strong>`;
   }
