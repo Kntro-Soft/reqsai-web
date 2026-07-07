@@ -40,6 +40,10 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `getJiraAuthorizeUrl`/`completeJiraOAuth` service methods, and the new `errors.*` codes
   (`JIRA_OAUTH_NOT_CONFIGURED`, `JIRA_OAUTH_STATE_INVALID`, `JIRA_OAUTH_EXCHANGE_FAILED`). No OAuth token is
   ever held client-side.
+- **Integrations — Jira "How it works" panel** (`feature/integrations-jira`): the Organization
+  Integrations page is now a responsive two-column layout (connect card + a new info panel with numbered
+  steps, a "what gets synced" note and a "Learn more" link), and the "Create your API token" link now
+  points at the correct `id.atlassian.com/manage-profile/security/api-tokens` page.
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps

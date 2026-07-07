@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleCheck, lucideExternalLink, lucideTriangleAlert } from '@ng-icons/lucide';
+import {
+  lucideCircleCheck,
+  lucideExternalLink,
+  lucidePlug,
+  lucideSend,
+  lucideSettings2,
+  lucideTriangleAlert,
+} from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
@@ -51,7 +58,16 @@ import {
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideCircleCheck, lucideExternalLink, lucideTriangleAlert })],
+  viewProviders: [
+    provideIcons({
+      lucideCircleCheck,
+      lucideExternalLink,
+      lucidePlug,
+      lucideSend,
+      lucideSettings2,
+      lucideTriangleAlert,
+    }),
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -77,256 +93,324 @@ import {
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'integrations.loadError' | transloco }}</p>
       } @else {
-        <section class="overflow-hidden rounded-2xl border border-border">
-          <div class="flex flex-col gap-4 p-5">
-            <div class="flex flex-col gap-1">
-              <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
-              <p class="text-sm text-muted-foreground">
-                {{ 'integrations.jira.description' | transloco }}
-              </p>
+        <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
+          <section class="overflow-hidden rounded-2xl border border-border">
+            <div class="flex flex-col gap-4 p-5">
+              <div class="flex flex-col gap-1">
+                <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.jira.description' | transloco }}
+                </p>
+              </div>
+
+              @if (connection(); as conn) {
+                <!-- Connected state -->
+                <dl class="flex flex-col gap-2 text-sm" data-testid="jira-connected">
+                  <div class="flex items-center gap-2">
+                    @if (conn.status === 'CONNECTED') {
+                      <hlm-icon name="lucideCircleCheck" size="16px" class="text-emerald-500" />
+                      <span class="font-medium text-emerald-500">
+                        {{ 'integrations.jira.statusConnected' | transloco }}
+                      </span>
+                    } @else {
+                      <hlm-icon name="lucideTriangleAlert" size="16px" class="text-destructive" />
+                      <span class="font-medium text-destructive">
+                        {{ 'integrations.jira.statusError' | transloco }}
+                      </span>
+                    }
+                  </div>
+                  <div class="flex flex-wrap gap-x-6 gap-y-1">
+                    <div class="flex flex-col">
+                      <dt class="text-xs text-muted-foreground">
+                        {{ 'integrations.jira.method' | transloco }}
+                      </dt>
+                      <dd class="font-medium">
+                        @if (conn.credentialType === 'OAUTH2') {
+                          {{ 'integrations.jira.methodOauth' | transloco }}
+                        } @else {
+                          {{ 'integrations.jira.methodApiToken' | transloco }}
+                        }
+                      </dd>
+                    </div>
+                    <div class="flex flex-col">
+                      <dt class="text-xs text-muted-foreground">
+                        {{ 'integrations.jira.siteUrl' | transloco }}
+                      </dt>
+                      <dd class="font-medium break-all">{{ conn.siteUrl }}</dd>
+                    </div>
+                    @if (conn.email) {
+                      <div class="flex flex-col">
+                        <dt class="text-xs text-muted-foreground">
+                          {{ 'integrations.jira.email' | transloco }}
+                        </dt>
+                        <dd class="font-medium break-all">{{ conn.email }}</dd>
+                      </div>
+                    }
+                    @if (conn.lastVerifiedAt) {
+                      <div class="flex flex-col">
+                        <dt class="text-xs text-muted-foreground">
+                          {{ 'integrations.jira.lastVerified' | transloco }}
+                        </dt>
+                        <dd class="font-medium">{{ formatDate(conn.lastVerifiedAt) }}</dd>
+                      </div>
+                    }
+                  </div>
+                </dl>
+              } @else {
+                <!-- Primary: connect with Atlassian (OAuth 2.0) -->
+                <div class="flex flex-col gap-2">
+                  <button
+                    hlmBtn
+                    type="button"
+                    class="w-full max-w-md"
+                    (click)="connectOAuth()"
+                    [disabled]="oauthDisabled() || redirecting()"
+                    [attr.title]="
+                      oauthDisabled()
+                        ? ('integrations.jira.oauth.notConfiguredHint' | transloco)
+                        : null
+                    "
+                    data-testid="jira-oauth-connect"
+                  >
+                    @if (redirecting()) {
+                      <hlm-spinner class="h-4 w-4" />
+                    }
+                    {{ 'integrations.jira.oauth.connect' | transloco }}
+                  </button>
+                  @if (oauthDisabled()) {
+                    <p
+                      class="max-w-md text-xs text-muted-foreground"
+                      data-testid="jira-oauth-disabled-hint"
+                    >
+                      {{ 'integrations.jira.oauth.notConfiguredHint' | transloco }}
+                    </p>
+                  }
+                </div>
+
+                <!-- Divider + collapsible API-token fallback -->
+                <div class="flex items-center gap-3 max-w-md">
+                  <span class="h-px flex-1 bg-border"></span>
+                  <button
+                    type="button"
+                    class="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    (click)="tokenOpen.set(!tokenOpen())"
+                    [attr.aria-expanded]="tokenOpen()"
+                    data-testid="jira-token-toggle"
+                  >
+                    {{ 'integrations.jira.oauth.orUseToken' | transloco }}
+                  </button>
+                  <span class="h-px flex-1 bg-border"></span>
+                </div>
+
+                @if (tokenOpen()) {
+                  <!-- Connect form (API-token fallback) -->
+                  <form
+                    [formGroup]="form"
+                    (ngSubmit)="connect()"
+                    class="flex flex-col gap-4"
+                    data-testid="jira-connect-form"
+                  >
+                    <div class="flex flex-col gap-1.5">
+                      <label hlmLabel for="siteUrl" class="flex items-center gap-1">
+                        {{ 'integrations.jira.siteUrl' | transloco }}
+                        <span
+                          class="cursor-help text-muted-foreground"
+                          [attr.title]="'integrations.jira.tooltips.siteUrl' | transloco"
+                          aria-hidden="true"
+                          >&#9432;</span
+                        >
+                      </label>
+                      <input
+                        hlmInput
+                        id="siteUrl"
+                        formControlName="siteUrl"
+                        class="max-w-md"
+                        placeholder="https://your-domain.atlassian.net"
+                        autocomplete="off"
+                        [attr.title]="'integrations.jira.tooltips.siteUrl' | transloco"
+                        data-testid="jira-site-url"
+                      />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label hlmLabel for="email" class="flex items-center gap-1">
+                        {{ 'integrations.jira.email' | transloco }}
+                        <span
+                          class="cursor-help text-muted-foreground"
+                          [attr.title]="'integrations.jira.tooltips.email' | transloco"
+                          aria-hidden="true"
+                          >&#9432;</span
+                        >
+                      </label>
+                      <input
+                        hlmInput
+                        id="email"
+                        type="email"
+                        formControlName="email"
+                        class="max-w-md"
+                        autocomplete="off"
+                        [attr.title]="'integrations.jira.tooltips.email' | transloco"
+                        data-testid="jira-email"
+                      />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      <label hlmLabel for="apiToken" class="flex items-center gap-1">
+                        {{ 'integrations.jira.apiToken' | transloco }}
+                        <span
+                          class="cursor-help text-muted-foreground"
+                          [attr.title]="'integrations.jira.tooltips.apiToken' | transloco"
+                          aria-hidden="true"
+                          >&#9432;</span
+                        >
+                      </label>
+                      <input
+                        hlmInput
+                        id="apiToken"
+                        type="password"
+                        formControlName="apiToken"
+                        class="max-w-md"
+                        autocomplete="off"
+                        [attr.title]="'integrations.jira.tooltips.apiToken' | transloco"
+                        data-testid="jira-api-token"
+                      />
+                      <p class="text-xs text-muted-foreground">
+                        {{ 'integrations.jira.apiTokenHint' | transloco }}
+                      </p>
+                      <a
+                        [href]="apiTokenUrl"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        data-testid="jira-create-token-link"
+                      >
+                        <hlm-icon name="lucideExternalLink" size="12px" />
+                        {{ 'integrations.jira.oauth.createToken' | transloco }}
+                      </a>
+                    </div>
+                  </form>
+                }
+              }
+
+              @if (errorMessage()) {
+                <p class="text-sm text-destructive" data-testid="integrations-error">
+                  {{ errorMessage() }}
+                </p>
+              }
             </div>
 
-            @if (connection(); as conn) {
-              <!-- Connected state -->
-              <dl class="flex flex-col gap-2 text-sm" data-testid="jira-connected">
-                <div class="flex items-center gap-2">
-                  @if (conn.status === 'CONNECTED') {
-                    <hlm-icon name="lucideCircleCheck" size="16px" class="text-emerald-500" />
-                    <span class="font-medium text-emerald-500">
-                      {{ 'integrations.jira.statusConnected' | transloco }}
-                    </span>
-                  } @else {
-                    <hlm-icon name="lucideTriangleAlert" size="16px" class="text-destructive" />
-                    <span class="font-medium text-destructive">
-                      {{ 'integrations.jira.statusError' | transloco }}
-                    </span>
-                  }
-                </div>
-                <div class="flex flex-wrap gap-x-6 gap-y-1">
-                  <div class="flex flex-col">
-                    <dt class="text-xs text-muted-foreground">
-                      {{ 'integrations.jira.method' | transloco }}
-                    </dt>
-                    <dd class="font-medium">
-                      @if (conn.credentialType === 'OAUTH2') {
-                        {{ 'integrations.jira.methodOauth' | transloco }}
-                      } @else {
-                        {{ 'integrations.jira.methodApiToken' | transloco }}
-                      }
-                    </dd>
-                  </div>
-                  <div class="flex flex-col">
-                    <dt class="text-xs text-muted-foreground">
-                      {{ 'integrations.jira.siteUrl' | transloco }}
-                    </dt>
-                    <dd class="font-medium break-all">{{ conn.siteUrl }}</dd>
-                  </div>
-                  @if (conn.email) {
-                    <div class="flex flex-col">
-                      <dt class="text-xs text-muted-foreground">
-                        {{ 'integrations.jira.email' | transloco }}
-                      </dt>
-                      <dd class="font-medium break-all">{{ conn.email }}</dd>
-                    </div>
-                  }
-                  @if (conn.lastVerifiedAt) {
-                    <div class="flex flex-col">
-                      <dt class="text-xs text-muted-foreground">
-                        {{ 'integrations.jira.lastVerified' | transloco }}
-                      </dt>
-                      <dd class="font-medium">{{ formatDate(conn.lastVerifiedAt) }}</dd>
-                    </div>
-                  }
-                </div>
-              </dl>
-            } @else {
-              <!-- Primary: connect with Atlassian (OAuth 2.0) -->
-              <div class="flex flex-col gap-2">
-                <button
-                  hlmBtn
-                  type="button"
-                  class="w-full max-w-md"
-                  (click)="connectOAuth()"
-                  [disabled]="oauthDisabled() || redirecting()"
-                  [attr.title]="
-                    oauthDisabled()
-                      ? ('integrations.jira.oauth.notConfiguredHint' | transloco)
-                      : null
-                  "
-                  data-testid="jira-oauth-connect"
-                >
-                  @if (redirecting()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  }
-                  {{ 'integrations.jira.oauth.connect' | transloco }}
-                </button>
-                @if (oauthDisabled()) {
-                  <p
-                    class="max-w-md text-xs text-muted-foreground"
-                    data-testid="jira-oauth-disabled-hint"
+            @if (connection() || tokenOpen()) {
+              <div
+                class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
+              >
+                @if (connection()) {
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    (click)="test()"
+                    [disabled]="testing()"
+                    data-testid="jira-test"
                   >
-                    {{ 'integrations.jira.oauth.notConfiguredHint' | transloco }}
-                  </p>
+                    @if (testing()) {
+                      <hlm-spinner class="h-4 w-4" />
+                    }
+                    {{ 'integrations.jira.test' | transloco }}
+                  </button>
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="destructive"
+                    type="button"
+                    (click)="disconnectOpen.set(true)"
+                    data-testid="jira-disconnect"
+                  >
+                    {{ 'integrations.jira.disconnect' | transloco }}
+                  </button>
+                } @else if (tokenOpen()) {
+                  <button
+                    hlmBtn
+                    size="sm"
+                    type="button"
+                    (click)="connect()"
+                    [disabled]="form.invalid || connecting()"
+                    data-testid="jira-connect"
+                  >
+                    @if (connecting()) {
+                      <hlm-spinner class="h-4 w-4" />
+                    }
+                    {{ 'integrations.jira.connect' | transloco }}
+                  </button>
                 }
               </div>
-
-              <!-- Divider + collapsible API-token fallback -->
-              <div class="flex items-center gap-3 max-w-md">
-                <span class="h-px flex-1 bg-border"></span>
-                <button
-                  type="button"
-                  class="text-xs font-medium text-muted-foreground hover:text-foreground"
-                  (click)="tokenOpen.set(!tokenOpen())"
-                  [attr.aria-expanded]="tokenOpen()"
-                  data-testid="jira-token-toggle"
-                >
-                  {{ 'integrations.jira.oauth.orUseToken' | transloco }}
-                </button>
-                <span class="h-px flex-1 bg-border"></span>
-              </div>
-
-              @if (tokenOpen()) {
-                <!-- Connect form (API-token fallback) -->
-                <form
-                  [formGroup]="form"
-                  (ngSubmit)="connect()"
-                  class="flex flex-col gap-4"
-                  data-testid="jira-connect-form"
-                >
-                  <div class="flex flex-col gap-1.5">
-                    <label hlmLabel for="siteUrl" class="flex items-center gap-1">
-                      {{ 'integrations.jira.siteUrl' | transloco }}
-                      <span
-                        class="cursor-help text-muted-foreground"
-                        [attr.title]="'integrations.jira.tooltips.siteUrl' | transloco"
-                        aria-hidden="true"
-                        >&#9432;</span
-                      >
-                    </label>
-                    <input
-                      hlmInput
-                      id="siteUrl"
-                      formControlName="siteUrl"
-                      class="max-w-md"
-                      placeholder="https://your-domain.atlassian.net"
-                      autocomplete="off"
-                      [attr.title]="'integrations.jira.tooltips.siteUrl' | transloco"
-                      data-testid="jira-site-url"
-                    />
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label hlmLabel for="email" class="flex items-center gap-1">
-                      {{ 'integrations.jira.email' | transloco }}
-                      <span
-                        class="cursor-help text-muted-foreground"
-                        [attr.title]="'integrations.jira.tooltips.email' | transloco"
-                        aria-hidden="true"
-                        >&#9432;</span
-                      >
-                    </label>
-                    <input
-                      hlmInput
-                      id="email"
-                      type="email"
-                      formControlName="email"
-                      class="max-w-md"
-                      autocomplete="off"
-                      [attr.title]="'integrations.jira.tooltips.email' | transloco"
-                      data-testid="jira-email"
-                    />
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label hlmLabel for="apiToken" class="flex items-center gap-1">
-                      {{ 'integrations.jira.apiToken' | transloco }}
-                      <span
-                        class="cursor-help text-muted-foreground"
-                        [attr.title]="'integrations.jira.tooltips.apiToken' | transloco"
-                        aria-hidden="true"
-                        >&#9432;</span
-                      >
-                    </label>
-                    <input
-                      hlmInput
-                      id="apiToken"
-                      type="password"
-                      formControlName="apiToken"
-                      class="max-w-md"
-                      autocomplete="off"
-                      [attr.title]="'integrations.jira.tooltips.apiToken' | transloco"
-                      data-testid="jira-api-token"
-                    />
-                    <p class="text-xs text-muted-foreground">
-                      {{ 'integrations.jira.apiTokenHint' | transloco }}
-                    </p>
-                    <a
-                      [href]="apiTokenUrl"
-                      target="_blank"
-                      rel="noopener"
-                      class="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
-                      data-testid="jira-create-token-link"
-                    >
-                      <hlm-icon name="lucideExternalLink" size="12px" />
-                      {{ 'integrations.jira.oauth.createToken' | transloco }}
-                    </a>
-                  </div>
-                </form>
-              }
             }
+          </section>
 
-            @if (errorMessage()) {
-              <p class="text-sm text-destructive" data-testid="integrations-error">
-                {{ errorMessage() }}
+          <!-- Informational side panel: how the Jira integration works -->
+          <aside
+            class="rounded-2xl border border-border bg-muted/20 p-5"
+            data-testid="jira-info-panel"
+          >
+            <h2 class="text-base font-semibold">
+              {{ 'integrations.jira.howItWorks.title' | transloco }}
+            </h2>
+
+            <ol class="mt-4 flex flex-col gap-4">
+              <li class="flex gap-3">
+                <span
+                  class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                >
+                  <hlm-icon name="lucidePlug" size="14px" />
+                </span>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.jira.howItWorks.step1' | transloco }}
+                </p>
+              </li>
+              <li class="flex gap-3">
+                <span
+                  class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                >
+                  <hlm-icon name="lucideSettings2" size="14px" />
+                </span>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.jira.howItWorks.step2' | transloco }}
+                </p>
+              </li>
+              <li class="flex gap-3">
+                <span
+                  class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                >
+                  <hlm-icon name="lucideSend" size="14px" />
+                </span>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.jira.howItWorks.step3' | transloco }}
+                </p>
+              </li>
+            </ol>
+
+            <div class="mt-5 rounded-lg border border-border bg-background p-3">
+              <p class="text-xs font-medium">
+                {{ 'integrations.jira.howItWorks.whatSyncsTitle' | transloco }}
               </p>
-            }
-          </div>
-
-          @if (connection() || tokenOpen()) {
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              @if (connection()) {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  (click)="test()"
-                  [disabled]="testing()"
-                  data-testid="jira-test"
-                >
-                  @if (testing()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  }
-                  {{ 'integrations.jira.test' | transloco }}
-                </button>
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="destructive"
-                  type="button"
-                  (click)="disconnectOpen.set(true)"
-                  data-testid="jira-disconnect"
-                >
-                  {{ 'integrations.jira.disconnect' | transloco }}
-                </button>
-              } @else if (tokenOpen()) {
-                <button
-                  hlmBtn
-                  size="sm"
-                  type="button"
-                  (click)="connect()"
-                  [disabled]="form.invalid || connecting()"
-                  data-testid="jira-connect"
-                >
-                  @if (connecting()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  }
-                  {{ 'integrations.jira.connect' | transloco }}
-                </button>
-              }
+              <p class="mt-1 text-xs text-muted-foreground">
+                {{ 'integrations.jira.howItWorks.whatSyncs' | transloco }}
+              </p>
             </div>
-          }
-        </section>
+
+            <p class="mt-4 text-xs text-muted-foreground">
+              {{ 'integrations.jira.howItWorks.oauthHint' | transloco }}
+            </p>
+            <a
+              [href]="apiTokenDocsUrl"
+              target="_blank"
+              rel="noopener"
+              class="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
+              data-testid="jira-learn-more-link"
+            >
+              <hlm-icon name="lucideExternalLink" size="12px" />
+              {{ 'integrations.jira.howItWorks.learnMore' | transloco }}
+            </a>
+          </aside>
+        </div>
 
         <!-- Disconnect confirm modal -->
         <app-modal [(open)]="disconnectOpen">
@@ -386,10 +470,12 @@ export class OrgIntegrations {
   protected readonly tokenOpen = signal(false);
 
   /** Where users mint an Atlassian API token (opens in a new tab). */
-  protected readonly apiTokenUrl =
-    'https://id.atlassian.com/manage-profile/security/api-tokens';
+  protected readonly apiTokenUrl = 'https://id.atlassian.com/manage-profile/security/api-tokens';
 
   protected readonly orgId = computed(() => this.store.organizationId());
+  /** Atlassian's own docs on managing API tokens (opens in a new tab). */
+  protected readonly apiTokenDocsUrl =
+    'https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/';
 
   protected readonly form = this.fb.nonNullable.group({
     siteUrl: ['', [Validators.required, Validators.maxLength(500)]],

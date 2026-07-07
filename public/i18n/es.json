@@ -1220,6 +1220,16 @@
         "siteUrl": "Tu sitio de Jira, p. ej. https://tu-espacio.atlassian.net",
         "email": "El correo de tu cuenta Atlassian, la dueña del API token.",
         "apiToken": "Pégalo aquí; se envía cifrado y nunca se guarda en el navegador."
+      },
+      "howItWorks": {
+        "title": "Cómo funciona",
+        "step1": "Conecta tu sitio de Jira, con Atlassian (OAuth) o un API token.",
+        "step2": "En cada proyecto, elige el proyecto de Jira y el tipo de incidencia en Ajustes del proyecto → Integraciones.",
+        "step3": "Envía historias a Jira desde el backlog o el detalle de una historia.",
+        "whatSyncsTitle": "Qué se sincroniza",
+        "whatSyncs": "El título de la historia se convierte en el resumen de la incidencia, y la descripción lleva el rol, la acción y el beneficio más los criterios de aceptación (Dado/Cuando/Entonces).",
+        "oauthHint": "Conectar con Atlassian es lo más fácil: un clic, sin escribir nada. El API token es una alternativa si no puedes usar OAuth.",
+        "learnMore": "Más información sobre los API tokens"
       }
     },
     "project": {
