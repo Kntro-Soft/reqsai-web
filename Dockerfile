@@ -3,7 +3,7 @@
 # ---- Build stage ----
 # Use node:24-alpine as base so Angular CLI 22 gets Node >=24.15.0.
 # oven/bun:1.3-alpine ships Node 24.3.0 which is below that minimum.
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /workspace
 
 # Install Bun (used for dependency installation and running scripts)
