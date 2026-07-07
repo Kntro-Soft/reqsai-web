@@ -1200,7 +1200,27 @@
       "statusError": "Connection error",
       "lastVerified": "Last verified",
       "testOk": "Connection is working.",
-      "testOkNamed": "Connection is working — signed in as {{name}}."
+      "testOkNamed": "Connection is working — signed in as {{name}}.",
+      "method": "Method",
+      "methodOauth": "Connected via Atlassian (OAuth)",
+      "methodApiToken": "API token",
+      "oauth": {
+        "connect": "Connect with Atlassian",
+        "orUseToken": "or use an API token",
+        "createToken": "Create your API token",
+        "connected": "Jira connected via Atlassian.",
+        "exchanging": "Finishing the connection with Atlassian…",
+        "denied": "Atlassian authorization was cancelled. Nothing was connected.",
+        "backToIntegrations": "Back to integrations",
+        "pickSiteTitle": "Choose a Jira site",
+        "pickSiteBody": "Your Atlassian account has access to several sites. Pick the one to connect.",
+        "notConfiguredHint": "Atlassian sign-in isn't available yet — an administrator must configure the Atlassian app on the server. You can still connect with an API token below."
+      },
+      "tooltips": {
+        "siteUrl": "Your Jira site, e.g. https://your-space.atlassian.net",
+        "email": "The email of your Atlassian account — the one that owns the API token.",
+        "apiToken": "Paste it here; it is sent encrypted and never stored in your browser."
+      }
     },
     "project": {
       "subtitle": "Map this project to a Jira project so stories can be pushed as issues.",
@@ -1313,6 +1333,9 @@
     "JIRA_UNREACHABLE": "We couldn't reach Jira. Check the site URL and try again.",
     "JIRA_PROJECT_NOT_FOUND": "That Jira project no longer exists or is not accessible.",
     "JIRA_PUSH_FAILED": "We couldn't push to Jira. Please try again.",
+    "JIRA_OAUTH_NOT_CONFIGURED": "Atlassian sign-in isn't set up on the server yet. Connect with an API token, or ask an administrator to configure it.",
+    "JIRA_OAUTH_STATE_INVALID": "That Atlassian sign-in link is invalid or expired. Please start the connection again.",
+    "JIRA_OAUTH_EXCHANGE_FAILED": "We couldn't finish connecting with Atlassian. Please try again.",
     "INTEGRATION_ENCRYPTION_ERROR": "We couldn't securely store those credentials. Please try again.",
     "http": {
       "400": "Please check your input and try again.",

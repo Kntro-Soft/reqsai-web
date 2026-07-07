@@ -1200,7 +1200,27 @@
       "statusError": "Error de conexión",
       "lastVerified": "Última verificación",
       "testOk": "La conexión funciona.",
-      "testOkNamed": "La conexión funciona: sesión iniciada como {{name}}."
+      "testOkNamed": "La conexión funciona: sesión iniciada como {{name}}.",
+      "method": "Método",
+      "methodOauth": "Conectado vía Atlassian (OAuth)",
+      "methodApiToken": "Token de API",
+      "oauth": {
+        "connect": "Conectar con Atlassian",
+        "orUseToken": "o usa un API token",
+        "createToken": "Crea tu API token",
+        "connected": "Jira conectado vía Atlassian.",
+        "exchanging": "Finalizando la conexión con Atlassian…",
+        "denied": "Se canceló la autorización de Atlassian. No se conectó nada.",
+        "backToIntegrations": "Volver a integraciones",
+        "pickSiteTitle": "Elige un sitio de Jira",
+        "pickSiteBody": "Tu cuenta de Atlassian tiene acceso a varios sitios. Elige el que quieres conectar.",
+        "notConfiguredHint": "El inicio de sesión con Atlassian aún no está disponible: un administrador debe configurar la app de Atlassian en el servidor. Aún puedes conectar con un API token abajo."
+      },
+      "tooltips": {
+        "siteUrl": "Tu sitio de Jira, p. ej. https://tu-espacio.atlassian.net",
+        "email": "El correo de tu cuenta Atlassian, la dueña del API token.",
+        "apiToken": "Pégalo aquí; se envía cifrado y nunca se guarda en el navegador."
+      }
     },
     "project": {
       "subtitle": "Asocia este proyecto a un proyecto de Jira para enviar historias como incidencias.",
@@ -1313,6 +1333,9 @@
     "JIRA_UNREACHABLE": "No pudimos conectar con Jira. Revisa la URL del sitio e inténtalo de nuevo.",
     "JIRA_PROJECT_NOT_FOUND": "Ese proyecto de Jira ya no existe o no es accesible.",
     "JIRA_PUSH_FAILED": "No pudimos enviar a Jira. Inténtalo de nuevo.",
+    "JIRA_OAUTH_NOT_CONFIGURED": "El inicio de sesión con Atlassian aún no está configurado en el servidor. Conecta con un API token o pide a un administrador que lo configure.",
+    "JIRA_OAUTH_STATE_INVALID": "Ese enlace de inicio de sesión de Atlassian no es válido o ha caducado. Inicia la conexión de nuevo.",
+    "JIRA_OAUTH_EXCHANGE_FAILED": "No pudimos finalizar la conexión con Atlassian. Inténtalo de nuevo.",
     "INTEGRATION_ENCRYPTION_ERROR": "No pudimos guardar esas credenciales de forma segura. Inténtalo de nuevo.",
     "http": {
       "400": "Revisa los datos e inténtalo de nuevo.",
