@@ -18,7 +18,7 @@ COPY . .
 RUN bun run build
 
 # ---- Runtime stage ----
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.31-alpine AS runtime
 
 # Remove default nginx static assets
 RUN rm -rf /usr/share/nginx/html/*
