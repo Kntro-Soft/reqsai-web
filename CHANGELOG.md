@@ -19,7 +19,14 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `PRESENCE_STATE` event on the existing per-session WebSocket topic (no extra subscription), scoped to the
   live session only, and reuses the shared avatar (image with monogram fallback). New joiners animate in and
   names show as tooltips (`discovery.presence.*`, en/es).
-
+- **Integrations — Jira** (`feature/integrations-jira`): a real Organization **Integrations** page
+  (replacing the placeholder) to connect a Jira site (site URL / email / API token — the token is only
+  ever sent to the backend, never stored client-side), with **Test connection** and a confirm-guarded
+  **Disconnect**. A per-project **Integrations** settings sub-page maps the project to a Jira project +
+  issue type (connection → projects → issue-types cascading selects, save/clear the target). Adds a
+  **Push to Jira** action on the story detail page (opens the created issue) and a **Push all to Jira**
+  action on the backlog list (toasts pushed/failed counts), plus the `IntegrationsApiService`, DTOs, and
+  the new `errors.*` codes (`INTEGRATION_*`, `JIRA_*`) so `messageForError` localizes backend failures.
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps
