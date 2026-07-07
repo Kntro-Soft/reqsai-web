@@ -5,6 +5,9 @@ import {
   AuthorizeUrlResponse,
   CreateJiraConnectionRequest,
   IntegrationConnectionResponse,
+  JiraImportPreviewResponse,
+  JiraImportRequest,
+  JiraImportResponse,
   JiraIssueTypeResponse,
   JiraOAuthCallbackRequest,
   JiraProjectResponse,
@@ -162,5 +165,20 @@ export class IntegrationsApiService {
       `${this.projectBase(projectId)}/stories/push-all`,
       {},
     );
+  }
+
+  // --- Import FROM Jira ---
+
+  /** Preview the Jira issues available to import, flagging duplicates already mapped to stories. */
+  previewJiraImport(projectId: string): Observable<JiraImportPreviewResponse> {
+    return this.http.get<JiraImportPreviewResponse>(`${this.projectBase(projectId)}/import/preview`);
+  }
+
+  /**
+   * Import Jira issues as stories. Pass the chosen `issueKeys`, or an empty body
+   * (omit `issueKeys`) to import every available issue.
+   */
+  importFromJira(projectId: string, request: JiraImportRequest = {}): Observable<JiraImportResponse> {
+    return this.http.post<JiraImportResponse>(`${this.projectBase(projectId)}/import`, request);
   }
 }

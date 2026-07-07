@@ -98,6 +98,54 @@ export interface JiraPushAllResponse {
   failed: number;
 }
 
+// --- Import FROM Jira ---
+
+/**
+ * One candidate Jira issue for import, as returned by the preview. `duplicate` is
+ * true when an existing story already maps to this issue (then `existingStoryId`
+ * points at it); such rows are de-selected by default in the import picker.
+ */
+export interface JiraImportIssue {
+  jiraIssueKey: string;
+  summary: string;
+  issueType: string;
+  duplicate: boolean;
+  existingStoryId?: string;
+}
+
+/** The import preview: the candidate Jira issues plus the total available. */
+export interface JiraImportPreviewResponse {
+  total: number;
+  issues: JiraImportIssue[];
+}
+
+/**
+ * Body for POST import. Omit `issueKeys` (or send undefined) to import every
+ * available issue; otherwise only the listed keys are imported.
+ */
+export interface JiraImportRequest {
+  issueKeys?: string[];
+}
+
+/** The per-issue outcome of an import. */
+export type JiraImportStatus = 'imported' | 'duplicate' | 'failed';
+
+/** One issue's import result: its status and, when imported, the new story id. */
+export interface JiraImportResult {
+  jiraIssueKey: string;
+  storyId?: string;
+  status: JiraImportStatus;
+  message?: string;
+}
+
+/** Aggregate outcome of an import: per-issue results plus imported/skipped/failed counts. */
+export interface JiraImportResponse {
+  imported: number;
+  skipped: number;
+  failed: number;
+  results: JiraImportResult[];
+}
+
 // --- Atlassian OAuth 2.0 ---
 
 /**
@@ -147,4 +195,35 @@ export type OAuthCallbackResult = IntegrationConnectionResponse | JiraSitesRespo
  */
 export function isSitesResult(result: OAuthCallbackResult): result is JiraSitesResponse {
   return Array.isArray((result as JiraSitesResponse).sites);
+}
+
+/**
+ * The Jira issue keys selected by default in the import picker: every NON-duplicate
+ * candidate. Duplicates (already mapped to an existing story) are left unchecked so
+ * a confirm imports only new work by default. Pure and exported so it is unit-tested.
+ */
+export function defaultImportSelection(preview: JiraImportPreviewResponse): string[] {
+  return preview.issues.filter((i) => !i.duplicate).map((i) => i.jiraIssueKey);
+}
+
+/**
+ * The counts to surface after an import, derived defensively from the per-issue
+ * `results` rather than trusting the top-level tallies, so the toast can never
+ * disagree with the rows. `imported`/`duplicate`/`failed` map to the status values;
+ * `skipped` counts the duplicates (nothing was created for them). Pure/testable.
+ */
+export function summarizeImport(response: JiraImportResponse): {
+  imported: number;
+  skipped: number;
+  failed: number;
+} {
+  let imported = 0;
+  let skipped = 0;
+  let failed = 0;
+  for (const r of response.results) {
+    if (r.status === 'imported') imported++;
+    else if (r.status === 'duplicate') skipped++;
+    else failed++;
+  }
+  return { imported, skipped, failed };
 }

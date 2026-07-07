@@ -1256,6 +1256,16 @@
       "pushedAll": "Pushed {{pushed}} stories to Jira ({{failed}} failed).",
       "notConfigured": "No Jira mapping is configured for this project. Set it up in the project integration settings first.",
       "pushError": "We couldn't push to Jira. Please try again."
+    },
+    "import": {
+      "action": "Import from Jira",
+      "title": "Import issues from Jira",
+      "subtitle": "{{total}} issue(s) available. Choose which to import as stories.",
+      "selectAll": "Select all",
+      "duplicate": "Already imported",
+      "empty": "There are no Jira issues to import for this project.",
+      "confirm": "Import {{count}}",
+      "summary": "Imported {{imported}}, skipped {{skipped}}, {{failed}} failed."
     }
   },
   "errors": {
@@ -1345,6 +1355,7 @@
     "JIRA_UNREACHABLE": "We couldn't reach Jira. Check the site URL and try again.",
     "JIRA_PROJECT_NOT_FOUND": "That Jira project no longer exists or is not accessible.",
     "JIRA_PUSH_FAILED": "We couldn't push to Jira. Please try again.",
+    "JIRA_IMPORT_FAILED": "We couldn't import from Jira. Please try again.",
     "JIRA_OAUTH_NOT_CONFIGURED": "Atlassian sign-in isn't set up on the server yet. Connect with an API token, or ask an administrator to configure it.",
     "JIRA_OAUTH_STATE_INVALID": "That Atlassian sign-in link is invalid or expired. Please start the connection again.",
     "JIRA_OAUTH_EXCHANGE_FAILED": "We couldn't finish connecting with Atlassian. Please try again.",

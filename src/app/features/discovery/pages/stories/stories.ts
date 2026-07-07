@@ -10,14 +10,21 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucidePlus, lucideSearch, lucideUpload } from '@ng-icons/lucide';
+import { lucideDownload, lucidePlus, lucideSearch, lucideUpload } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
+import {
+  JiraImportIssue,
+  defaultImportSelection,
+  summarizeImport,
+} from '../../../workspace/data/integrations.models';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HttpErrorResponse } from '@angular/common/http';
-import { HlmSpinner } from '../../../../shared/ui';
+import { Modal } from '../../../../shared/components/modal/modal';
+import { Indeterminate } from '../../../../shared/directives/indeterminate';
+import { HlmBadge, HlmSpinner } from '../../../../shared/ui';
 import {
   StoryListFilters,
   StoryPriority,
@@ -46,6 +53,9 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
   imports: [
     RouterLink,
     Select,
+    Modal,
+    Indeterminate,
+    HlmBadge,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -53,7 +63,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucidePlus, lucideSearch, lucideUpload })],
+  viewProviders: [provideIcons({ lucideDownload, lucidePlus, lucideSearch, lucideUpload })],
   host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-6">
@@ -63,6 +73,22 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="openImport()"
+            [disabled]="importPreviewing()"
+            data-testid="stories-import"
+          >
+            @if (importPreviewing()) {
+              <hlm-spinner class="h-4 w-4" />
+            } @else {
+              <hlm-icon name="lucideDownload" size="15px" />
+            }
+            {{ 'integrations.import.action' | transloco }}
+          </button>
           <button
             hlmBtn
             size="sm"
@@ -280,6 +306,88 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
         </div>
       }
     </div>
+
+    <!-- Import from Jira: preview picker -->
+    <app-modal [(open)]="importOpen">
+      <span modalTitle>{{ 'integrations.import.title' | transloco }}</span>
+      <div class="flex flex-col gap-3">
+        @if (importIssues().length === 0) {
+          <p class="text-sm text-muted-foreground" data-testid="import-empty">
+            {{ 'integrations.import.empty' | transloco }}
+          </p>
+        } @else {
+          <p class="text-sm text-muted-foreground">
+            {{ 'integrations.import.subtitle' | transloco: { total: importIssues().length } }}
+          </p>
+          <label
+            class="flex cursor-pointer items-center gap-2.5 border-b border-border pb-2 text-sm font-medium"
+          >
+            <input
+              type="checkbox"
+              class="h-4 w-4 shrink-0 accent-primary"
+              [checked]="allSelected()"
+              [appIndeterminate]="someSelected()"
+              (change)="toggleAll()"
+              data-testid="import-select-all"
+            />
+            {{ 'integrations.import.selectAll' | transloco }}
+          </label>
+          <div class="-mx-1 max-h-72 overflow-y-auto">
+            @for (issue of importIssues(); track issue.jiraIssueKey) {
+              <label
+                class="flex cursor-pointer items-start gap-2.5 rounded-lg px-1 py-2 text-sm hover:bg-accent/50"
+              >
+                <input
+                  type="checkbox"
+                  class="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+                  [checked]="selectedKeys().has(issue.jiraIssueKey)"
+                  (change)="toggleIssue(issue.jiraIssueKey)"
+                  [attr.data-testid]="'import-issue-' + issue.jiraIssueKey"
+                />
+                <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span class="flex items-center gap-2">
+                    <span class="font-mono text-xs text-muted-foreground">{{
+                      issue.jiraIssueKey
+                    }}</span>
+                    <span class="text-xs text-muted-foreground">· {{ issue.issueType }}</span>
+                    @if (issue.duplicate) {
+                      <span hlmBadge variant="secondary" data-testid="import-duplicate-badge">
+                        {{ 'integrations.import.duplicate' | transloco }}
+                      </span>
+                    }
+                  </span>
+                  <span class="truncate font-medium text-foreground">{{ issue.summary }}</span>
+                </span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="importOpen.set(false)"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        type="button"
+        (click)="confirmImport()"
+        [disabled]="selectedKeys().size === 0 || importing()"
+        data-testid="import-confirm"
+      >
+        @if (importing()) {
+          <hlm-spinner class="h-4 w-4" />
+        }
+        {{ 'integrations.import.confirm' | transloco: { count: selectedKeys().size } }}
+      </button>
+    </app-modal>
   `,
 })
 export class ProjectStories implements OnInit, OnDestroy {
@@ -292,6 +400,22 @@ export class ProjectStories implements OnInit, OnDestroy {
   readonly projectId = input.required<string>();
 
   protected readonly pushingAll = signal(false);
+
+  // Import-from-Jira flow: preview loads the candidate issues into the picker modal,
+  // where non-duplicates are selected by default; confirm POSTs the chosen keys.
+  protected readonly importOpen = signal(false);
+  protected readonly importPreviewing = signal(false);
+  protected readonly importing = signal(false);
+  protected readonly importIssues = signal<JiraImportIssue[]>([]);
+  protected readonly selectedKeys = signal<ReadonlySet<string>>(new Set());
+  protected readonly allSelected = computed(
+    () => this.importIssues().length > 0 && this.selectedKeys().size === this.importIssues().length,
+  );
+  /** Some — but not all — issues selected: drives the header checkbox's indeterminate state. */
+  protected readonly someSelected = computed(() => {
+    const n = this.selectedKeys().size;
+    return n > 0 && n < this.importIssues().length;
+  });
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
   protected readonly pageSize = 20;
@@ -434,6 +558,75 @@ export class ProjectStories implements OnInit, OnDestroy {
       (err.error as { code?: unknown } | null)?.code === 'INTEGRATION_TARGET_NOT_CONFIGURED'
     ) {
       return this.transloco.translate('integrations.push.notConfigured');
+    }
+    return messageForError(err, this.transloco);
+  }
+
+  /**
+   * Fetches the Jira import preview and opens the picker modal with the candidate
+   * issues (non-duplicates pre-selected). An unconfigured target
+   * (INTEGRATION_TARGET_NOT_CONFIGURED) points the user at project settings.
+   */
+  protected openImport(): void {
+    if (this.importPreviewing()) return;
+    this.importPreviewing.set(true);
+    this.integrations.previewJiraImport(this.projectId()).subscribe({
+      next: (preview) => {
+        this.importPreviewing.set(false);
+        this.importIssues.set(preview.issues);
+        this.selectedKeys.set(new Set(defaultImportSelection(preview)));
+        this.importOpen.set(true);
+      },
+      error: (err: unknown) => {
+        this.importPreviewing.set(false);
+        this.toast.error(this.importErrorMessage(err));
+      },
+    });
+  }
+
+  protected toggleAll(): void {
+    if (this.allSelected()) {
+      this.selectedKeys.set(new Set());
+    } else {
+      this.selectedKeys.set(new Set(this.importIssues().map((i) => i.jiraIssueKey)));
+    }
+  }
+
+  protected toggleIssue(key: string): void {
+    this.selectedKeys.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  /** Imports the selected Jira issues, toasts the imported/skipped/failed summary, and reloads. */
+  protected confirmImport(): void {
+    if (this.importing() || this.selectedKeys().size === 0) return;
+    this.importing.set(true);
+    const issueKeys = [...this.selectedKeys()];
+    this.integrations.importFromJira(this.projectId(), { issueKeys }).subscribe({
+      next: (response) => {
+        this.importing.set(false);
+        this.importOpen.set(false);
+        const summary = summarizeImport(response);
+        this.toast.success(this.transloco.translate('integrations.import.summary', summary));
+        this.resetAndLoad();
+      },
+      error: (err: unknown) => {
+        this.importing.set(false);
+        this.toast.error(this.importErrorMessage(err));
+      },
+    });
+  }
+
+  private importErrorMessage(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const code = (err.error as { code?: unknown } | null)?.code;
+      if (code === 'INTEGRATION_TARGET_NOT_CONFIGURED') {
+        return this.transloco.translate('integrations.push.notConfigured');
+      }
     }
     return messageForError(err, this.transloco);
   }

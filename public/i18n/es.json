@@ -1256,6 +1256,16 @@
       "pushedAll": "Se enviaron {{pushed}} historias a Jira ({{failed}} con error).",
       "notConfigured": "Este proyecto no tiene un mapeo de Jira configurado. Configúralo primero en la configuración de integración del proyecto.",
       "pushError": "No pudimos enviar a Jira. Inténtalo de nuevo."
+    },
+    "import": {
+      "action": "Importar de Jira",
+      "title": "Importar incidencias de Jira",
+      "subtitle": "{{total}} incidencia(s) disponible(s). Elige cuáles importar como historias.",
+      "selectAll": "Seleccionar todo",
+      "duplicate": "Ya importada",
+      "empty": "No hay incidencias de Jira para importar en este proyecto.",
+      "confirm": "Importar {{count}}",
+      "summary": "Se importaron {{imported}}, se omitieron {{skipped}}, {{failed}} con error."
     }
   },
   "errors": {
@@ -1345,6 +1355,7 @@
     "JIRA_UNREACHABLE": "No pudimos conectar con Jira. Revisa la URL del sitio e inténtalo de nuevo.",
     "JIRA_PROJECT_NOT_FOUND": "Ese proyecto de Jira ya no existe o no es accesible.",
     "JIRA_PUSH_FAILED": "No pudimos enviar a Jira. Inténtalo de nuevo.",
+    "JIRA_IMPORT_FAILED": "No pudimos importar de Jira. Inténtalo de nuevo.",
     "JIRA_OAUTH_NOT_CONFIGURED": "El inicio de sesión con Atlassian aún no está configurado en el servidor. Conecta con un API token o pide a un administrador que lo configure.",
     "JIRA_OAUTH_STATE_INVALID": "Ese enlace de inicio de sesión de Atlassian no es válido o ha caducado. Inicia la conexión de nuevo.",
     "JIRA_OAUTH_EXCHANGE_FAILED": "No pudimos finalizar la conexión con Atlassian. Inténtalo de nuevo.",
