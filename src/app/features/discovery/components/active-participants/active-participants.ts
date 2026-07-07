@@ -79,7 +79,7 @@ import { SessionParticipant } from '../../data/discovery.models';
         </div>
 
         <!-- Count label (hidden on very small screens) -->
-        <span class="hidden text-xs font-medium text-muted-foreground sm:inline">
+        <span class="hidden whitespace-nowrap text-xs font-medium text-muted-foreground sm:inline">
           {{ 'discovery.presence.viewing' | transloco: { count: count() } }}
         </span>
       </div>
