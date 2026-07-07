@@ -294,9 +294,9 @@ export class Shell {
   private readonly orgSettingsSegs: { seg: string; soon?: boolean }[] = [
     { seg: 'general' },
     { seg: 'members' },
-    { seg: 'billing', soon: true },
+    { seg: 'billing' },
     { seg: 'integrations', soon: true },
-    { seg: 'usage', soon: true },
+    { seg: 'usage' },
   ];
   private readonly projectRootSegs: { seg: string }[] = [
     { seg: 'overview' },

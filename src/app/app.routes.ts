@@ -118,8 +118,7 @@ export const routes: Routes = [
             path: 'billing',
             title: 'titles.billing',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.billing', icon: 'lucideCreditCard' },
+              import('./features/billing/pages/billing/billing').then((m) => m.Billing),
           },
           {
             path: 'integrations',
@@ -132,10 +131,28 @@ export const routes: Routes = [
             path: 'usage',
             title: 'titles.usage',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.usage', icon: 'lucideChartLine' },
+              import('./features/billing/pages/usage/usage').then((m) => m.Usage),
           },
         ],
+      },
+      // Payment-provider hosted-checkout return landings (Stripe success/cancel URLs).
+      {
+        path: 'billing/success',
+        title: 'titles.billing',
+        loadComponent: () =>
+          import('./features/billing/pages/checkout-result/checkout-result').then(
+            (m) => m.CheckoutResult,
+          ),
+        data: { outcome: 'success' },
+      },
+      {
+        path: 'billing/cancel',
+        title: 'titles.billing',
+        loadComponent: () =>
+          import('./features/billing/pages/checkout-result/checkout-result').then(
+            (m) => m.CheckoutResult,
+          ),
+        data: { outcome: 'cancel' },
       },
       {
         path: 'account',

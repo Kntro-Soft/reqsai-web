@@ -105,6 +105,62 @@
     "title": "Próximamente",
     "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
   },
+  "billing": {
+    "loadError": "No pudimos cargar tu suscripción. Solo el propietario de la organización puede gestionar la facturación.",
+    "planName": {
+      "FREE": "Gratis",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "status": {
+      "ACTIVE": "Activa",
+      "CANCELLED": "Cancelada",
+      "PAST_DUE": "Pago pendiente",
+      "TRIALING": "Prueba"
+    },
+    "free": "Gratis",
+    "perMonth": "/ mes",
+    "current": "Plan actual",
+    "included": "Incluido",
+    "freeDesc": "Estás en el plan gratuito.",
+    "renewsOn": "Se renueva el {{date}}.",
+    "cancelsOn": "Se cancela el {{date}}. Conservas el acceso hasta entonces.",
+    "reactivate": "Reactivar",
+    "cancel": "Cancelar plan",
+    "keepPlan": "Mantener plan",
+    "upgradeTo": "Cambiar a {{plan}}",
+    "feature": {
+      "tokens": "{{count}} tokens de IA / mes",
+      "projects": "{{count}} proyectos",
+      "members": "{{count}} miembros",
+      "documents": "{{count}} documentos por proyecto",
+      "glossary": "{{count}} términos de glosario por proyecto"
+    },
+    "upgradeModalTitle": "Confirmar cambio de plan",
+    "upgradeModalBody": "¿Cambiar a {{plan}} por {{price}} al mes? Tus nuevos límites se aplican de inmediato.",
+    "confirmUpgrade": "Mejorar plan",
+    "upgradeSuccess": "Tu plan fue actualizado.",
+    "cancelModalTitle": "¿Cancelar la suscripción?",
+    "cancelModalBody": "Tu plan sigue activo hasta el {{date}} y luego vuelve a Gratis. Puedes reactivarlo en cualquier momento antes de esa fecha.",
+    "cancelSuccess": "Tu suscripción fue cancelada.",
+    "reactivateSuccess": "Tu suscripción fue reactivada.",
+    "checkout": {
+      "successTitle": "Pago recibido",
+      "successBody": "¡Gracias! Tu suscripción se está activando y estará lista en un momento.",
+      "cancelTitle": "Pago cancelado",
+      "cancelBody": "No se realizó ningún cargo. Puedes elegir un plan de nuevo cuando quieras.",
+      "backToBilling": "Volver a facturación"
+    }
+  },
+  "usage": {
+    "loadError": "No pudimos cargar tu consumo. Solo el propietario de la organización puede verlo.",
+    "tokensTitle": "Tokens de IA",
+    "period": "{{start}} - {{end}}",
+    "remaining": "{{count}} tokens restantes",
+    "exhausted": "Has agotado tu cuota mensual de tokens. Mejora tu plan para obtener más.",
+    "planTitle": "Plan actual",
+    "managePlan": "Gestionar plan"
+  },
   "userMenu": {
     "ariaLabel": "Menú de usuario",
     "personalAccount": "Cuenta personal",
@@ -1120,6 +1176,12 @@
     "ORGANIZATION_NOT_FOUND": "Esa organización ya no existe.",
     "ORGANIZATION_SLUG_ALREADY_EXISTS": "Ese nombre de organización ya está en uso.",
     "ORGANIZATION_EDIT_PERMISSION_DENIED": "No tienes permiso para editar esta organización.",
+    "SUBSCRIPTION_NOT_FOUND": "No encontramos una suscripción para esta organización.",
+    "SUBSCRIPTION_ALREADY_EXISTS": "Esta organización ya tiene una suscripción.",
+    "INVALID_PLAN_CHANGE": "Ese cambio de plan no está permitido.",
+    "INVALID_SUBSCRIPTION_STATE": "Tu suscripción no está en un estado que permita esta acción.",
+    "PLAN_NOT_PURCHASABLE": "Ese plan no se puede comprar.",
+    "PAYMENT_GATEWAY_ERROR": "El proveedor de pago no pudo procesar la solicitud. Inténtalo de nuevo.",
     "INVALID_GENERATION_SETTINGS": "Esos ajustes de generación no son válidos.",
     "GLOSSARY_NOT_FOUND": "Ese glosario ya no existe.",
     "GLOSSARY_TERM_NOT_FOUND": "Ese término del glosario ya no existe.",
