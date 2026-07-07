@@ -972,6 +972,10 @@
     "live": {
       "banner": "Live session in progress â€” {{language}}"
     },
+    "presence": {
+      "viewing": "{{count}} viewing",
+      "more": "{{count}} more"
+    },
     "composer": {
       "placeholder": "Message discoveryâ€¦",
       "comingSoon": "Text to pipeline is coming soon.",

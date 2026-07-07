@@ -972,6 +972,10 @@
     "live": {
       "banner": "Sesión en vivo en curso — {{language}}"
     },
+    "presence": {
+      "viewing": "{{count}} viendo",
+      "more": "{{count}} más"
+    },
     "composer": {
       "placeholder": "Escribe a discovery…",
       "comingSoon": "La entrada de texto llegará pronto.",
