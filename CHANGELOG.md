@@ -143,6 +143,7 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `public/i18n/es.json` (e.g. "ElicitaciÃ³n con IA" → "Elicitación con IA") that resulted from a UTF-8
   payload being re-decoded as CP1252 during a rebase resolution. Reversed the double-encoding on the
   affected values only; `en.json` was unaffected and locale key parity is preserved.
+- **i18n — English encoding errors and Spanish typos** (`bugfix/i18n-typos-and-encoding`): fixed UTF-8 double-encoding issues (such as `â€¦` -> `…` and `â€”` -> `—`) in `en.json` and corrected multiple translation typos/inconsistencies (e.g., `"Resuelto"` -> `"Resolver"`, `"API token"` -> `"token de API"`) in `es.json` while maintaining complete translation key parity.
 
 ---
 
