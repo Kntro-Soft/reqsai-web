@@ -16,16 +16,24 @@ function people(count: number): SessionParticipant[] {
 }
 
 describe('ActiveParticipants', () => {
-  function render(participants: SessionParticipant[], max?: number): HTMLElement {
+  afterEach(() => {
+    // CDK overlays are portalled onto document.body and outlive the fixture.
+    document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove());
+  });
+
+  function build(participants: SessionParticipant[], max?: number): ComponentFixture<ActiveParticipants> {
     TestBed.configureTestingModule({
       imports: [ActiveParticipants, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
     });
-    const fixture: ComponentFixture<ActiveParticipants> =
-      TestBed.createComponent(ActiveParticipants);
+    const fixture = TestBed.createComponent(ActiveParticipants);
     fixture.componentRef.setInput('participants', participants);
     if (max !== undefined) fixture.componentRef.setInput('max', max);
     fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
+    return fixture;
+  }
+
+  function render(participants: SessionParticipant[], max?: number): HTMLElement {
+    return build(participants, max).nativeElement as HTMLElement;
   }
 
   it('renders nothing when there are no participants', () => {
@@ -51,5 +59,78 @@ describe('ActiveParticipants', () => {
     const el = render(people(2));
     const root = el.querySelector('[data-testid="active-participants"]');
     expect(root?.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('is closed by default and opens a panel listing every participant on click', async () => {
+    const fixture = build(people(6), 4);
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-testid="active-participants"]',
+    ) as HTMLElement;
+    expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(0);
+
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // The panel lists all 6, not just the 4 collapsed into the avatar stack.
+    const rows = document.querySelectorAll('[data-testid="active-participants-row"]');
+    expect(rows).toHaveLength(6);
+    expect(document.body.textContent).toContain('User 1');
+    expect(document.body.textContent).toContain('User 6');
+  });
+
+  it('toggles closed on a second click', async () => {
+    const fixture = build(people(3));
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-testid="active-participants"]',
+    ) as HTMLElement;
+
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(3);
+
+    trigger.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(0);
+  });
+
+  it('opens on mouse hover, without requiring a click', async () => {
+    const fixture = build(people(2));
+    const trigger = fixture.nativeElement.querySelector(
+      '[data-testid="active-participants"]',
+    ) as HTMLElement;
+
+    trigger.dispatchEvent(new MouseEvent('mouseenter'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(2);
+  });
+
+  it('closes shortly after the mouse leaves, so moving into the panel does not flicker-close it', async () => {
+    vi.useFakeTimers();
+    try {
+      const fixture = build(people(2));
+      const trigger = fixture.nativeElement.querySelector(
+        '[data-testid="active-participants"]',
+      ) as HTMLElement;
+
+      trigger.dispatchEvent(new MouseEvent('mouseenter'));
+      fixture.detectChanges();
+      trigger.dispatchEvent(new MouseEvent('mouseleave'));
+      fixture.detectChanges();
+
+      // Still open immediately after mouseleave (grace period).
+      expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(2);
+
+      vi.advanceTimersByTime(250);
+      fixture.detectChanges();
+
+      expect(document.querySelectorAll('[data-testid="active-participants-row"]')).toHaveLength(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
