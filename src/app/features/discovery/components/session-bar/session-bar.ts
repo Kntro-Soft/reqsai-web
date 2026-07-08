@@ -33,10 +33,16 @@ export function formatElapsed(ms: number): string {
   template: `
     @if (recording.session(); as session) {
       <div
-        class="flex items-center gap-3 rounded-2xl border border-border bg-card/95 px-4 py-2.5 shadow-lg backdrop-blur"
+        class="flex items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5"
         data-testid="session-bar"
       >
-        <span class="relative flex h-2.5 w-2.5 shrink-0">
+        <span
+          class="relative flex h-2.5 w-2.5 shrink-0"
+          [attr.title]="
+            (recording.status() === 'RECORDING' ? 'discovery.bar.recording' : 'discovery.bar.paused')
+              | transloco
+          "
+        >
           @if (recording.status() === 'RECORDING') {
             <span
               class="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-60 motion-reduce:animate-none"
@@ -47,7 +53,9 @@ export function formatElapsed(ms: number): string {
           }
         </span>
 
-        <span class="text-sm font-medium" data-testid="session-bar-status">
+        <!-- Status label: hidden on mobile to keep the bar compact — the pulse
+             color above already conveys recording (red) vs. paused (amber). -->
+        <span class="hidden text-sm font-medium sm:inline" data-testid="session-bar-status">
           {{
             (recording.status() === 'RECORDING'
               ? 'discovery.bar.recording'
@@ -90,24 +98,30 @@ export function formatElapsed(ms: number): string {
             size="sm"
             variant="secondary"
             type="button"
+            class="gap-0 px-2 sm:gap-2 sm:px-3"
             [disabled]="recording.busy()"
             (click)="pauseSession.emit()"
+            [attr.aria-label]="'discovery.bar.pause' | transloco"
+            [title]="'discovery.bar.pause' | transloco"
             data-testid="session-bar-pause"
           >
-            <hlm-icon name="lucidePause" size="14px" class="mr-1" />
-            {{ 'discovery.bar.pause' | transloco }}
+            <hlm-icon name="lucidePause" size="14px" />
+            <span class="hidden sm:inline">{{ 'discovery.bar.pause' | transloco }}</span>
           </button>
         } @else {
           <button
             hlmBtn
             size="sm"
             type="button"
+            class="gap-0 px-2 sm:gap-2 sm:px-3"
             [disabled]="recording.busy()"
             (click)="resumeSession.emit()"
+            [attr.aria-label]="'discovery.bar.resume' | transloco"
+            [title]="'discovery.bar.resume' | transloco"
             data-testid="session-bar-resume"
           >
-            <hlm-icon name="lucidePlay" size="14px" class="mr-1" />
-            {{ 'discovery.bar.resume' | transloco }}
+            <hlm-icon name="lucidePlay" size="14px" />
+            <span class="hidden sm:inline">{{ 'discovery.bar.resume' | transloco }}</span>
           </button>
         }
         <button
@@ -115,12 +129,15 @@ export function formatElapsed(ms: number): string {
           size="sm"
           variant="destructive"
           type="button"
+          class="gap-0 px-2 sm:gap-2 sm:px-3"
           [disabled]="recording.busy()"
           (click)="stopSession.emit()"
+          [attr.aria-label]="'discovery.bar.stop' | transloco"
+          [title]="'discovery.bar.stop' | transloco"
           data-testid="session-bar-stop"
         >
-          <hlm-icon name="lucideSquare" size="14px" class="mr-1" />
-          {{ 'discovery.bar.stop' | transloco }}
+          <hlm-icon name="lucideSquare" size="14px" />
+          <span class="hidden sm:inline">{{ 'discovery.bar.stop' | transloco }}</span>
         </button>
       </div>
     }
