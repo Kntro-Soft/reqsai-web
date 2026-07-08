@@ -1,20 +1,31 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { BELOW_START } from '../../../../shared/components/popover/popover-positions';
 import { SessionParticipant } from '../../data/discovery.models';
+
+/** Delay before closing on mouse-out, so moving from the trigger into the panel doesn't flicker-close it. */
+const HOVER_CLOSE_DELAY_MS = 200;
 
 /**
  * Live presence roster for a discovery session: an overlapping stack of participant avatars with a
  * "+N" overflow bubble and a live-pulse count. Purely presentational — it renders whatever
  * {@link participants} the store feeds it (the store already scopes presence to the live session).
  *
- * Avatars carry the participant name as a native tooltip (via {@link Avatar}); new joiners fade/scale
- * in through a CSS entrance animation keyed by user id, so the stack feels alive without reshuffling.
+ * Clicking (or, on desktop, hovering) the pill opens a small popover listing every participant by
+ * name — the stack alone only names people via native title tooltips, which doesn't scale past a
+ * couple of avatars and doesn't work at all on touch. The popover is the one place that always shows
+ * the full roster regardless of how many are collapsed into the "+N" bubble.
+ *
+ * Avatars carry the participant name as a native tooltip too (via {@link Avatar}); new joiners
+ * fade/scale in through a CSS entrance animation keyed by user id, so the stack feels alive without
+ * reshuffling.
  */
 @Component({
   selector: 'app-active-participants',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Avatar, TranslocoPipe],
+  imports: [Avatar, OverlayModule, TranslocoPipe],
   host: { class: 'inline-flex' },
   styles: `
     @keyframes participant-in {
@@ -39,9 +50,20 @@ import { SessionParticipant } from '../../data/discovery.models';
   template: `
     @if (count() > 0) {
       <div
-        class="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 py-1 pr-2.5 pl-2.5 backdrop-blur"
+        cdkOverlayOrigin
+        #origin="cdkOverlayOrigin"
+        role="button"
+        tabindex="0"
+        class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card/70 py-1 pr-2.5 pl-2.5 backdrop-blur"
         data-testid="active-participants"
         [attr.aria-label]="'discovery.presence.viewing' | transloco: { count: count() }"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="open()"
+        (click)="toggle()"
+        (keydown.enter)="toggle()"
+        (keydown.space)="toggle(); $event.preventDefault()"
+        (mouseenter)="onMouseEnter()"
+        (mouseleave)="onMouseLeave()"
       >
         <!-- Live pulse -->
         <span class="relative flex h-2 w-2 shrink-0" aria-hidden="true">
@@ -71,7 +93,6 @@ import { SessionParticipant } from '../../data/discovery.models';
               [style.width.px]="size()"
               [style.height.px]="size()"
               [style.fontSize.px]="size() * 0.36"
-              [attr.title]="'discovery.presence.more' | transloco: { count: overflow() }"
             >
               +{{ overflow() }}
             </span>
@@ -83,6 +104,46 @@ import { SessionParticipant } from '../../data/discovery.models';
           {{ 'discovery.presence.viewing' | transloco: { count: count() } }}
         </span>
       </div>
+
+      <ng-template
+        cdkConnectedOverlay
+        [cdkConnectedOverlayOrigin]="origin"
+        [cdkConnectedOverlayOpen]="open()"
+        [cdkConnectedOverlayPositions]="positions"
+        (overlayOutsideClick)="close()"
+        (overlayKeydown)="onOverlayKeydown($event)"
+        (detach)="close()"
+      >
+        <div
+          role="dialog"
+          class="w-56 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+          (mouseenter)="onMouseEnter()"
+          (mouseleave)="onMouseLeave()"
+        >
+          <div
+            class="border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground"
+            data-testid="active-participants-panel-title"
+          >
+            {{ 'discovery.presence.viewing' | transloco: { count: count() } }}
+          </div>
+          <div class="max-h-64 overflow-y-auto p-1">
+            @for (participant of participants(); track participant.userId) {
+              <div
+                class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm"
+                data-testid="active-participants-row"
+              >
+                <app-avatar
+                  [name]="participant.displayName"
+                  [seed]="participant.userId"
+                  [imageUrl]="participant.avatarUrl"
+                  [size]="24"
+                />
+                <span class="min-w-0 flex-1 truncate">{{ participant.displayName }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </ng-template>
     }
   `,
 })
@@ -94,7 +155,37 @@ export class ActiveParticipants {
   /** How many avatars to render before collapsing the rest into a "+N" bubble. */
   readonly max = input<number>(4);
 
+  protected readonly positions = BELOW_START;
+  protected readonly open = signal(false);
+  private closeTimer: ReturnType<typeof setTimeout> | null = null;
+
   protected readonly count = computed(() => this.participants().length);
   protected readonly visible = computed(() => this.participants().slice(0, this.max()));
   protected readonly overflow = computed(() => Math.max(0, this.count() - this.max()));
+
+  protected toggle(): void {
+    this.open.update((v) => !v);
+  }
+
+  protected close(): void {
+    this.open.set(false);
+  }
+
+  /** Opens on hover (desktop); harmless on touch, where this event never fires. */
+  protected onMouseEnter(): void {
+    if (this.closeTimer !== null) {
+      clearTimeout(this.closeTimer);
+      this.closeTimer = null;
+    }
+    this.open.set(true);
+  }
+
+  /** Delayed close so moving the pointer from the trigger into the panel doesn't flicker-close it. */
+  protected onMouseLeave(): void {
+    this.closeTimer = setTimeout(() => this.open.set(false), HOVER_CLOSE_DELAY_MS);
+  }
+
+  protected onOverlayKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') this.close();
+  }
 }
