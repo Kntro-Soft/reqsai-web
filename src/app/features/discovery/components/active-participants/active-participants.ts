@@ -39,7 +39,7 @@ import { SessionParticipant } from '../../data/discovery.models';
   template: `
     @if (count() > 0) {
       <div
-        class="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 py-1 pr-2.5 pl-1.5 backdrop-blur"
+        class="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 py-1 pr-2.5 pl-2.5 backdrop-blur"
         data-testid="active-participants"
         [attr.aria-label]="'discovery.presence.viewing' | transloco: { count: count() }"
       >
