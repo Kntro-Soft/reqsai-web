@@ -566,7 +566,7 @@
       "acceptError": "No se pudo aceptar la invitación. Inténtalo de nuevo.",
       "signIn": "Inicia sesión para aceptar",
       "createAccount": "Crear una cuenta",
-      "signUpNote": "Regístrate con ese correo y verifícalo: te añadiremos a la organización automáticamente."
+      "signUpNote": "Regístrate con ese correo y verifícalo — te añadiremos a la organización automáticamente."
     },
     "wrongAccount": {
       "title": "Cuenta incorrecta",
@@ -1090,7 +1090,7 @@
       "noCriterion": "Aún no hay un criterio redactado.",
       "viewTarget": "Ver historia objetivo",
       "accept": "Aceptar",
-      "resolve": "Resuelto",
+      "resolve": "Resolver",
       "saveAndAccept": "Guardar y aceptar",
       "dismiss": "Descartar",
       "edit": "Editar",
