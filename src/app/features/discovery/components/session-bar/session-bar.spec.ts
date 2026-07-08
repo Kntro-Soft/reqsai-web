@@ -4,8 +4,7 @@ import { TranslocoTestingModule } from '@jsverse/transloco';
 import { SessionBar } from './session-bar';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
-import { DiscoveryChatStore } from '../../data/discovery-chat.store';
-import { DiscoverySessionResponse, SessionParticipant, SessionStatus } from '../../data/discovery.models';
+import { DiscoverySessionResponse, SessionStatus } from '../../data/discovery.models';
 
 function session(status: SessionStatus): DiscoverySessionResponse {
   return {
@@ -34,10 +33,6 @@ class FakeAudioRecorderService {
   readonly levels = signal<readonly number[]>([]);
 }
 
-class FakeStore {
-  readonly activeParticipants = signal<SessionParticipant[]>([]);
-}
-
 describe('SessionBar', () => {
   let recording: FakeRecordingService;
 
@@ -48,7 +43,6 @@ describe('SessionBar', () => {
       providers: [
         { provide: SessionRecordingService, useValue: recording },
         { provide: AudioRecorderService, useValue: new FakeAudioRecorderService() },
-        { provide: DiscoveryChatStore, useValue: new FakeStore() },
       ],
     });
     const fixture = TestBed.createComponent(SessionBar);
@@ -100,7 +94,6 @@ describe('SessionBar', () => {
       providers: [
         { provide: SessionRecordingService, useValue: recording },
         { provide: AudioRecorderService, useValue: new FakeAudioRecorderService() },
-        { provide: DiscoveryChatStore, useValue: new FakeStore() },
       ],
     });
     const fixture = TestBed.createComponent(SessionBar);
