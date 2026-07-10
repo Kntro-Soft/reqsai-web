@@ -57,6 +57,20 @@ function projectIdFrom(
 }
 
 /**
+ * Extracts the active project id from the in-flight navigation's full URL. A `CanMatch`
+ * guard on a deep child route only receives the segments matched at ITS level (e.g. just
+ * `['members']`), not the `projects/:projectId` prefix consumed by ancestors — so scanning
+ * those segments finds no project id and the guard would wrongly deny to the dashboard.
+ * Reading the whole URL recovers it. Falls back to the router's current URL when no
+ * navigation is in progress.
+ */
+function projectIdFromUrl(router: Router): string | null {
+  const url = router.getCurrentNavigation()?.extractedUrl?.toString() ?? router.url;
+  const match = /\/projects\/([^/?#]+)/.exec(url);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
  * Denies access: toasts the "no access" message and returns a `UrlTree` redirect —
  * the caller's project overview when we can resolve a project, else the dashboard.
  * Returning a tree (rather than navigating imperatively) lets the router treat the
@@ -106,7 +120,8 @@ export function requirePermissionMatch(permission: string): CanMatchFn {
   return async (route: Route, segments: UrlSegment[]) => {
     const deps = resolveDeps();
     const perm = (route.data?.['permission'] as string | undefined) ?? permission;
-    const projectId = projectIdFrom(null, segments);
+    // Prefer the full navigation URL — the matched segments here omit the project prefix.
+    const projectId = projectIdFromUrl(deps.router) ?? projectIdFrom(null, segments);
     return checkPermission(deps, perm, projectId);
   };
 }

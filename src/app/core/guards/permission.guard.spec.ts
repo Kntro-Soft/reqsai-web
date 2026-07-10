@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import {
   ActivatedRouteSnapshot,
   Route,
+  Router,
   RouterStateSnapshot,
   UrlSegment,
   UrlTree,
@@ -133,6 +134,23 @@ describe('permission guards', () => {
       );
       expect(result).toBeInstanceOf(UrlTree);
       expect((result as UrlTree).toString()).toBe('/projects/proj-7');
+    });
+
+    it('recovers the projectId from the navigation URL when the matched segments omit it', async () => {
+      // A deep child's CanMatch receives only its own segments (e.g. ['members']); the
+      // projectId must come from the full in-flight URL, else the guard denies to /projects.
+      seedRole('MEMBER');
+      seedProject('proj-8', ['MEMBER_READ']);
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'getCurrentNavigation').mockReturnValue({
+        extractedUrl: router.parseUrl('/projects/proj-8/settings/members'),
+      } as never);
+
+      const guard = requirePermissionMatch('MEMBER_READ');
+      const result = await TestBed.runInInjectionContext(() =>
+        guard({ data: {} } as Route, segments(['members']), {} as never),
+      );
+      expect(result).toBe(true);
     });
   });
 
