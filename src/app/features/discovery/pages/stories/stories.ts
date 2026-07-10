@@ -32,6 +32,7 @@ import { messageForError } from '../../../../core/errors/error-message';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Indeterminate } from '../../../../shared/directives/indeterminate';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import { HlmBadge, HlmSpinner } from '../../../../shared/ui';
 import {
   StoryListFilters,
@@ -69,6 +70,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
     Select,
     Modal,
     Indeterminate,
+    HasPermission,
     HlmBadge,
     HlmButton,
     HlmIcon,
@@ -135,7 +137,13 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             }
             {{ 'integrations.push.pushAll' | transloco }}
           </button>
-          <a hlmBtn size="sm" [routerLink]="['new']" data-testid="stories-new">
+          <a
+            *appHasPermission="'STORY_WRITE'"
+            hlmBtn
+            size="sm"
+            [routerLink]="['new']"
+            data-testid="stories-new"
+          >
             <hlm-icon name="lucidePlus" size="15px" />
             {{ 'stories.new' | transloco }}
           </a>
