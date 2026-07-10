@@ -146,6 +146,60 @@ export interface JiraImportResponse {
   results: JiraImportResult[];
 }
 
+// --- Background integration jobs (import / push-all) ---
+
+/** The kind of background work an integration job performs. */
+export type IntegrationJobType = 'IMPORT' | 'PUSH_ALL';
+
+/** An integration job's lifecycle state. RUNNING is the only non-terminal state. */
+export type IntegrationJobStatus = 'RUNNING' | 'COMPLETED' | 'FAILED';
+
+/**
+ * A background integration job (Jira import or push-all). Returned with 202 by the
+ * import/push-all POSTs and streamed as full snapshots over the project's
+ * `integration-jobs` STOMP topic while it progresses. `total` may be 0 while the
+ * backend is still counting the work (render an indeterminate progress state).
+ */
+export interface IntegrationJobResponse {
+  id: string;
+  projectId: string;
+  jobType: IntegrationJobType;
+  status: IntegrationJobStatus;
+  total: number;
+  processed: number;
+  succeeded: number;
+  failed: number;
+  /** A human-readable failure reason or backend error code; null while healthy. */
+  message: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
+/** True when the job reached a terminal state (COMPLETED or FAILED). */
+export function isJobTerminal(job: Pick<IntegrationJobResponse, 'status'>): boolean {
+  return job.status !== 'RUNNING';
+}
+
+/**
+ * The job's progress as a 0–100 percentage, or null while it is indeterminate
+ * (`total` is 0 or negative — the backend hasn't counted the work yet). Clamped so
+ * an over-reporting backend can never overflow the progress bar. Pure/testable.
+ */
+export function jobProgressPercent(
+  job: Pick<IntegrationJobResponse, 'processed' | 'total'>,
+): number | null {
+  if (job.total <= 0) return null;
+  const percent = Math.round((job.processed / job.total) * 100);
+  return Math.min(100, Math.max(0, percent));
+}
+
+/** The i18n key of the banner label for a running job of this type. Pure/testable. */
+export function jobLabelKey(jobType: IntegrationJobType): string {
+  return jobType === 'IMPORT'
+    ? 'integrations.jobs.importRunning'
+    : 'integrations.jobs.pushRunning';
+}
+
 // --- Atlassian OAuth 2.0 ---
 
 /**

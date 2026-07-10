@@ -5,6 +5,7 @@ import {
   AuthorizeUrlResponse,
   CreateJiraConnectionRequest,
   IntegrationConnectionResponse,
+  IntegrationJobResponse,
   JiraImportPreviewResponse,
   JiraImportRequest,
   JiraImportResponse,
@@ -165,6 +166,25 @@ export class IntegrationsApiService {
       `${this.projectBase(projectId)}/stories/push-all`,
       {},
     );
+  }
+
+  // --- Background integration jobs ---
+
+  /**
+   * List the project's integration jobs. With `activeOnly` the backend returns only
+   * RUNNING jobs — used to recover in-flight work after a page reload.
+   */
+  getIntegrationJobs(projectId: string, activeOnly = false): Observable<IntegrationJobResponse[]> {
+    let params = new HttpParams();
+    if (activeOnly) params = params.set('active', 'true');
+    return this.http.get<IntegrationJobResponse[]>(`${this.projectBase(projectId)}/jobs`, {
+      params,
+    });
+  }
+
+  /** A single integration job snapshot — the polling fallback while the socket is down. */
+  getIntegrationJob(projectId: string, jobId: string): Observable<IntegrationJobResponse> {
+    return this.http.get<IntegrationJobResponse>(`${this.projectBase(projectId)}/jobs/${jobId}`);
   }
 
   // --- Import FROM Jira ---

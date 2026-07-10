@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { buildIssueTypesParams } from './integrations-api.service';
 import {
   defaultImportSelection,
+  isJobTerminal,
   isSitesResult,
+  jobLabelKey,
+  jobProgressPercent,
   summarizeImport,
   type IntegrationConnectionResponse,
   type JiraImportPreviewResponse,
@@ -119,5 +122,45 @@ describe('summarizeImport', () => {
       skipped: 0,
       failed: 0,
     });
+  });
+});
+
+describe('isJobTerminal', () => {
+  it('is false while the job is running', () => {
+    expect(isJobTerminal({ status: 'RUNNING' })).toBe(false);
+  });
+
+  it('is true for completed and failed jobs', () => {
+    expect(isJobTerminal({ status: 'COMPLETED' })).toBe(true);
+    expect(isJobTerminal({ status: 'FAILED' })).toBe(true);
+  });
+});
+
+describe('jobProgressPercent', () => {
+  it('is null while the total is unknown (indeterminate)', () => {
+    expect(jobProgressPercent({ processed: 3, total: 0 })).toBeNull();
+  });
+
+  it('rounds the processed/total ratio to a whole percentage', () => {
+    expect(jobProgressPercent({ processed: 1, total: 3 })).toBe(33);
+    expect(jobProgressPercent({ processed: 3, total: 3 })).toBe(100);
+  });
+
+  it('clamps an over-reporting backend to 100', () => {
+    expect(jobProgressPercent({ processed: 7, total: 3 })).toBe(100);
+  });
+
+  it('clamps a negative processed count to 0', () => {
+    expect(jobProgressPercent({ processed: -1, total: 3 })).toBe(0);
+  });
+});
+
+describe('jobLabelKey', () => {
+  it('selects the import label for IMPORT jobs', () => {
+    expect(jobLabelKey('IMPORT')).toBe('integrations.jobs.importRunning');
+  });
+
+  it('selects the push label for PUSH_ALL jobs', () => {
+    expect(jobLabelKey('PUSH_ALL')).toBe('integrations.jobs.pushRunning');
   });
 });
