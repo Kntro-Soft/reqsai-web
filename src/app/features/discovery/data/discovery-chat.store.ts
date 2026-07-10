@@ -20,6 +20,8 @@ import {
   DisplayStory,
   ProjectSessionLifecycleMessage,
   SessionEventType,
+  SessionParticipant,
+  SessionPresenceMessage,
   SessionProcessingFailedMessage,
   SessionRealtimeMessage,
   SessionStatus,
@@ -149,6 +151,8 @@ export class DiscoveryChatStore {
   private readonly _liveSessionId = signal<string | null>(null);
   /** Suggestion ids with an accept/dismiss in flight (drives the card spinner). */
   private readonly _deciding = signal<readonly string[]>([]);
+  /** Latest presence roster per session id (snapshot from PRESENCE_STATE events). */
+  private readonly _presenceBySession = signal<Record<string, SessionParticipant[]>>({});
 
   readonly state = this._state.asReadonly();
   readonly queue = this._queue.asReadonly();
@@ -172,6 +176,19 @@ export class DiscoveryChatStore {
       ? session
       : null;
   });
+
+  /**
+   * Users currently viewing the live session (empty when no session is live). Presence is only
+   * surfaced for the live session — a historical session shows no roster. Fed by PRESENCE_STATE
+   * events on the per-session topic.
+   */
+  readonly activeParticipants = computed<SessionParticipant[]>(() => {
+    const id = this._liveSessionId();
+    return id ? (this._presenceBySession()[id] ?? []) : [];
+  });
+
+  /** Number of distinct users currently viewing the live session. */
+  readonly activeParticipantCount = computed(() => this.activeParticipants().length);
 
   /** The topmost (oldest loaded) block still has older segments to page in. */
   private readonly hasOlderSegments = computed(() => {
@@ -274,6 +291,7 @@ export class DiscoveryChatStore {
     this._focusSessionId.set(null);
     this._liveSessionId.set(null);
     this._deciding.set([]);
+    this._presenceBySession.set({});
   }
 
   /**
@@ -753,6 +771,15 @@ export class DiscoveryChatStore {
   /** Applies an incoming realtime message to the owning block / queue. */
   applyRealtime(message: SessionRealtimeMessage): void {
     const sessionId = message.sessionId;
+
+    if (message.type === 'PRESENCE_STATE') {
+      const presence = message as SessionPresenceMessage;
+      this._presenceBySession.update((bySession) => ({
+        ...bySession,
+        [sessionId]: presence.participants ?? [],
+      }));
+      return;
+    }
 
     if (message.type === 'TRANSCRIPT_SEGMENT') {
       const segment = message as SessionTranscriptSegmentMessage;

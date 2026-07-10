@@ -13,6 +13,13 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **Discovery — live session presence** (`feature/discovery-presence`): the discovery chat now shows who
+  else is viewing the **live** session — an overlapping avatar stack with a live pulse, a "+N" overflow
+  bubble and a viewer count, in both the page header and the live session bar. It is fed by a new
+  `PRESENCE_STATE` event on the existing per-session WebSocket topic (no extra subscription), scoped to the
+  live session only, and reuses the shared avatar (image with monogram fallback). New joiners animate in and
+  names show as tooltips (`discovery.presence.*`, en/es).
+
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps

@@ -845,4 +845,63 @@ describe('DiscoveryChatStore', () => {
       expect(items.some((i) => i.kind === 'segment')).toBe(false);
     });
   });
+
+  describe('presence', () => {
+    const at = '2026-07-04T12:00:00Z';
+
+    function goLive(sessionId: string): void {
+      store.applyRealtime({ sessionId, type: 'RECORDING_STARTED', occurredAt: at });
+    }
+
+    it('surfaces the roster for the live session', () => {
+      flushInit([]);
+      goLive('sess-1');
+
+      store.applyRealtime({
+        sessionId: 'sess-1',
+        type: 'PRESENCE_STATE',
+        occurredAt: at,
+        count: 2,
+        participants: [
+          { userId: 'u1', displayName: 'Ana', avatarUrl: '/api/users/u1/avatar' },
+          { userId: 'u2', displayName: 'Beto', avatarUrl: '/api/users/u2/avatar' },
+        ],
+      });
+
+      expect(store.activeParticipantCount()).toBe(2);
+      expect(store.activeParticipants().map((p) => p.displayName)).toEqual(['Ana', 'Beto']);
+    });
+
+    it('does not surface presence for a session that is not the live one', () => {
+      flushInit([]);
+      goLive('sess-1');
+
+      store.applyRealtime({
+        sessionId: 'other',
+        type: 'PRESENCE_STATE',
+        occurredAt: at,
+        count: 1,
+        participants: [{ userId: 'u9', displayName: 'Ghost', avatarUrl: '/api/users/u9/avatar' }],
+      });
+
+      expect(store.activeParticipants()).toEqual([]);
+    });
+
+    it('clears presence on reset', () => {
+      flushInit([]);
+      goLive('sess-1');
+      store.applyRealtime({
+        sessionId: 'sess-1',
+        type: 'PRESENCE_STATE',
+        occurredAt: at,
+        count: 1,
+        participants: [{ userId: 'u1', displayName: 'Ana', avatarUrl: '/api/users/u1/avatar' }],
+      });
+      expect(store.activeParticipantCount()).toBe(1);
+
+      store.reset();
+
+      expect(store.activeParticipants()).toEqual([]);
+    });
+  });
 });

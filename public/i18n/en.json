@@ -1028,6 +1028,10 @@
     "live": {
       "banner": "Live session in progress — {{language}}"
     },
+    "presence": {
+      "viewing": "{{count}} viewing",
+      "more": "{{count}} more"
+    },
     "composer": {
       "placeholder": "Message discovery…",
       "comingSoon": "Text to pipeline is coming soon.",
