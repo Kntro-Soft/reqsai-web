@@ -14,6 +14,7 @@ import {
   JiraPushResultResponse,
   OAuthCallbackResult,
   ProjectJiraTargetResponse,
+  PushAllStoriesRequest,
   TestConnectionResponse,
   UpsertProjectJiraTargetRequest,
 } from './integrations.models';
@@ -159,14 +160,18 @@ export class IntegrationsApiService {
   }
 
   /**
-   * Start pushing every eligible story to Jira as a BACKGROUND job (202). Track the
-   * returned job via the jobs store; 409 `INTEGRATION_JOB_ALREADY_RUNNING` when one
-   * is already in flight for the project.
+   * Start pushing stories to Jira as a BACKGROUND job (202). Pass `storyIds` to push
+   * only the selected stories; omit the body (or send an empty array) to push every
+   * eligible story. Track the returned job via the jobs store; 409
+   * `INTEGRATION_JOB_ALREADY_RUNNING` when one is already in flight for the project.
    */
-  pushAllStories(projectId: string): Observable<IntegrationJobResponse> {
+  pushAllStories(
+    projectId: string,
+    request: PushAllStoriesRequest = {},
+  ): Observable<IntegrationJobResponse> {
     return this.http.post<IntegrationJobResponse>(
       `${this.projectBase(projectId)}/stories/push-all`,
-      {},
+      request,
     );
   }
 

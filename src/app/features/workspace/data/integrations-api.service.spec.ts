@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { buildIssueTypesParams } from './integrations-api.service';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { IntegrationsApiService, buildIssueTypesParams } from './integrations-api.service';
 import {
   defaultImportSelection,
   isJobTerminal,
@@ -125,5 +128,36 @@ describe('jobLabelKey', () => {
 
   it('selects the push label for PUSH_ALL jobs', () => {
     expect(jobLabelKey('PUSH_ALL')).toBe('integrations.jobs.pushRunning');
+  });
+});
+
+describe('IntegrationsApiService.pushAllStories', () => {
+  let api: IntegrationsApiService;
+  let http: HttpTestingController;
+  const url = '/api/projects/proj-1/integration/jira/stories/push-all';
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [IntegrationsApiService, provideHttpClient(), provideHttpClientTesting()],
+    });
+    api = TestBed.inject(IntegrationsApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('posts an empty body when no request is given (push all)', () => {
+    api.pushAllStories('proj-1').subscribe();
+    const req = http.expectOne(url);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush({});
+  });
+
+  it('posts the selected storyIds when given', () => {
+    api.pushAllStories('proj-1', { storyIds: ['s1', 's2'] }).subscribe();
+    const req = http.expectOne(url);
+    expect(req.request.body).toEqual({ storyIds: ['s1', 's2'] });
+    req.flush({});
   });
 });

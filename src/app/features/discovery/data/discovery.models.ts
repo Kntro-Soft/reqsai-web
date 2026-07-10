@@ -109,6 +109,16 @@ export interface StoryListFilters {
   createdBefore?: string;
 }
 
+/** Body for the backlog batch-delete (POST /stories/batch-delete): the story ids to remove. */
+export interface BatchDeleteStoriesRequest {
+  storyIds: string[];
+}
+
+/** Result of a batch delete: how many stories were actually removed. */
+export interface BatchDeleteStoriesResult {
+  deleted: number;
+}
+
 /**
  * A persisted acceptance criterion resource (criteria REST). Carries its own `id`
  * so the detail/edit page can PUT/DELETE it individually — unlike the display-only

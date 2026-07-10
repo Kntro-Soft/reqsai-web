@@ -120,6 +120,14 @@ export interface JiraImportRequest {
   issueKeys?: string[];
 }
 
+/**
+ * Body for POST push-all. Omit `storyIds` (or send an empty array) to push every
+ * eligible story; otherwise only the listed stories are pushed as a background job.
+ */
+export interface PushAllStoriesRequest {
+  storyIds?: string[];
+}
+
 // --- Background integration jobs (import / push-all) ---
 
 /** The kind of background work an integration job performs. */
