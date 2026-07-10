@@ -64,6 +64,28 @@ describe('PermissionsStore', () => {
     expect(store.has('STORY_WRITE')).toBe(false);
   });
 
+  it('shares an in-flight project load so concurrent callers await the same fetch', () => {
+    // On a cold reload the shell and the route guards both call loadProjectPermissions
+    // before the request resolves. The second caller must await the same fetch, not
+    // resolve immediately against an empty set (which made a guard wrongly deny).
+    let firstResolved = false;
+    let secondResolved = false;
+    store.loadProjectPermissions('proj-1').subscribe(() => (firstResolved = true));
+    store.loadProjectPermissions('proj-1').subscribe(() => (secondResolved = true));
+
+    // Only one request fires, and neither subscriber completes until it flushes.
+    const req = http.expectOne('/api/projects/proj-1/me/permissions');
+    expect(firstResolved).toBe(false);
+    expect(secondResolved).toBe(false);
+
+    req.flush({ permissions: ['MEMBER_READ'] });
+
+    expect(firstResolved).toBe(true);
+    expect(secondResolved).toBe(true);
+    // Both callers now see the loaded permission — no empty-set race.
+    expect(store.has('MEMBER_READ')).toBe(true);
+  });
+
   it('lets owner/admin bypass has() even before the project set loads', () => {
     store.loadOrgAuthorization('org-1').subscribe();
     http

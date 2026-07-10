@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, finalize, map, of, tap } from 'rxjs';
+import { Observable, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { PermissionsApiService } from './permissions-api.service';
 import { BasePermission, OrgRole } from './permissions.models';
 
@@ -32,6 +32,9 @@ export class PermissionsStore {
   private loadedOrgId: string | null = null;
   /** The project this store's permissions currently reflect (cache key). */
   private loadedProjectId: string | null = null;
+  /** The in-flight org/project fetches, so concurrent callers await the same request. */
+  private orgAuthInFlight: Observable<void> | null = null;
+  private projectPermsInFlight: Observable<void> | null = null;
 
   readonly orgRole = this._orgRole.asReadonly();
   readonly memberBasePermission = this._memberBasePermission.asReadonly();
@@ -60,34 +63,53 @@ export class PermissionsStore {
    * Loads the caller's org authorization (role + base permission) and caches it by
    * org id. Returns void so callers can just subscribe; a repeat call for the same
    * org is a no-op unless {@link refresh}ed.
+   *
+   * On a cold reload the shell and the route guards call this concurrently. The cache
+   * key alone isn't enough — it's set before the request resolves — so a second caller
+   * would get an immediate empty result while the first fetch is still pending, and a
+   * guard would wrongly deny. Share the in-flight request so every caller awaits it.
    */
   loadOrgAuthorization(orgId: string): Observable<void> {
-    if (this.loadedOrgId === orgId) return of(void 0);
+    if (this.loadedOrgId === orgId) return this.orgAuthInFlight ?? of(void 0);
     this.loadedOrgId = orgId;
     this._orgLoading.set(true);
-    return this.api.getOrgAuthorization(orgId).pipe(
+    const request = this.api.getOrgAuthorization(orgId).pipe(
       tap((res) => {
         this._orgRole.set(res.orgRole);
         this._memberBasePermission.set(res.memberBasePermission);
       }),
       map(() => void 0),
-      finalize(() => this._orgLoading.set(false)),
+      finalize(() => {
+        this._orgLoading.set(false);
+        this.orgAuthInFlight = null;
+      }),
+      shareReplay(1),
     );
+    this.orgAuthInFlight = request;
+    return request;
   }
 
   /**
    * Loads the caller's effective permissions on `projectId` and caches them. A repeat
-   * call for the same project is a no-op unless {@link refresh}ed.
+   * call for the same project is a no-op unless {@link refresh}ed. Shares the in-flight
+   * request so concurrent callers (shell + guards on reload) await the same fetch rather
+   * than racing to an empty result — see {@link loadOrgAuthorization}.
    */
   loadProjectPermissions(projectId: string): Observable<void> {
-    if (this.loadedProjectId === projectId) return of(void 0);
+    if (this.loadedProjectId === projectId) return this.projectPermsInFlight ?? of(void 0);
     this.loadedProjectId = projectId;
     this._projectLoading.set(true);
-    return this.api.getProjectPermissions(projectId).pipe(
+    const request = this.api.getProjectPermissions(projectId).pipe(
       tap((res) => this._projectPermissions.set(new Set(res.permissions))),
       map(() => void 0),
-      finalize(() => this._projectLoading.set(false)),
+      finalize(() => {
+        this._projectLoading.set(false);
+        this.projectPermsInFlight = null;
+      }),
+      shareReplay(1),
     );
+    this.projectPermsInFlight = request;
+    return request;
   }
 
   /** Locally reflect a base-permission change saved via the settings card. */
@@ -98,11 +120,13 @@ export class PermissionsStore {
   /** Drop the org-authorization cache so the next load re-fetches (e.g. after a role change). */
   refreshOrgAuthorization(): void {
     this.loadedOrgId = null;
+    this.orgAuthInFlight = null;
   }
 
   /** Drop the project-permission cache so the next load re-fetches. */
   refreshProjectPermissions(): void {
     this.loadedProjectId = null;
+    this.projectPermsInFlight = null;
   }
 
   /**
@@ -111,6 +135,7 @@ export class PermissionsStore {
    */
   resetProject(): void {
     this.loadedProjectId = null;
+    this.projectPermsInFlight = null;
     this._projectPermissions.set(new Set());
     this._projectLoading.set(false);
   }
@@ -119,6 +144,8 @@ export class PermissionsStore {
   reset(): void {
     this.loadedOrgId = null;
     this.loadedProjectId = null;
+    this.orgAuthInFlight = null;
+    this.projectPermsInFlight = null;
     this._orgRole.set(null);
     this._memberBasePermission.set(null);
     this._projectPermissions.set(new Set());
