@@ -208,9 +208,6 @@ export class IntegrationsApiService {
     projectId: string,
     request: JiraImportRequest = {},
   ): Observable<IntegrationJobResponse> {
-    return this.http.post<IntegrationJobResponse>(
-      `${this.projectBase(projectId)}/import`,
-      request,
-    );
+    return this.http.post<IntegrationJobResponse>(`${this.projectBase(projectId)}/import`, request);
   }
 }
