@@ -840,30 +840,35 @@ export class DiscoveryChatStore {
     }
 
     const status = STATUS_BY_EVENT[message.type];
-    if (status) {
-      const error =
-        message.type === 'FAILED' ? (message as SessionProcessingFailedMessage).reason : null;
-      this.updateBlock(sessionId, (b) => ({
-        ...b,
-        session: {
-          ...b.session,
-          status,
-          processingError: error ?? b.session.processingError,
-        },
-      }));
-      this.recording.syncStatus(sessionId, status);
-      // Keep the project-level live flag in sync even when the lifecycle
-      // reaches us only through the per-session topic.
-      if (status === 'RECORDING' || status === 'PAUSED') {
-        this._liveSessionId.set(sessionId);
-      } else if (this._liveSessionId() === sessionId) {
-        this._liveSessionId.set(null);
-      }
-      // A block created while the session was live never fetched its persisted
-      // timeline. Once the session settles, reload it as a historical block so
-      // segments and resolved decisions survive exactly like after a reload.
-      if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
+    if (!status) {
+      // A type this build doesn't know (backend shipped a new event first). Log it so a
+      // schema drift is visible in the console instead of a silently dead feature.
+      console.warn('[discovery] Unhandled realtime message type:', message.type);
+      return;
     }
+
+    const error =
+      message.type === 'FAILED' ? (message as SessionProcessingFailedMessage).reason : null;
+    this.updateBlock(sessionId, (b) => ({
+      ...b,
+      session: {
+        ...b.session,
+        status,
+        processingError: error ?? b.session.processingError,
+      },
+    }));
+    this.recording.syncStatus(sessionId, status);
+    // Keep the project-level live flag in sync even when the lifecycle
+    // reaches us only through the per-session topic.
+    if (status === 'RECORDING' || status === 'PAUSED') {
+      this._liveSessionId.set(sessionId);
+    } else if (this._liveSessionId() === sessionId) {
+      this._liveSessionId.set(null);
+    }
+    // A block created while the session was live never fetched its persisted
+    // timeline. Once the session settles, reload it as a historical block so
+    // segments and resolved decisions survive exactly like after a reload.
+    if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
   }
 
   /**

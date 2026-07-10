@@ -360,6 +360,27 @@ describe('DiscoveryChatStore', () => {
     expect(store.blocks()).toHaveLength(0);
   });
 
+  it('warns and ignores an unknown realtime message type instead of failing silently', () => {
+    flushInit([session()]);
+    http
+      .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+      .flush(page<SuggestionResponse>([]));
+    http.match(() => true).forEach((r) => r.flush(page<never>([])));
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    store.applyRealtime({
+      sessionId: 's-1',
+      type: 'BRAND_NEW_EVENT',
+      occurredAt: new Date().toISOString(),
+    } as never);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[discovery] Unhandled realtime message type:',
+      'BRAND_NEW_EVENT',
+    );
+    warnSpy.mockRestore();
+  });
+
   describe('decide', () => {
     /** Boots one completed session whose queue holds a single pending suggestion. */
     function setupWithPending(): SuggestionResponse {
