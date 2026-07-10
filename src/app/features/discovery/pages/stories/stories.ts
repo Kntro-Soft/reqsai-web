@@ -92,6 +92,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <button
+            *appHasPermission="'INTEGRATION_SYNC'"
             hlmBtn
             size="sm"
             variant="outline"
@@ -115,6 +116,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             {{ 'integrations.import.action' | transloco }}
           </button>
           <button
+            *appHasPermission="'INTEGRATION_SYNC'"
             hlmBtn
             size="sm"
             variant="outline"
@@ -171,6 +173,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           </button>
           <div class="ml-auto flex items-center gap-2">
             <button
+              *appHasPermission="'INTEGRATION_SYNC'"
               hlmBtn
               size="sm"
               variant="outline"
@@ -194,6 +197,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
             </button>
             <button
+              *appHasPermission="'STORY_DELETE'"
               hlmBtn
               size="sm"
               variant="destructive"
@@ -317,7 +321,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               <tr
                 class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
               >
-                <th class="w-10 px-4 py-2.5 font-medium">
+                <th
+                  *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
+                  class="w-10 px-4 py-2.5 font-medium"
+                >
                   <input
                     type="checkbox"
                     class="h-4 w-4 shrink-0 align-middle accent-primary"
@@ -337,7 +344,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                 <th class="px-3 py-2.5 whitespace-nowrap font-medium">
                   {{ 'stories.colCreated' | transloco }}
                 </th>
-                <th class="w-12 px-3 py-2.5 text-right font-medium">
+                <th
+                  *appHasPermission="'STORY_DELETE'"
+                  class="w-12 px-3 py-2.5 text-right font-medium"
+                >
                   <span class="sr-only">{{ 'stories.colActions' | transloco }}</span>
                 </th>
               </tr>
@@ -350,7 +360,11 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                   (click)="openDetail(s)"
                   data-testid="story-row"
                 >
-                  <td class="w-10 px-4 py-3" (click)="$event.stopPropagation()">
+                  <td
+                    *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
+                    class="w-10 px-4 py-3"
+                    (click)="$event.stopPropagation()"
+                  >
                     <input
                       type="checkbox"
                       class="h-4 w-4 shrink-0 align-middle accent-primary"
@@ -389,7 +403,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                   <td class="px-3 py-3 whitespace-nowrap text-muted-foreground">
                     {{ formatDate(s.createdAt) }}
                   </td>
-                  <td class="w-12 px-3 py-3 text-right">
+                  <td *appHasPermission="'STORY_DELETE'" class="w-12 px-3 py-3 text-right">
                     <button
                       type="button"
                       (click)="askDelete(s, $event)"
