@@ -41,7 +41,14 @@ import { BELOW_START } from '../../../../shared/components/popover/popover-posit
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { translateFn } from '../../../../core/i18n/translate-fn';
-import { HlmButton, HlmIcon, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
+import {
+  HlmButton,
+  HlmIcon,
+  HlmInput,
+  HlmLabel,
+  HlmSkeleton,
+  HlmSpinner,
+} from '../../../../shared/ui';
 
 /** A single "add member" row: an empty draft, a picked existing org member, or a new email invite. */
 interface AddRow {
@@ -99,7 +106,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">{{ 'projectMembers.title' | transloco }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">{{ 'projectMembers.subtitle' | transloco }}</p>
+        <p class="mt-1 text-sm text-muted-foreground">
+          {{ 'projectMembers.subtitle' | transloco }}
+        </p>
       </div>
 
       <!-- Add people (owner/admin only) — unified batch rows -->
@@ -561,7 +570,10 @@ export class ProjectMembers implements OnInit {
   protected readonly roleFilterOptions = computed<SelectOption[]>(() => {
     const t = this.translate();
     const all = t ? t('projectMembers.filterAllRoles') : '';
-    return [{ value: 'all', label: all }, ...this.roles().map((r) => ({ value: r.id, label: r.name }))];
+    return [
+      { value: 'all', label: all },
+      ...this.roles().map((r) => ({ value: r.id, label: r.name })),
+    ];
   });
 
   protected readonly sortOptions = computed<SelectOption[]>(() => {
@@ -612,7 +624,10 @@ export class ProjectMembers implements OnInit {
     const row = rows[index];
     if (!row) return [];
     const chosenMembers = new Set(
-      rows.filter((_, i) => i !== index).map((r) => r.memberId).filter(Boolean),
+      rows
+        .filter((_, i) => i !== index)
+        .map((r) => r.memberId)
+        .filter(Boolean),
     );
     const q = row.search.trim().toLowerCase();
     return this.assignableMembers()
@@ -796,7 +811,9 @@ export class ProjectMembers implements OnInit {
     if (!orgId || !this.canSubmit() || this.submitting()) return;
     const rows = this.rows_add();
     const memberRows = rows.filter((r) => r.kind === 'member' && r.memberId && r.roleId);
-    const emailRows = rows.filter((r) => r.kind === 'email' && r.email && r.displayName.trim() && r.roleId);
+    const emailRows = rows.filter(
+      (r) => r.kind === 'email' && r.email && r.displayName.trim() && r.roleId,
+    );
     if (!memberRows.length && !emailRows.length) return;
 
     this.submitting.set(true);
