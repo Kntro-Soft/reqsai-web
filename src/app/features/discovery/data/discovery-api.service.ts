@@ -5,6 +5,8 @@ import {
   AcceptSuggestionRequest,
   AcceptanceCriterionRequest,
   AcceptanceCriterionResponse,
+  BatchDeleteStoriesRequest,
+  BatchDeleteStoriesResult,
   CreateDiscoverySessionRequest,
   CreateUserStoryRequest,
   DiscoverySessionResponse,
@@ -176,6 +178,25 @@ export class DiscoveryApiService {
     return this.http.put<UserStoryResponse>(
       `/api/projects/${projectId}/stories/${storyId}`,
       request,
+    );
+  }
+
+  /**
+   * Permanently deletes a single story (DELETE /projects/{projectId}/stories/{storyId}).
+   * Resolves on the 204; 404 if the story does not exist in the tenant/project.
+   */
+  deleteStory(projectId: string, storyId: string): Observable<void> {
+    return this.http.delete<void>(`/api/projects/${projectId}/stories/${storyId}`);
+  }
+
+  /**
+   * Deletes several stories at once (POST /projects/{projectId}/stories/batch-delete),
+   * returning how many were actually removed. Unknown ids are simply not counted.
+   */
+  batchDeleteStories(projectId: string, storyIds: string[]): Observable<BatchDeleteStoriesResult> {
+    return this.http.post<BatchDeleteStoriesResult>(
+      `/api/projects/${projectId}/stories/batch-delete`,
+      { storyIds } satisfies BatchDeleteStoriesRequest,
     );
   }
 

@@ -31,6 +31,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
   },
 
+  // Atlassian OAuth 2.0 redirect landing: chrome-less (no shell), auth-guarded so the
+  // silent-refresh initializer has restored the session by the time it exchanges the
+  // authorization code. Sits outside the shell because Atlassian fully reloads the SPA.
+  {
+    path: 'settings/integrations/jira/callback',
+    title: 'titles.integrations',
+    canActivate: [authGuard, termsGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/jira-oauth-callback/jira-oauth-callback').then(
+        (m) => m.JiraOAuthCallback,
+      ),
+  },
+
   // Create organization: standalone full-screen page, outside the app shell (no sidebar/header).
   {
     path: 'onboarding',
@@ -124,8 +137,9 @@ export const routes: Routes = [
             path: 'integrations',
             title: 'titles.integrations',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.integrations', icon: 'lucidePlug' },
+              import('./features/workspace/pages/org-integrations/org-integrations').then(
+                (m) => m.OrgIntegrations,
+              ),
           },
           {
             path: 'usage',
@@ -301,6 +315,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./features/workspace/pages/project-members/project-members').then(
                     (m) => m.ProjectMembers,
+                  ),
+              },
+              {
+                path: 'integrations',
+                title: 'titles.integrations',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-integrations/project-integrations').then(
+                    (m) => m.ProjectIntegrations,
                   ),
               },
               {

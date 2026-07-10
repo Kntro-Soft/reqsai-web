@@ -1,7 +1,13 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
 export type SessionStatus =
-  'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  | 'DRAFT'
+  | 'RECORDING'
+  | 'PAUSED'
+  | 'STOPPED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED';
 
 export interface DiscoverySessionResponse {
   id: string;
@@ -107,6 +113,16 @@ export interface StoryListFilters {
   priority?: StoryPriority;
   createdAfter?: string;
   createdBefore?: string;
+}
+
+/** Body for the backlog batch-delete (POST /stories/batch-delete): the story ids to remove. */
+export interface BatchDeleteStoriesRequest {
+  storyIds: string[];
+}
+
+/** Result of a batch delete: how many stories were actually removed. */
+export interface BatchDeleteStoriesResult {
+  deleted: number;
 }
 
 /**

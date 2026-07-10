@@ -19,7 +19,53 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `PRESENCE_STATE` event on the existing per-session WebSocket topic (no extra subscription), scoped to the
   live session only, and reuses the shared avatar (image with monogram fallback). New joiners animate in and
   names show as tooltips (`discovery.presence.*`, en/es).
-
+- **Backlog — multi-select, bulk actions and delete** (`feature/integrations-jira`): the stories
+  backlog table gains a **per-page multi-select** (a checkbox per row plus a select-all/indeterminate
+  header checkbox); the selection is scoped to the visible server-side page and cleared on any
+  page/filter/sort change. Selecting rows reveals a **contextual action bar** with the selected count, a
+  clear button, **Push to Jira (n)** (reuses the async push-all job flow, now with an optional
+  `storyIds` body so only the selection is pushed) and **Delete (n)** (confirm → `batch-delete` → toast
+  + reload). A **row-level trash action** deletes a single story (confirm → `DELETE` → toast + reload),
+  and the **story detail** page gets a matching **Delete** button that returns to the backlog on
+  success. New `discovery-api` methods `deleteStory` / `batchDeleteStories`, the extended
+  `pushAllStories({ storyIds })`, and new `stories.*` i18n keys (EN + ES).
+- **Integrations — non-blocking Jira import / push-all** (`feature/integrations-jira`): the backlog's
+  **Import from Jira** and **Push all to Jira** now start a **background job** (the endpoints answer
+  `202` with an `IntegrationJobResponse`) instead of blocking the page: the modal/button releases
+  immediately with a "started" toast, and a slim **global progress banner** under the top bar shows the
+  running job on ANY page of the project — label, `processed/total` counter and a thin progress bar
+  (indeterminate sweep while the total is unknown). A new signal-based `IntegrationJobsStore` follows the
+  current project: it **recovers in-flight jobs after a reload** (`GET jobs?active=true`), streams
+  progress from the `projects/{id}/integration-jobs` STOMP topic, and **falls back to ~5s polling** of
+  `GET jobs/{jobId}` while the socket is down. On completion the banner toasts the succeeded/failed
+  summary (or the failure `message`, localized via the `errors.*` table) and the stories list refreshes
+  itself; the action buttons stay disabled while a job of their type runs, and a conflicting start
+  surfaces the new `errors.INTEGRATION_JOB_ALREADY_RUNNING` message (EN + ES).
+- **Integrations — Jira** (`feature/integrations-jira`): a real Organization **Integrations** page
+  (replacing the placeholder) to connect a Jira site (site URL / email / API token — the token is only
+  ever sent to the backend, never stored client-side), with **Test connection** and a confirm-guarded
+  **Disconnect**. A per-project **Integrations** settings sub-page maps the project to a Jira project +
+  issue type (connection → projects → issue-types cascading selects, save/clear the target). Adds a
+  **Push to Jira** action on the story detail page (opens the created issue) and a **Push all to Jira**
+  action on the backlog list (toasts pushed/failed counts), plus the `IntegrationsApiService`, DTOs, and
+  the new `errors.*` codes (`INTEGRATION_*`, `JIRA_*`) so `messageForError` localizes backend failures.
+- **Integrations — Connect with Atlassian (OAuth 2.0)** (`feature/integrations-jira`): a primary
+  **Connect with Atlassian** button on the Organization Integrations page that full-page-redirects to the
+  Atlassian consent screen and returns to a new chrome-less `settings/integrations/jira/callback` route
+  (`JiraOAuthCallback`) which exchanges the authorization `code` for a saved connection — rendering a
+  **site picker** when the account has multiple Atlassian sites, and falling back to sign-in on a lost
+  session. The button disables with an explanatory tooltip when the server reports
+  `JIRA_OAUTH_NOT_CONFIGURED` (never hard-erroring the page). The existing **API-token** form is kept as a
+  collapsible fallback, improved with a **"Create your API token"** link and per-field tooltips; the
+  connected-state card now labels the method (**OAuth** vs **API token**) and shows the email only when
+  present. Adds `credentialType`/nullable `email` to `IntegrationConnectionResponse`, the OAuth DTOs +
+  `getJiraAuthorizeUrl`/`completeJiraOAuth` service methods, and the new `errors.*` codes
+  (`JIRA_OAUTH_NOT_CONFIGURED`, `JIRA_OAUTH_STATE_INVALID`, `JIRA_OAUTH_EXCHANGE_FAILED`). No OAuth token is
+  ever held client-side.
+- **Integrations — Jira "How it works" panel** (`feature/integrations-jira`): the Organization
+  Integrations page is now a responsive two-column layout (connect card + a new info panel with numbered
+  steps, a "what gets synced" note and a "Learn more" link), and the "Create your API token" link now
+  points at the correct `id.atlassian.com/manage-profile/security/api-tokens` page.
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps

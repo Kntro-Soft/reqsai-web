@@ -8,11 +8,13 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucidePlus, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideArrowLeft, lucidePlus, lucideTrash2, lucideUpload } from '@ng-icons/lucide';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
+import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
 import {
   AcceptanceCriterionResponse,
   StoryPriority,
@@ -24,6 +26,7 @@ import {
   isConflict,
   problemCode,
 } from '../../data/duplicate-error';
+import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -57,6 +60,7 @@ import {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    Modal,
     Select,
     HlmButton,
     HlmIcon,
@@ -66,7 +70,7 @@ import {
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucidePlus, lucideTrash2 })],
+  viewProviders: [provideIcons({ lucideArrowLeft, lucidePlus, lucideTrash2, lucideUpload })],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
@@ -78,7 +82,41 @@ import {
           <hlm-icon name="lucideArrowLeft" size="15px" />
           {{ 'storyForm.back' | transloco }}
         </a>
-        <h1 class="text-2xl font-bold tracking-tight">{{ 'storyForm.editTitle' | transloco }}</h1>
+        <div class="flex items-start justify-between gap-3">
+          <h1 class="text-2xl font-bold tracking-tight">{{ 'storyForm.editTitle' | transloco }}</h1>
+          @if (state() === 'ready') {
+            <div class="flex shrink-0 items-center gap-2">
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="pushToJira()"
+                [disabled]="pushing()"
+                data-testid="story-push-jira"
+              >
+                @if (pushing()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUpload" size="15px" />
+                }
+                {{ 'integrations.push.pushStory' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="deleteOpen.set(true)"
+                class="text-destructive hover:text-destructive"
+                data-testid="story-delete"
+              >
+                <hlm-icon name="lucideTrash2" size="15px" />
+                {{ 'stories.delete' | transloco }}
+              </button>
+            </div>
+          }
+        </div>
       </div>
 
       @if (state() === 'loading') {
@@ -261,11 +299,44 @@ import {
         </section>
       }
     </div>
+
+    <!-- Delete this story -->
+    <app-modal [(open)]="deleteOpen">
+      <span modalTitle>{{ 'stories.deleteConfirmTitle' | transloco }}</span>
+      <p>{{ 'stories.deleteConfirmBody' | transloco }}</p>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="deleteOpen.set(false)"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="confirmDelete()"
+        [disabled]="deleting()"
+        data-testid="story-delete-confirm"
+      >
+        @if (deleting()) {
+          <hlm-spinner class="h-4 w-4" />
+        }
+        {{ 'stories.delete' | transloco }}
+      </button>
+    </app-modal>
   `,
 })
 export class StoryDetail implements OnInit {
   private readonly api = inject(DiscoveryApiService);
+  private readonly integrations = inject(IntegrationsApiService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
 
@@ -275,6 +346,9 @@ export class StoryDetail implements OnInit {
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
+  protected readonly pushing = signal(false);
+  protected readonly deleteOpen = signal(false);
+  protected readonly deleting = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly criteria = signal<CriterionRow[]>([]);
   /** Index of the criterion row currently saving/deleting, or null. */
@@ -356,6 +430,63 @@ export class StoryDetail implements OnInit {
         this.toast.error(message);
       },
     });
+  }
+
+  /**
+   * Pushes this story to Jira as an issue. On success toasts the created issue key
+   * and opens its Jira URL. A missing project mapping (INTEGRATION_TARGET_NOT_CONFIGURED)
+   * gets a helpful message pointing the user to the project's integration settings.
+   */
+  protected pushToJira(): void {
+    if (this.pushing()) return;
+    this.pushing.set(true);
+    this.integrations.pushStory(this.projectId(), this.storyId()).subscribe({
+      next: (result) => {
+        this.pushing.set(false);
+        this.toast.success(
+          this.transloco.translate('integrations.push.pushed', { key: result.jiraIssueKey }),
+        );
+        if (result.jiraIssueUrl) {
+          window.open(result.jiraIssueUrl, '_blank', 'noopener');
+        }
+      },
+      error: (err: unknown) => {
+        this.pushing.set(false);
+        this.toast.error(this.pushErrorMessage(err));
+      },
+    });
+  }
+
+  /**
+   * Permanently deletes this story after a confirm, then returns to the backlog list.
+   * A failure keeps the page open and surfaces the localized error via a toast.
+   */
+  protected confirmDelete(): void {
+    if (this.deleting()) return;
+    this.deleting.set(true);
+    this.api.deleteStory(this.projectId(), this.storyId()).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.deleteOpen.set(false);
+        this.toast.success(this.transloco.translate('stories.deleted'));
+        void this.router.navigate(['/projects', this.projectId(), 'stories']);
+      },
+      error: (err: unknown) => {
+        this.deleting.set(false);
+        this.toast.error(messageForError(err, this.transloco));
+      },
+    });
+  }
+
+  /** A missing Jira mapping gets a settings-pointing message; otherwise the shared chain. */
+  private pushErrorMessage(err: unknown): string {
+    if (
+      err instanceof HttpErrorResponse &&
+      (err.error as { code?: unknown } | null)?.code === 'INTEGRATION_TARGET_NOT_CONFIGURED'
+    ) {
+      return this.transloco.translate('integrations.push.notConfigured');
+    }
+    return messageForError(err, this.transloco);
   }
 
   protected addRow(): void {
