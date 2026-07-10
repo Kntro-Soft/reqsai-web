@@ -722,11 +722,25 @@ export class ProjectMembers implements OnInit {
       this.state.set('error');
       return;
     }
-    // Only the assignments list (MEMBER_READ) is required to render the roster. Roles need
-    // ROLE_READ — a plain viewer can't read them, so skip that call when they lack it (the
-    // role NAMES arrive embedded in each assignment); the roles list only feeds the manager's
-    // filter/picker. Org members (orgMember-scoped) resolve names/avatars; both degrade to
-    // empty rather than failing the whole page.
+    // Load our authorization FIRST, so the roles decision below reflects the real role.
+    // On a direct reload the shell's authorization fetch may not have landed yet; deciding
+    // synchronously would wrongly treat an owner/admin as unable to read roles and skip the
+    // roles list, emptying the role editor. These loads are cached/shared, so this reuses
+    // the shell's own fetch rather than duplicating it.
+    forkJoin({
+      _org: this.permissions.loadOrgAuthorization(orgId),
+      _project: this.permissions.loadProjectPermissions(this.projectId()),
+    }).subscribe(() => this.loadRoster(orgId));
+  }
+
+  /**
+   * Loads the roster. Only the assignments list (MEMBER_READ) is required to render it.
+   * Roles need ROLE_READ — a plain viewer can't read them, so skip that call when they lack
+   * it (the role NAMES arrive embedded in each assignment); the roles list only feeds the
+   * manager's filter/picker/editor. Org members (orgMember-scoped) resolve names/avatars;
+   * both degrade to empty rather than failing the whole page.
+   */
+  private loadRoster(orgId: string): void {
     const canReadRoles = this.permissions.isOrgOwnerOrAdmin() || this.permissions.has('ROLE_READ');
     forkJoin({
       roles: canReadRoles
