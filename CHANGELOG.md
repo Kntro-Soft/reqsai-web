@@ -66,6 +66,17 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   Integrations page is now a responsive two-column layout (connect card + a new info panel with numbered
   steps, a "what gets synced" note and a "Learn more" link), and the "Create your API token" link now
   points at the correct `id.atlassian.com/manage-profile/security/api-tokens` page.
+- **Billing — subscription, usage and plan management UI** (`feature/billing-ui`): consumes the backend
+  Billing API (subscriptions, token quota, Stripe payments). A new `BillingApiService` +
+  `BillingStore` signal store, response/request models, and a display plan catalog (limits + pricing)
+  kept in sync with the backend `PlanCatalog`. Settings → **Billing** page shows the current plan with
+  status/renewal, a Free/Pro/Enterprise plan grid with upgrade, and cancel/reactivate — immediate
+  activation with the fake gateway in dev, or a redirect to Stripe hosted checkout in production.
+  Settings → **Usage** page shows AI token consumption vs. the plan allowance for the current period
+  (amber/red progress bar). New checkout return landings (`/billing/success`, `/billing/cancel`) handle
+  the Stripe redirect. Previously "soon" Billing/Usage nav items are now enabled; adds billing/usage
+  i18n and billing error-code messages (en + es). Plan prices (`bugfix/billing-prices`) were later
+  adjusted to match the marketing landing page (Pro $49/mo, Enterprise $149/mo).
 - **Discovery — "Captura" chat & live suggestion review** (`feature/discovery-session-control`): rebuilt
   Discovery as a GPT/Claude-style chat (renamed **Captura** in Spanish) — Play implicitly starts a session,
   the rolling transcript renders as a chronological, speaker-tagged timeline with hover-reveal timestamps
