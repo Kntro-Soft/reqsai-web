@@ -36,7 +36,7 @@ export const PLAN_CATALOG: Record<PlanType, PlanDefinition> = {
   },
   PRO: {
     type: 'PRO',
-    priceCents: 2_900,
+    priceCents: 4_900,
     currency: 'USD',
     limits: {
       maxMembers: 15,
@@ -48,7 +48,7 @@ export const PLAN_CATALOG: Record<PlanType, PlanDefinition> = {
   },
   ENTERPRISE: {
     type: 'ENTERPRISE',
-    priceCents: 9_900,
+    priceCents: 14_900,
     currency: 'USD',
     limits: {
       maxMembers: 200,
