@@ -79,7 +79,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             variant="outline"
             type="button"
             (click)="openImport()"
-            [disabled]="importPreviewing()"
+            [disabled]="importPreviewing() || jiraConfigured() !== true"
+            [title]="
+              jiraConfigured() === false ? ('integrations.push.notConfigured' | transloco) : ''
+            "
             data-testid="stories-import"
           >
             @if (importPreviewing()) {
@@ -95,7 +98,10 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             variant="outline"
             type="button"
             (click)="pushAll()"
-            [disabled]="pushingAll()"
+            [disabled]="pushingAll() || jiraConfigured() !== true"
+            [title]="
+              jiraConfigured() === false ? ('integrations.push.notConfigured' | transloco) : ''
+            "
             data-testid="stories-push-all"
           >
             @if (pushingAll()) {
@@ -403,6 +409,13 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   protected readonly pushingAll = signal(false);
 
+  /**
+   * Whether the project has a Jira push target configured; `null` while resolving. Import and
+   * push-all are disabled (with an explanatory tooltip) until a target exists — a missing target
+   * would only 409 on click. The GET's 404 is the expected "not configured" answer, not an error.
+   */
+  protected readonly jiraConfigured = signal<boolean | null>(null);
+
   // Import-from-Jira flow: preview loads the candidate issues into the picker modal,
   // where non-duplicates are selected by default; confirm POSTs the chosen keys.
   protected readonly importOpen = signal(false);
@@ -483,6 +496,10 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
+    this.integrations.getProjectTarget(this.projectId()).subscribe({
+      next: () => this.jiraConfigured.set(true),
+      error: () => this.jiraConfigured.set(false),
+    });
   }
 
   ngOnDestroy(): void {
