@@ -11,7 +11,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -24,6 +24,7 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import {
@@ -508,6 +509,7 @@ export class ProjectMembers implements OnInit {
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
+  private readonly permissions = inject(PermissionsStore);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
 
@@ -682,7 +684,7 @@ export class ProjectMembers implements OnInit {
         name: member?.displayName || member?.email || fallback,
         email: member?.email ?? '',
         avatarUrl: member?.userId ? `/api/users/${member.userId}/avatar` : null,
-        roleName: this.roleById().get(a.roleId)?.name ?? '',
+        roleName: a.roleName ?? this.roleById().get(a.roleId)?.name ?? '',
       };
     });
     const q = this.query().trim().toLowerCase();
@@ -705,10 +707,20 @@ export class ProjectMembers implements OnInit {
       this.state.set('error');
       return;
     }
+    // Only the assignments list (MEMBER_READ) is required to render the roster. Roles need
+    // ROLE_READ — a plain viewer can't read them, so skip that call when they lack it (the
+    // role NAMES arrive embedded in each assignment); the roles list only feeds the manager's
+    // filter/picker. Org members (orgMember-scoped) resolve names/avatars; both degrade to
+    // empty rather than failing the whole page.
+    const canReadRoles = this.permissions.isOrgOwnerOrAdmin() || this.permissions.has('ROLE_READ');
     forkJoin({
-      roles: this.api.listProjectRoles(orgId, this.projectId()),
+      roles: canReadRoles
+        ? this.api
+            .listProjectRoles(orgId, this.projectId())
+            .pipe(catchError(() => of([] as ProjectRoleResponse[])))
+        : of([] as ProjectRoleResponse[]),
       assignments: this.api.listProjectMembers(orgId, this.projectId()),
-      members: this.api.listMembers(orgId),
+      members: this.api.listMembers(orgId).pipe(catchError(() => of([] as MemberResponse[]))),
     }).subscribe({
       next: ({ roles, assignments, members }) => {
         this.roles.set(roles);
