@@ -141,12 +141,16 @@ export const routes: Routes = [
           {
             path: 'billing',
             title: 'titles.billing',
+            canActivate: [requireOrgRole('OWNER')],
+            data: { orgRole: 'OWNER' },
             loadComponent: () =>
               import('./features/billing/pages/billing/billing').then((m) => m.Billing),
           },
           {
             path: 'integrations',
             title: 'titles.integrations',
+            canActivate: [requireOrgRole('ADMIN')],
+            data: { orgRole: 'ADMIN' },
             loadComponent: () =>
               import('./features/workspace/pages/org-integrations/org-integrations').then(
                 (m) => m.OrgIntegrations,
@@ -155,6 +159,8 @@ export const routes: Routes = [
           {
             path: 'usage',
             title: 'titles.usage',
+            canActivate: [requireOrgRole('OWNER')],
+            data: { orgRole: 'OWNER' },
             loadComponent: () =>
               import('./features/billing/pages/usage/usage').then((m) => m.Usage),
           },
@@ -358,6 +364,9 @@ export const routes: Routes = [
               {
                 path: 'integrations',
                 title: 'titles.integrations',
+                canMatch: [requirePermissionMatch('INTEGRATION_READ')],
+                canActivate: [requirePermission('INTEGRATION_READ')],
+                data: { permission: 'INTEGRATION_READ' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-integrations/project-integrations').then(
                     (m) => m.ProjectIntegrations,

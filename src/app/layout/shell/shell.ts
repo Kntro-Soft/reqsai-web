@@ -316,9 +316,9 @@ export class Shell {
   private readonly orgSettingsSegs: NavSeg[] = [
     { seg: 'general', role: 'OWNER' },
     { seg: 'members', role: 'ADMIN' },
-    { seg: 'billing' },
-    { seg: 'integrations' },
-    { seg: 'usage' },
+    { seg: 'billing', role: 'OWNER' },
+    { seg: 'integrations', role: 'ADMIN' },
+    { seg: 'usage', role: 'OWNER' },
   ];
   private readonly projectRootSegs: NavSeg[] = [
     { seg: 'overview' },
@@ -332,7 +332,7 @@ export class Shell {
     { seg: 'general', permission: 'PROJECT_UPDATE' },
     { seg: 'roles', permission: 'ROLE_READ' },
     { seg: 'members', permission: 'MEMBER_READ' },
-    { seg: 'integrations' },
+    { seg: 'integrations', permission: 'INTEGRATION_READ' },
     { seg: 'danger', permission: 'PROJECT_DELETE' },
   ];
   private readonly accountSegs: NavSeg[] = [
