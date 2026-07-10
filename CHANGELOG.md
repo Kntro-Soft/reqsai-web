@@ -19,6 +19,18 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `PRESENCE_STATE` event on the existing per-session WebSocket topic (no extra subscription), scoped to the
   live session only, and reuses the shared avatar (image with monogram fallback). New joiners animate in and
   names show as tooltips (`discovery.presence.*`, en/es).
+- **Integrations — non-blocking Jira import / push-all** (`feature/integrations-jira`): the backlog's
+  **Import from Jira** and **Push all to Jira** now start a **background job** (the endpoints answer
+  `202` with an `IntegrationJobResponse`) instead of blocking the page: the modal/button releases
+  immediately with a "started" toast, and a slim **global progress banner** under the top bar shows the
+  running job on ANY page of the project — label, `processed/total` counter and a thin progress bar
+  (indeterminate sweep while the total is unknown). A new signal-based `IntegrationJobsStore` follows the
+  current project: it **recovers in-flight jobs after a reload** (`GET jobs?active=true`), streams
+  progress from the `projects/{id}/integration-jobs` STOMP topic, and **falls back to ~5s polling** of
+  `GET jobs/{jobId}` while the socket is down. On completion the banner toasts the succeeded/failed
+  summary (or the failure `message`, localized via the `errors.*` table) and the stories list refreshes
+  itself; the action buttons stay disabled while a job of their type runs, and a conflicting start
+  surfaces the new `errors.INTEGRATION_JOB_ALREADY_RUNNING` message (EN + ES).
 - **Integrations — Jira** (`feature/integrations-jira`): a real Organization **Integrations** page
   (replacing the placeholder) to connect a Jira site (site URL / email / API token — the token is only
   ever sent to the backend, never stored client-side), with **Test connection** and a confirm-guarded
