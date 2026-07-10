@@ -1,11 +1,4 @@
-import {
-  Directive,
-  TemplateRef,
-  ViewContainerRef,
-  effect,
-  inject,
-  input,
-} from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { PermissionsStore } from '../../core/authz/permissions.store';
 import { OrgRole } from '../../core/authz/permissions.models';
 
@@ -41,8 +34,7 @@ export class HasPermission {
 
       let granted = true;
       if (role) {
-        granted =
-          role === 'OWNER' ? this.store.isOrgOwner() : this.store.isOrgOwnerOrAdmin();
+        granted = role === 'OWNER' ? this.store.isOrgOwner() : this.store.isOrgOwnerOrAdmin();
       }
       if (granted && permission) {
         granted = this.store.has(permission);

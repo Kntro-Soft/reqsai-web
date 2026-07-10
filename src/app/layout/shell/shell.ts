@@ -456,7 +456,8 @@ export class Shell {
   private visibleSegs(segs: NavSeg[]): NavSeg[] {
     return segs.filter((s) => {
       if (s.role) {
-        const ok = s.role === 'OWNER' ? this.permissions.isOrgOwner() : this.permissions.isOrgOwnerOrAdmin();
+        const ok =
+          s.role === 'OWNER' ? this.permissions.isOrgOwner() : this.permissions.isOrgOwnerOrAdmin();
         if (!ok) return false;
       }
       if (s.permission && !this.permissions.has(s.permission)) return false;

@@ -93,101 +93,103 @@ const MENU_POS: ConnectedPosition[] = [
       <!-- Invite (owner/admin only) -->
       @if (canManage()) {
         <section class="overflow-hidden rounded-2xl border border-border">
-        <div class="flex flex-col gap-1 p-5">
-          <h2 class="text-base font-semibold">{{ 'members.inviteTitle' | transloco }}</h2>
-          <p class="text-sm text-muted-foreground">{{ 'members.inviteDesc' | transloco }}</p>
-        </div>
-        <form
-          [formGroup]="form"
-          (ngSubmit)="invite()"
-          class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5"
-        >
-          <div formArrayName="invites" class="flex flex-col gap-3">
-            @for (row of invites.controls; track row; let i = $index) {
-              <div [formGroupName]="i" class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div class="flex flex-1 flex-col gap-1.5">
-                  @if (i === 0) {
-                    <label hlmLabel [for]="'email' + i">{{ 'members.fieldEmail' | transloco }}</label>
-                  }
-                  <input
-                    hlmInput
-                    [id]="'email' + i"
-                    type="email"
-                    formControlName="email"
-                    [placeholder]="'members.placeholderEmail' | transloco"
-                  />
-                  @if (row.controls.email.errors?.['selfInvite'] && row.controls.email.touched) {
-                    <p class="text-xs text-destructive" data-testid="invite-self-error">
-                      {{ 'members.errorSelfInvite' | transloco }}
-                    </p>
-                  }
-                </div>
-                <div class="flex flex-1 flex-col gap-1.5">
-                  @if (i === 0) {
-                    <label hlmLabel [for]="'displayName' + i">
-                      {{ 'members.fieldName' | transloco }}
-                    </label>
-                  }
-                  <input
-                    hlmInput
-                    [id]="'displayName' + i"
-                    formControlName="displayName"
-                    [placeholder]="'members.placeholderName' | transloco"
-                  />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  @if (i === 0) {
-                    <span hlmLabel>{{ 'members.fieldRole' | transloco }}</span>
-                  }
-                  <app-select
-                    [options]="roleOptions()"
-                    [value]="row.controls.role.value"
-                    (valueChange)="row.controls.role.setValue($any($event))"
-                    [ariaLabel]="'members.fieldRole' | transloco"
-                  />
-                </div>
-                <button
-                  type="button"
-                  (click)="removeInvite(i)"
-                  [disabled]="invites.length === 1"
-                  [attr.aria-label]="'members.removeInviteAria' | transloco"
-                  class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <hlm-icon name="lucideTrash2" size="16px" />
-                </button>
-              </div>
-            }
+          <div class="flex flex-col gap-1 p-5">
+            <h2 class="text-base font-semibold">{{ 'members.inviteTitle' | transloco }}</h2>
+            <p class="text-sm text-muted-foreground">{{ 'members.inviteDesc' | transloco }}</p>
           </div>
-
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <button
-              type="button"
-              (click)="addInvite()"
-              class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              data-testid="invite-add-more"
-            >
-              <hlm-icon name="lucidePlus" size="15px" />
-              {{ 'members.addMore' | transloco }}
-            </button>
-            <button
-              hlmBtn
-              size="sm"
-              type="submit"
-              [disabled]="form.invalid || submitting()"
-              data-testid="invite-submit"
-            >
-              @if (submitting()) {
-                <hlm-spinner class="h-4 w-4" />
-              } @else {
-                <hlm-icon name="lucideUserPlus" size="15px" />
+          <form
+            [formGroup]="form"
+            (ngSubmit)="invite()"
+            class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5"
+          >
+            <div formArrayName="invites" class="flex flex-col gap-3">
+              @for (row of invites.controls; track row; let i = $index) {
+                <div [formGroupName]="i" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div class="flex flex-1 flex-col gap-1.5">
+                    @if (i === 0) {
+                      <label hlmLabel [for]="'email' + i">{{
+                        'members.fieldEmail' | transloco
+                      }}</label>
+                    }
+                    <input
+                      hlmInput
+                      [id]="'email' + i"
+                      type="email"
+                      formControlName="email"
+                      [placeholder]="'members.placeholderEmail' | transloco"
+                    />
+                    @if (row.controls.email.errors?.['selfInvite'] && row.controls.email.touched) {
+                      <p class="text-xs text-destructive" data-testid="invite-self-error">
+                        {{ 'members.errorSelfInvite' | transloco }}
+                      </p>
+                    }
+                  </div>
+                  <div class="flex flex-1 flex-col gap-1.5">
+                    @if (i === 0) {
+                      <label hlmLabel [for]="'displayName' + i">
+                        {{ 'members.fieldName' | transloco }}
+                      </label>
+                    }
+                    <input
+                      hlmInput
+                      [id]="'displayName' + i"
+                      formControlName="displayName"
+                      [placeholder]="'members.placeholderName' | transloco"
+                    />
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    @if (i === 0) {
+                      <span hlmLabel>{{ 'members.fieldRole' | transloco }}</span>
+                    }
+                    <app-select
+                      [options]="roleOptions()"
+                      [value]="row.controls.role.value"
+                      (valueChange)="row.controls.role.setValue($any($event))"
+                      [ariaLabel]="'members.fieldRole' | transloco"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeInvite(i)"
+                    [disabled]="invites.length === 1"
+                    [attr.aria-label]="'members.removeInviteAria' | transloco"
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <hlm-icon name="lucideTrash2" size="16px" />
+                  </button>
+                </div>
               }
-              {{ 'members.inviteSubmit' | transloco }}
-            </button>
-          </div>
-          @if (errorMessage()) {
-            <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
-          }
-        </form>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                (click)="addInvite()"
+                class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                data-testid="invite-add-more"
+              >
+                <hlm-icon name="lucidePlus" size="15px" />
+                {{ 'members.addMore' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                type="submit"
+                [disabled]="form.invalid || submitting()"
+                data-testid="invite-submit"
+              >
+                @if (submitting()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUserPlus" size="15px" />
+                }
+                {{ 'members.inviteSubmit' | transloco }}
+              </button>
+            </div>
+            @if (errorMessage()) {
+              <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
+            }
+          </form>
         </section>
 
         <!-- Member base permission (GitHub-style floor): owner/admin only -->
@@ -219,7 +221,9 @@ const MENU_POS: ConnectedPosition[] = [
                   <span
                     class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border"
                     [class]="
-                      basePermission() === opt.value ? 'border-primary' : 'border-muted-foreground/50'
+                      basePermission() === opt.value
+                        ? 'border-primary'
+                        : 'border-muted-foreground/50'
                     "
                   >
                     @if (basePermission() === opt.value) {
@@ -298,7 +302,10 @@ const MENU_POS: ConnectedPosition[] = [
       </div>
 
       @if (state() === 'loading') {
-        <div class="overflow-hidden rounded-2xl border border-border" data-testid="members-skeleton">
+        <div
+          class="overflow-hidden rounded-2xl border border-border"
+          data-testid="members-skeleton"
+        >
           @for (i of skeletonRows; track i) {
             <div class="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
               <hlm-skeleton class="h-[34px] w-[34px] shrink-0 rounded-full" />
@@ -620,8 +627,16 @@ export class Members {
     labelKey: string;
     descKey: string;
   }[] = [
-    { value: 'NONE', labelKey: 'authz.basePermission.none', descKey: 'authz.basePermission.noneDesc' },
-    { value: 'READ', labelKey: 'authz.basePermission.read', descKey: 'authz.basePermission.readDesc' },
+    {
+      value: 'NONE',
+      labelKey: 'authz.basePermission.none',
+      descKey: 'authz.basePermission.noneDesc',
+    },
+    {
+      value: 'READ',
+      labelKey: 'authz.basePermission.read',
+      descKey: 'authz.basePermission.readDesc',
+    },
   ];
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
@@ -675,8 +690,7 @@ export class Members {
   private bold(text: string): string {
     const escaped = text.replace(
       /[&<>"']/g,
-      (c) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
     );
     return `<strong>${escaped}</strong>`;
   }
