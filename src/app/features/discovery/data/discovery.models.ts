@@ -1,13 +1,7 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
 export type SessionStatus =
-  | 'DRAFT'
-  | 'RECORDING'
-  | 'PAUSED'
-  | 'STOPPED'
-  | 'PROCESSING'
-  | 'COMPLETED'
-  | 'FAILED';
+  'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
 export interface DiscoverySessionResponse {
   id: string;
@@ -431,11 +425,11 @@ export function editableToAcceptRequest(
 // ---- Realtime (STOMP topic /topic/sessions/{id}) ----
 
 export type SessionEventType =
+  | 'SESSION_CREATED'
   | 'RECORDING_STARTED'
   | 'RECORDING_PAUSED'
   | 'RECORDING_RESUMED'
   | 'RECORDING_STOPPED'
-  | 'SESSION_RESET'
   | 'TRANSCRIPT_SEGMENT'
   | 'TRANSCRIPT_UPLOADED'
   | 'PROCESSING'

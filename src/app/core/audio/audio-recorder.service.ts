@@ -132,6 +132,17 @@ export class AudioRecorderService {
     }
 
     if (this.webSocket) {
+      // Flush the sub-chunk tail (< CHUNK_SIZE samples) before closing, so the last
+      // ~100ms of speech — often the end of the final sentence — reaches the STT.
+      if (this.webSocket.readyState === WebSocket.OPEN && this.pcmBufferAccumulator.length > 0) {
+        const tail = this.pcmBufferAccumulator;
+        const buffer = new ArrayBuffer(tail.length * 2);
+        const view = new DataView(buffer);
+        for (let i = 0; i < tail.length; i++) {
+          view.setInt16(i * 2, tail[i], true); // little-endian
+        }
+        this.webSocket.send(buffer);
+      }
       if (
         this.webSocket.readyState === WebSocket.OPEN ||
         this.webSocket.readyState === WebSocket.CONNECTING

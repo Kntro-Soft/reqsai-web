@@ -32,6 +32,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -592,6 +593,7 @@ export class DiscoveryChat implements OnInit {
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
   private readonly auth = inject(AuthStore);
+  private readonly permissions = inject(PermissionsStore);
   private readonly workspace = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
@@ -646,15 +648,13 @@ export class DiscoveryChat implements OnInit {
   );
 
   /** Owner/admin gate reused from the workspace pages (fine-grained perms not client-side yet). */
-  protected readonly canManage = computed(() => {
-    const user = this.auth.user();
-    if (!user) return false;
-    const orgId = this.auth.organizationId();
-    const org = this.workspace.organizations().find((o) => o.id === orgId);
-    return org?.ownerId === user.id;
-  });
-  protected readonly canRecord = this.canManage;
-  protected readonly canDecide = this.canManage;
+  // Gate the live controls by the caller's PROJECT permissions (owner/admin bypass is built
+  // into PermissionsStore.has()), not org ownership — an admin or a member whose project role
+  // grants SESSION_RUN/SESSION_DECIDE must be able to run and decide, while a read-only viewer
+  // sees the session without the record/accept controls (and never hits a spurious 403 toast).
+  // The SESSION_READ route guard has already awaited the project permission load before we render.
+  protected readonly canRecord = computed(() => this.permissions.has('SESSION_RUN'));
+  protected readonly canDecide = computed(() => this.permissions.has('SESSION_DECIDE'));
 
   /**
    * Meeting language for the next session, editable until recording starts.
