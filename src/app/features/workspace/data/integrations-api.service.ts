@@ -8,11 +8,9 @@ import {
   IntegrationJobResponse,
   JiraImportPreviewResponse,
   JiraImportRequest,
-  JiraImportResponse,
   JiraIssueTypeResponse,
   JiraOAuthCallbackRequest,
   JiraProjectResponse,
-  JiraPushAllResponse,
   JiraPushResultResponse,
   OAuthCallbackResult,
   ProjectJiraTargetResponse,
@@ -160,9 +158,13 @@ export class IntegrationsApiService {
     );
   }
 
-  /** Push every eligible story to Jira; returns per-story results + pushed/failed counts. */
-  pushAllStories(projectId: string): Observable<JiraPushAllResponse> {
-    return this.http.post<JiraPushAllResponse>(
+  /**
+   * Start pushing every eligible story to Jira as a BACKGROUND job (202). Track the
+   * returned job via the jobs store; 409 `INTEGRATION_JOB_ALREADY_RUNNING` when one
+   * is already in flight for the project.
+   */
+  pushAllStories(projectId: string): Observable<IntegrationJobResponse> {
+    return this.http.post<IntegrationJobResponse>(
       `${this.projectBase(projectId)}/stories/push-all`,
       {},
     );
@@ -197,13 +199,18 @@ export class IntegrationsApiService {
   }
 
   /**
-   * Import Jira issues as stories. Pass the chosen `issueKeys`, or an empty body
-   * (omit `issueKeys`) to import every available issue.
+   * Start importing Jira issues as stories as a BACKGROUND job (202). Pass the
+   * chosen `issueKeys`, or an empty body (omit `issueKeys`) to import every
+   * available issue. Track the returned job via the jobs store; 409
+   * `INTEGRATION_JOB_ALREADY_RUNNING` when one is already in flight.
    */
   importFromJira(
     projectId: string,
     request: JiraImportRequest = {},
-  ): Observable<JiraImportResponse> {
-    return this.http.post<JiraImportResponse>(`${this.projectBase(projectId)}/import`, request);
+  ): Observable<IntegrationJobResponse> {
+    return this.http.post<IntegrationJobResponse>(
+      `${this.projectBase(projectId)}/import`,
+      request,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   computed,
@@ -8,16 +9,17 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucideDownload, lucidePlus, lucideSearch, lucideUpload } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
+import { IntegrationJobsStore } from '../../../workspace/data/integration-jobs.store';
 import {
   JiraImportIssue,
   defaultImportSelection,
-  summarizeImport,
 } from '../../../workspace/data/integrations.models';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -79,13 +81,17 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             variant="outline"
             type="button"
             (click)="openImport()"
-            [disabled]="importPreviewing() || jiraConfigured() !== true"
+            [disabled]="importPreviewing() || importJobRunning() || jiraConfigured() !== true"
             [title]="
-              jiraConfigured() === false ? ('integrations.push.notConfigured' | transloco) : ''
+              importJobRunning()
+                ? ('integrations.jobs.alreadyRunning' | transloco)
+                : jiraConfigured() === false
+                  ? ('integrations.push.notConfigured' | transloco)
+                  : ''
             "
             data-testid="stories-import"
           >
-            @if (importPreviewing()) {
+            @if (importPreviewing() || importJobRunning()) {
               <hlm-spinner class="h-4 w-4" />
             } @else {
               <hlm-icon name="lucideDownload" size="15px" />
@@ -98,13 +104,17 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             variant="outline"
             type="button"
             (click)="pushAll()"
-            [disabled]="pushingAll() || jiraConfigured() !== true"
+            [disabled]="pushAllBusy() || jiraConfigured() !== true"
             [title]="
-              jiraConfigured() === false ? ('integrations.push.notConfigured' | transloco) : ''
+              pushJobRunning()
+                ? ('integrations.jobs.alreadyRunning' | transloco)
+                : jiraConfigured() === false
+                  ? ('integrations.push.notConfigured' | transloco)
+                  : ''
             "
             data-testid="stories-push-all"
           >
-            @if (pushingAll()) {
+            @if (pushAllBusy()) {
               <hlm-spinner class="h-4 w-4" />
             } @else {
               <hlm-icon name="lucideUpload" size="15px" />
@@ -401,13 +411,21 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
 export class ProjectStories implements OnInit, OnDestroy {
   private readonly api = inject(DiscoveryApiService);
   private readonly integrations = inject(IntegrationsApiService);
+  private readonly jobs = inject(IntegrationJobsStore);
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly projectId = input.required<string>();
 
-  protected readonly pushingAll = signal(false);
+  // Background-job state: the 202 request itself is brief (pushStarting), then the
+  // jobs store owns the RUNNING state — the buttons stay disabled from it while the
+  // work happens server-side, without blocking the page.
+  protected readonly pushStarting = signal(false);
+  protected readonly pushJobRunning = computed(() => this.jobs.runningOfType('PUSH_ALL'));
+  protected readonly pushAllBusy = computed(() => this.pushStarting() || this.pushJobRunning());
+  protected readonly importJobRunning = computed(() => this.jobs.runningOfType('IMPORT'));
 
   /**
    * Whether the project has a Jira push target configured; `null` while resolving. Import and
@@ -500,6 +518,11 @@ export class ProjectStories implements OnInit, OnDestroy {
       next: () => this.jiraConfigured.set(true),
       error: () => this.jiraConfigured.set(false),
     });
+    // A finished background job (import or push-all) changes the backlog — new
+    // stories, or statuses flipped to EXPORTED — so refresh the visible page.
+    this.jobs.completed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((job) => {
+      if (job.projectId === this.projectId()) this.load();
+    });
   }
 
   ngOnDestroy(): void {
@@ -547,25 +570,24 @@ export class ProjectStories implements OnInit, OnDestroy {
   }
 
   /**
-   * Pushes every eligible story to Jira and toasts the pushed/failed counts. A
-   * missing project mapping (INTEGRATION_TARGET_NOT_CONFIGURED) gets a helpful
-   * message pointing to the project's integration settings.
+   * Starts pushing every eligible story to Jira as a background job: the 202's job
+   * is handed to the jobs store (global banner + button disabling) and a "started"
+   * toast confirms the kick-off — completion is announced by the banner's toast. A
+   * missing mapping (INTEGRATION_TARGET_NOT_CONFIGURED) points at the project's
+   * integration settings; a job already in flight (INTEGRATION_JOB_ALREADY_RUNNING,
+   * e.g. started by a teammate) surfaces its own message via `messageForError`.
    */
   protected pushAll(): void {
-    if (this.pushingAll()) return;
-    this.pushingAll.set(true);
+    if (this.pushAllBusy()) return;
+    this.pushStarting.set(true);
     this.integrations.pushAllStories(this.projectId()).subscribe({
-      next: (result) => {
-        this.pushingAll.set(false);
-        this.toast.success(
-          this.transloco.translate('integrations.push.pushedAll', {
-            pushed: result.pushed,
-            failed: result.failed,
-          }),
-        );
+      next: (job) => {
+        this.pushStarting.set(false);
+        this.jobs.track(job);
+        this.toast.success(this.transloco.translate('integrations.jobs.started'));
       },
       error: (err: unknown) => {
-        this.pushingAll.set(false);
+        this.pushStarting.set(false);
         this.toast.error(this.pushAllErrorMessage(err));
       },
     });
@@ -620,18 +642,22 @@ export class ProjectStories implements OnInit, OnDestroy {
     });
   }
 
-  /** Imports the selected Jira issues, toasts the imported/skipped/failed summary, and reloads. */
+  /**
+   * Starts importing the selected Jira issues as a background job: on the 202 the
+   * modal closes immediately, the job is handed to the jobs store (global banner)
+   * and a "started" toast confirms the kick-off. The list refreshes when the job's
+   * completion event arrives (see ngOnInit); the summary toast comes from the banner.
+   */
   protected confirmImport(): void {
     if (this.importing() || this.selectedKeys().size === 0) return;
     this.importing.set(true);
     const issueKeys = [...this.selectedKeys()];
     this.integrations.importFromJira(this.projectId(), { issueKeys }).subscribe({
-      next: (response) => {
+      next: (job) => {
         this.importing.set(false);
         this.importOpen.set(false);
-        const summary = summarizeImport(response);
-        this.toast.success(this.transloco.translate('integrations.import.summary', summary));
-        this.resetAndLoad();
+        this.jobs.track(job);
+        this.toast.success(this.transloco.translate('integrations.jobs.started'));
       },
       error: (err: unknown) => {
         this.importing.set(false);

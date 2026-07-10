@@ -1253,7 +1253,6 @@
       "pushStory": "Enviar a Jira",
       "pushAll": "Enviar todo a Jira",
       "pushed": "Enviado a Jira como {{key}}.",
-      "pushedAll": "Se enviaron {{pushed}} historias a Jira ({{failed}} con error).",
       "notConfigured": "Este proyecto no tiene un mapeo de Jira configurado. Configúralo primero en la configuración de integración del proyecto.",
       "pushError": "No pudimos enviar a Jira. Inténtalo de nuevo."
     },
@@ -1264,8 +1263,7 @@
       "selectAll": "Seleccionar todo",
       "duplicate": "Ya importada",
       "empty": "No hay incidencias de Jira para importar en este proyecto.",
-      "confirm": "Importar {{count}}",
-      "summary": "Se importaron {{imported}}, se omitieron {{skipped}}, {{failed}} con error."
+      "confirm": "Importar {{count}}"
     },
     "jobs": {
       "importRunning": "Importando de Jira…",

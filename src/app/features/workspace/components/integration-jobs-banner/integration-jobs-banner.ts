@@ -61,7 +61,10 @@ export function jobFailureMessage(
           }
         </div>
         <!-- Thin progress bar hugging the banner's bottom edge. -->
-        <div class="absolute inset-x-0 bottom-0 h-0.5 overflow-hidden bg-border/60" aria-hidden="true">
+        <div
+          class="absolute inset-x-0 bottom-0 h-0.5 overflow-hidden bg-border/60"
+          aria-hidden="true"
+        >
           @if (percent(job) !== null) {
             <div
               class="h-full rounded-r-full bg-primary transition-[width] duration-500 ease-out"

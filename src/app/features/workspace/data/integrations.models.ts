@@ -91,13 +91,6 @@ export interface JiraPushResultResponse {
   jiraIssueUrl: string;
 }
 
-/** Aggregate outcome of a push-all: per-story results plus pushed/failed counts. */
-export interface JiraPushAllResponse {
-  results: JiraPushResultResponse[];
-  pushed: number;
-  failed: number;
-}
-
 // --- Import FROM Jira ---
 
 /**
@@ -125,25 +118,6 @@ export interface JiraImportPreviewResponse {
  */
 export interface JiraImportRequest {
   issueKeys?: string[];
-}
-
-/** The per-issue outcome of an import. */
-export type JiraImportStatus = 'imported' | 'duplicate' | 'failed';
-
-/** One issue's import result: its status and, when imported, the new story id. */
-export interface JiraImportResult {
-  jiraIssueKey: string;
-  storyId?: string;
-  status: JiraImportStatus;
-  message?: string;
-}
-
-/** Aggregate outcome of an import: per-issue results plus imported/skipped/failed counts. */
-export interface JiraImportResponse {
-  imported: number;
-  skipped: number;
-  failed: number;
-  results: JiraImportResult[];
 }
 
 // --- Background integration jobs (import / push-all) ---
@@ -258,24 +232,3 @@ export function defaultImportSelection(preview: JiraImportPreviewResponse): stri
   return preview.issues.filter((i) => !i.duplicate).map((i) => i.jiraIssueKey);
 }
 
-/**
- * The counts to surface after an import, derived defensively from the per-issue
- * `results` rather than trusting the top-level tallies, so the toast can never
- * disagree with the rows. `imported`/`duplicate`/`failed` map to the status values;
- * `skipped` counts the duplicates (nothing was created for them). Pure/testable.
- */
-export function summarizeImport(response: JiraImportResponse): {
-  imported: number;
-  skipped: number;
-  failed: number;
-} {
-  let imported = 0;
-  let skipped = 0;
-  let failed = 0;
-  for (const r of response.results) {
-    if (r.status === 'imported') imported++;
-    else if (r.status === 'duplicate') skipped++;
-    else failed++;
-  }
-  return { imported, skipped, failed };
-}

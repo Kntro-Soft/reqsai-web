@@ -6,10 +6,8 @@ import {
   isSitesResult,
   jobLabelKey,
   jobProgressPercent,
-  summarizeImport,
   type IntegrationConnectionResponse,
   type JiraImportPreviewResponse,
-  type JiraImportResponse,
   type JiraSitesResponse,
 } from './integrations.models';
 
@@ -87,41 +85,6 @@ describe('defaultImportSelection', () => {
 
   it('returns an empty selection for an empty preview', () => {
     expect(defaultImportSelection({ total: 0, issues: [] })).toEqual([]);
-  });
-});
-
-describe('summarizeImport', () => {
-  it('counts imported, skipped (duplicate) and failed from the per-issue results', () => {
-    const response: JiraImportResponse = {
-      imported: 2,
-      skipped: 1,
-      failed: 1,
-      results: [
-        { jiraIssueKey: 'PROJ-1', storyId: 's-1', status: 'imported' },
-        { jiraIssueKey: 'PROJ-3', storyId: 's-3', status: 'imported' },
-        { jiraIssueKey: 'PROJ-2', status: 'duplicate' },
-        { jiraIssueKey: 'PROJ-4', status: 'failed', message: 'boom' },
-      ],
-    };
-    expect(summarizeImport(response)).toEqual({ imported: 2, skipped: 1, failed: 1 });
-  });
-
-  it('derives counts from results even when the top-level tallies disagree', () => {
-    const response: JiraImportResponse = {
-      imported: 99,
-      skipped: 99,
-      failed: 99,
-      results: [{ jiraIssueKey: 'PROJ-1', storyId: 's-1', status: 'imported' }],
-    };
-    expect(summarizeImport(response)).toEqual({ imported: 1, skipped: 0, failed: 0 });
-  });
-
-  it('returns all-zero counts for an empty result set', () => {
-    expect(summarizeImport({ imported: 0, skipped: 0, failed: 0, results: [] })).toEqual({
-      imported: 0,
-      skipped: 0,
-      failed: 0,
-    });
   });
 });
 

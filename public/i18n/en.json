@@ -1253,7 +1253,6 @@
       "pushStory": "Push to Jira",
       "pushAll": "Push all to Jira",
       "pushed": "Pushed to Jira as {{key}}.",
-      "pushedAll": "Pushed {{pushed}} stories to Jira ({{failed}} failed).",
       "notConfigured": "No Jira mapping is configured for this project. Set it up in the project integration settings first.",
       "pushError": "We couldn't push to Jira. Please try again."
     },
@@ -1264,8 +1263,7 @@
       "selectAll": "Select all",
       "duplicate": "Already imported",
       "empty": "There are no Jira issues to import for this project.",
-      "confirm": "Import {{count}}",
-      "summary": "Imported {{imported}}, skipped {{skipped}}, {{failed}} failed."
+      "confirm": "Import {{count}}"
     },
     "jobs": {
       "importRunning": "Importing from Jira…",
