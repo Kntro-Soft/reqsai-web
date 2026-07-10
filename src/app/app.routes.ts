@@ -4,6 +4,7 @@ import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import {
   requireOrgRole,
+  projectSettingsLanding,
   requirePermission,
   requirePermissionMatch,
 } from './core/guards/permission.guard';
@@ -293,7 +294,15 @@ export const routes: Routes = [
           {
             path: 'settings',
             children: [
-              { path: '', redirectTo: 'general', pathMatch: 'full' },
+              {
+                path: '',
+                pathMatch: 'full',
+                canActivate: [projectSettingsLanding],
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-overview/project-overview').then(
+                    (m) => m.ProjectOverview,
+                  ),
+              },
               {
                 path: 'general',
                 title: 'titles.general',
