@@ -25,7 +25,6 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
-import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import {
   MemberResponse,
@@ -34,6 +33,7 @@ import {
   ProjectRoleResponse,
 } from '../../data/workspace.models';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import { InlineEntity } from '../../../../shared/components/inline-entity/inline-entity';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
@@ -73,7 +73,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * On submit, existing-member rows call assignProjectMember and new-email rows are batched into a single
  * inviteProjectMembers call. A filter bar (search + role filter + sort) narrows the roster below, a
  * compact table shows each assignment with an inline role select and a remove action (behind a
- * confirmation modal). Only org owners/admins may manage; everyone else gets a read-only roster.
+ * confirmation modal). Each control is gated by its specific project permission: the add-people
+ * card by MEMBER_INVITE (the "invite as new email" sub-option additionally requires org
+ * owner/admin, matching the backend), the inline role select by MEMBER_UPDATE_ROLE, and the
+ * remove action by MEMBER_REMOVE. Owner/admin bypass implicitly via the permissions store;
+ * a caller holding none of these gets a read-only roster.
  */
 @Component({
   selector: 'app-project-members',
@@ -81,6 +85,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   imports: [
     OverlayModule,
     Avatar,
+    HasPermission,
     InlineEntity,
     Modal,
     Select,
@@ -111,252 +116,256 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         </p>
       </div>
 
-      <!-- Add people (owner/admin only) — unified batch rows -->
-      @if (canManage()) {
-        <section class="overflow-hidden rounded-2xl border border-border">
-          <div class="flex flex-col gap-1 p-5">
-            <h2 class="text-base font-semibold">{{ 'projectMembers.addTitle' | transloco }}</h2>
-            <p class="text-sm text-muted-foreground">{{ 'projectMembers.addDesc' | transloco }}</p>
-          </div>
-          <div class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5">
-            @for (row of rows_add(); track row.key; let i = $index) {
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div class="flex flex-1 flex-col gap-1.5">
-                  @if (i === 0) {
-                    <span hlmLabel>{{ 'projectMembers.selectMember' | transloco }}</span>
-                  }
-                  @if (row.kind === 'member') {
-                    <!-- Fixed to an existing member -->
-                    <div
-                      class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
-                      [attr.data-testid]="'add-row-member-' + i"
-                    >
-                      <app-avatar
-                        [name]="memberName(row.memberId)"
-                        [seed]="row.memberId"
-                        [imageUrl]="memberAvatar(row.memberId)"
-                        [size]="24"
-                        [circle]="true"
-                      />
-                      <span class="min-w-0 flex-1 truncate font-medium">{{
-                        memberName(row.memberId)
-                      }}</span>
-                      <button
-                        type="button"
-                        (click)="resetRow(i)"
-                        class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {{ 'projectMembers.change' | transloco }}
-                      </button>
-                    </div>
-                  } @else if (row.kind === 'email') {
-                    <!-- Fixed to a new email invite -->
-                    <div
-                      class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
-                      [attr.data-testid]="'add-row-email-' + i"
-                    >
-                      <span
-                        class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
-                      >
-                        <hlm-icon name="lucideMailPlus" size="13px" />
-                      </span>
-                      <span class="min-w-0 flex-1 truncate font-medium">{{ row.email }}</span>
-                      <button
-                        type="button"
-                        (click)="resetRow(i)"
-                        class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {{ 'projectMembers.change' | transloco }}
-                      </button>
-                    </div>
-                  } @else {
-                    <!-- Searchable combobox -->
+      <!-- Add people (MEMBER_INVITE) — unified batch rows -->
+      <section
+        *appHasPermission="'MEMBER_INVITE'"
+        class="overflow-hidden rounded-2xl border border-border"
+      >
+        <div class="flex flex-col gap-1 p-5">
+          <h2 class="text-base font-semibold">{{ 'projectMembers.addTitle' | transloco }}</h2>
+          <p class="text-sm text-muted-foreground">{{ 'projectMembers.addDesc' | transloco }}</p>
+        </div>
+        <div class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5">
+          @for (row of rows_add(); track row.key; let i = $index) {
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="flex flex-1 flex-col gap-1.5">
+                @if (i === 0) {
+                  <span hlmLabel>{{ 'projectMembers.selectMember' | transloco }}</span>
+                }
+                @if (row.kind === 'member') {
+                  <!-- Fixed to an existing member -->
+                  <div
+                    class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
+                    [attr.data-testid]="'add-row-member-' + i"
+                  >
+                    <app-avatar
+                      [name]="memberName(row.memberId)"
+                      [seed]="row.memberId"
+                      [imageUrl]="memberAvatar(row.memberId)"
+                      [size]="24"
+                      [circle]="true"
+                    />
+                    <span class="min-w-0 flex-1 truncate font-medium">{{
+                      memberName(row.memberId)
+                    }}</span>
                     <button
                       type="button"
-                      cdkOverlayOrigin
-                      #pickerOrigin="cdkOverlayOrigin"
-                      (click)="openPicker(i)"
-                      [attr.aria-expanded]="openPickerIndex() === i"
-                      aria-haspopup="listbox"
-                      [attr.aria-label]="'projectMembers.selectMember' | transloco"
-                      [attr.data-testid]="'add-row-picker-' + i"
-                      class="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      (click)="resetRow(i)"
+                      class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      <hlm-icon
-                        name="lucideSearch"
-                        size="15px"
-                        class="shrink-0 text-muted-foreground"
-                      />
-                      <span class="min-w-0 flex-1 truncate text-left text-muted-foreground">
-                        {{ 'projectMembers.pickerPlaceholder' | transloco }}
-                      </span>
-                      <hlm-icon
-                        name="lucideChevronsUpDown"
-                        size="14px"
-                        class="shrink-0 text-muted-foreground"
-                      />
+                      {{ 'projectMembers.change' | transloco }}
                     </button>
-
-                    <ng-template
-                      cdkConnectedOverlay
-                      [cdkConnectedOverlayOrigin]="pickerOrigin"
-                      [cdkConnectedOverlayOpen]="openPickerIndex() === i"
-                      [cdkConnectedOverlayPositions]="pickerPositions"
-                      [cdkConnectedOverlayWidth]="pickerOrigin.elementRef.nativeElement.offsetWidth"
-                      (overlayOutsideClick)="closePicker()"
-                      (overlayKeydown)="onPickerKeydown($event)"
-                      (detach)="closePicker()"
-                    >
-                      <div
-                        role="listbox"
-                        class="w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
-                      >
-                        <div class="flex items-center gap-2 border-b border-border px-3">
-                          <hlm-icon
-                            name="lucideSearch"
-                            size="15px"
-                            class="shrink-0 text-muted-foreground"
-                          />
-                          <input
-                            #pickerSearch
-                            type="text"
-                            [value]="row.search"
-                            (input)="setSearch(i, $any($event.target).value)"
-                            [placeholder]="'projectMembers.pickerPlaceholder' | transloco"
-                            class="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                            autocomplete="off"
-                            spellcheck="false"
-                          />
-                        </div>
-                        <div class="max-h-64 overflow-y-auto p-1">
-                          @for (m of pickerResults(i); track m.id) {
-                            <button
-                              type="button"
-                              role="option"
-                              [attr.aria-selected]="false"
-                              (click)="pickMember(i, m.id)"
-                              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
-                            >
-                              <app-avatar
-                                [name]="m.displayName || m.email"
-                                [seed]="m.id"
-                                [imageUrl]="m.userId ? '/api/users/' + m.userId + '/avatar' : null"
-                                [size]="28"
-                                [circle]="true"
-                              />
-                              <span class="flex min-w-0 flex-1 flex-col">
-                                <span class="truncate font-medium">{{
-                                  m.displayName || m.email
-                                }}</span>
-                                @if (m.displayName) {
-                                  <span class="truncate text-xs text-muted-foreground">{{
-                                    m.email
-                                  }}</span>
-                                }
-                              </span>
-                            </button>
-                          }
-                          @if (canInviteTyped(i); as email) {
-                            <button
-                              type="button"
-                              (click)="pickEmail(i, email)"
-                              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
-                              [attr.data-testid]="'add-row-invite-option-' + i"
-                            >
-                              <span
-                                class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
-                              >
-                                <hlm-icon name="lucideMailPlus" size="14px" />
-                              </span>
-                              <span class="min-w-0 flex-1 truncate">
-                                {{ 'projectMembers.inviteAsNew' | transloco: { email: email } }}
-                              </span>
-                            </button>
-                          }
-                          @if (!pickerResults(i).length && !canInviteTyped(i)) {
-                            <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">
-                              {{ 'projectMembers.pickerEmpty' | transloco }}
-                            </p>
-                          }
-                        </div>
-                      </div>
-                    </ng-template>
-                  }
-                </div>
-
-                <!-- New-invite rows need a display name -->
-                @if (row.kind === 'email') {
-                  <div class="flex flex-1 flex-col gap-1.5">
-                    @if (i === 0) {
-                      <label hlmLabel [for]="'add-name-' + i">
-                        {{ 'projectMembers.fieldName' | transloco }}
-                      </label>
-                    }
-                    <input
-                      hlmInput
-                      [id]="'add-name-' + i"
-                      [value]="row.displayName"
-                      (input)="setDisplayName(i, $any($event.target).value)"
-                      [placeholder]="'projectMembers.placeholderName' | transloco"
-                      autocomplete="off"
-                    />
                   </div>
-                }
+                } @else if (row.kind === 'email') {
+                  <!-- Fixed to a new email invite -->
+                  <div
+                    class="flex h-10 items-center gap-2.5 rounded-md border border-input bg-background px-3 text-sm"
+                    [attr.data-testid]="'add-row-email-' + i"
+                  >
+                    <span
+                      class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
+                    >
+                      <hlm-icon name="lucideMailPlus" size="13px" />
+                    </span>
+                    <span class="min-w-0 flex-1 truncate font-medium">{{ row.email }}</span>
+                    <button
+                      type="button"
+                      (click)="resetRow(i)"
+                      class="shrink-0 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {{ 'projectMembers.change' | transloco }}
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Searchable combobox -->
+                  <button
+                    type="button"
+                    cdkOverlayOrigin
+                    #pickerOrigin="cdkOverlayOrigin"
+                    (click)="openPicker(i)"
+                    [attr.aria-expanded]="openPickerIndex() === i"
+                    aria-haspopup="listbox"
+                    [attr.aria-label]="'projectMembers.selectMember' | transloco"
+                    [attr.data-testid]="'add-row-picker-' + i"
+                    class="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <hlm-icon
+                      name="lucideSearch"
+                      size="15px"
+                      class="shrink-0 text-muted-foreground"
+                    />
+                    <span class="min-w-0 flex-1 truncate text-left text-muted-foreground">
+                      {{ 'projectMembers.pickerPlaceholder' | transloco }}
+                    </span>
+                    <hlm-icon
+                      name="lucideChevronsUpDown"
+                      size="14px"
+                      class="shrink-0 text-muted-foreground"
+                    />
+                  </button>
 
-                <div class="flex flex-col gap-1.5">
+                  <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayOrigin]="pickerOrigin"
+                    [cdkConnectedOverlayOpen]="openPickerIndex() === i"
+                    [cdkConnectedOverlayPositions]="pickerPositions"
+                    [cdkConnectedOverlayWidth]="pickerOrigin.elementRef.nativeElement.offsetWidth"
+                    (overlayOutsideClick)="closePicker()"
+                    (overlayKeydown)="onPickerKeydown($event)"
+                    (detach)="closePicker()"
+                  >
+                    <div
+                      role="listbox"
+                      class="w-full overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+                    >
+                      <div class="flex items-center gap-2 border-b border-border px-3">
+                        <hlm-icon
+                          name="lucideSearch"
+                          size="15px"
+                          class="shrink-0 text-muted-foreground"
+                        />
+                        <input
+                          #pickerSearch
+                          type="text"
+                          [value]="row.search"
+                          (input)="setSearch(i, $any($event.target).value)"
+                          [placeholder]="'projectMembers.pickerPlaceholder' | transloco"
+                          class="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                          autocomplete="off"
+                          spellcheck="false"
+                        />
+                      </div>
+                      <div class="max-h-64 overflow-y-auto p-1">
+                        @for (m of pickerResults(i); track m.id) {
+                          <button
+                            type="button"
+                            role="option"
+                            [attr.aria-selected]="false"
+                            (click)="pickMember(i, m.id)"
+                            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+                          >
+                            <app-avatar
+                              [name]="m.displayName || m.email"
+                              [seed]="m.id"
+                              [imageUrl]="m.userId ? '/api/users/' + m.userId + '/avatar' : null"
+                              [size]="28"
+                              [circle]="true"
+                            />
+                            <span class="flex min-w-0 flex-1 flex-col">
+                              <span class="truncate font-medium">{{
+                                m.displayName || m.email
+                              }}</span>
+                              @if (m.displayName) {
+                                <span class="truncate text-xs text-muted-foreground">{{
+                                  m.email
+                                }}</span>
+                              }
+                            </span>
+                          </button>
+                        }
+                        @if (permissions.isOrgOwnerOrAdmin() && canInviteTyped(i); as email) {
+                          <button
+                            type="button"
+                            (click)="pickEmail(i, email)"
+                            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent"
+                            [attr.data-testid]="'add-row-invite-option-' + i"
+                          >
+                            <span
+                              class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground"
+                            >
+                              <hlm-icon name="lucideMailPlus" size="14px" />
+                            </span>
+                            <span class="min-w-0 flex-1 truncate">
+                              {{ 'projectMembers.inviteAsNew' | transloco: { email: email } }}
+                            </span>
+                          </button>
+                        }
+                        @if (
+                          !pickerResults(i).length &&
+                          !(permissions.isOrgOwnerOrAdmin() && canInviteTyped(i))
+                        ) {
+                          <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">
+                            {{ 'projectMembers.pickerEmpty' | transloco }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </ng-template>
+                }
+              </div>
+
+              <!-- New-invite rows need a display name -->
+              @if (row.kind === 'email') {
+                <div class="flex flex-1 flex-col gap-1.5">
                   @if (i === 0) {
-                    <span hlmLabel>{{ 'projectMembers.selectRole' | transloco }}</span>
+                    <label hlmLabel [for]="'add-name-' + i">
+                      {{ 'projectMembers.fieldName' | transloco }}
+                    </label>
                   }
-                  <app-select
-                    [options]="roleOptions()"
-                    [value]="row.roleId"
-                    (valueChange)="setRole(i, $event)"
-                    [ariaLabel]="'projectMembers.selectRole' | transloco"
+                  <input
+                    hlmInput
+                    [id]="'add-name-' + i"
+                    [value]="row.displayName"
+                    (input)="setDisplayName(i, $any($event.target).value)"
+                    [placeholder]="'projectMembers.placeholderName' | transloco"
+                    autocomplete="off"
                   />
                 </div>
-                <button
-                  type="button"
-                  (click)="removeRow(i)"
-                  [disabled]="rows_add().length === 1"
-                  [attr.aria-label]="'projectMembers.removeRowAria' | transloco"
-                  class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <hlm-icon name="lucideTrash2" size="16px" />
-                </button>
-              </div>
-            }
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <button
-                type="button"
-                (click)="addRow()"
-                class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                data-testid="add-more"
-              >
-                <hlm-icon name="lucidePlus" size="15px" />
-                {{ 'projectMembers.addMore' | transloco }}
-              </button>
-              <button
-                hlmBtn
-                size="sm"
-                type="button"
-                (click)="submit()"
-                [disabled]="!canSubmit() || submitting()"
-                data-testid="add-submit"
-              >
-                @if (submitting()) {
-                  <hlm-spinner class="h-4 w-4" />
-                } @else {
-                  <hlm-icon name="lucideUserPlus" size="15px" />
+              }
+
+              <div class="flex flex-col gap-1.5">
+                @if (i === 0) {
+                  <span hlmLabel>{{ 'projectMembers.selectRole' | transloco }}</span>
                 }
-                {{ 'projectMembers.add' | transloco }}
+                <app-select
+                  [options]="roleOptions()"
+                  [value]="row.roleId"
+                  (valueChange)="setRole(i, $event)"
+                  [ariaLabel]="'projectMembers.selectRole' | transloco"
+                />
+              </div>
+              <button
+                type="button"
+                (click)="removeRow(i)"
+                [disabled]="rows_add().length === 1"
+                [attr.aria-label]="'projectMembers.removeRowAria' | transloco"
+                class="grid h-10 w-10 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <hlm-icon name="lucideTrash2" size="16px" />
               </button>
             </div>
-            @if (addError()) {
-              <p class="text-sm text-destructive" data-testid="add-error">{{ addError() }}</p>
-            }
+          }
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              (click)="addRow()"
+              class="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              data-testid="add-more"
+            >
+              <hlm-icon name="lucidePlus" size="15px" />
+              {{ 'projectMembers.addMore' | transloco }}
+            </button>
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              (click)="submit()"
+              [disabled]="!canSubmit() || submitting()"
+              data-testid="add-submit"
+            >
+              @if (submitting()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideUserPlus" size="15px" />
+              }
+              {{ 'projectMembers.add' | transloco }}
+            </button>
           </div>
-        </section>
-      }
+          @if (addError()) {
+            <p class="text-sm text-destructive" data-testid="add-error">{{ addError() }}</p>
+          }
+        </div>
+      </section>
 
       <!-- Filters -->
       <div class="flex flex-wrap items-center gap-2">
@@ -439,7 +448,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     </div>
                   </td>
                   <td class="px-3 text-right whitespace-nowrap">
-                    @if (canManage()) {
+                    @if (canUpdateRole()) {
                       <div class="flex justify-end">
                         <app-select
                           size="sm"
@@ -458,16 +467,15 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     }
                   </td>
                   <td class="w-12 py-3 pr-3 pl-1 text-right">
-                    @if (canManage()) {
-                      <button
-                        type="button"
-                        (click)="askRemove(a)"
-                        [attr.aria-label]="'projectMembers.remove' | transloco"
-                        class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <hlm-icon name="lucideTrash2" size="16px" />
-                      </button>
-                    }
+                    <button
+                      *appHasPermission="'MEMBER_REMOVE'"
+                      type="button"
+                      (click)="askRemove(a)"
+                      [attr.aria-label]="'projectMembers.remove' | transloco"
+                      class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <hlm-icon name="lucideTrash2" size="16px" />
+                    </button>
                   </td>
                 </tr>
               }
@@ -517,8 +525,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export class ProjectMembers implements OnInit {
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
-  private readonly workspace = inject(WorkspaceStore);
-  private readonly permissions = inject(PermissionsStore);
+  protected readonly permissions = inject(PermissionsStore);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
 
@@ -677,16 +684,13 @@ export class ProjectMembers implements OnInit {
     ),
   );
 
-  /** Owner or admin of the active org may manage members; everyone else gets a read-only roster. */
-  protected readonly canManage = computed(() => {
-    const user = this.store.user();
-    if (!user) return false;
-    const orgId = this.store.organizationId();
-    const org = this.workspace.organizations().find((o) => o.id === orgId);
-    if (org?.ownerId === user.id) return true;
-    const me = this.orgMembers().find((m) => m.userId === user.id && m.status === 'ACTIVE');
-    return me?.role === 'ADMIN' || me?.role === 'OWNER';
-  });
+  /**
+   * Whether the caller may change a member's role (MEMBER_UPDATE_ROLE) — gates the inline
+   * role editor; when false the row shows the read-only role chip. Owner/admin bypass via
+   * the permissions store. Remove and invite controls are gated independently in the
+   * template via *appHasPermission (MEMBER_REMOVE / MEMBER_INVITE).
+   */
+  protected readonly canUpdateRole = computed(() => this.permissions.has('MEMBER_UPDATE_ROLE'));
 
   /** Assignment rows decorated with resolved display name, email, avatar and role name, then filtered/sorted. */
   protected readonly rows = computed(() => {
@@ -741,7 +745,15 @@ export class ProjectMembers implements OnInit {
    * both degrade to empty rather than failing the whole page.
    */
   private loadRoster(orgId: string): void {
-    const canReadRoles = this.permissions.isOrgOwnerOrAdmin() || this.permissions.has('ROLE_READ');
+    // Fetch the roles list whenever it feeds a control the caller can use: the read-only
+    // roles view (ROLE_READ), the inline role editor (MEMBER_UPDATE_ROLE), or the add/invite
+    // picker (MEMBER_INVITE). Owner/admin always. The catchError fallback keeps a 403 from
+    // breaking the page (see the ROLE_READ coupling note in the report).
+    const canReadRoles =
+      this.permissions.isOrgOwnerOrAdmin() ||
+      this.permissions.has('ROLE_READ') ||
+      this.permissions.has('MEMBER_UPDATE_ROLE') ||
+      this.permissions.has('MEMBER_INVITE');
     forkJoin({
       roles: canReadRoles
         ? this.api
