@@ -45,7 +45,12 @@ export class SessionRecordingService {
   private readonly nowMs = signal(Date.now());
   /** Recorded time in ms, frozen while paused. */
   readonly elapsedMs = computed(() => {
-    const running = this.resumedAtEpochMs === null ? 0 : this.nowMs() - this.resumedAtEpochMs;
+    // Read nowMs() UNCONDITIONALLY so this computed always keeps its dependency on the tick signal.
+    // If nowMs() were only read in the "running" branch, then while paused (resumedAtEpochMs === null)
+    // the ternary short-circuits, the computed records ZERO signal dependencies, and it never re-runs
+    // on resume — freezing the timer at the paused value until a full page reload.
+    const now = this.nowMs();
+    const running = this.resumedAtEpochMs === null ? 0 : now - this.resumedAtEpochMs;
     return this.accumulatedMs + Math.max(0, running);
   });
 
