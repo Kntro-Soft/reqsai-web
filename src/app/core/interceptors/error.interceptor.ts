@@ -1,11 +1,21 @@
 import { HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AuthStore } from '../auth/auth.store';
+import { ToastService } from '../../shared/toast/toast.service';
 
 /** Marks a request already replayed after a refresh, so it never loops. */
 const RETRY_HEADER = 'X-Auth-Retry';
+
+/**
+ * De-dupe window (ms) for the 403 "no access" toast. A single denied navigation often
+ * fans out into several parallel 403s (the page's data loads) plus the guard's own
+ * toast — collapse them so the user sees one message, not a stack.
+ */
+const FORBIDDEN_TOAST_DEBOUNCE_MS = 1500;
+let lastForbiddenToastAt = 0;
 
 /**
  * Global 401 handling:
@@ -17,13 +27,31 @@ const RETRY_HEADER = 'X-Auth-Retry';
  *   the original request once. If the refresh fails, sign out.
  * - The replayed request carries a marker header so a second 401 cannot trigger
  *   another refresh (no infinite loop).
+ *
+ * Global 403 handling (RBAC): the backend is the source of truth and returns 403 for
+ * any action the caller may not perform. The route guards catch most of these before
+ * a request even fires, but this is the safety net — it swaps the generic red error for
+ * a clear "no access" toast on any path the guards miss. Debounced so one denied page
+ * doesn't stack several identical toasts.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const authStore = inject(AuthStore);
+  const toast = inject(ToastService);
+  const transloco = inject(TranslocoService);
 
   return next(req).pipe(
     catchError((err) => {
+      const isForbidden = err.status === HttpStatusCode.Forbidden;
+      if (isForbidden) {
+        const now = Date.now();
+        if (now - lastForbiddenToastAt > FORBIDDEN_TOAST_DEBOUNCE_MS) {
+          lastForbiddenToastAt = now;
+          toast.error(transloco.translate('authz.noAccess'));
+        }
+        return throwError(() => err);
+      }
+
       const isUnauthorized = err.status === HttpStatusCode.Unauthorized;
       const isAuthEndpoint = req.url.startsWith('/api/auth');
       const alreadyRetried = req.headers.has(RETRY_HEADER);
