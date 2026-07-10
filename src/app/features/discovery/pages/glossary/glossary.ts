@@ -19,6 +19,7 @@ import {
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import {
   GlossaryTermRequest,
   GlossaryTermResponse,
@@ -54,6 +55,7 @@ const MENU_POS: ConnectedPosition[] = [
     ReactiveFormsModule,
     OverlayModule,
     Modal,
+    HasPermission,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -74,7 +76,10 @@ const MENU_POS: ConnectedPosition[] = [
       </div>
 
       <!-- Add -->
-      <section class="shrink-0 overflow-hidden rounded-2xl border border-border">
+      <section
+        *appHasPermission="'GLOSSARY_TERM_WRITE'"
+        class="shrink-0 overflow-hidden rounded-2xl border border-border"
+      >
         <div class="flex flex-col gap-1 p-5">
           <h2 class="text-base font-semibold">{{ 'glossaryPage.addTitle' | transloco }}</h2>
           <p class="text-sm text-muted-foreground">{{ 'glossaryPage.addDesc' | transloco }}</p>
@@ -184,7 +189,10 @@ const MENU_POS: ConnectedPosition[] = [
                 <th class="px-3 py-2.5 whitespace-nowrap font-medium">
                   {{ 'glossaryPage.colUpdated' | transloco }}
                 </th>
-                <th class="w-12 px-3 py-2.5"></th>
+                <th
+                  *appHasPermission="['GLOSSARY_TERM_WRITE', 'GLOSSARY_TERM_DELETE']"
+                  class="w-12 px-3 py-2.5"
+                ></th>
               </tr>
             </thead>
             <tbody>
@@ -200,7 +208,10 @@ const MENU_POS: ConnectedPosition[] = [
                   <td class="px-3 py-3 align-top whitespace-nowrap text-muted-foreground">
                     {{ formatDate(t.updatedAt) }}
                   </td>
-                  <td class="px-3 py-3 text-right align-top">
+                  <td
+                    *appHasPermission="['GLOSSARY_TERM_WRITE', 'GLOSSARY_TERM_DELETE']"
+                    class="px-3 py-3 text-right align-top"
+                  >
                     <button
                       type="button"
                       cdkOverlayOrigin
@@ -224,6 +235,7 @@ const MENU_POS: ConnectedPosition[] = [
                         class="w-max min-w-40 overflow-hidden rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-xl"
                       >
                         <button
+                          *appHasPermission="'GLOSSARY_TERM_WRITE'"
                           role="menuitem"
                           type="button"
                           (click)="askEdit(t); menuFor.set(null)"
@@ -233,6 +245,7 @@ const MENU_POS: ConnectedPosition[] = [
                           {{ 'glossaryPage.edit' | transloco }}
                         </button>
                         <button
+                          *appHasPermission="'GLOSSARY_TERM_DELETE'"
                           role="menuitem"
                           type="button"
                           (click)="askDelete(t); menuFor.set(null)"

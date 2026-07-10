@@ -17,6 +17,7 @@ import {
   UpdateOrganizationRequest,
   UpdateProjectMemberRoleRequest,
 } from './workspace.models';
+import { silentForbidden } from '../../../core/interceptors/error.interceptor';
 
 /** Thin HTTP client for the workspace endpoints. The active tenant is resolved
  * by the backend from the JWT, so project calls only need the org id in the path. */
@@ -44,7 +45,11 @@ export class WorkspaceApiService {
   }
 
   getProject(orgId: string, projectId: string): Observable<ProjectResponse> {
-    return this.http.get<ProjectResponse>(`/api/organizations/${orgId}/projects/${projectId}`);
+    // A page-load read, not a discrete action — a 403 is an access concern the route
+    // guards own, so keep it out of the global "no access" toast.
+    return this.http.get<ProjectResponse>(`/api/organizations/${orgId}/projects/${projectId}`, {
+      context: silentForbidden(),
+    });
   }
 
   updateProject(
@@ -155,11 +160,7 @@ export class WorkspaceApiService {
     );
   }
 
-  removeProjectMember(
-    orgId: string,
-    projectId: string,
-    assignmentId: string,
-  ): Observable<void> {
+  removeProjectMember(orgId: string, projectId: string, assignmentId: string): Observable<void> {
     return this.http.delete<void>(
       `/api/organizations/${orgId}/projects/${projectId}/members/${assignmentId}`,
     );
@@ -181,10 +182,9 @@ export class WorkspaceApiService {
   }
 
   transferOwnership(orgId: string, newOwnerMemberId: string): Observable<OrganizationResponse> {
-    return this.http.post<OrganizationResponse>(
-      `/api/organizations/${orgId}/transfer-ownership`,
-      { newOwnerMemberId },
-    );
+    return this.http.post<OrganizationResponse>(`/api/organizations/${orgId}/transfer-ownership`, {
+      newOwnerMemberId,
+    });
   }
 
   deleteOrganization(orgId: string): Observable<void> {

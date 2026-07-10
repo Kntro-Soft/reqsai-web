@@ -181,6 +181,16 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 - **Dependency security audit** (`bun audit --audit-level=critical`) via weekly GitHub Actions
   workflow; blocks on Critical CVEs, reports lower severities.
 - **Docker** multi-stage `Dockerfile` (Bun build → nginx Alpine) and `compose.yaml`.
+- **Workspace — permission-aware RBAC UX** (`feature/rbac-base-permission`): the frontend now mirrors the
+  backend's per-project permissions end to end. A configurable **member base-permission** toggle
+  (None/Read floor) on the org members page; route **guards** that redirect with a toast instead of a red
+  error when the caller lacks a permission; and a `*appHasPermission` structural directive (single
+  permission, an any-of list, or an org role) that hides nav items, create buttons and table action
+  columns the caller can't use across sessions/stories/glossary/constraints and project settings. Member
+  and role **management controls are gated by their specific project permission** (`MEMBER_INVITE`,
+  `MEMBER_UPDATE_ROLE`, `MEMBER_REMOVE`, `ROLE_CREATE`/`ROLE_UPDATE`/`ROLE_DELETE`) with owner/admin
+  bypass, and the members list shows each member's role inline (name embedded by the API) without needing
+  `ROLE_READ`.
 
 ### Changed
 
@@ -208,6 +218,21 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   payload being re-decoded as CP1252 during a rebase resolution. Reversed the double-encoding on the
   affected values only; `en.json` was unaffected and locale key parity is preserved.
 - **i18n — English encoding errors and Spanish typos** (`bugfix/i18n-typos-and-encoding`): fixed UTF-8 double-encoding issues (such as `â€¦` -> `…` and `â€”` -> `—`) in `en.json` and corrected multiple translation typos/inconsistencies (e.g., `"Resuelto"` -> `"Resolver"`, `"API token"` -> `"token de API"`) in `es.json` while maintaining complete translation key parity.
+- **Workspace — RBAC bootstrap & 403 handling** (`feature/rbac-base-permission`): background/eager loads
+  (the integration-jobs banner, the overview's project-name fetch) no longer raise the global "no access"
+  toast on an expected 403, and the banner stays dormant without `INTEGRATION_READ` (no console 403 on
+  every project page); the project members roster loads for a member holding only `MEMBER_READ`; the
+  project settings index lands on the first sub-page the caller can reach; and integrations/billing/usage
+  are hidden and route-guarded by role/permission.
+- **Workspace — permission race & guard fixes** (`feature/rbac-base-permission`): concurrent callers now
+  await a single shared authorization fetch (a cold reload no longer races to an empty permission set and
+  wrongly denies), the `canMatch` guards recover the project id from the navigation URL (reloading the
+  members page no longer bounces to the dashboard), and the members page loads authorization before
+  deciding whether to fetch the roles list (so an owner/admin's inline role editor is populated on reload).
+- **i18n — bootstrap translations & cache** (`feature/rbac-base-permission`): the active language is
+  preloaded before the first route renders (no more "missing translation" for `authz.noAccess` during a
+  bootstrap deny), and the translation request is cache-busted per app load so a rebuild or deploy never
+  serves a stale `{lang}.json` (which rendered raw keys for newly added translations).
 
 ---
 

@@ -13,9 +13,10 @@ import { provideIcons } from '@ng-icons/core';
 import { lucidePencil, lucidePlus, lucideSearch, lucideTrash2 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
-import { WorkspaceStore } from '../../data/workspace.store';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
-import { MemberResponse, ProjectRoleResponse } from '../../data/workspace.models';
+import { ProjectRoleResponse } from '../../data/workspace.models';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -25,14 +26,17 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
  * Project roles (Vercel-style, mirrors the org members page): a header with a "New role" button that
  * routes to the standalone role form, a filter bar, and a compact single-column roles table with
  * permission chips and edit/delete actions. Editing routes to the same form; deletion is behind a
- * confirmation modal. Only org owners/admins may manage; everyone else gets a read-only list (the
- * backend additionally enforces the ROLE_* permissions per request).
+ * confirmation modal. Each control is gated by its specific project permission (create → ROLE_CREATE,
+ * edit → ROLE_UPDATE, delete → ROLE_DELETE); owner/admin bypass implicitly via the permissions store.
+ * Everyone else gets a read-only list (the backend additionally enforces the ROLE_* permissions per
+ * request).
  */
 @Component({
   selector: 'app-project-roles',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
+    HasPermission,
     Modal,
     HlmButton,
     HlmIcon,
@@ -46,14 +50,20 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
       <div class="flex items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">{{ 'projectRoles.title' | transloco }}</h1>
-          <p class="mt-1 text-sm text-muted-foreground">{{ 'projectRoles.subtitle' | transloco }}</p>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ 'projectRoles.subtitle' | transloco }}
+          </p>
         </div>
-        @if (canManage()) {
-          <a hlmBtn size="sm" routerLink="new" data-testid="new-role">
-            <hlm-icon name="lucidePlus" size="15px" />
-            {{ 'projectRoles.newRole' | transloco }}
-          </a>
-        }
+        <a
+          *appHasPermission="'ROLE_CREATE'"
+          hlmBtn
+          size="sm"
+          routerLink="new"
+          data-testid="new-role"
+        >
+          <hlm-icon name="lucidePlus" size="15px" />
+          {{ 'projectRoles.newRole' | transloco }}
+        </a>
       </div>
 
       <!-- Filter -->
@@ -94,7 +104,9 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
           class="rounded-2xl border border-border py-10 text-center text-sm text-muted-foreground"
           data-testid="roles-empty"
         >
-          {{ (roles().length === 0 ? 'projectRoles.empty' : 'projectRoles.filterEmpty') | transloco }}
+          {{
+            (roles().length === 0 ? 'projectRoles.empty' : 'projectRoles.filterEmpty') | transloco
+          }}
         </p>
       } @else {
         <div class="overflow-hidden rounded-2xl border border-border">
@@ -121,25 +133,28 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
                     </div>
                   </td>
                   <td class="w-20 py-3 pr-4 pl-1 text-right align-top">
-                    @if (canManage()) {
-                      <div class="flex items-center justify-end gap-1">
-                        <a
-                          [routerLink]="[role.id, 'edit']"
-                          [attr.aria-label]="'projectRoles.edit' | transloco"
-                          class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <hlm-icon name="lucidePencil" size="15px" />
-                        </a>
-                        <button
-                          type="button"
-                          (click)="askDelete(role)"
-                          [attr.aria-label]="'projectRoles.delete' | transloco"
-                          class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <hlm-icon name="lucideTrash2" size="15px" />
-                        </button>
-                      </div>
-                    }
+                    <div
+                      *appHasPermission="['ROLE_UPDATE', 'ROLE_DELETE']"
+                      class="flex items-center justify-end gap-1"
+                    >
+                      <a
+                        *appHasPermission="'ROLE_UPDATE'"
+                        [routerLink]="[role.id, 'edit']"
+                        [attr.aria-label]="'projectRoles.edit' | transloco"
+                        class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <hlm-icon name="lucidePencil" size="15px" />
+                      </a>
+                      <button
+                        *appHasPermission="'ROLE_DELETE'"
+                        type="button"
+                        (click)="askDelete(role)"
+                        [attr.aria-label]="'projectRoles.delete' | transloco"
+                        class="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <hlm-icon name="lucideTrash2" size="15px" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -189,7 +204,7 @@ import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/
 export class ProjectRoles implements OnInit {
   private readonly api = inject(WorkspaceApiService);
   private readonly store = inject(AuthStore);
-  private readonly workspace = inject(WorkspaceStore);
+  protected readonly permissions = inject(PermissionsStore);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
 
@@ -199,7 +214,6 @@ export class ProjectRoles implements OnInit {
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly roles = signal<ProjectRoleResponse[]>([]);
-  private readonly orgMembers = signal<MemberResponse[]>([]);
 
   // Filter.
   protected readonly query = signal('');
@@ -217,17 +231,6 @@ export class ProjectRoles implements OnInit {
     return list.filter((r) => r.name.toLowerCase().includes(q));
   });
 
-  /** Owner or admin of the active org may manage roles; everyone else gets a read-only list. */
-  protected readonly canManage = computed(() => {
-    const user = this.store.user();
-    if (!user) return false;
-    const orgId = this.store.organizationId();
-    const org = this.workspace.organizations().find((o) => o.id === orgId);
-    if (org?.ownerId === user.id) return true;
-    const me = this.orgMembers().find((m) => m.userId === user.id && m.status === 'ACTIVE');
-    return me?.role === 'ADMIN' || me?.role === 'OWNER';
-  });
-
   ngOnInit(): void {
     const orgId = this.store.organizationId();
     if (!orgId) {
@@ -235,16 +238,15 @@ export class ProjectRoles implements OnInit {
       return;
     }
     this.state.set('loading');
-    // Roles power the table; the org member list only feeds the manage gate.
+    // Roles power the table; each management control is gated by its specific project
+    // permission via *appHasPermission (owner/admin bypass through the permissions store,
+    // which the shell loads for the active project).
     this.api.listProjectRoles(orgId, this.projectId()).subscribe({
       next: (roles) => {
         this.roles.set(roles);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
-    });
-    this.api.listMembers(orgId).subscribe({
-      next: (members) => this.orgMembers.set(members),
     });
   }
 

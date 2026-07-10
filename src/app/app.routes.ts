@@ -2,6 +2,12 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
+import {
+  requireOrgRole,
+  projectSettingsLanding,
+  requirePermission,
+  requirePermissionMatch,
+} from './core/guards/permission.guard';
 import { termsAcceptedGuard, termsGuard } from './core/guards/terms.guard';
 import { recordingLeaveGuard } from './features/discovery/guards/recording-leave.guard';
 
@@ -118,24 +124,33 @@ export const routes: Routes = [
           {
             path: 'general',
             title: 'titles.general',
+            // Owner-only server-side; also hosts the owner/admin base-permission card.
+            canActivate: [requireOrgRole('OWNER')],
+            data: { orgRole: 'OWNER' },
             loadComponent: () =>
               import('./features/workspace/pages/settings/settings').then((m) => m.OrgSettings),
           },
           {
             path: 'members',
             title: 'titles.members',
+            canActivate: [requireOrgRole('ADMIN')],
+            data: { orgRole: 'ADMIN' },
             loadComponent: () =>
               import('./features/workspace/pages/members/members').then((m) => m.Members),
           },
           {
             path: 'billing',
             title: 'titles.billing',
+            canActivate: [requireOrgRole('OWNER')],
+            data: { orgRole: 'OWNER' },
             loadComponent: () =>
               import('./features/billing/pages/billing/billing').then((m) => m.Billing),
           },
           {
             path: 'integrations',
             title: 'titles.integrations',
+            canActivate: [requireOrgRole('ADMIN')],
+            data: { orgRole: 'ADMIN' },
             loadComponent: () =>
               import('./features/workspace/pages/org-integrations/org-integrations').then(
                 (m) => m.OrgIntegrations,
@@ -144,6 +159,8 @@ export const routes: Routes = [
           {
             path: 'usage',
             title: 'titles.usage',
+            canActivate: [requireOrgRole('OWNER')],
+            data: { orgRole: 'OWNER' },
             loadComponent: () =>
               import('./features/billing/pages/usage/usage').then((m) => m.Usage),
           },
@@ -227,6 +244,7 @@ export const routes: Routes = [
             // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
             title: 'titles.discovery',
+            canActivate: [requirePermission('SESSION_READ')],
             canDeactivate: [recordingLeaveGuard],
             loadComponent: () =>
               import('./features/discovery/pages/discovery-chat/discovery-chat').then(
@@ -236,36 +254,42 @@ export const routes: Routes = [
           {
             path: 'sessions/history',
             title: 'titles.history',
+            canActivate: [requirePermission('SESSION_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/history/history').then((m) => m.DiscoveryHistory),
           },
           {
             path: 'stories',
             title: 'titles.stories',
+            canActivate: [requirePermission('STORY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
           },
           {
             path: 'stories/new',
             title: 'titles.newStory',
+            canActivate: [requirePermission('STORY_WRITE')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/story-form').then((m) => m.StoryCreate),
           },
           {
             path: 'stories/:storyId',
             title: 'titles.story',
+            canActivate: [requirePermission('STORY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/story-detail').then((m) => m.StoryDetail),
           },
           {
             path: 'glossary',
             title: 'titles.glossary',
+            canActivate: [requirePermission('GLOSSARY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/glossary/glossary').then((m) => m.ProjectGlossary),
           },
           {
             path: 'constraints',
             title: 'titles.constraints',
+            canActivate: [requirePermission('CONSTRAINT_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/constraints/constraints').then(
                 (m) => m.ProjectConstraints,
@@ -276,10 +300,20 @@ export const routes: Routes = [
           {
             path: 'settings',
             children: [
-              { path: '', redirectTo: 'general', pathMatch: 'full' },
+              {
+                path: '',
+                pathMatch: 'full',
+                canActivate: [projectSettingsLanding],
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-overview/project-overview').then(
+                    (m) => m.ProjectOverview,
+                  ),
+              },
               {
                 path: 'general',
                 title: 'titles.general',
+                canActivate: [requirePermission('PROJECT_UPDATE')],
+                data: { permission: 'PROJECT_UPDATE' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-settings/project-settings').then(
                     (m) => m.ProjectSettings,
@@ -288,6 +322,9 @@ export const routes: Routes = [
               {
                 path: 'roles',
                 title: 'titles.projectRoles',
+                canMatch: [requirePermissionMatch('ROLE_READ')],
+                canActivate: [requirePermission('ROLE_READ')],
+                data: { permission: 'ROLE_READ' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-roles/project-roles').then(
                     (m) => m.ProjectRoles,
@@ -296,6 +333,8 @@ export const routes: Routes = [
               {
                 path: 'roles/new',
                 title: 'titles.newRole',
+                canActivate: [requirePermission('ROLE_CREATE')],
+                data: { permission: 'ROLE_CREATE' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-role-form/project-role-form').then(
                     (m) => m.ProjectRoleForm,
@@ -304,6 +343,8 @@ export const routes: Routes = [
               {
                 path: 'roles/:roleId/edit',
                 title: 'titles.editRole',
+                canActivate: [requirePermission('ROLE_UPDATE')],
+                data: { permission: 'ROLE_UPDATE' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-role-form/project-role-form').then(
                     (m) => m.ProjectRoleForm,
@@ -312,6 +353,9 @@ export const routes: Routes = [
               {
                 path: 'members',
                 title: 'titles.projectMembers',
+                canMatch: [requirePermissionMatch('MEMBER_READ')],
+                canActivate: [requirePermission('MEMBER_READ')],
+                data: { permission: 'MEMBER_READ' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-members/project-members').then(
                     (m) => m.ProjectMembers,
@@ -320,6 +364,9 @@ export const routes: Routes = [
               {
                 path: 'integrations',
                 title: 'titles.integrations',
+                canMatch: [requirePermissionMatch('INTEGRATION_READ')],
+                canActivate: [requirePermission('INTEGRATION_READ')],
+                data: { permission: 'INTEGRATION_READ' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-integrations/project-integrations').then(
                     (m) => m.ProjectIntegrations,
@@ -328,6 +375,9 @@ export const routes: Routes = [
               {
                 path: 'danger',
                 title: 'titles.danger',
+                canMatch: [requirePermissionMatch('PROJECT_DELETE')],
+                canActivate: [requirePermission('PROJECT_DELETE')],
+                data: { permission: 'PROJECT_DELETE' },
                 loadComponent: () =>
                   import('./features/workspace/pages/project-danger/project-danger').then(
                     (m) => m.ProjectDanger,
