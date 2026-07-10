@@ -19,6 +19,7 @@ import {
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import {
   ProjectConstraintRequest,
   ProjectConstraintResponse,
@@ -57,6 +58,7 @@ const MAX_DESCRIPTION = 500;
     ReactiveFormsModule,
     OverlayModule,
     Modal,
+    HasPermission,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -79,7 +81,10 @@ const MAX_DESCRIPTION = 500;
       </div>
 
       <!-- Add -->
-      <section class="shrink-0 overflow-hidden rounded-2xl border border-border">
+      <section
+        *appHasPermission="'CONSTRAINT_WRITE'"
+        class="shrink-0 overflow-hidden rounded-2xl border border-border"
+      >
         <div class="flex flex-col gap-1 p-5">
           <h2 class="text-base font-semibold">{{ 'constraintsPage.addTitle' | transloco }}</h2>
           <p class="text-sm text-muted-foreground">{{ 'constraintsPage.addDesc' | transloco }}</p>
@@ -182,7 +187,7 @@ const MAX_DESCRIPTION = 500;
                 <th class="px-3 py-2.5 whitespace-nowrap font-medium">
                   {{ 'constraintsPage.colUpdated' | transloco }}
                 </th>
-                <th class="w-12 px-3 py-2.5"></th>
+                <th *appHasPermission="'CONSTRAINT_WRITE'" class="w-12 px-3 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
@@ -195,7 +200,7 @@ const MAX_DESCRIPTION = 500;
                   <td class="px-3 py-3 align-top whitespace-nowrap text-muted-foreground">
                     {{ formatDate(c.updatedAt) }}
                   </td>
-                  <td class="px-3 py-3 text-right align-top">
+                  <td *appHasPermission="'CONSTRAINT_WRITE'" class="px-3 py-3 text-right align-top">
                     <button
                       type="button"
                       cdkOverlayOrigin

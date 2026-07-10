@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { IntegrationJobsStore } from '../../data/integration-jobs.store';
 import {
   IntegrationJobResponse,
@@ -103,6 +104,7 @@ export function jobFailureMessage(
 })
 export class IntegrationJobsBanner {
   private readonly store = inject(IntegrationJobsStore);
+  private readonly permissions = inject(PermissionsStore);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
 
@@ -116,8 +118,14 @@ export class IntegrationJobsBanner {
   constructor() {
     // The banner is mounted once in the shell, so it can drive the store's project
     // context from the URL-derived input: recovery + topic (re)subscription happen
-    // here, on navigation, without every page having to care.
-    effect(() => this.store.setProject(this.projectId()));
+    // here, on navigation, without every page having to care. Only drive it when the
+    // caller can read integrations (owner/admin bypass) — otherwise the recovery fetch
+    // would 403 (a console error on every project page); pass null to stay dormant.
+    effect(() => {
+      const canRead =
+        this.permissions.isOrgOwnerOrAdmin() || this.permissions.has('INTEGRATION_READ');
+      this.store.setProject(canRead ? this.projectId() : null);
+    });
     this.store.completed$.pipe(takeUntilDestroyed()).subscribe((job) => this.notify(job));
   }
 

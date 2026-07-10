@@ -113,6 +113,8 @@ export interface ProjectMemberResponse {
   projectId: string;
   memberId: string;
   roleId: string;
+  /** Resolved role display name; embedded by the list endpoint, null on single-assignment responses. */
+  roleName: string | null;
   assignedBy: string | null;
   assignedAt: string | null;
 }

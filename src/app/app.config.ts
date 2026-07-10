@@ -17,8 +17,9 @@ import {
   withViewTransitions,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideTransloco } from '@jsverse/transloco';
+import { TranslocoService, provideTransloco } from '@jsverse/transloco';
 import { provideTranslocoLocale } from '@jsverse/transloco-locale';
+import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -74,6 +75,11 @@ export const appConfig: ApplicationConfig = {
     // Order matters: authInterceptor stamps the version/token on the way out;
     // errorInterceptor catches 401s on the way back and replays once.
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    // Preload the active language before the first route renders, so guards and the
+    // error interceptor can translate their toasts (e.g. `authz.noAccess`) synchronously.
+    // Without this, a deny during bootstrap fires before the lazy language file loads and
+    // Transloco logs a "missing translation" for a key that does exist.
+    provideAppInitializer(() => firstValueFrom(inject(TranslocoService).load(initialLang))),
     // Recover an existing session from the HttpOnly refresh cookie before the
     // first route renders, so guards see the right auth state.
     provideAppInitializer(() => inject(SilentRefreshService).initialize()),

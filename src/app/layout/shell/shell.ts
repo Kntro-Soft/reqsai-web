@@ -15,6 +15,8 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideMenu, lucideSearch, lucideX } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
+import { PermissionsStore } from '../../core/authz/permissions.store';
+import { OrgRole } from '../../core/authz/permissions.models';
 import { PageTitleService } from '../../core/layout/page-title.service';
 import { modLabel } from '../../core/platform/shortcut';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
@@ -35,6 +37,18 @@ interface NavItem {
   link: unknown[];
   /** When true the item is a disabled placeholder rendered with a "Soon" badge. */
   soon?: boolean;
+}
+
+/**
+ * A nav item template before its link is resolved. `permission` / `role` (when set)
+ * gate the item to callers who hold that project permission / org role — used to hide
+ * settings entries a member can't reach.
+ */
+interface NavSeg {
+  seg: string;
+  soon?: boolean;
+  permission?: string;
+  role?: OrgRole;
 }
 
 /** The sidebar context derived from the URL: which nav list, back link and heading to show. */
@@ -276,6 +290,7 @@ interface Crumb {
 export class Shell {
   protected readonly auth = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
+  private readonly permissions = inject(PermissionsStore);
   private readonly router = inject(Router);
   private readonly pageTitle = inject(PageTitleService);
 
@@ -294,31 +309,33 @@ export class Shell {
   }
 
   // Nav item segments per context; links are resolved in `navContext()` where the
-  // active project id is known. `soon` marks disabled placeholder items.
-  private readonly orgRootSegs: { seg: string }[] = [{ seg: 'projects' }, { seg: 'settings' }];
-  private readonly orgSettingsSegs: { seg: string; soon?: boolean }[] = [
-    { seg: 'general' },
-    { seg: 'members' },
-    { seg: 'billing' },
-    { seg: 'integrations' },
-    { seg: 'usage' },
+  // active project id is known. `soon` marks disabled placeholder items. `permission`
+  // / `role` gate the item to what the caller may reach — items they can't use are
+  // filtered out so the aside never offers a dead end (the guards + backend still enforce).
+  private readonly orgRootSegs: NavSeg[] = [{ seg: 'projects' }, { seg: 'settings' }];
+  private readonly orgSettingsSegs: NavSeg[] = [
+    { seg: 'general', role: 'OWNER' },
+    { seg: 'members', role: 'ADMIN' },
+    { seg: 'billing', role: 'OWNER' },
+    { seg: 'integrations', role: 'ADMIN' },
+    { seg: 'usage', role: 'OWNER' },
   ];
-  private readonly projectRootSegs: { seg: string }[] = [
+  private readonly projectRootSegs: NavSeg[] = [
     { seg: 'overview' },
-    { seg: 'sessions' },
-    { seg: 'stories' },
-    { seg: 'glossary' },
-    { seg: 'constraints' },
+    { seg: 'sessions', permission: 'SESSION_READ' },
+    { seg: 'stories', permission: 'STORY_READ' },
+    { seg: 'glossary', permission: 'GLOSSARY_READ' },
+    { seg: 'constraints', permission: 'CONSTRAINT_READ' },
     { seg: 'settings' },
   ];
-  private readonly projectSettingsSegs: { seg: string; soon?: boolean }[] = [
-    { seg: 'general' },
-    { seg: 'roles' },
-    { seg: 'members' },
-    { seg: 'integrations' },
-    { seg: 'danger' },
+  private readonly projectSettingsSegs: NavSeg[] = [
+    { seg: 'general', permission: 'PROJECT_UPDATE' },
+    { seg: 'roles', permission: 'ROLE_READ' },
+    { seg: 'members', permission: 'MEMBER_READ' },
+    { seg: 'integrations', permission: 'INTEGRATION_READ' },
+    { seg: 'danger', permission: 'PROJECT_DELETE' },
   ];
-  private readonly accountSegs: { seg: string; soon?: boolean }[] = [
+  private readonly accountSegs: NavSeg[] = [
     { seg: 'profile' },
     { seg: 'security' },
     { seg: 'appearance' },
@@ -390,7 +407,7 @@ export class Shell {
           },
           headingKey: 'nav.settings',
           ariaKey: 'nav.projectAria',
-          items: this.projectSettingsSegs.map((s) => ({
+          items: this.visibleSegs(this.projectSettingsSegs).map((s) => ({
             seg: s.seg,
             link: ['/projects', pid, 'settings', s.seg],
             soon: s.soon,
@@ -401,7 +418,7 @@ export class Shell {
       return {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         ariaKey: 'nav.projectAria',
-        items: this.projectRootSegs.map((s) => ({
+        items: this.visibleSegs(this.projectRootSegs).map((s) => ({
           seg: s.seg,
           link: ['/projects', pid, s.seg],
         })),
@@ -414,7 +431,7 @@ export class Shell {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         headingKey: 'nav.settings',
         ariaKey: 'nav.orgAria',
-        items: this.orgSettingsSegs.map((s) => ({
+        items: this.visibleSegs(this.orgSettingsSegs).map((s) => ({
           seg: s.seg,
           link: ['/settings', s.seg],
           soon: s.soon,
@@ -429,6 +446,24 @@ export class Shell {
       items: this.orgRootSegs.map((s) => ({ seg: s.seg, link: ['/' + s.seg] })),
     };
   });
+
+  /**
+   * Keeps only the nav segments the caller may reach: an item with a `role` needs that
+   * org role (owner always passes; `'ADMIN'` admits owner + admin), an item with a
+   * `permission` needs that project permission (owner/admin bypass). Ungated items always
+   * show. Reads the permission signals so the list re-renders when authorization arrives.
+   */
+  private visibleSegs(segs: NavSeg[]): NavSeg[] {
+    return segs.filter((s) => {
+      if (s.role) {
+        const ok =
+          s.role === 'OWNER' ? this.permissions.isOrgOwner() : this.permissions.isOrgOwnerOrAdmin();
+        if (!ok) return false;
+      }
+      if (s.permission && !this.permissions.has(s.permission)) return false;
+      return true;
+    });
+  }
 
   /** Breadcrumb trail for the top bar: the context ancestors (clickable) then the
    * current page title. Sub-nav pages (settings/account sections) get an extra
@@ -476,6 +511,19 @@ export class Shell {
     effect(() => {
       const orgId = this.auth.organizationId();
       if (orgId && this.workspace.projectsState() === 'idle') this.workspace.loadProjects(orgId);
+    });
+    // Load the caller's org authorization (role + base permission) whenever an org
+    // context is active, so the aside can gate settings entries by role/permission.
+    effect(() => {
+      const orgId = this.auth.organizationId();
+      if (orgId) this.permissions.loadOrgAuthorization(orgId).subscribe();
+    });
+    // Load the caller's effective project permissions on entering a project; reset them
+    // on leaving so the next project never briefly shows the previous one's grants.
+    effect(() => {
+      const pid = this.projectId();
+      if (pid) this.permissions.loadProjectPermissions(pid).subscribe();
+      else this.permissions.resetProject();
     });
     // Close the mobile drawer whenever navigation completes.
     effect(() => {
