@@ -86,7 +86,7 @@
     "accountAria": "Account navigation",
     "overview": "Overview",
     "allProjects": "All Projects",
-    "find": "Findâ€¦",
+    "find": "Find…",
     "openMenu": "Open menu",
     "soon": "Soon",
     "account": "Account",
@@ -103,7 +103,63 @@
   },
   "comingSoon": {
     "title": "Coming soon",
-    "subtitle": "This section isn't available yet. It's on the roadmap â€” check back soon."
+    "subtitle": "This section isn't available yet. It's on the roadmap — check back soon."
+  },
+  "billing": {
+    "loadError": "We couldn't load your subscription. Only the organization owner can manage billing.",
+    "planName": {
+      "FREE": "Free",
+      "PRO": "Pro",
+      "ENTERPRISE": "Enterprise"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled",
+      "PAST_DUE": "Past due",
+      "TRIALING": "Trial"
+    },
+    "free": "Free",
+    "perMonth": "/ month",
+    "current": "Current plan",
+    "included": "Included",
+    "freeDesc": "You're on the free plan.",
+    "renewsOn": "Renews on {{date}}.",
+    "cancelsOn": "Cancels on {{date}}. You keep access until then.",
+    "reactivate": "Reactivate",
+    "cancel": "Cancel plan",
+    "keepPlan": "Keep plan",
+    "upgradeTo": "Upgrade to {{plan}}",
+    "feature": {
+      "tokens": "{{count}} AI tokens / month",
+      "projects": "{{count}} projects",
+      "members": "{{count}} members",
+      "documents": "{{count}} documents per project",
+      "glossary": "{{count}} glossary terms per project"
+    },
+    "upgradeModalTitle": "Confirm upgrade",
+    "upgradeModalBody": "Upgrade to {{plan}} for {{price}} per month? Your new limits apply immediately.",
+    "confirmUpgrade": "Upgrade",
+    "upgradeSuccess": "Your plan was upgraded.",
+    "cancelModalTitle": "Cancel subscription?",
+    "cancelModalBody": "Your plan stays active until {{date}}, then reverts to Free. You can reactivate any time before then.",
+    "cancelSuccess": "Your subscription was cancelled.",
+    "reactivateSuccess": "Your subscription was reactivated.",
+    "checkout": {
+      "successTitle": "Payment received",
+      "successBody": "Thanks! Your subscription is being activated and will be ready in a moment.",
+      "cancelTitle": "Checkout cancelled",
+      "cancelBody": "No charge was made. You can pick a plan again whenever you're ready.",
+      "backToBilling": "Back to billing"
+    }
+  },
+  "usage": {
+    "loadError": "We couldn't load your usage. Only the organization owner can view it.",
+    "tokensTitle": "AI tokens",
+    "period": "{{start}} - {{end}}",
+    "remaining": "{{count}} tokens remaining",
+    "exhausted": "You've used your monthly token allowance. Upgrade your plan for more.",
+    "planTitle": "Current plan",
+    "managePlan": "Manage plan"
   },
   "userMenu": {
     "ariaLabel": "User menu",
@@ -120,18 +176,18 @@
     "organizations": "Organizations",
     "createOrganization": "Create organization",
     "fallbackName": "Organization",
-    "search": "Find organizationâ€¦",
+    "search": "Find organization…",
     "empty": "No organizations found."
   },
   "projectSwitcher": {
     "ariaLabel": "Switch project",
-    "search": "Find projectâ€¦",
+    "search": "Find project…",
     "empty": "No projects found.",
     "createProject": "Create project"
   },
   "commandPalette": {
     "open": "Open command palette",
-    "placeholder": "Search or jump toâ€¦",
+    "placeholder": "Search or jump to…",
     "empty": "No results found.",
     "recent": "Recent",
     "groups": {
@@ -165,7 +221,7 @@
     "avatar": "Avatar",
     "avatarDesc": "PNG, JPG, WEBP or SVG, up to 1 MB.",
     "avatarHint": "An avatar is optional but strongly recommended.",
-    "avatarUploading": "Uploadingâ€¦",
+    "avatarUploading": "Uploading…",
     "changeAvatar": "Change avatar",
     "avatarTooLarge": "The image is too large (max 1 MB).",
     "profile": "Profile",
@@ -241,7 +297,7 @@
     },
     "verify": {
       "title": "Verify your email",
-      "verifying": "Confirming your accountâ€¦",
+      "verifying": "Confirming your account…",
       "successDesc": "Done! Your account is verified.",
       "sentTo": "We sent a verification link to",
       "yourEmail": "your email",
@@ -259,7 +315,7 @@
     "name": "Organization name",
     "language": "Meeting language",
     "advanced": "Advanced options",
-    "languageHint": "Default language for new meetings. Auto-detected â€” you can change it.",
+    "languageHint": "Default language for new meetings. Auto-detected — you can change it.",
     "submit": "Create and continue",
     "errorNameInUse": "That name is already in use. Try another.",
     "errorGeneric": "Could not create the organization. Please try again."
@@ -267,7 +323,7 @@
   "projects": {
     "title": "Projects",
     "subtitle": "Manage your organization's projects and their discovery sessions.",
-    "searchPlaceholder": "Search projectsâ€¦",
+    "searchPlaceholder": "Search projects…",
     "addNew": "Add New",
     "viewCards": "Card view",
     "viewTable": "Table view",
@@ -296,7 +352,7 @@
   },
   "projectCreate": {
     "title": "New project",
-    "subtitle": "Give it a name. You can add the tech profile later â€” it helps the AI but is optional.",
+    "subtitle": "Give it a name. You can add the tech profile later — it helps the AI but is optional.",
     "advanced": "Advanced options",
     "advancedHint": "Optional context the AI uses to tailor its suggestions."
   },
@@ -339,7 +395,7 @@
         },
         {
           "heading": "5. Meeting recording & consent",
-          "body": "You represent and warrant that, before recording or transcribing any meeting, you have obtained every consent required by law from all participants â€” some jurisdictions require the consent of all parties. {{tradeName}} provides a recording indicator, but your Organization is solely responsible for lawful capture and will indemnify {{name}} against claims arising from a breach of this section."
+          "body": "You represent and warrant that, before recording or transcribing any meeting, you have obtained every consent required by law from all participants — some jurisdictions require the consent of all parties. {{tradeName}} provides a recording indicator, but your Organization is solely responsible for lawful capture and will indemnify {{name}} against claims arising from a breach of this section."
         },
         {
           "heading": "6. AI-generated output",
@@ -351,7 +407,7 @@
         },
         {
           "heading": "8. Third-party AI sub-processors",
-          "body": "To deliver the Service we rely on third-party AI providers â€” Deepgram (speech-to-text), Google Gemini (generation) and OpenAI (embeddings). Details are in our Privacy Policy."
+          "body": "To deliver the Service we rely on third-party AI providers — Deepgram (speech-to-text), Google Gemini (generation) and OpenAI (embeddings). Details are in our Privacy Policy."
         },
         {
           "heading": "9. Model training",
@@ -395,7 +451,7 @@
         },
         {
           "heading": "3. Purposes & lawful bases",
-          "body": "We process data to provide the Service (performance of a contract), to keep it secure (legitimate interest), to comply with the law, and â€” where third parties are recorded â€” on the basis of the consent you are responsible for obtaining."
+          "body": "We process data to provide the Service (performance of a contract), to keep it secure (legitimate interest), to comply with the law, and — where third parties are recorded — on the basis of the consent you are responsible for obtaining."
         },
         {
           "heading": "4. AI processing & sub-processors",
@@ -419,7 +475,7 @@
         },
         {
           "heading": "9. Cookies & local storage",
-          "body": "We store only what the app needs to work â€” session handling and your theme and language preferences. We do not use advertising cookies."
+          "body": "We store only what the app needs to work — session handling and your theme and language preferences. We do not use advertising cookies."
         },
         {
           "heading": "10. Children",
@@ -456,7 +512,7 @@
     "inviteSubmit": "Invite",
     "addMore": "Add more",
     "removeInviteAria": "Remove this invitation row",
-    "filterPlaceholder": "Filter by name or emailâ€¦",
+    "filterPlaceholder": "Filter by name or email…",
     "filterAllRoles": "All roles",
     "filterRoleAria": "Filter by role",
     "sortAria": "Sort members",
@@ -510,7 +566,7 @@
       "acceptError": "Could not accept the invitation. Please try again.",
       "signIn": "Sign in to accept",
       "createAccount": "Create an account",
-      "signUpNote": "Sign up with that email and verify it â€” you'll be added to the organization automatically."
+      "signUpNote": "Sign up with that email and verify it — you'll be added to the organization automatically."
     },
     "wrongAccount": {
       "title": "Wrong account",
@@ -541,7 +597,7 @@
     "logo": "Organization logo",
     "logoDesc": "Click the logo to upload a custom image (PNG, JPG, WEBP or SVG, max 1 MB).",
     "logoUpload": "Upload a new logo",
-    "logoUploading": "Uploadingâ€¦",
+    "logoUploading": "Uploading…",
     "logoHint": "A logo is optional but strongly recommended.",
     "logoError": "That image could not be used. Try another file.",
     "orgId": "Organization ID",
@@ -567,18 +623,19 @@
     "audioRetentionHint": "Use -1 to keep indefinitely.",
     "saved": "Changes saved.",
     "save": "Save changes",
+    "ownerOnlyHint": "Only the organization owner can edit these settings.",
     "errorValidation": "Check the data and try again.",
     "errorGeneric": "Could not save the changes.",
     "transferModalTitle": "Transfer ownership",
     "transferModalBodyBefore": "You are about to transfer",
     "transferModalBodyAfter": "to another member.",
     "transferTo": "Transfer to",
-    "transferPlaceholder": "Select a memberâ€¦",
-    "transferSearch": "Search membersâ€¦",
+    "transferPlaceholder": "Select a member…",
+    "transferSearch": "Search members…",
     "transferSearchEmpty": "No members match your search.",
     "deleteModalTitle": "Delete organization",
     "deleteModalBodyBefore": "This will permanently delete",
-    "deleteModalBodyAfter": "and all of its data (members, projects, sessionsâ€¦).",
+    "deleteModalBodyAfter": "and all of its data (members, projects, sessions…).",
     "deleteConfirmName": "To confirm, type \"{{org}}\"",
     "deleteConfirmPhrase": "To confirm, type {{phrase}}",
     "deletePhrase": "delete my organization",
@@ -695,7 +752,7 @@
       "STORY_WRITE": "Create and edit user stories and their acceptance criteria"
     },
     "newRole": "New role",
-    "filterPlaceholder": "Filter rolesâ€¦",
+    "filterPlaceholder": "Filter roles…",
     "filterEmpty": "No roles match your filter."
   },
   "projectMembers": {
@@ -709,12 +766,12 @@
     "add": "Add",
     "added": "People added.",
     "change": "Change",
-    "pickerPlaceholder": "Search by email or nameâ€¦",
+    "pickerPlaceholder": "Search by email or name…",
     "pickerEmpty": "No matching members.",
     "inviteAsNew": "Invite {{email}} as new",
     "errorAssign": "Could not update the member. Please try again.",
     "errorAdd": "Could not add everyone. Please try again.",
-    "filterPlaceholder": "Filter by name or emailâ€¦",
+    "filterPlaceholder": "Filter by name or email…",
     "remove": "Remove member",
     "removed": "Member removed.",
     "removeTitle": "Remove from project",
@@ -738,7 +795,7 @@
   "stories": {
     "title": "Stories",
     "subtitle": "The project's user-story backlog.",
-    "loading": "Loadingâ€¦",
+    "loading": "Loading…",
     "loadError": "Could not load the stories.",
     "emptyTitle": "No stories yet",
     "emptyBody": "Record a session and generate stories with AI, or create them manually.",
@@ -747,7 +804,7 @@
     "as": "As",
     "want": ", I want",
     "benefit": ", so that",
-    "searchPlaceholder": "Search by title, role or actionâ€¦",
+    "searchPlaceholder": "Search by title, role or action…",
     "filterAllPriorities": "All priorities",
     "filterAllStatuses": "All statuses",
     "filterPriorityAria": "Filter by priority",
@@ -775,6 +832,23 @@
     "created": "Story added.",
     "errorDuplicate": "A similar story already exists ({{percent}}% similar).",
     "errorDuplicateNoScore": "A similar story already exists.",
+    "selectRowAria": "Select this story",
+    "selectAllAria": "Select every story on this page",
+    "selectedCount": "{{count}} selected",
+    "clearSelection": "Clear selection",
+    "colActions": "Actions",
+    "rowActionsAria": "Story actions",
+    "delete": "Delete",
+    "deleteAria": "Delete this story",
+    "bulkPush": "Push to Jira ({{count}})",
+    "bulkDelete": "Delete ({{count}})",
+    "deleteConfirmTitle": "Delete story?",
+    "deleteConfirmBody": "This permanently removes the story and its acceptance criteria. This can't be undone.",
+    "deleteConfirmBulkTitle": "Delete {{count}} stories?",
+    "deleteConfirmBulkBody": "This permanently removes the {{count}} selected stories and their acceptance criteria. This can't be undone.",
+    "deleted": "Story deleted.",
+    "deletedBulk": "{{deleted}} stories deleted.",
+    "deleteError": "Could not delete the story. Please try again.",
     "priority": {
       "HIGH": "High",
       "MEDIUM": "Medium",
@@ -832,7 +906,7 @@
     "emptyTitle": "No terms yet",
     "emptyBody": "Add the terms your team uses so the AI understands your domain.",
     "noMatches": "No terms match your search.",
-    "searchPlaceholder": "Search termsâ€¦",
+    "searchPlaceholder": "Search terms…",
     "colTerm": "Term",
     "colDefinition": "Definition",
     "colCreated": "Created",
@@ -867,7 +941,7 @@
     "emptyTitle": "No constraints yet",
     "emptyBody": "Record the technical or business constraints the AI should keep in mind.",
     "noMatches": "No constraints match your search.",
-    "searchPlaceholder": "Search constraintsâ€¦",
+    "searchPlaceholder": "Search constraints…",
     "colDescription": "Description",
     "colCreated": "Created",
     "colUpdated": "Updated",
@@ -901,7 +975,7 @@
     "roleNamePlaceholder": "e.g. Lead analyst",
     "permissionsLabel": "Permissions",
     "selectedCount": "{{count}} selected",
-    "searchPlaceholder": "Search permissionsâ€¦",
+    "searchPlaceholder": "Search permissions…",
     "searchEmpty": "No permissions match your search.",
     "selectAllGroup": "Toggle all permissions in this group",
     "toggleGroup": "Expand or collapse this group",
@@ -941,14 +1015,14 @@
     "title": "Discovery",
     "subtitle": "Record meetings and turn them into user stories in real time.",
     "loadError": "Could not load the discovery feed.",
-    "loadingOlder": "Loading earlier sessionsâ€¦",
+    "loadingOlder": "Loading earlier sessions…",
     "startMarker": "Project created on {{date}}",
     "scrollToBottom": "Jump to latest",
     "emptyTitle": "No sessions yet",
     "emptyBody": "Press record to capture your first requirements conversation.",
     "sessionSeparator": "Session",
     "sessionStories": "{{count}} stories",
-    "sessionDefaultTitle": "Discovery session â€” {{date}}",
+    "sessionDefaultTitle": "Discovery session — {{date}}",
     "generatedStory": "Generated story",
     "speaker": "Speaker {{n}}",
     "goToStory": "Go to story",
@@ -970,16 +1044,20 @@
       "dismissed": "Dismissed"
     },
     "live": {
-      "banner": "Live session in progress â€” {{language}}"
+      "banner": "Live session in progress — {{language}}"
+    },
+    "presence": {
+      "viewing": "{{count}} viewing",
+      "more": "{{count}} more"
     },
     "composer": {
-      "placeholder": "Message discoveryâ€¦",
+      "placeholder": "Message discovery…",
       "comingSoon": "Text to pipeline is coming soon.",
       "record": "Start recording"
     },
     "language": {
       "label": "Meeting language",
-      "search": "Search languageâ€¦",
+      "search": "Search language…",
       "empty": "No language found.",
       "locked": "The language is fixed once recording starts."
     },
@@ -1059,7 +1137,7 @@
       "info": "Info",
       "glossary": "Glossary",
       "constraints": "Constraints",
-      "filter": "Filterâ€¦",
+      "filter": "Filter…",
       "toggle": "Panel",
       "close": "Close panel",
       "sortBy": "Sort:",
@@ -1116,10 +1194,114 @@
       "leave": "Leave anyway"
     }
   },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect Reqs-AI to your external tools.",
+    "loadError": "We couldn't load your integrations. Please try again.",
+    "jira": {
+      "title": "Jira",
+      "description": "Connect a Jira site so you can push user stories as issues.",
+      "connect": "Connect",
+      "connected": "Jira connected.",
+      "test": "Test connection",
+      "disconnect": "Disconnect",
+      "disconnected": "Jira disconnected.",
+      "disconnectTitle": "Disconnect Jira?",
+      "disconnectBody": "This removes the Jira connection and any project mappings that use it. You can reconnect later.",
+      "siteUrl": "Site URL",
+      "email": "Email",
+      "apiToken": "API token",
+      "apiTokenHint": "Create an API token in your Atlassian account. It is sent securely and never shown again.",
+      "projectKey": "Jira project",
+      "issueType": "Issue type",
+      "statusConnected": "Connected",
+      "statusError": "Connection error",
+      "lastVerified": "Last verified",
+      "testOk": "Connection is working.",
+      "testOkNamed": "Connection is working — signed in as {{name}}.",
+      "method": "Method",
+      "methodOauth": "Connected via Atlassian (OAuth)",
+      "methodApiToken": "API token",
+      "oauth": {
+        "connect": "Connect with Atlassian",
+        "orUseToken": "or use an API token",
+        "createToken": "Create your API token",
+        "connected": "Jira connected via Atlassian.",
+        "exchanging": "Finishing the connection with Atlassian…",
+        "denied": "Atlassian authorization was cancelled. Nothing was connected.",
+        "backToIntegrations": "Back to integrations",
+        "pickSiteTitle": "Choose a Jira site",
+        "pickSiteBody": "Your Atlassian account has access to several sites. Pick the one to connect.",
+        "notConfiguredHint": "Atlassian sign-in isn't available yet — an administrator must configure the Atlassian app on the server. You can still connect with an API token below."
+      },
+      "tooltips": {
+        "siteUrl": "Your Jira site, e.g. https://your-space.atlassian.net",
+        "email": "The email of your Atlassian account — the one that owns the API token.",
+        "apiToken": "Paste it here; it is sent encrypted and never stored in your browser."
+      },
+      "howItWorks": {
+        "title": "How it works",
+        "step1": "Connect your Jira site — with Atlassian (OAuth) or an API token.",
+        "step2": "In each project, choose the Jira project and issue type in Project settings → Integrations.",
+        "step3": "Push stories to Jira from the backlog or a story's detail page.",
+        "whatSyncsTitle": "What gets synced",
+        "whatSyncs": "The story title becomes the issue summary, and the description carries the role, action and benefit plus the acceptance criteria (Given/When/Then).",
+        "oauthHint": "Connecting with Atlassian is the easiest — one click, nothing to type. The API token is an alternative if you can't use OAuth.",
+        "learnMore": "Learn more about API tokens"
+      }
+    },
+    "project": {
+      "subtitle": "Map this project to a Jira project so stories can be pushed as issues.",
+      "mappingDescription": "Choose the Jira project and issue type new stories are created as.",
+      "connection": "Connection",
+      "noConnection": "No Jira connection exists for this organization yet.",
+      "goToOrg": "Connect Jira in organization settings",
+      "noProjects": "No Jira projects found",
+      "noIssueTypes": "No issue types found",
+      "selectProjectFirst": "Select a Jira project first",
+      "save": "Save mapping",
+      "saved": "Jira mapping saved.",
+      "clear": "Clear mapping",
+      "cleared": "Jira mapping cleared.",
+      "clearTitle": "Clear Jira mapping?",
+      "clearBody": "This removes the project's Jira mapping. You won't be able to push stories until you map it again."
+    },
+    "push": {
+      "pushStory": "Push to Jira",
+      "pushAll": "Push all to Jira",
+      "pushed": "Pushed to Jira as {{key}}.",
+      "notConfigured": "No Jira mapping is configured for this project. Set it up in the project integration settings first.",
+      "pushError": "We couldn't push to Jira. Please try again."
+    },
+    "import": {
+      "action": "Import from Jira",
+      "title": "Import issues from Jira",
+      "subtitle": "{{total}} issue(s) available. Choose which to import as stories.",
+      "selectAll": "Select all",
+      "duplicate": "Already imported",
+      "empty": "There are no Jira issues to import for this project.",
+      "confirm": "Import {{count}}"
+    },
+    "jobs": {
+      "importRunning": "Importing from Jira…",
+      "pushRunning": "Pushing stories to Jira…",
+      "started": "Started — we'll let you know when it finishes.",
+      "completedImport": "Jira import finished: {{succeeded}} imported, {{failed}} failed.",
+      "completedPush": "Push to Jira finished: {{succeeded}} pushed, {{failed}} failed.",
+      "failed": "The Jira job failed. Please try again.",
+      "alreadyRunning": "A Jira job is already running for this project."
+    }
+  },
   "errors": {
     "ORGANIZATION_NOT_FOUND": "That organization no longer exists.",
     "ORGANIZATION_SLUG_ALREADY_EXISTS": "That organization name is already taken.",
     "ORGANIZATION_EDIT_PERMISSION_DENIED": "You don't have permission to edit this organization.",
+    "SUBSCRIPTION_NOT_FOUND": "We couldn't find a subscription for this organization.",
+    "SUBSCRIPTION_ALREADY_EXISTS": "This organization already has a subscription.",
+    "INVALID_PLAN_CHANGE": "That plan change isn't allowed.",
+    "INVALID_SUBSCRIPTION_STATE": "Your subscription isn't in a state that allows this action.",
+    "PLAN_NOT_PURCHASABLE": "That plan can't be purchased.",
+    "PAYMENT_GATEWAY_ERROR": "The payment provider couldn't process the request. Please try again.",
     "INVALID_GENERATION_SETTINGS": "Those generation settings are invalid.",
     "GLOSSARY_NOT_FOUND": "That glossary no longer exists.",
     "GLOSSARY_TERM_NOT_FOUND": "That glossary term no longer exists.",
@@ -1190,6 +1372,19 @@
     "EDGE_CASE_WITHOUT_TARGET": "This edge case needs an existing story to attach to.",
     "SESSION_ACCESS_DENIED": "You don't have access to this session.",
     "SESSION_ALREADY_ACTIVE": "There's already an active session.",
+    "INTEGRATION_CONNECTION_NOT_FOUND": "That integration connection no longer exists.",
+    "INTEGRATION_ALREADY_CONNECTED": "This organization already has a Jira connection.",
+    "INTEGRATION_TARGET_NOT_CONFIGURED": "This project isn't mapped to Jira yet. Configure it in the project integration settings.",
+    "INTEGRATION_JOB_ALREADY_RUNNING": "A Jira import or push is already running for this project. Wait for it to finish.",
+    "JIRA_AUTH_FAILED": "Jira rejected those credentials. Check the email and API token.",
+    "JIRA_UNREACHABLE": "We couldn't reach Jira. Check the site URL and try again.",
+    "JIRA_PROJECT_NOT_FOUND": "That Jira project no longer exists or is not accessible.",
+    "JIRA_PUSH_FAILED": "We couldn't push to Jira. Please try again.",
+    "JIRA_IMPORT_FAILED": "We couldn't import from Jira. Please try again.",
+    "JIRA_OAUTH_NOT_CONFIGURED": "Atlassian sign-in isn't set up on the server yet. Connect with an API token, or ask an administrator to configure it.",
+    "JIRA_OAUTH_STATE_INVALID": "That Atlassian sign-in link is invalid or expired. Please start the connection again.",
+    "JIRA_OAUTH_EXCHANGE_FAILED": "We couldn't finish connecting with Atlassian. Please try again.",
+    "INTEGRATION_ENCRYPTION_ERROR": "We couldn't securely store those credentials. Please try again.",
     "http": {
       "400": "Please check your input and try again.",
       "401": "Your session has expired. Please sign in again.",

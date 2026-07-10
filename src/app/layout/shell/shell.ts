@@ -25,6 +25,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 import { CommandPalette } from '../../shared/components/command-palette/command-palette';
 import { ToastHost } from '../../shared/toast/toast-host';
 import { RecordingMinibar } from '../../features/discovery/components/recording-minibar/recording-minibar';
+import { IntegrationJobsBanner } from '../../features/workspace/components/integration-jobs-banner/integration-jobs-banner';
 import { HlmIcon } from '../../shared/ui';
 
 interface NavItem {
@@ -80,6 +81,7 @@ interface Crumb {
     CommandPalette,
     ToastHost,
     RecordingMinibar,
+    IntegrationJobsBanner,
     HlmIcon,
     TranslocoPipe,
   ],
@@ -226,7 +228,10 @@ interface Crumb {
           </nav>
         </header>
 
-        <main class="flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
+        <!-- Global background-job progress (Jira import / push-all), any page of the project. -->
+        <app-integration-jobs-banner [projectId]="projectId()" />
+
+        <main class="min-h-0 flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
           <div class="mx-auto flex h-full w-full max-w-5xl flex-col">
             <router-outlet />
           </div>
@@ -294,9 +299,9 @@ export class Shell {
   private readonly orgSettingsSegs: { seg: string; soon?: boolean }[] = [
     { seg: 'general' },
     { seg: 'members' },
-    { seg: 'billing', soon: true },
-    { seg: 'integrations', soon: true },
-    { seg: 'usage', soon: true },
+    { seg: 'billing' },
+    { seg: 'integrations' },
+    { seg: 'usage' },
   ];
   private readonly projectRootSegs: { seg: string }[] = [
     { seg: 'overview' },
@@ -310,6 +315,7 @@ export class Shell {
     { seg: 'general' },
     { seg: 'roles' },
     { seg: 'members' },
+    { seg: 'integrations' },
     { seg: 'danger' },
   ];
   private readonly accountSegs: { seg: string; soon?: boolean }[] = [

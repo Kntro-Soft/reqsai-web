@@ -31,6 +31,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/iam/pages/terms/terms').then((m) => m.Terms),
   },
 
+  // Atlassian OAuth 2.0 redirect landing: chrome-less (no shell), auth-guarded so the
+  // silent-refresh initializer has restored the session by the time it exchanges the
+  // authorization code. Sits outside the shell because Atlassian fully reloads the SPA.
+  {
+    path: 'settings/integrations/jira/callback',
+    title: 'titles.integrations',
+    canActivate: [authGuard, termsGuard],
+    loadComponent: () =>
+      import('./features/workspace/pages/jira-oauth-callback/jira-oauth-callback').then(
+        (m) => m.JiraOAuthCallback,
+      ),
+  },
+
   // Create organization: standalone full-screen page, outside the app shell (no sidebar/header).
   {
     path: 'onboarding',
@@ -118,24 +131,42 @@ export const routes: Routes = [
             path: 'billing',
             title: 'titles.billing',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.billing', icon: 'lucideCreditCard' },
+              import('./features/billing/pages/billing/billing').then((m) => m.Billing),
           },
           {
             path: 'integrations',
             title: 'titles.integrations',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.integrations', icon: 'lucidePlug' },
+              import('./features/workspace/pages/org-integrations/org-integrations').then(
+                (m) => m.OrgIntegrations,
+              ),
           },
           {
             path: 'usage',
             title: 'titles.usage',
             loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.usage', icon: 'lucideChartLine' },
+              import('./features/billing/pages/usage/usage').then((m) => m.Usage),
           },
         ],
+      },
+      // Payment-provider hosted-checkout return landings (Stripe success/cancel URLs).
+      {
+        path: 'billing/success',
+        title: 'titles.billing',
+        loadComponent: () =>
+          import('./features/billing/pages/checkout-result/checkout-result').then(
+            (m) => m.CheckoutResult,
+          ),
+        data: { outcome: 'success' },
+      },
+      {
+        path: 'billing/cancel',
+        title: 'titles.billing',
+        loadComponent: () =>
+          import('./features/billing/pages/checkout-result/checkout-result').then(
+            (m) => m.CheckoutResult,
+          ),
+        data: { outcome: 'cancel' },
       },
       {
         path: 'account',
@@ -284,6 +315,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./features/workspace/pages/project-members/project-members').then(
                     (m) => m.ProjectMembers,
+                  ),
+              },
+              {
+                path: 'integrations',
+                title: 'titles.integrations',
+                loadComponent: () =>
+                  import('./features/workspace/pages/project-integrations/project-integrations').then(
+                    (m) => m.ProjectIntegrations,
                   ),
               },
               {

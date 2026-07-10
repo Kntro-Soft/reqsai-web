@@ -46,6 +46,7 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { SessionBar } from '../../components/session-bar/session-bar';
+import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
@@ -70,6 +71,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     DatePipe,
     TranslocoPipe,
     SessionBar,
+    ActiveParticipants,
     DecisionQueue,
     SidePanel,
     Select,
@@ -109,6 +111,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             </p>
           </div>
           <div class="flex shrink-0 items-center gap-1.5">
+            <!-- Live presence: who is currently viewing the live session. Renders
+                 unconditionally for every role (unlike app-session-bar, which is
+                 recorder-only) — this is the one place all members can see it. -->
+            @if (store.activeParticipants(); as participants) {
+              @if (participants.length > 0) {
+                <app-active-participants [participants]="participants" class="mr-1" />
+              }
+            }
             <!-- Meeting language: editable until a session is live, then locked to
                  the SESSION's language so every viewer sees the actual meeting
                  language rather than their own preference. -->

@@ -109,6 +109,16 @@ export interface StoryListFilters {
   createdBefore?: string;
 }
 
+/** Body for the backlog batch-delete (POST /stories/batch-delete): the story ids to remove. */
+export interface BatchDeleteStoriesRequest {
+  storyIds: string[];
+}
+
+/** Result of a batch delete: how many stories were actually removed. */
+export interface BatchDeleteStoriesResult {
+  deleted: number;
+}
+
 /**
  * A persisted acceptance criterion resource (criteria REST). Carries its own `id`
  * so the detail/edit page can PUT/DELETE it individually — unlike the display-only
@@ -428,7 +438,8 @@ export type SessionEventType =
   | 'STORY_GENERATED'
   | 'SUGGESTION_GENERATED'
   | 'SUGGESTION_ACCEPTED'
-  | 'SUGGESTION_DISMISSED';
+  | 'SUGGESTION_DISMISSED'
+  | 'PRESENCE_STATE';
 
 interface SessionRealtimeBase {
   sessionId: string;
@@ -481,12 +492,32 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
 }
 
+/** One user currently viewing a live session, carried by {@link SessionPresenceMessage}. */
+export interface SessionParticipant {
+  userId: string;
+  displayName: string;
+  /** Public avatar serve path, loadable directly by an `<img>` (no bearer token needed). */
+  avatarUrl: string;
+}
+
+/**
+ * Roster snapshot of who is currently viewing a live session. A full snapshot (not a delta), so it
+ * renders idempotently; `count` is the number of distinct participants (a user on two tabs counts
+ * once). Travels on the same per-session topic as every other session event.
+ */
+export interface SessionPresenceMessage extends SessionRealtimeBase {
+  type: 'PRESENCE_STATE';
+  participants: SessionParticipant[];
+  count: number;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
   | SessionStoryGeneratedMessage
   | SessionProcessingFailedMessage
-  | SessionSuggestionMessage;
+  | SessionSuggestionMessage
+  | SessionPresenceMessage;
 
 // ---- Realtime (project-level lifecycle topic /topic/projects/{id}) ----
 
