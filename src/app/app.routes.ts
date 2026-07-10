@@ -237,6 +237,7 @@ export const routes: Routes = [
             // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
             title: 'titles.discovery',
+            canActivate: [requirePermission('SESSION_READ')],
             canDeactivate: [recordingLeaveGuard],
             loadComponent: () =>
               import('./features/discovery/pages/discovery-chat/discovery-chat').then(
@@ -246,36 +247,42 @@ export const routes: Routes = [
           {
             path: 'sessions/history',
             title: 'titles.history',
+            canActivate: [requirePermission('SESSION_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/history/history').then((m) => m.DiscoveryHistory),
           },
           {
             path: 'stories',
             title: 'titles.stories',
+            canActivate: [requirePermission('STORY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/stories').then((m) => m.ProjectStories),
           },
           {
             path: 'stories/new',
             title: 'titles.newStory',
+            canActivate: [requirePermission('STORY_WRITE')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/story-form').then((m) => m.StoryCreate),
           },
           {
             path: 'stories/:storyId',
             title: 'titles.story',
+            canActivate: [requirePermission('STORY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/stories/story-detail').then((m) => m.StoryDetail),
           },
           {
             path: 'glossary',
             title: 'titles.glossary',
+            canActivate: [requirePermission('GLOSSARY_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/glossary/glossary').then((m) => m.ProjectGlossary),
           },
           {
             path: 'constraints',
             title: 'titles.constraints',
+            canActivate: [requirePermission('CONSTRAINT_READ')],
             loadComponent: () =>
               import('./features/discovery/pages/constraints/constraints').then(
                 (m) => m.ProjectConstraints,

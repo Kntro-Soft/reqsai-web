@@ -322,10 +322,10 @@ export class Shell {
   ];
   private readonly projectRootSegs: NavSeg[] = [
     { seg: 'overview' },
-    { seg: 'sessions' },
-    { seg: 'stories' },
-    { seg: 'glossary' },
-    { seg: 'constraints' },
+    { seg: 'sessions', permission: 'SESSION_READ' },
+    { seg: 'stories', permission: 'STORY_READ' },
+    { seg: 'glossary', permission: 'GLOSSARY_READ' },
+    { seg: 'constraints', permission: 'CONSTRAINT_READ' },
     { seg: 'settings' },
   ];
   private readonly projectSettingsSegs: NavSeg[] = [
@@ -418,7 +418,7 @@ export class Shell {
       return {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         ariaKey: 'nav.projectAria',
-        items: this.projectRootSegs.map((s) => ({
+        items: this.visibleSegs(this.projectRootSegs).map((s) => ({
           seg: s.seg,
           link: ['/projects', pid, s.seg],
         })),
