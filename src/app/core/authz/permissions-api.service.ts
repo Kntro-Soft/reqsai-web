@@ -20,9 +20,7 @@ export class PermissionsApiService {
 
   /** The caller's org-level role + base permission for the given organization. */
   getOrgAuthorization(orgId: string): Observable<OrgAuthorizationResponse> {
-    return this.http.get<OrgAuthorizationResponse>(
-      `/api/organizations/${orgId}/me/authorization`,
-    );
+    return this.http.get<OrgAuthorizationResponse>(`/api/organizations/${orgId}/me/authorization`);
   }
 
   /** The caller's effective permissions on the given project (owner/admin get all). */
@@ -40,9 +38,8 @@ export class PermissionsApiService {
     orgId: string,
     basePermission: BasePermission,
   ): Observable<BasePermissionResponse> {
-    return this.http.put<BasePermissionResponse>(
-      `/api/organizations/${orgId}/base-permission`,
-      { basePermission },
-    );
+    return this.http.put<BasePermissionResponse>(`/api/organizations/${orgId}/base-permission`, {
+      basePermission,
+    });
   }
 }
