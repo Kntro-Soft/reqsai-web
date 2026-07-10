@@ -1266,6 +1266,15 @@
       "empty": "There are no Jira issues to import for this project.",
       "confirm": "Import {{count}}",
       "summary": "Imported {{imported}}, skipped {{skipped}}, {{failed}} failed."
+    },
+    "jobs": {
+      "importRunning": "Importing from Jira…",
+      "pushRunning": "Pushing stories to Jira…",
+      "started": "Started — we'll let you know when it finishes.",
+      "completedImport": "Jira import finished: {{succeeded}} imported, {{failed}} failed.",
+      "completedPush": "Push to Jira finished: {{succeeded}} pushed, {{failed}} failed.",
+      "failed": "The Jira job failed. Please try again.",
+      "alreadyRunning": "A Jira job is already running for this project."
     }
   },
   "errors": {
@@ -1351,6 +1360,7 @@
     "INTEGRATION_CONNECTION_NOT_FOUND": "That integration connection no longer exists.",
     "INTEGRATION_ALREADY_CONNECTED": "This organization already has a Jira connection.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "This project isn't mapped to Jira yet. Configure it in the project integration settings.",
+    "INTEGRATION_JOB_ALREADY_RUNNING": "A Jira import or push is already running for this project. Wait for it to finish.",
     "JIRA_AUTH_FAILED": "Jira rejected those credentials. Check the email and API token.",
     "JIRA_UNREACHABLE": "We couldn't reach Jira. Check the site URL and try again.",
     "JIRA_PROJECT_NOT_FOUND": "That Jira project no longer exists or is not accessible.",

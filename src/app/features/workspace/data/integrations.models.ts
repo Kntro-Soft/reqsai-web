@@ -195,9 +195,7 @@ export function jobProgressPercent(
 
 /** The i18n key of the banner label for a running job of this type. Pure/testable. */
 export function jobLabelKey(jobType: IntegrationJobType): string {
-  return jobType === 'IMPORT'
-    ? 'integrations.jobs.importRunning'
-    : 'integrations.jobs.pushRunning';
+  return jobType === 'IMPORT' ? 'integrations.jobs.importRunning' : 'integrations.jobs.pushRunning';
 }
 
 // --- Atlassian OAuth 2.0 ---

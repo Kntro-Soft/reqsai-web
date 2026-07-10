@@ -1266,6 +1266,15 @@
       "empty": "No hay incidencias de Jira para importar en este proyecto.",
       "confirm": "Importar {{count}}",
       "summary": "Se importaron {{imported}}, se omitieron {{skipped}}, {{failed}} con error."
+    },
+    "jobs": {
+      "importRunning": "Importando de Jira…",
+      "pushRunning": "Enviando historias a Jira…",
+      "started": "Iniciado: te avisaremos cuando termine.",
+      "completedImport": "Importación de Jira finalizada: {{succeeded}} importadas, {{failed}} con error.",
+      "completedPush": "Envío a Jira finalizado: {{succeeded}} enviadas, {{failed}} con error.",
+      "failed": "El trabajo de Jira falló. Inténtalo de nuevo.",
+      "alreadyRunning": "Ya hay un trabajo de Jira en curso para este proyecto."
     }
   },
   "errors": {
@@ -1351,6 +1360,7 @@
     "INTEGRATION_CONNECTION_NOT_FOUND": "Esa conexión de integración ya no existe.",
     "INTEGRATION_ALREADY_CONNECTED": "Esta organización ya tiene una conexión con Jira.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "Este proyecto aún no está asociado a Jira. Configúralo en la configuración de integración del proyecto.",
+    "INTEGRATION_JOB_ALREADY_RUNNING": "Ya hay una importación o un envío a Jira en curso para este proyecto. Espera a que termine.",
     "JIRA_AUTH_FAILED": "Jira rechazó esas credenciales. Revisa el correo y el token de API.",
     "JIRA_UNREACHABLE": "No pudimos conectar con Jira. Revisa la URL del sitio e inténtalo de nuevo.",
     "JIRA_PROJECT_NOT_FOUND": "Ese proyecto de Jira ya no existe o no es accesible.",

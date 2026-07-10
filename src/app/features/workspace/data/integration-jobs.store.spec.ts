@@ -141,9 +141,7 @@ describe('IntegrationJobsStore', () => {
 
     realtime.connected.set(false);
     vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
-    http
-      .expectOne('/api/projects/proj-1/integration/jira/jobs/job-1')
-      .flush(job({ processed: 5 }));
+    http.expectOne('/api/projects/proj-1/integration/jira/jobs/job-1').flush(job({ processed: 5 }));
     expect(store.current()?.processed).toBe(5);
 
     vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
