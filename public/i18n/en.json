@@ -105,6 +105,25 @@
     "title": "Coming soon",
     "subtitle": "This section isn't available yet. It's on the roadmap — check back soon."
   },
+  "authz": {
+    "noAccess": "You don't have sufficient permissions.",
+    "role": {
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "MEMBER": "Member"
+    },
+    "basePermission": {
+      "title": "Member base permission",
+      "desc": "The baseline every member gets on every project. Roles add more permissions on top.",
+      "help": "Members get this baseline on every project; roles add more on top.",
+      "none": "None",
+      "noneDesc": "Members get no access until a project role grants it.",
+      "read": "Read",
+      "readDesc": "Members can view every project by default.",
+      "saved": "Base permission updated.",
+      "loadError": "We couldn't load the base permission."
+    }
+  },
   "billing": {
     "loadError": "We couldn't load your subscription. Only the organization owner can manage billing.",
     "planName": {

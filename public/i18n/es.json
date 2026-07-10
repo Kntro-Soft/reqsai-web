@@ -105,6 +105,25 @@
     "title": "Próximamente",
     "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
   },
+  "authz": {
+    "noAccess": "No tienes permisos suficientes.",
+    "role": {
+      "OWNER": "Propietario",
+      "ADMIN": "Administrador",
+      "MEMBER": "Miembro"
+    },
+    "basePermission": {
+      "title": "Permiso base de miembro",
+      "desc": "El nivel base que todo miembro obtiene en cada proyecto. Los roles añaden más permisos encima.",
+      "help": "Los miembros obtienen este nivel base en cada proyecto; los roles añaden más encima.",
+      "none": "Ninguno",
+      "noneDesc": "Los miembros no tienen acceso hasta que un rol de proyecto lo conceda.",
+      "read": "Lectura",
+      "readDesc": "Los miembros pueden ver todos los proyectos de forma predeterminada.",
+      "saved": "Permiso base actualizado.",
+      "loadError": "No pudimos cargar el permiso base."
+    }
+  },
   "billing": {
     "loadError": "No pudimos cargar tu suscripción. Solo el propietario de la organización puede gestionar la facturación.",
     "planName": {
