@@ -12,7 +12,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucideDownload, lucidePlus, lucideSearch, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideDownload,
+  lucidePlus,
+  lucideSearch,
+  lucideTrash2,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
@@ -38,6 +44,12 @@ import {
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmSkeleton } from '../../../../shared/ui';
+import {
+  allSelectedOnPage,
+  someSelectedOnPage,
+  toggleAllOnPage,
+  toggleId,
+} from './selection.helpers';
 
 /** A sort control value: a backend sort field paired with a direction. */
 type SortValue = `${StorySort}:${StorySortDirection}`;
@@ -65,7 +77,9 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideDownload, lucidePlus, lucideSearch, lucideUpload })],
+  viewProviders: [
+    provideIcons({ lucideDownload, lucidePlus, lucideSearch, lucideTrash2, lucideUpload }),
+  ],
   host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-6">
@@ -127,6 +141,64 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           </a>
         </div>
       </div>
+
+      <!-- Contextual action bar: shown while any row on this page is selected. -->
+      @if (selectedCount() > 0) {
+        <div
+          class="flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-2"
+          data-testid="stories-action-bar"
+        >
+          <span class="text-sm font-medium">
+            {{ 'stories.selectedCount' | transloco: { count: selectedCount() } }}
+          </span>
+          <button
+            hlmBtn
+            size="sm"
+            variant="ghost"
+            type="button"
+            (click)="clearSelection()"
+            data-testid="stories-clear-selection"
+          >
+            {{ 'stories.clearSelection' | transloco }}
+          </button>
+          <div class="ml-auto flex items-center gap-2">
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="pushSelected()"
+              [disabled]="pushAllBusy() || jiraConfigured() !== true"
+              [title]="
+                pushJobRunning()
+                  ? ('integrations.jobs.alreadyRunning' | transloco)
+                  : jiraConfigured() === false
+                    ? ('integrations.push.notConfigured' | transloco)
+                    : ''
+              "
+              data-testid="stories-push-selected"
+            >
+              @if (pushAllBusy()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideUpload" size="15px" />
+              }
+              {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
+            </button>
+            <button
+              hlmBtn
+              size="sm"
+              variant="destructive"
+              type="button"
+              (click)="askBulkDelete()"
+              data-testid="stories-bulk-delete"
+            >
+              <hlm-icon name="lucideTrash2" size="15px" />
+              {{ 'stories.bulkDelete' | transloco: { count: selectedCount() } }}
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- Filters + sort -->
       <div class="flex shrink-0 flex-col gap-2">
@@ -237,6 +309,17 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               <tr
                 class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
               >
+                <th class="w-10 px-4 py-2.5 font-medium">
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 shrink-0 align-middle accent-primary"
+                    [checked]="allRowsSelected()"
+                    [appIndeterminate]="someRowsSelected()"
+                    (change)="toggleAllRows()"
+                    [attr.aria-label]="'stories.selectAllAria' | transloco"
+                    data-testid="stories-select-all"
+                  />
+                </th>
                 <th class="px-4 py-2.5 font-medium">{{ 'stories.colTitle' | transloco }}</th>
                 <th class="px-3 py-2.5 font-medium">{{ 'stories.colPriority' | transloco }}</th>
                 <th class="px-3 py-2.5 font-medium">{{ 'stories.colStatus' | transloco }}</th>
@@ -246,15 +329,29 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                 <th class="px-3 py-2.5 whitespace-nowrap font-medium">
                   {{ 'stories.colCreated' | transloco }}
                 </th>
+                <th class="w-12 px-3 py-2.5 text-right font-medium">
+                  <span class="sr-only">{{ 'stories.colActions' | transloco }}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               @for (s of stories(); track s.id) {
                 <tr
                   class="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-accent/50"
+                  [class.bg-muted]="selected().has(s.id)"
                   (click)="openDetail(s)"
                   data-testid="story-row"
                 >
+                  <td class="w-10 px-4 py-3" (click)="$event.stopPropagation()">
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 shrink-0 align-middle accent-primary"
+                      [checked]="selected().has(s.id)"
+                      (change)="toggleRow(s.id)"
+                      [attr.aria-label]="'stories.selectRowAria' | transloco"
+                      [attr.data-testid]="'story-select-' + s.id"
+                    />
+                  </td>
                   <td class="max-w-xs px-4 py-3">
                     <p class="truncate font-medium">{{ s.title }}</p>
                     <p class="truncate text-xs text-muted-foreground">
@@ -283,6 +380,17 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                   </td>
                   <td class="px-3 py-3 whitespace-nowrap text-muted-foreground">
                     {{ formatDate(s.createdAt) }}
+                  </td>
+                  <td class="w-12 px-3 py-3 text-right">
+                    <button
+                      type="button"
+                      (click)="askDelete(s, $event)"
+                      [attr.aria-label]="'stories.deleteAria' | transloco"
+                      class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      [attr.data-testid]="'story-delete-' + s.id"
+                    >
+                      <hlm-icon name="lucideTrash2" size="15px" />
+                    </button>
                   </td>
                 </tr>
               }
@@ -324,6 +432,70 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
         </div>
       }
     </div>
+
+    <!-- Delete a single story -->
+    <app-modal [(open)]="deleteOpen">
+      <span modalTitle>{{ 'stories.deleteConfirmTitle' | transloco }}</span>
+      <p>{{ 'stories.deleteConfirmBody' | transloco }}</p>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="deleteOpen.set(false)"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="confirmDelete()"
+        [disabled]="deleting()"
+        data-testid="stories-delete-confirm"
+      >
+        @if (deleting()) {
+          <hlm-spinner class="h-4 w-4" />
+        }
+        {{ 'stories.delete' | transloco }}
+      </button>
+    </app-modal>
+
+    <!-- Bulk delete the selected stories -->
+    <app-modal [(open)]="bulkDeleteOpen">
+      <span modalTitle>{{
+        'stories.deleteConfirmBulkTitle' | transloco: { count: selectedCount() }
+      }}</span>
+      <p>{{ 'stories.deleteConfirmBulkBody' | transloco: { count: selectedCount() } }}</p>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="bulkDeleteOpen.set(false)"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="confirmBulkDelete()"
+        [disabled]="bulkDeleting()"
+        data-testid="stories-bulk-delete-confirm"
+      >
+        @if (bulkDeleting()) {
+          <hlm-spinner class="h-4 w-4" />
+        }
+        {{ 'stories.bulkDelete' | transloco: { count: selectedCount() } }}
+      </button>
+    </app-modal>
 
     <!-- Import from Jira: preview picker -->
     <app-modal [(open)]="importOpen">
@@ -459,6 +631,28 @@ export class ProjectStories implements OnInit, OnDestroy {
   protected readonly totalPages = signal(1);
   protected readonly total = signal(0);
 
+  // PER-PAGE multi-select: the ids selected on the currently visible page only. The
+  // table is server-side paged, so the selection is cleared whenever the page, filters
+  // or sort change (see clearSelection in resetAndLoad/goToPage/load).
+  protected readonly selected = signal<ReadonlySet<string>>(new Set());
+  protected readonly selectedCount = computed(() => this.selected().size);
+  private readonly pageStoryIds = computed(() => this.stories().map((s) => s.id));
+  protected readonly allRowsSelected = computed(() =>
+    allSelectedOnPage(this.selected(), this.pageStoryIds()),
+  );
+  /** Some — but not all — of the page's rows selected: the header checkbox's indeterminate flag. */
+  protected readonly someRowsSelected = computed(() =>
+    someSelectedOnPage(this.selected(), this.pageStoryIds()),
+  );
+
+  // Single-story delete confirmation (row-level trash action).
+  protected readonly deleteOpen = signal(false);
+  protected readonly deleteTarget = signal<UserStoryResponse | null>(null);
+  protected readonly deleting = signal(false);
+  // Bulk delete confirmation (contextual action bar).
+  protected readonly bulkDeleteOpen = signal(false);
+  protected readonly bulkDeleting = signal(false);
+
   protected readonly query = signal('');
   protected readonly priorityFilter = signal('all');
   protected readonly statusFilter = signal('all');
@@ -561,12 +755,115 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   protected goToPage(next: number): void {
     if (next < 0 || next >= this.totalPages()) return;
+    this.clearSelection();
     this.page.set(next);
     this.load();
   }
 
   protected openDetail(story: UserStoryResponse): void {
     void this.router.navigate(['/projects', this.projectId(), 'stories', story.id]);
+  }
+
+  // ---- Per-page selection ----
+
+  /** Toggles one row's checkbox. */
+  protected toggleRow(id: string): void {
+    this.selected.set(toggleId(this.selected(), id));
+  }
+
+  /** Header checkbox: select every row on the current page, or clear them all. */
+  protected toggleAllRows(): void {
+    this.selected.set(toggleAllOnPage(this.selected(), this.pageStoryIds()));
+  }
+
+  /** Empties the selection — also called on page/filter/sort change so it stays per-page. */
+  protected clearSelection(): void {
+    if (this.selected().size > 0) this.selected.set(new Set());
+  }
+
+  // ---- Selective push to Jira ----
+
+  /**
+   * Pushes only the SELECTED stories to Jira, reusing the same background-job flow as
+   * {@link pushAll}: the 202's job goes to the jobs store (global banner) and a
+   * "started" toast confirms the kick-off. The selection is cleared once the job starts.
+   */
+  protected pushSelected(): void {
+    if (this.pushAllBusy() || this.selectedCount() === 0) return;
+    this.pushStarting.set(true);
+    const storyIds = [...this.selected()];
+    this.integrations.pushAllStories(this.projectId(), { storyIds }).subscribe({
+      next: (job) => {
+        this.pushStarting.set(false);
+        this.clearSelection();
+        this.jobs.track(job);
+        this.toast.success(this.transloco.translate('integrations.jobs.started'));
+      },
+      error: (err: unknown) => {
+        this.pushStarting.set(false);
+        this.toast.error(this.pushAllErrorMessage(err));
+      },
+    });
+  }
+
+  // ---- Single-story delete ----
+
+  protected askDelete(story: UserStoryResponse, event: Event): void {
+    // Don't let the click bubble to the row (which navigates to the detail page).
+    event.stopPropagation();
+    this.deleteTarget.set(story);
+    this.deleteOpen.set(true);
+  }
+
+  protected confirmDelete(): void {
+    const target = this.deleteTarget();
+    if (!target || this.deleting()) return;
+    this.deleting.set(true);
+    this.api.deleteStory(this.projectId(), target.id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.deleteOpen.set(false);
+        if (this.selected().has(target.id)) {
+          const next = new Set(this.selected());
+          next.delete(target.id);
+          this.selected.set(next);
+        }
+        this.toast.success(this.transloco.translate('stories.deleted'));
+        this.load();
+      },
+      error: (err: unknown) => {
+        this.deleting.set(false);
+        this.toast.error(messageForError(err, this.transloco));
+      },
+    });
+  }
+
+  // ---- Bulk delete ----
+
+  protected askBulkDelete(): void {
+    if (this.selectedCount() === 0) return;
+    this.bulkDeleteOpen.set(true);
+  }
+
+  protected confirmBulkDelete(): void {
+    if (this.bulkDeleting() || this.selectedCount() === 0) return;
+    this.bulkDeleting.set(true);
+    const storyIds = [...this.selected()];
+    this.api.batchDeleteStories(this.projectId(), storyIds).subscribe({
+      next: (result) => {
+        this.bulkDeleting.set(false);
+        this.bulkDeleteOpen.set(false);
+        this.clearSelection();
+        this.toast.success(
+          this.transloco.translate('stories.deletedBulk', { deleted: result.deleted }),
+        );
+        this.load();
+      },
+      error: (err: unknown) => {
+        this.bulkDeleting.set(false);
+        this.toast.error(messageForError(err, this.transloco));
+      },
+    });
   }
 
   /**
@@ -677,6 +974,7 @@ export class ProjectStories implements OnInit, OnDestroy {
   }
 
   private resetAndLoad(): void {
+    this.clearSelection();
     this.page.set(0);
     this.load();
   }
