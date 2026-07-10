@@ -160,11 +160,7 @@ export class WorkspaceApiService {
     );
   }
 
-  removeProjectMember(
-    orgId: string,
-    projectId: string,
-    assignmentId: string,
-  ): Observable<void> {
+  removeProjectMember(orgId: string, projectId: string, assignmentId: string): Observable<void> {
     return this.http.delete<void>(
       `/api/organizations/${orgId}/projects/${projectId}/members/${assignmentId}`,
     );
@@ -186,10 +182,9 @@ export class WorkspaceApiService {
   }
 
   transferOwnership(orgId: string, newOwnerMemberId: string): Observable<OrganizationResponse> {
-    return this.http.post<OrganizationResponse>(
-      `/api/organizations/${orgId}/transfer-ownership`,
-      { newOwnerMemberId },
-    );
+    return this.http.post<OrganizationResponse>(`/api/organizations/${orgId}/transfer-ownership`, {
+      newOwnerMemberId,
+    });
   }
 
   deleteOrganization(orgId: string): Observable<void> {
