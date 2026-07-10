@@ -21,6 +21,9 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { PermissionsApiService } from '../../../../core/authz/permissions-api.service';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
+import { BasePermission } from '../../../../core/authz/permissions.models';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { CreateMemberRequest, MemberResponse } from '../../data/workspace.models';
@@ -185,6 +188,60 @@ const MENU_POS: ConnectedPosition[] = [
             <p class="text-sm text-destructive" data-testid="form-error">{{ errorMessage() }}</p>
           }
         </form>
+        </section>
+
+        <!-- Member base permission (GitHub-style floor): owner/admin only -->
+        <section
+          class="overflow-hidden rounded-2xl border border-border"
+          data-testid="base-permission-card"
+        >
+          <div class="flex flex-col gap-1 p-5">
+            <h2 class="text-base font-semibold">{{ 'authz.basePermission.title' | transloco }}</h2>
+            <p class="text-sm text-muted-foreground">
+              {{ 'authz.basePermission.desc' | transloco }}
+            </p>
+            <div class="mt-3 flex flex-col gap-2">
+              @for (opt of basePermissionOptions; track opt.value) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="basePermission() === opt.value"
+                  [disabled]="basePermissionSaving() !== null || basePermission() === null"
+                  (click)="setBasePermission(opt.value)"
+                  class="flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed"
+                  [class]="
+                    basePermission() === opt.value
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:bg-accent'
+                  "
+                  [attr.data-testid]="'base-permission-' + opt.value"
+                >
+                  <span
+                    class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border"
+                    [class]="
+                      basePermission() === opt.value ? 'border-primary' : 'border-muted-foreground/50'
+                    "
+                  >
+                    @if (basePermission() === opt.value) {
+                      <span class="h-2 w-2 rounded-full bg-primary"></span>
+                    }
+                  </span>
+                  <span class="flex flex-col gap-0.5">
+                    <span class="text-sm font-medium">{{ opt.labelKey | transloco }}</span>
+                    <span class="text-xs text-muted-foreground">{{ opt.descKey | transloco }}</span>
+                  </span>
+                  @if (basePermissionSaving() === opt.value) {
+                    <hlm-spinner class="ml-auto h-4 w-4" />
+                  }
+                </button>
+              }
+            </div>
+          </div>
+          <div class="border-t border-border bg-muted/30 px-5 py-3">
+            <span class="text-xs text-muted-foreground">
+              {{ 'authz.basePermission.help' | transloco }}
+            </span>
+          </div>
         </section>
       }
 
@@ -547,10 +604,25 @@ const MENU_POS: ConnectedPosition[] = [
 export class Members {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(WorkspaceApiService);
+  private readonly permissionsApi = inject(PermissionsApiService);
+  private readonly permissions = inject(PermissionsStore);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
+
+  // Member base permission (GitHub-style floor). `null` until loaded — the radios stay
+  // disabled while unknown; `basePermissionSaving` holds the option mid-PUT for its spinner.
+  protected readonly basePermission = signal<BasePermission | null>(null);
+  protected readonly basePermissionSaving = signal<BasePermission | null>(null);
+  protected readonly basePermissionOptions: readonly {
+    value: BasePermission;
+    labelKey: string;
+    descKey: string;
+  }[] = [
+    { value: 'NONE', labelKey: 'authz.basePermission.none', descKey: 'authz.basePermission.noneDesc' },
+    { value: 'READ', labelKey: 'authz.basePermission.read', descKey: 'authz.basePermission.readDesc' },
+  ];
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
   protected readonly tabs: readonly { value: MemberTab; labelKey: string }[] = [
@@ -750,8 +822,38 @@ export class Members {
       next: (members) => {
         this.members.set(members);
         this.state.set('ready');
+        // Only owner/admin may read/write the base permission — fetch it once the roster
+        // has resolved the caller's role, so we don't fire an endpoint that would 403.
+        if (this.canManage()) this.loadBasePermission(orgId);
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  private loadBasePermission(orgId: string): void {
+    this.permissionsApi.getBasePermission(orgId).subscribe({
+      next: (res) => this.basePermission.set(res.basePermission),
+      // Silent: a failure just leaves the card in its disabled/unknown state.
+      error: () => void 0,
+    });
+  }
+
+  /** PUTs the chosen base permission; optimistic-free — the store mirror is updated on success. */
+  protected setBasePermission(value: BasePermission): void {
+    const orgId = this.store.organizationId();
+    if (!orgId || this.basePermissionSaving() || this.basePermission() === value) return;
+    this.basePermissionSaving.set(value);
+    this.permissionsApi.updateBasePermission(orgId, value).subscribe({
+      next: (res) => {
+        this.basePermission.set(res.basePermission);
+        this.permissions.setMemberBasePermission(res.basePermission);
+        this.basePermissionSaving.set(null);
+        this.toast.success(this.transloco.translate('authz.basePermission.saved'));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.basePermissionSaving.set(null);
+        this.toast.error(messageForError(err, this.transloco));
+      },
     });
   }
 
