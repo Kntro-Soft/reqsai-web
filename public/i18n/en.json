@@ -114,8 +114,10 @@
     },
     "basePermission": {
       "title": "Member base permission",
-      "desc": "The baseline every member gets on every project. Roles add more permissions on top.",
+      "desc": "The baseline every member gets on each project; roles add more on top.",
       "help": "Members get this baseline on every project; roles add more on top.",
+      "change": "Change",
+      "save": "Save",
       "none": "None",
       "noneDesc": "Members get no access until a project role grants it.",
       "read": "Read",

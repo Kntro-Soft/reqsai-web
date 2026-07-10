@@ -192,61 +192,106 @@ const MENU_POS: ConnectedPosition[] = [
           </form>
         </section>
 
-        <!-- Member base permission (GitHub-style floor): owner/admin only -->
+        <!-- Member base permission (GitHub-style floor): compact card, choice in a modal. -->
         <section
-          class="overflow-hidden rounded-2xl border border-border"
+          class="flex items-center justify-between gap-4 rounded-2xl border border-border p-5"
           data-testid="base-permission-card"
         >
-          <div class="flex flex-col gap-1 p-5">
+          <div class="flex min-w-0 flex-col gap-1">
             <h2 class="text-base font-semibold">{{ 'authz.basePermission.title' | transloco }}</h2>
             <p class="text-sm text-muted-foreground">
               {{ 'authz.basePermission.desc' | transloco }}
             </p>
-            <div class="mt-3 flex flex-col gap-2">
-              @for (opt of basePermissionOptions; track opt.value) {
-                <button
-                  type="button"
-                  role="radio"
-                  [attr.aria-checked]="basePermission() === opt.value"
-                  [disabled]="basePermissionSaving() !== null || basePermission() === null"
-                  (click)="setBasePermission(opt.value)"
-                  class="flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed"
-                  [class]="
-                    basePermission() === opt.value
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:bg-accent'
-                  "
-                  [attr.data-testid]="'base-permission-' + opt.value"
-                >
-                  <span
-                    class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border"
-                    [class]="
-                      basePermission() === opt.value
-                        ? 'border-primary'
-                        : 'border-muted-foreground/50'
-                    "
-                  >
-                    @if (basePermission() === opt.value) {
-                      <span class="h-2 w-2 rounded-full bg-primary"></span>
-                    }
-                  </span>
-                  <span class="flex flex-col gap-0.5">
-                    <span class="text-sm font-medium">{{ opt.labelKey | transloco }}</span>
-                    <span class="text-xs text-muted-foreground">{{ opt.descKey | transloco }}</span>
-                  </span>
-                  @if (basePermissionSaving() === opt.value) {
-                    <hlm-spinner class="ml-auto h-4 w-4" />
-                  }
-                </button>
-              }
-            </div>
           </div>
-          <div class="border-t border-border bg-muted/30 px-5 py-3">
-            <span class="text-xs text-muted-foreground">
-              {{ 'authz.basePermission.help' | transloco }}
-            </span>
+          <div class="flex shrink-0 items-center gap-3">
+            @if (basePermission(); as value) {
+              <span
+                class="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs font-medium"
+                data-testid="base-permission-value"
+              >
+                {{ 'authz.basePermission.' + (value === 'READ' ? 'read' : 'none') | transloco }}
+              </span>
+            } @else {
+              <hlm-spinner class="h-4 w-4" />
+            }
+            <button
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="openBasePermission()"
+              [disabled]="basePermission() === null"
+              data-testid="base-permission-change"
+            >
+              {{ 'authz.basePermission.change' | transloco }}
+            </button>
           </div>
         </section>
+
+        <!-- Base-permission chooser (None / Read) -->
+        <app-modal [(open)]="basePermissionOpen">
+          <span modalTitle>{{ 'authz.basePermission.title' | transloco }}</span>
+          <div class="flex flex-col gap-2" role="radiogroup">
+            @for (opt of basePermissionOptions; track opt.value) {
+              <button
+                type="button"
+                role="radio"
+                [attr.aria-checked]="basePermissionDraft() === opt.value"
+                (click)="basePermissionDraft.set(opt.value)"
+                class="flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors"
+                [class]="
+                  basePermissionDraft() === opt.value
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:bg-accent'
+                "
+                [attr.data-testid]="'base-permission-option-' + opt.value"
+              >
+                <span
+                  class="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border"
+                  [class]="
+                    basePermissionDraft() === opt.value
+                      ? 'border-primary'
+                      : 'border-muted-foreground/50'
+                  "
+                >
+                  @if (basePermissionDraft() === opt.value) {
+                    <span class="h-2 w-2 rounded-full bg-primary"></span>
+                  }
+                </span>
+                <span class="flex flex-col gap-0.5">
+                  <span class="text-sm font-medium">{{ opt.labelKey | transloco }}</span>
+                  <span class="text-xs text-muted-foreground">{{ opt.descKey | transloco }}</span>
+                </span>
+              </button>
+            }
+          </div>
+          <button
+            modalFooter
+            hlmBtn
+            size="sm"
+            variant="ghost"
+            type="button"
+            (click)="basePermissionOpen.set(false)"
+          >
+            {{ 'common.cancel' | transloco }}
+          </button>
+          <button
+            modalFooter
+            hlmBtn
+            size="sm"
+            type="button"
+            (click)="saveBasePermission()"
+            [disabled]="
+              basePermissionSaving() !== null || basePermissionDraft() === basePermission()
+            "
+            data-testid="base-permission-save"
+          >
+            @if (basePermissionSaving() !== null) {
+              <hlm-spinner class="h-4 w-4" />
+            }
+            {{ 'authz.basePermission.save' | transloco }}
+          </button>
+        </app-modal>
       }
 
       <!-- Tabs -->
@@ -618,10 +663,13 @@ export class Members {
   protected readonly store = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
 
-  // Member base permission (GitHub-style floor). `null` until loaded — the radios stay
-  // disabled while unknown; `basePermissionSaving` holds the option mid-PUT for its spinner.
+  // Member base permission (GitHub-style floor). `null` until loaded — the compact card
+  // shows the current value + a Change button that opens a modal; the modal holds a draft
+  // choice until Save. `basePermissionSaving` holds the option mid-PUT for its spinner.
   protected readonly basePermission = signal<BasePermission | null>(null);
   protected readonly basePermissionSaving = signal<BasePermission | null>(null);
+  protected readonly basePermissionOpen = signal(false);
+  protected readonly basePermissionDraft = signal<BasePermission | null>(null);
   protected readonly basePermissionOptions: readonly {
     value: BasePermission;
     labelKey: string;
@@ -852,16 +900,25 @@ export class Members {
     });
   }
 
-  /** PUTs the chosen base permission; optimistic-free — the store mirror is updated on success. */
-  protected setBasePermission(value: BasePermission): void {
+  /** Opens the chooser modal, seeding the draft with the current value. */
+  protected openBasePermission(): void {
+    if (this.basePermission() === null) return;
+    this.basePermissionDraft.set(this.basePermission());
+    this.basePermissionOpen.set(true);
+  }
+
+  /** PUTs the drafted base permission; on success closes the modal and mirrors it into the store. */
+  protected saveBasePermission(): void {
     const orgId = this.store.organizationId();
-    if (!orgId || this.basePermissionSaving() || this.basePermission() === value) return;
+    const value = this.basePermissionDraft();
+    if (!orgId || !value || this.basePermissionSaving() || value === this.basePermission()) return;
     this.basePermissionSaving.set(value);
     this.permissionsApi.updateBasePermission(orgId, value).subscribe({
       next: (res) => {
         this.basePermission.set(res.basePermission);
         this.permissions.setMemberBasePermission(res.basePermission);
         this.basePermissionSaving.set(null);
+        this.basePermissionOpen.set(false);
         this.toast.success(this.transloco.translate('authz.basePermission.saved'));
       },
       error: (err: HttpErrorResponse) => {

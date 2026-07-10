@@ -114,8 +114,10 @@
     },
     "basePermission": {
       "title": "Permiso base de miembro",
-      "desc": "El nivel base que todo miembro obtiene en cada proyecto. Los roles añaden más permisos encima.",
+      "desc": "El nivel base que todo miembro obtiene en cada proyecto; los roles añaden más encima.",
       "help": "Los miembros obtienen este nivel base en cada proyecto; los roles añaden más encima.",
+      "change": "Cambiar",
+      "save": "Guardar",
       "none": "Ninguno",
       "noneDesc": "Los miembros no tienen acceso hasta que un rol de proyecto lo conceda.",
       "read": "Lectura",
