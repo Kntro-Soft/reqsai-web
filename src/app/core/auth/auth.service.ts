@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, map, of, share, switchMap, tap } from 'rxjs';
 import { AuthStore } from './auth.store';
+import { PermissionsStore } from '../authz/permissions.store';
 import { RealtimeService } from '../realtime/realtime.service';
 import {
   AuthResponse,
@@ -26,6 +27,7 @@ const BASE = '/api/auth';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(AuthStore);
+  private readonly permissions = inject(PermissionsStore);
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
 
@@ -123,6 +125,9 @@ export class AuthService {
    * endpoint — this is the supported flow.
    */
   switchOrganization(orgId: string): Observable<void> {
+    // The active org is changing: drop the cached RBAC context so the new org's
+    // role/permissions are re-fetched fresh (a member in one org may be an owner in another).
+    this.permissions.reset();
     return this.http
       .patch<void>('/api/users/me/preferences', { lastVisitedOrgId: orgId })
       .pipe(switchMap(() => this.refresh()));
@@ -145,6 +150,7 @@ export class AuthService {
       .subscribe({ error: () => void 0 });
     this.realtime.disconnect();
     this.store.clear();
+    this.permissions.reset();
     void this.router.navigate(['/auth/sign-in']);
   }
 }
