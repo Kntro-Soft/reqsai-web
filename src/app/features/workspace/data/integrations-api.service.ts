@@ -18,6 +18,7 @@ import {
   TestConnectionResponse,
   UpsertProjectJiraTargetRequest,
 } from './integrations.models';
+import { silentForbidden } from '../../../core/interceptors/error.interceptor';
 
 /**
  * Builds the query params for the Jira issue-types lookup. Exported as a pure
@@ -184,14 +185,19 @@ export class IntegrationsApiService {
   getIntegrationJobs(projectId: string, activeOnly = false): Observable<IntegrationJobResponse[]> {
     let params = new HttpParams();
     if (activeOnly) params = params.set('active', 'true');
+    // Eager recovery fetch on every project page — a 403 for a member without
+    // integration access is expected, so keep it out of the global toast.
     return this.http.get<IntegrationJobResponse[]>(`${this.projectBase(projectId)}/jobs`, {
       params,
+      context: silentForbidden(),
     });
   }
 
   /** A single integration job snapshot — the polling fallback while the socket is down. */
   getIntegrationJob(projectId: string, jobId: string): Observable<IntegrationJobResponse> {
-    return this.http.get<IntegrationJobResponse>(`${this.projectBase(projectId)}/jobs/${jobId}`);
+    return this.http.get<IntegrationJobResponse>(`${this.projectBase(projectId)}/jobs/${jobId}`, {
+      context: silentForbidden(),
+    });
   }
 
   // --- Import FROM Jira ---

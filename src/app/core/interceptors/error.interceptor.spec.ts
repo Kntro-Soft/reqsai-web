@@ -3,7 +3,7 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { vi } from 'vitest';
-import { errorInterceptor } from './error.interceptor';
+import { errorInterceptor, silentForbidden } from './error.interceptor';
 import { ToastService } from '../../shared/toast/toast.service';
 
 describe('errorInterceptor (403 handling)', () => {
@@ -37,6 +37,19 @@ describe('errorInterceptor (403 handling)', () => {
 
     // The interceptor translates `authz.noAccess`; assert it toasted and re-threw.
     expect(errorSpy).toHaveBeenCalledOnce();
+    expect(failure).toHaveBeenCalled();
+  });
+
+  it('stays silent on a 403 when the request opts out, but still re-throws', () => {
+    const errorSpy = vi.spyOn(toast, 'error');
+    const failure = vi.fn();
+
+    http.get('/api/projects/p1/jobs', { context: silentForbidden() }).subscribe({ error: failure });
+    httpMock
+      .expectOne('/api/projects/p1/jobs')
+      .flush('nope', { status: 403, statusText: 'Forbidden' });
+
+    expect(errorSpy).not.toHaveBeenCalled();
     expect(failure).toHaveBeenCalled();
   });
 

@@ -1,4 +1,9 @@
-import { HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
+import {
+  HttpContext,
+  HttpContextToken,
+  HttpInterceptorFn,
+  HttpStatusCode,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { catchError, switchMap, throwError } from 'rxjs';
@@ -8,6 +13,22 @@ import { ToastService } from '../../shared/toast/toast.service';
 
 /** Marks a request already replayed after a refresh, so it never loops. */
 const RETRY_HEADER = 'X-Auth-Retry';
+
+/**
+ * Opt a request out of the global 403 "no access" toast. Background and eager loads
+ * (a project's job banner, an overview's name fetch, sidebar summaries) fire on entry
+ * regardless of the caller's grants, so a 403 there is expected — not an action the
+ * user took — and must stay silent. The request still fails; only the toast is skipped.
+ * User-initiated calls leave this unset so a denied action still surfaces a message.
+ *
+ * Usage: `this.http.get(url, { context: silentForbidden() })`.
+ */
+export const SILENCE_FORBIDDEN_TOAST = new HttpContextToken<boolean>(() => false);
+
+/** Convenience: an {@link HttpContext} that opts the request out of the 403 toast. */
+export function silentForbidden(): HttpContext {
+  return new HttpContext().set(SILENCE_FORBIDDEN_TOAST, true);
+}
 
 /**
  * De-dupe window (ms) for the 403 "no access" toast. A single denied navigation often
@@ -44,6 +65,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err) => {
       const isForbidden = err.status === HttpStatusCode.Forbidden;
       if (isForbidden) {
+        if (req.context.get(SILENCE_FORBIDDEN_TOAST)) {
+          return throwError(() => err);
+        }
         const now = Date.now();
         if (now - lastForbiddenToastAt > FORBIDDEN_TOAST_DEBOUNCE_MS) {
           lastForbiddenToastAt = now;
