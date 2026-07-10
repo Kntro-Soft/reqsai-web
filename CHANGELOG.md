@@ -19,6 +19,16 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `PRESENCE_STATE` event on the existing per-session WebSocket topic (no extra subscription), scoped to the
   live session only, and reuses the shared avatar (image with monogram fallback). New joiners animate in and
   names show as tooltips (`discovery.presence.*`, en/es).
+- **Backlog — multi-select, bulk actions and delete** (`feature/integrations-jira`): the stories
+  backlog table gains a **per-page multi-select** (a checkbox per row plus a select-all/indeterminate
+  header checkbox); the selection is scoped to the visible server-side page and cleared on any
+  page/filter/sort change. Selecting rows reveals a **contextual action bar** with the selected count, a
+  clear button, **Push to Jira (n)** (reuses the async push-all job flow, now with an optional
+  `storyIds` body so only the selection is pushed) and **Delete (n)** (confirm → `batch-delete` → toast
+  + reload). A **row-level trash action** deletes a single story (confirm → `DELETE` → toast + reload),
+  and the **story detail** page gets a matching **Delete** button that returns to the backlog on
+  success. New `discovery-api` methods `deleteStory` / `batchDeleteStories`, the extended
+  `pushAllStories({ storyIds })`, and new `stories.*` i18n keys (EN + ES).
 - **Integrations — non-blocking Jira import / push-all** (`feature/integrations-jira`): the backlog's
   **Import from Jira** and **Push all to Jira** now start a **background job** (the endpoints answer
   `202` with an `IntegrationJobResponse`) instead of blocking the page: the modal/button releases
