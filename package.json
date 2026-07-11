@@ -36,7 +36,7 @@
     "@angular/router": "^22.0.0",
     "@jsverse/transloco": "^8.4.0",
     "@jsverse/transloco-locale": "^8.4.0",
-    "@ng-icons/core": "^33.3.0",
+    "@ng-icons/core": "^34.0.0",
     "@ng-icons/lucide": "^33.3.0",
     "@spartan-ng/brain": "^0.0.1-alpha.713",
     "@stomp/rx-stomp": "^2.4.0",
