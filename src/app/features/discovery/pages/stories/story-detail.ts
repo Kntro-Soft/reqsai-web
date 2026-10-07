@@ -188,7 +188,19 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
           <h2 class="text-base font-semibold">{{ 'storyForm.storySection' | transloco }}</h2>
           <div class="flex flex-col gap-1.5">
             <label hlmLabel for="title">{{ 'storyForm.fieldTitle' | transloco }}</label>
-            <input hlmInput id="title" formControlName="title" data-testid="story-title" />
+            <input
+              hlmInput
+              id="title"
+              formControlName="title"
+              [attr.aria-invalid]="form.controls.title.invalid && form.controls.title.touched"
+              aria-describedby="title-error"
+              data-testid="story-title"
+            />
+            @if (form.controls.title.invalid && form.controls.title.touched) {
+              <p id="title-error" class="text-xs text-destructive">
+                {{ 'storyForm.required' | transloco }}
+              </p>
+            }
           </div>
           @for (part of storyParts; track part.control) {
             <div class="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start sm:gap-4">
@@ -198,14 +210,24 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
                   part.lead | transloco
                 }}</span>
               </label>
-              <textarea
-                hlmInput
-                rows="1"
-                class="min-h-10"
-                [id]="part.control"
-                [formControlName]="part.control"
-                [attr.data-testid]="'story-' + part.control"
-              ></textarea>
+              @let control = form.controls[part.control];
+              <div class="flex min-w-0 flex-col gap-1">
+                <textarea
+                  hlmInput
+                  rows="1"
+                  class="min-h-10"
+                  [id]="part.control"
+                  [formControlName]="part.control"
+                  [attr.aria-invalid]="control.invalid && control.touched"
+                  [attr.aria-describedby]="part.control + '-error'"
+                  [attr.data-testid]="'story-' + part.control"
+                ></textarea>
+                @if (control.invalid && control.touched) {
+                  <p [id]="part.control + '-error'" class="text-xs text-destructive">
+                    {{ 'storyForm.required' | transloco }}
+                  </p>
+                }
+              </div>
             </div>
           }
           <div class="flex flex-wrap items-end gap-3 border-t border-border pt-4">

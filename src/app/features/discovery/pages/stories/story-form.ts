@@ -75,8 +75,15 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
               id="title"
               formControlName="title"
               [placeholder]="'storyForm.placeholderTitle' | transloco"
+              [attr.aria-invalid]="form.controls.title.invalid && form.controls.title.touched"
+              aria-describedby="title-error"
               data-testid="story-title"
             />
+            @if (form.controls.title.invalid && form.controls.title.touched) {
+              <p id="title-error" class="text-xs text-destructive">
+                {{ 'storyForm.required' | transloco }}
+              </p>
+            }
           </div>
           @for (part of storyParts; track part.control) {
             <div class="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start sm:gap-4">
@@ -86,14 +93,24 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
                   part.lead | transloco
                 }}</span>
               </label>
-              <textarea
-                hlmInput
-                rows="1"
-                class="min-h-10"
-                [id]="part.control"
-                [formControlName]="part.control"
-                [placeholder]="part.placeholder | transloco"
-              ></textarea>
+              @let control = form.controls[part.control];
+              <div class="flex min-w-0 flex-col gap-1">
+                <textarea
+                  hlmInput
+                  rows="1"
+                  class="min-h-10"
+                  [id]="part.control"
+                  [formControlName]="part.control"
+                  [placeholder]="part.placeholder | transloco"
+                  [attr.aria-invalid]="control.invalid && control.touched"
+                  [attr.aria-describedby]="part.control + '-error'"
+                ></textarea>
+                @if (control.invalid && control.touched) {
+                  <p [id]="part.control + '-error'" class="text-xs text-destructive">
+                    {{ 'storyForm.required' | transloco }}
+                  </p>
+                }
+              </div>
             </div>
           }
           <div class="flex flex-wrap items-end gap-3 border-t border-border pt-4">

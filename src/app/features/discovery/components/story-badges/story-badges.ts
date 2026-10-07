@@ -37,7 +37,7 @@ const PRIORITY: Record<string, ChipStyle> = {
 const STATUS: Record<string, ChipStyle> = {
   DRAFT: {
     icon: 'lucideCircleDashed',
-    tone: 'bg-pending-soft text-pending ring-1 ring-inset ring-pending-border',
+    tone: 'border border-dashed border-pending text-pending',
   },
   APPROVED: {
     icon: 'lucideCircleCheck',
@@ -91,8 +91,9 @@ export class PriorityBadge {
 }
 
 /**
- * Review-status chip. Draft (awaiting review) is amber with a dashed ring; approved
- * (validated by the team) is emerald with a check — the two states the analyst must
+ * Review-status chip. Draft (not approved yet) is an amber dashed outline, so it never
+ * reads like the filled priority chips beside it; approved (validated by the team) is
+ * emerald with a check — the two states the analyst must
  * tell apart at a glance. The tooltip spells out what the status means.
  */
 @Component({

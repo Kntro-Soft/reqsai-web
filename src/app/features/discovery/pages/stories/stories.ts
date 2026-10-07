@@ -121,9 +121,11 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
       lucideUpload,
     }),
   ],
-  host: { class: 'flex h-full min-h-0 flex-col' },
+  // Below sm the page itself scrolls (no nested scroll box); from sm the table scrolls
+  // inside the viewport-high layout with its sticky header.
+  host: { class: 'flex flex-col sm:h-full sm:min-h-0' },
   template: `
-    <div class="flex h-full min-h-0 flex-col gap-6">
+    <div class="flex flex-col gap-6 sm:h-full sm:min-h-0">
       <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
@@ -339,7 +341,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
 
       @if (state() === 'loading') {
         <div
-          class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border"
+          class="overflow-hidden rounded-2xl border border-border sm:min-h-0 sm:flex-1 sm:overflow-auto"
           data-testid="stories-skeleton"
         >
           @for (i of skeletonRows; track i) {
@@ -363,7 +365,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
         </div>
       } @else if (stories().length === 0) {
         <div
-          class="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border px-6 py-10 text-center"
+          class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border px-6 py-10 text-center sm:min-h-0 sm:flex-1"
           data-testid="stories-empty"
         >
           <p class="max-w-md text-sm text-muted-foreground">
@@ -391,7 +393,9 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
         <p class="-mb-3 shrink-0 text-xs text-muted-foreground" data-testid="stories-sorted-by">
           {{ 'stories.sortedBy' | transloco: { sort: sortLabel() } }}
         </p>
-        <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
+        <div
+          class="overflow-x-auto rounded-2xl border border-border sm:min-h-0 sm:flex-1 sm:overflow-auto"
+        >
           <table class="w-full text-sm sm:min-w-[760px]">
             <caption class="sr-only">
               {{
