@@ -11,6 +11,21 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Fixed (Session history stats and duration — `bugfix/discovery-history-stats-contract`)
+
+- **The session history now shows its stats columns and the duration of live sessions.** The session
+  model expected `storiesGeneratedCount`, `storiesAcceptedCount`, `pendingSuggestionsCount` and
+  `questionsCount`, but the API sends `storiesGenerated`, `storiesAccepted`, `suggestionsPending` and
+  `questionsAsked`. As a result:
+  - the Historias / Aceptadas / Pendientes / Preguntas columns never appeared;
+  - the session separator in Captura never showed its story count.
+
+  The duration cell only read `audioDurationMs`, which live sessions never set, so every live session
+  showed "—".
+- The model now uses the API names and adds `durationSeconds`. The duration cell prefers it and still
+  falls back to `audioDurationMs` for older deployments. The logic lives in the new pure helpers
+  `sessionDuration` and `hasSessionStats` (`history.helpers.ts`), which have unit tests.
+
 ### Added
 
 - **MVP feature flags** (`feature/mvp-feature-flags`): a typed `features` map in both environment

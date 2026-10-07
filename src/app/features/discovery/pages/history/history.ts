@@ -6,7 +6,7 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { DiscoverySessionResponse } from '../../data/discovery.models';
-import { formatElapsed } from '../../components/session-bar/session-bar';
+import { hasSessionStats, sessionDuration } from './history.helpers';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -98,15 +98,15 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       </td>
                       @if (showStats()) {
                         <td class="px-4 py-3 tabular-nums">
-                          {{ session.storiesGeneratedCount ?? '—' }}
+                          {{ session.storiesGenerated ?? '—' }}
                         </td>
                         <td class="px-4 py-3 tabular-nums">
-                          {{ session.storiesAcceptedCount ?? '—' }}
+                          {{ session.storiesAccepted ?? '—' }}
                         </td>
                         <td class="px-4 py-3 tabular-nums">
-                          {{ session.pendingSuggestionsCount ?? '—' }}
+                          {{ session.suggestionsPending ?? '—' }}
                         </td>
-                        <td class="px-4 py-3 tabular-nums">{{ session.questionsCount ?? '—' }}</td>
+                        <td class="px-4 py-3 tabular-nums">{{ session.questionsAsked ?? '—' }}</td>
                       }
                     </tr>
                   }
@@ -151,9 +151,7 @@ export class DiscoveryHistory implements OnInit {
   private nextPage = 0;
 
   /** Show stats columns only when at least one session actually carries them. */
-  protected readonly showStats = computed(() =>
-    this.sessions().some((s) => s.storiesGeneratedCount !== null && s.storiesGeneratedCount !== undefined),
-  );
+  protected readonly showStats = computed(() => hasSessionStats(this.sessions()));
 
   ngOnInit(): void {
     this.load(0);
@@ -191,7 +189,7 @@ export class DiscoveryHistory implements OnInit {
   }
 
   protected duration(session: DiscoverySessionResponse): string {
-    return session.audioDurationMs > 0 ? formatElapsed(session.audioDurationMs) : '—';
+    return sessionDuration(session);
   }
 
   protected statusClass(status: string): string {

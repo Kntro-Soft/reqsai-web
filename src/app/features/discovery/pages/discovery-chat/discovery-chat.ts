@@ -330,13 +330,13 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           {{ sessionAt | date: 'MMM d · HH:mm' }}
                         }
                         @if (
-                          block.session.storiesGeneratedCount !== null &&
-                          block.session.storiesGeneratedCount !== undefined
+                          block.session.storiesGenerated !== null &&
+                          block.session.storiesGenerated !== undefined
                         ) {
                           ·
                           {{
                             'discovery.sessionStories'
-                              | transloco: { count: block.session.storiesGeneratedCount }
+                              | transloco: { count: block.session.storiesGenerated }
                           }}
                         }
                       </span>
