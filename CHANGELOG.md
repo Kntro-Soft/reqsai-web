@@ -13,6 +13,16 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **MVP feature flags** (`feature/mvp-feature-flags`): a typed `features` map in both environment
+  files (`FeatureKey` union + `FeatureFlags.isEnabled()`), all **off** by default, so the deployed
+  product shows only the MVP. A `featureGuard()` `canMatch` makes a disabled route behave like an
+  unknown URL (falls through to `/projects`), and the sidebar, command palette, buttons and cards
+  drop what it hides: `billing` (billing pages, checkout returns, Upgrade CTA), `usage`,
+  `integrations` (Jira pages + OAuth callback, job banner, import/push actions), `members` (org +
+  project members, invitation landing, palette action/hits, ownership transfer), `customRoles`
+  (project roles), and the `notifications` / `tokens` account placeholders. The sidebar also hides
+  a **Settings** entry with no reachable sub-page. Flipping a flag restores the feature with no
+  other change; see `docs/FEATURE-FLAGS.md` (incl. the backend's FREE-plan limits).
 - **Discovery — virtual-meeting audio capture** (`feature/system-audio-capture`): the analyst can now
   record a Zoom / Google Meet / Teams call, not only a face-to-face meeting. A compact **audio-source
   picker** next to the record button chooses **In person (microphone)** or **Virtual meeting (microphone +
