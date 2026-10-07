@@ -29,6 +29,7 @@ import {
 } from '../../../workspace/data/integrations.models';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
+import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Indeterminate } from '../../../../shared/directives/indeterminate';
@@ -91,54 +92,56 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <button
-            *appHasPermission="'INTEGRATION_SYNC'"
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="openImport()"
-            [disabled]="importPreviewing() || importJobRunning() || jiraConfigured() !== true"
-            [title]="
-              importJobRunning()
-                ? ('integrations.jobs.alreadyRunning' | transloco)
-                : jiraConfigured() === false
-                  ? ('integrations.push.notConfigured' | transloco)
-                  : ''
-            "
-            data-testid="stories-import"
-          >
-            @if (importPreviewing() || importJobRunning()) {
-              <hlm-spinner class="h-4 w-4" />
-            } @else {
-              <hlm-icon name="lucideDownload" size="15px" />
-            }
-            {{ 'integrations.import.action' | transloco }}
-          </button>
-          <button
-            *appHasPermission="'INTEGRATION_SYNC'"
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="pushAll()"
-            [disabled]="pushAllBusy() || jiraConfigured() !== true"
-            [title]="
-              pushJobRunning()
-                ? ('integrations.jobs.alreadyRunning' | transloco)
-                : jiraConfigured() === false
-                  ? ('integrations.push.notConfigured' | transloco)
-                  : ''
-            "
-            data-testid="stories-push-all"
-          >
-            @if (pushAllBusy()) {
-              <hlm-spinner class="h-4 w-4" />
-            } @else {
-              <hlm-icon name="lucideUpload" size="15px" />
-            }
-            {{ 'integrations.push.pushAll' | transloco }}
-          </button>
+          @if (integrationsEnabled) {
+            <button
+              *appHasPermission="'INTEGRATION_SYNC'"
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="openImport()"
+              [disabled]="importPreviewing() || importJobRunning() || jiraConfigured() !== true"
+              [title]="
+                importJobRunning()
+                  ? ('integrations.jobs.alreadyRunning' | transloco)
+                  : jiraConfigured() === false
+                    ? ('integrations.push.notConfigured' | transloco)
+                    : ''
+              "
+              data-testid="stories-import"
+            >
+              @if (importPreviewing() || importJobRunning()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideDownload" size="15px" />
+              }
+              {{ 'integrations.import.action' | transloco }}
+            </button>
+            <button
+              *appHasPermission="'INTEGRATION_SYNC'"
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="pushAll()"
+              [disabled]="pushAllBusy() || jiraConfigured() !== true"
+              [title]="
+                pushJobRunning()
+                  ? ('integrations.jobs.alreadyRunning' | transloco)
+                  : jiraConfigured() === false
+                    ? ('integrations.push.notConfigured' | transloco)
+                    : ''
+              "
+              data-testid="stories-push-all"
+            >
+              @if (pushAllBusy()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideUpload" size="15px" />
+              }
+              {{ 'integrations.push.pushAll' | transloco }}
+            </button>
+          }
           <a
             *appHasPermission="'STORY_WRITE'"
             hlmBtn
@@ -172,30 +175,32 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             {{ 'stories.clearSelection' | transloco }}
           </button>
           <div class="ml-auto flex items-center gap-2">
-            <button
-              *appHasPermission="'INTEGRATION_SYNC'"
-              hlmBtn
-              size="sm"
-              variant="outline"
-              type="button"
-              (click)="pushSelected()"
-              [disabled]="pushAllBusy() || jiraConfigured() !== true"
-              [title]="
-                pushJobRunning()
-                  ? ('integrations.jobs.alreadyRunning' | transloco)
-                  : jiraConfigured() === false
-                    ? ('integrations.push.notConfigured' | transloco)
-                    : ''
-              "
-              data-testid="stories-push-selected"
-            >
-              @if (pushAllBusy()) {
-                <hlm-spinner class="h-4 w-4" />
-              } @else {
-                <hlm-icon name="lucideUpload" size="15px" />
-              }
-              {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
-            </button>
+            @if (integrationsEnabled) {
+              <button
+                *appHasPermission="'INTEGRATION_SYNC'"
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="pushSelected()"
+                [disabled]="pushAllBusy() || jiraConfigured() !== true"
+                [title]="
+                  pushJobRunning()
+                    ? ('integrations.jobs.alreadyRunning' | transloco)
+                    : jiraConfigured() === false
+                      ? ('integrations.push.notConfigured' | transloco)
+                      : ''
+                "
+                data-testid="stories-push-selected"
+              >
+                @if (pushAllBusy()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUpload" size="15px" />
+                }
+                {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
+              </button>
+            }
             <button
               *appHasPermission="'STORY_DELETE'"
               hlmBtn
@@ -321,10 +326,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               <tr
                 class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
               >
-                <th
-                  *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
-                  class="w-10 px-4 py-2.5 font-medium"
-                >
+                <th *appHasPermission="selectPermissions" class="w-10 px-4 py-2.5 font-medium">
                   <input
                     type="checkbox"
                     class="h-4 w-4 shrink-0 align-middle accent-primary"
@@ -361,7 +363,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                   data-testid="story-row"
                 >
                   <td
-                    *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
+                    *appHasPermission="selectPermissions"
                     class="w-10 px-4 py-3"
                     (click)="$event.stopPropagation()"
                   >
@@ -613,6 +615,16 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   readonly projectId = input.required<string>();
 
+  /** Jira import / push (and their job tracking) belong to the `integrations` feature. */
+  protected readonly integrationsEnabled = inject(FeatureFlags).isEnabled('integrations');
+  /**
+   * Row selection only exists to feed the bulk actions, so the checkbox column shows to
+   * callers who can run at least one of them — bulk delete, or bulk push while Jira is on.
+   */
+  protected readonly selectPermissions: readonly string[] = this.integrationsEnabled
+    ? ['STORY_DELETE', 'INTEGRATION_SYNC']
+    : ['STORY_DELETE'];
+
   // Background-job state: the 202 request itself is brief (pushStarting), then the
   // jobs store owns the RUNNING state — the buttons stay disabled from it while the
   // work happens server-side, without blocking the page.
@@ -730,10 +742,12 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
-    this.integrations.getProjectTarget(this.projectId()).subscribe({
-      next: () => this.jiraConfigured.set(true),
-      error: () => this.jiraConfigured.set(false),
-    });
+    if (this.integrationsEnabled) {
+      this.integrations.getProjectTarget(this.projectId()).subscribe({
+        next: () => this.jiraConfigured.set(true),
+        error: () => this.jiraConfigured.set(false),
+      });
+    }
     // A finished background job (import or push-all) changes the backlog — new
     // stories, or statuses flipped to EXPORTED — so refresh the visible page.
     this.jobs.completed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((job) => {
