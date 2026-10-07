@@ -24,11 +24,14 @@ import {
   lucideCheck,
   lucideCircleHelp,
   lucideClock,
+  lucideHeadphones,
   lucideHistory,
+  lucideInfo,
   lucideLanguages,
   lucideMic,
   lucidePanelRight,
   lucideSparkles,
+  lucideTriangleAlert,
   lucideX,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
@@ -36,6 +39,7 @@ import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
+import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-source';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { SpeakerDisplay } from '../../data/feed';
@@ -46,6 +50,7 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { SessionBar } from '../../components/session-bar/session-bar';
+import { AudioSourcePicker } from '../../components/audio-source-picker/audio-source-picker';
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SidePanel } from '../../components/side-panel/side-panel';
@@ -53,6 +58,7 @@ import { Select, SelectOption } from '../../../../shared/components/select/selec
 import { Modal } from '../../../../shared/components/modal/modal';
 import { DISCOVERY_LANGUAGES } from '../../data/discovery-languages';
 import { languageStorageKey, resolveInitialLanguage } from '../../data/language-preference';
+import { audioSourceStorageKey, resolveAudioSource } from '../../data/audio-source-preference';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -60,7 +66,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
  * chronological, read-only stream of transcript bubbles and resolved decision
  * cards, chunked by session; scrolling to the top lazily loads older sessions.
  * The composer at the bottom pairs a disabled ("coming soon") text input with
- * the record button. Pending AI suggestions surface in the floating decision
+ * the audio-source picker (in person vs. virtual meeting) and the record
+ * button. Pending AI suggestions surface in the floating decision
  * queue; the side panel exposes the project's stories/info/glossary/constraints.
  */
 @Component({
@@ -71,6 +78,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     DatePipe,
     TranslocoPipe,
     SessionBar,
+    AudioSourcePicker,
     ActiveParticipants,
     DecisionQueue,
     SidePanel,
@@ -87,11 +95,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideCheck,
       lucideCircleHelp,
       lucideClock,
+      lucideHeadphones,
       lucideHistory,
+      lucideInfo,
       lucideLanguages,
       lucideMic,
       lucidePanelRight,
       lucideSparkles,
+      lucideTriangleAlert,
       lucideX,
     }),
   ],
@@ -501,16 +512,24 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             />
           </div>
           @if (canRecord()) {
+            <!-- Locked once a session is live: the recorder owns the source then. -->
+            <app-audio-source-picker
+              [value]="audioSource()"
+              (valueChange)="setAudioSource($event)"
+              [meetingSupported]="meetingSupported"
+              [disabled]="startLocked()"
+              (unavailablePicked)="meetingUnavailableHint.set(true)"
+            />
             <button
               type="button"
               hlmBtn
-              [disabled]="recording.busy() || recording.isActive()"
+              [disabled]="startLocked()"
               (click)="record()"
               [attr.aria-label]="'discovery.composer.record' | transloco"
               class="h-11 w-11 shrink-0 rounded-full p-0"
               data-testid="composer-record"
             >
-              @if (recording.busy()) {
+              @if (recording.busy() || preparingCapture()) {
                 <hlm-spinner class="h-4 w-4" />
               } @else {
                 <svg
@@ -534,6 +553,29 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         </div>
         @if (recorder.error(); as errKey) {
           <p class="mt-1.5 text-center text-xs text-destructive">{{ errKey | transloco }}</p>
+        } @else if (recorder.notice(); as noticeKey) {
+          <p
+            class="mx-auto mt-1.5 flex w-fit max-w-full items-start gap-1.5 text-xs text-amber-600"
+            role="status"
+            data-testid="recorder-notice"
+          >
+            <hlm-icon name="lucideTriangleAlert" size="13px" class="mt-px shrink-0" />
+            <span>{{ noticeKey | transloco }}</span>
+          </p>
+        } @else if (sourceHint(); as hintKey) {
+          <p
+            class="mx-auto mt-1.5 flex w-fit max-w-full items-start gap-1.5 text-xs text-muted-foreground"
+            data-testid="audio-source-hint"
+          >
+            <hlm-icon
+              [name]="
+                hintKey === 'discovery.source.unsupported' ? 'lucideInfo' : 'lucideHeadphones'
+              "
+              size="13px"
+              class="mt-px shrink-0"
+            />
+            <span>{{ hintKey | transloco }}</span>
+          </p>
         }
       </div>
 
@@ -694,6 +736,33 @@ export class DiscoveryChat implements OnInit {
     const code = this.liveLanguage();
     return code ? this.languageAbbrev(code) : null;
   });
+  /** Whether this browser can capture a virtual meeting's audio (desktop Chromium). */
+  protected readonly meetingSupported = supportsMeetingAudio();
+  /**
+   * Audio source for the next session: the user's last choice (localStorage),
+   * falling back to the microphone where meeting capture is unavailable.
+   */
+  protected readonly audioSource = linkedSignal<AudioSource>(() =>
+    resolveAudioSource(this.storedAudioSource(), this.meetingSupported),
+  );
+  /** Set when the unavailable "virtual meeting" option is tapped, to explain why. */
+  protected readonly meetingUnavailableHint = signal(false);
+  /** True while the share picker / mic prompt is open, so a second click can't stack another. */
+  protected readonly preparingCapture = signal(false);
+  /** The record button and source picker stay locked while starting or once a session is live. */
+  protected readonly startLocked = computed(
+    () => this.recording.busy() || this.recording.isActive() || this.preparingCapture(),
+  );
+  /**
+   * The composer's guidance line before recording: why the virtual option is
+   * unavailable, or how to share the meeting audio (and to wear headphones).
+   */
+  protected readonly sourceHint = computed<string | null>(() => {
+    if (!this.canRecord() || this.recording.isActive()) return null;
+    if (this.meetingUnavailableHint()) return 'discovery.source.unsupported';
+    return this.audioSource() === 'meeting' ? 'discovery.source.hint' : null;
+  });
+
   /** Uppercased primary subtag of the editable language, for the select's mobile trigger. */
   protected readonly languageAbbrevValue = computed(() => this.languageAbbrev(this.language()));
 
@@ -776,7 +845,12 @@ export class DiscoveryChat implements OnInit {
   }
 
   protected async record(): Promise<void> {
-    const granted = await this.recorder.requestPermission();
+    if (this.startLocked()) return;
+    this.preparingCapture.set(true);
+    // Must stay the first await: the meeting source opens the screen-share
+    // picker, which needs this click's transient activation.
+    const granted = await this.recorder.requestPermission(this.audioSource());
+    this.preparingCapture.set(false);
     if (!granted) return;
     const language = this.language();
     this.recording.start(this.projectId(), { title: this.defaultTitle(), language }).subscribe({
@@ -913,6 +987,32 @@ export class DiscoveryChat implements OnInit {
   private storedLanguage(): string | null {
     try {
       return localStorage.getItem(languageStorageKey(this.projectId()));
+    } catch {
+      return null;
+    }
+  }
+
+  /** Picks the audio source and persists it as this user's preference. */
+  protected setAudioSource(source: AudioSource): void {
+    this.audioSource.set(source);
+    this.meetingUnavailableHint.set(false);
+    // A previous attempt's capture warning no longer applies to the new choice.
+    this.recorder.notice.set(null);
+    const userId = this.auth.user()?.id;
+    if (!userId) return;
+    try {
+      localStorage.setItem(audioSourceStorageKey(userId), source);
+    } catch {
+      // Storage can be unavailable (private mode / quota); the in-memory value still applies.
+    }
+  }
+
+  /** This user's stored audio-source choice, or null when absent/unreadable. */
+  private storedAudioSource(): string | null {
+    const userId = this.auth.user()?.id;
+    if (!userId) return null;
+    try {
+      return localStorage.getItem(audioSourceStorageKey(userId));
     } catch {
       return null;
     }
