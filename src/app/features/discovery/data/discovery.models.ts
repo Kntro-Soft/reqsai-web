@@ -15,12 +15,21 @@ export interface DiscoverySessionResponse {
   processingError: string | null;
   createdAt: string;
   updatedAt: string;
-  // Per-session stats being added by a parallel backend branch — absent on older
-  // deployments, so every consumer must degrade gracefully when undefined.
-  storiesGeneratedCount?: number | null;
-  storiesAcceptedCount?: number | null;
-  pendingSuggestionsCount?: number | null;
-  questionsCount?: number | null;
+  /**
+   * Recording length in seconds: the audio length of an uploaded recording, otherwise start to stop of
+   * a live session; null while a live session is still running.
+   */
+  durationSeconds?: number | null;
+  // Per-session stats, only on the get/list endpoints (null on lifecycle responses such as start/stop),
+  // so every consumer must degrade gracefully when null or undefined.
+  /** Backlog stories whose source is this session. */
+  storiesGenerated?: number | null;
+  /** Story suggestions of this session the analyst accepted (questions excluded). */
+  storiesAccepted?: number | null;
+  /** Suggestions of this session still pending review. */
+  suggestionsPending?: number | null;
+  /** Clarifying questions the AI raised in this session. */
+  questionsAsked?: number | null;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */
