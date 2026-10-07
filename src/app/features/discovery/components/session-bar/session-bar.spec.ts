@@ -40,14 +40,16 @@ class FakeAudioRecorderService {
 
 describe('SessionBar', () => {
   let recording: FakeRecordingService;
+  let recorder: FakeAudioRecorderService;
 
   function render(): { fixture: ComponentFixture<SessionBar>; el: HTMLElement } {
     recording = new FakeRecordingService();
+    recorder = new FakeAudioRecorderService();
     TestBed.configureTestingModule({
       imports: [SessionBar, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
       providers: [
         { provide: SessionRecordingService, useValue: recording },
-        { provide: AudioRecorderService, useValue: new FakeAudioRecorderService() },
+        { provide: AudioRecorderService, useValue: recorder },
       ],
     });
     const fixture = TestBed.createComponent(SessionBar);
@@ -107,5 +109,40 @@ describe('SessionBar', () => {
 
     expect(el.querySelector('[data-testid="session-bar-resume"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="session-bar-pause"]')).toBeNull();
+  });
+
+  describe('virtual meeting source', () => {
+    it('shows no meeting controls for an in-person recording', () => {
+      const { el } = render();
+
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).toBeNull();
+      expect(el.querySelector('[data-testid="session-bar-reshare"]')).toBeNull();
+    });
+
+    it('shows the meeting-audio badge while the meeting audio is captured', () => {
+      const { fixture, el } = render();
+      recorder.source.set('meeting');
+      recorder.meetingAudio.set(true);
+      fixture.detectChanges();
+
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="session-bar-reshare"]')).toBeNull();
+    });
+
+    it('offers to share the meeting audio again after "Stop sharing"', () => {
+      const { fixture, el } = render();
+      recorder.source.set('meeting');
+      recorder.meetingAudio.set(false);
+      fixture.detectChanges();
+
+      const reshare = el.querySelector('[data-testid="session-bar-reshare"]') as HTMLButtonElement;
+      expect(reshare).not.toBeNull();
+      expect(reshare.getAttribute('aria-label')).toBeTruthy();
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).toBeNull();
+
+      reshare.click();
+
+      expect(recorder.shareMeetingAudio).toHaveBeenCalledTimes(1);
+    });
   });
 });
