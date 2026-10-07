@@ -67,13 +67,17 @@ export function formatElapsed(ms: number): string {
             ></span>
             <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive"></span>
           } @else {
-            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-pending"></span>
           }
         </span>
 
-        <!-- Status label: hidden on mobile to keep the bar compact — the pulse
-             color above already conveys recording (red) vs. paused (amber). -->
-        <span class="hidden text-sm font-medium sm:inline" data-testid="session-bar-status">
+        <!-- Status label: visually hidden on mobile to keep the bar compact (the pulse
+             colour shows recording vs. paused) but always announced to screen readers. -->
+        <span
+          class="sr-only text-sm font-medium sm:not-sr-only"
+          aria-live="polite"
+          data-testid="session-bar-status"
+        >
           {{
             (recording.status() === 'RECORDING'
               ? 'discovery.bar.recording'
@@ -91,11 +95,15 @@ export function formatElapsed(ms: number): string {
 
         @if (recorder.source() === 'meeting' && recorder.meetingAudio()) {
           <span
-            class="hidden shrink-0 text-muted-foreground sm:inline-flex"
+            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
             [title]="'discovery.bar.meetingAudio' | transloco"
             data-testid="session-bar-meeting-audio"
           >
-            <hlm-icon name="lucideMonitorSpeaker" size="15px" />
+            <hlm-icon name="lucideMonitorSpeaker" size="14px" aria-hidden="true" />
+            <span class="hidden lg:inline">{{
+              'discovery.bar.meetingAudioShort' | transloco
+            }}</span>
+            <span class="sr-only lg:hidden">{{ 'discovery.bar.meetingAudio' | transloco }}</span>
           </span>
         }
 
@@ -121,7 +129,7 @@ export function formatElapsed(ms: number): string {
             size="sm"
             variant="outline"
             type="button"
-            class="gap-0 border-amber-500/40 px-2 text-amber-600 sm:gap-2 sm:px-3"
+            class="gap-0 border-pending-border bg-pending-soft px-2 text-pending hover:bg-pending-soft hover:text-pending sm:gap-2 sm:px-3"
             (click)="reshareMeetingAudio()"
             [attr.aria-label]="'discovery.bar.reshare' | transloco"
             [title]="'discovery.bar.meetingAudioLost' | transloco"
