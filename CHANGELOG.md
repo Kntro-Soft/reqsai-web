@@ -217,6 +217,13 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed
 
+- **CI — deploy through reqsai-infra** (`ci/deploy-via-infra`): `deploy.yml` no longer syncs to S3 and
+  invalidates CloudFront; that stack no longer exists, so the old workflow would fail on the next push to
+  `main`. A push to `main` now asks `Kntro-Soft/reqsai-infra` to run its `deploy-mvp.yml` workflow with
+  `web_ref` set to the pushed commit; that workflow builds the linux/arm64 nginx image and deploys it to the
+  single-EC2 MVP host over SSM, and rebuilds reqsai-api from its `main`. Needs the repository secret
+  `INFRA_DEPLOY_TOKEN` (fine-grained PAT with Actions read and write on `reqsai-infra` only); without it the
+  job logs a notice and succeeds, so `main` never goes red. Manual runs only dispatch from `main`.
 - **UX — MVP usability polish** (`feature/mvp-ux-polish`): a refinement pass on the MVP surfaces driven by
   a heuristic evaluation with 6 users (Nielsen, impeccable critique: live session 20 → 26/40, stories
   20 → 24/40), keeping the brand, behaviour and copy.
