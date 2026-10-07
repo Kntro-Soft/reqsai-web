@@ -217,6 +217,45 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed
 
+- **UX — MVP usability polish** (`feature/mvp-ux-polish`): a refinement pass on the MVP surfaces driven by
+  a heuristic evaluation with 6 users (Nielsen; impeccable critique before: 20/40 on both the live session
+  and the stories pages), keeping the brand, behaviour and copy.
+  - *Live session*: the AI suggestion queue docks to the feed column as a framed **review tray** ("AI
+    suggestions to review", counter with prev/next, minimize) instead of floating over the session bar,
+    header actions and side panel. A status line at the live edge says what the AI is doing — listening
+    (with the last suggestion's age), paused, **processing the final stories after Stop**, or failed with
+    the backend reason. The transcript recedes into neutral bubbles with visible speaker/time
+    ("Participante n" in Spanish); human decisions become compact "accepted/resolved by the analyst"
+    rows; accepting confirms that the story landed in the backlog as a draft.
+  - *AI vs human provenance*: new `ai` / `verified` / `pending` tokens. Everything the AI proposed reads
+    violet (suggestion cards, generated stories, "IA" origin chip); human-validated content reads emerald;
+    drafts awaiting review read amber. Priority gets its own glyph scale (critical red, high orange,
+    medium/low neutral), so red is no longer brand, AI, danger and priority at once.
+  - *Readable stories*: `hlmInput` textareas grow with their content (they were clipped at a fixed
+    height); stories read as their sentence and criteria as **Gherkin** steps with a keyword gutter in the
+    suggestion card, side panel, story detail and create page. The story detail leads with the title,
+    review status (with what it means) and origin, links an AI story to its capture session, and flags
+    unsaved story and criterion edits.
+  - *Backlog order*: sortable headers with a direction arrow and `aria-sort`, a visible "sorted by"
+    caption, priority re-ordered by meaning on the page (the API sorts the enum alphabetically), origin
+    and status chips, a chip-row layout below `sm`, unambiguous dates, an empty state with next steps and
+    retry on load errors.
+  - *Audio source*: the picker is a labelled segmented control (In person / Virtual meeting) next to a
+    record button with a record dot and label; the virtual-meeting guidance is a calm two-step note
+    (share the meeting tab with its audio; wear headphones) and the missing-audio notice offers "Share
+    again" in place.
+  - *Project forms*: only the name is required and both forms say so; the optional technical profile is
+    one group (business context + tech stack, example placeholders, Enter-to-add hint). Settings go from
+    eight one-field cards to General and Technical profile, and the logo card is titled for the project.
+  - *Accessibility*: the brand red fill is `#dc2626` so white labels pass AA (4.83:1), red text in dark
+    uses a lighter step, muted text and the default focus outline meet AA, filter inputs show focus,
+    story titles are keyboard links, panel tabs/sort chips expose their state, the mobile session-bar
+    status stays announced, and new suggestions are announced politely. All measured chips are ≥ 4.5:1
+    in both themes.
+  - Report screenshots (light, 1440×900, Spanish demo data) in `docs/screenshots/mvp/`. New
+    `discovery.ai.*`, `discovery.queue.*`, `discovery.suggestion.*`, `stories.statusHint.*`,
+    `stories.origin.*`, `storyForm.*`, `projectCreate.*`, `projectSettings.*` and `common.optional/required`
+    keys (EN + ES); `discovery.source.hint` is replaced by `hintShare` / `hintHeadphones`.
 - **Core — centralized backend error handling** (`feature/frontend-error-handling`): a shared
   `messageForError` helper resolves backend errors by their machine-readable `code` against a single
   top-level `errors.<CODE>` i18n block (network / per-status / generic fallback chain). Extended from the
