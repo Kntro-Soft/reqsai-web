@@ -2,7 +2,7 @@ import { Directive, computed, input } from '@angular/core';
 import { cn } from '../../utils/cn';
 
 @Directive({
-  selector: 'label[hlmLabel]',
+  selector: 'label[hlmLabel], span[hlmLabel], legend[hlmLabel]',
   host: { '[class]': '_computedClass()' },
 })
 export class HlmLabel {
