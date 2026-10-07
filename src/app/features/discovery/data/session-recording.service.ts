@@ -11,8 +11,9 @@ import {
 /**
  * Singleton owner of the active recording session's lifecycle, so navigating
  * away from the discovery chat never kills a recording. Pressing record
- * creates a session implicitly (create → start) and begins mic streaming;
- * pause/resume/stop drive both the REST lifecycle and the local microphone.
+ * creates a session implicitly (create → start) and begins audio streaming;
+ * pause/resume/stop drive both the REST lifecycle and the local capture. A
+ * pause keeps a shared meeting surface alive, so resuming needs no picker.
  *
  * `attach()` adopts a session that is already active elsewhere (409
  * SESSION_ALREADY_ACTIVE): the bar and timer work, but this tab does not
@@ -69,8 +70,9 @@ export class SessionRecordingService {
 
   /**
    * Implicit session start: creates the session and immediately starts it,
-   * then begins mic streaming. The caller should have secured mic permission
-   * first (so we never leave an orphan RECORDING session without audio).
+   * then begins audio streaming. The caller should have secured the capture
+   * first (so we never leave an orphan RECORDING session without audio); it is
+   * released again if the session cannot start.
    */
   start(
     projectId: string,
@@ -87,7 +89,10 @@ export class SessionRecordingService {
           void this.recorder.startStreaming(session.id);
           this.busy.set(false);
         },
-        error: () => this.busy.set(false),
+        error: () => {
+          this.recorder.stopStreaming();
+          this.busy.set(false);
+        },
       }),
     );
   }
@@ -115,7 +120,7 @@ export class SessionRecordingService {
         next: (updated) => {
           this._session.set(updated);
           this.pauseTimer();
-          this.recorder.stopStreaming();
+          this.recorder.pauseStreaming();
           this.busy.set(false);
         },
         error: () => this.busy.set(false),
@@ -168,7 +173,7 @@ export class SessionRecordingService {
       if (session.status !== 'RECORDING') this.resumeTimer();
     } else if (status === 'PAUSED') {
       this.pauseTimer();
-      if (this.hasMic) this.recorder.stopStreaming();
+      if (this.hasMic) this.recorder.pauseStreaming();
     } else {
       this.teardown();
       return;

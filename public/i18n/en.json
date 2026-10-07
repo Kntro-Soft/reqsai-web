@@ -1095,7 +1095,11 @@
       "wsError": "Could not connect to the transcription server.",
       "wsClosed": "The transcription connection was closed.",
       "initFailed": "Could not start recording.",
-      "audioInitFailed": "Could not initialize the local audio processor."
+      "audioInitFailed": "Could not initialize the local audio processor.",
+      "noMeetingAudio": "No audio was shared. Pick the meeting tab and tick \"Share tab audio\".",
+      "meetingAudioEnded": "Meeting audio sharing stopped. Recording continues with the microphone only.",
+      "meetingUnsupported": "Your browser cannot capture meeting audio. Use desktop Chrome or Edge.",
+      "shareFailed": "Could not capture the selected tab, window or screen."
     },
     "queue": {
       "pendingBadge": "{{count}} suggestions pending",

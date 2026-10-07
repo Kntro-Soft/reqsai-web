@@ -1095,7 +1095,11 @@
       "wsError": "No se pudo conectar con el servidor de transcripción.",
       "wsClosed": "Se cerró la conexión de transcripción.",
       "initFailed": "No se pudo iniciar la grabación.",
-      "audioInitFailed": "No se pudo inicializar el procesador de audio local."
+      "audioInitFailed": "No se pudo inicializar el procesador de audio local.",
+      "noMeetingAudio": "No se compartió audio. Elige la pestaña de la reunión y marca «Compartir audio de la pestaña».",
+      "meetingAudioEnded": "Se dejó de compartir el audio de la reunión. La grabación continúa solo con el micrófono.",
+      "meetingUnsupported": "Tu navegador no puede capturar el audio de la reunión. Usa Chrome o Edge de escritorio.",
+      "shareFailed": "No se pudo capturar la pestaña, ventana o pantalla elegida."
     },
     "queue": {
       "pendingBadge": "{{count}} sugerencias pendientes",
