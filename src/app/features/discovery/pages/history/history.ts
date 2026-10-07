@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -71,7 +79,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       <th class="px-4 py-2.5">{{ 'discovery.history.colStories' | transloco }}</th>
                       <th class="px-4 py-2.5">{{ 'discovery.history.colAccepted' | transloco }}</th>
                       <th class="px-4 py-2.5">{{ 'discovery.history.colPending' | transloco }}</th>
-                      <th class="px-4 py-2.5">{{ 'discovery.history.colQuestions' | transloco }}</th>
+                      <th class="px-4 py-2.5">
+                        {{ 'discovery.history.colQuestions' | transloco }}
+                      </th>
                     }
                   </tr>
                 </thead>
