@@ -1082,6 +1082,13 @@
       "empty": "No se encontró el idioma.",
       "locked": "El idioma queda fijo al iniciar la grabación."
     },
+    "source": {
+      "label": "Fuente de audio",
+      "mic": "Presencial (micrófono)",
+      "meeting": "Reunión virtual (micrófono + audio de la reunión)",
+      "unsupported": "Reunión virtual: disponible en Chrome o Edge de escritorio.",
+      "hint": "Al compartir, elige la pestaña de la reunión y marca «Compartir audio de la pestaña». Usa audífonos para no duplicar la transcripción."
+    },
     "bar": {
       "recording": "Grabando",
       "paused": "En pausa",

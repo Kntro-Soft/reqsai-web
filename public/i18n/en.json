@@ -1082,6 +1082,13 @@
       "empty": "No language found.",
       "locked": "The language is fixed once recording starts."
     },
+    "source": {
+      "label": "Audio source",
+      "mic": "In person (microphone)",
+      "meeting": "Virtual meeting (microphone + meeting audio)",
+      "unsupported": "Virtual meeting: available in desktop Chrome or Edge.",
+      "hint": "When sharing, pick the meeting tab and tick \"Share tab audio\". Use headphones to avoid a duplicated transcript."
+    },
     "bar": {
       "recording": "Recording",
       "paused": "Paused",
