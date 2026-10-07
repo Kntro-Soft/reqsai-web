@@ -5,6 +5,22 @@
 
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
+@theme inline {
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-border: var(--ai-border);
+  --color-verified: var(--verified);
+  --color-verified-soft: var(--verified-soft);
+  --color-verified-border: var(--verified-border);
+  --color-pending: var(--pending);
+  --color-pending-soft: var(--pending-soft);
+  --color-pending-border: var(--pending-border);
+  --color-priority-critical: var(--priority-critical);
+  --color-priority-critical-soft: var(--priority-critical-soft);
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-soft: var(--priority-high-soft);
+}
+
 /* CDK Overlay structural styles — required so connected popovers (org/project
  * switchers, user menu) position correctly and escape sidebar clipping. */
 @import '@angular/cdk/overlay-prebuilt.css';
@@ -28,26 +44,43 @@
   --card-foreground: #050d1a;
   --popover: #ffffff;
   --popover-foreground: #050d1a;
-  --primary: #ef4444;
+  --primary: #dc2626;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
   --secondary-foreground: #0f172a;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #5b6b82;
   --accent: #fef2f2;
   --accent-foreground: #b91c1c;
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --border: #dbe1ea;
   --input: #dbe1ea;
-  --ring: #ef4444;
+  --ring: #dc2626;
   --sidebar: #f2f4f7;
   --sidebar-foreground: #0f172a;
-  --sidebar-primary: #ef4444;
+  --sidebar-primary: #dc2626;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #fef2f2;
   --sidebar-accent-foreground: #b91c1c;
   --sidebar-border: #dbe1ea;
-  --sidebar-ring: #ef4444;
+  --sidebar-ring: #dc2626;
+
+  /* Provenance and review states (see .ai/.verified/.pending utilities below). AI-originated
+   * content reads violet, human-validated content emerald, awaiting-review amber, so "the AI
+   * suggested this" and "an analyst approved this" never share a colour with the brand red. */
+  --ai: #6d28d9;
+  --ai-soft: #f3effe;
+  --ai-border: #c4b5fd;
+  --verified: #047857;
+  --verified-soft: #ecfdf5;
+  --verified-border: #a7f3d0;
+  --pending: #b45309;
+  --pending-soft: #fffbeb;
+  --pending-border: #fcd34d;
+  --priority-critical: #b91c1c;
+  --priority-critical-soft: #fef2f2;
+  --priority-high: #c2410c;
+  --priority-high-soft: #fff7ed;
 }
 
 :root.dark .theme-reqsai {
@@ -59,7 +92,7 @@
   --card-foreground: #ffffff;
   --popover: #0f2040;
   --popover-foreground: #ffffff;
-  --primary: #ef4444;
+  --primary: #dc2626;
   --primary-foreground: #ffffff;
   --secondary: #0f2040;
   --secondary-foreground: #e2e8f0;
@@ -67,27 +100,55 @@
   --muted-foreground: #94a3b8;
   --accent: #1a2b4a;
   --accent-foreground: #fecaca;
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --border: rgba(255, 255, 255, 0.12);
   --input: rgba(255, 255, 255, 0.16);
   --ring: #ef4444;
   --sidebar: #070f1f;
   --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #ef4444;
+  --sidebar-primary: #dc2626;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #0f2040;
   --sidebar-accent-foreground: #fecaca;
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #ef4444;
+
+  /* Red text on navy needs a lighter step than the red that white button labels sit on. */
+  --primary-text: #f87171;
+
+  --ai: #c4b5fd;
+  --ai-soft: rgba(139, 92, 246, 0.14);
+  --ai-border: rgba(167, 139, 250, 0.38);
+  --verified: #6ee7b7;
+  --verified-soft: rgba(16, 185, 129, 0.12);
+  --verified-border: rgba(52, 211, 153, 0.32);
+  --pending: #fcd34d;
+  --pending-soft: rgba(245, 158, 11, 0.12);
+  --pending-border: rgba(251, 191, 36, 0.32);
+  --priority-critical: #fca5a5;
+  --priority-critical-soft: rgba(239, 68, 68, 0.15);
+  --priority-high: #fdba74;
+  --priority-high-soft: rgba(249, 115, 22, 0.14);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring outline-offset-2;
+  }
+  ::selection {
+    background-color: color-mix(in srgb, var(--primary) 22%, transparent);
   }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+  }
+}
+
+/* Dark theme: red used as TEXT (links, active tabs) takes the lighter step so it stays
+ * legible on navy, while red FILLS keep --primary so white button labels pass AA. */
+@layer utilities {
+  .dark .text-primary {
+    color: var(--primary-text);
   }
 }
 

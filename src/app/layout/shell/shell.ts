@@ -156,7 +156,7 @@ interface Crumb {
             } @else {
               <a
                 [routerLink]="item.link"
-                routerLinkActive="nav-link-active bg-primary/15 text-primary"
+                routerLinkActive="nav-link-active bg-primary/10 text-sidebar-accent-foreground"
                 [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
                 class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
@@ -269,15 +269,15 @@ interface Crumb {
         position: absolute;
         left: 0;
         top: 50%;
-        height: 0;
+        height: 1.15rem;
         width: 3px;
         border-radius: 9999px;
         background: var(--primary);
-        transform: translateY(-50%);
-        transition: height 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(-50%) scaleY(0);
+        transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
       }
       .nav-link-active::before {
-        height: 1.15rem;
+        transform: translateY(-50%) scaleY(1);
       }
       @media (prefers-reduced-motion: reduce) {
         .nav-link::before {
