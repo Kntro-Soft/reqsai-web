@@ -24,5 +24,5 @@ jobs:
             echo "::notice title=Deploy not triggered::INFRA_DEPLOY_TOKEN is not set. Add a fine-grained PAT with Actions read and write on Kntro-Soft/reqsai-infra to deploy main automatically."
             exit 0
           fi
-          gh workflow run deploy-mvp.yml --repo Kntro-Soft/reqsai-infra --ref main -f web_ref="$SHA"
+          gh workflow run deploy-mvp.yml --repo Kntro-Soft/reqsai-infra --ref main -f web_ref="$SHA" -f api_ref=keep
           echo "Requested the deploy of reqsai-web $SHA: https://github.com/Kntro-Soft/reqsai-infra/actions/workflows/deploy-mvp.yml" >> "$GITHUB_STEP_SUMMARY"
