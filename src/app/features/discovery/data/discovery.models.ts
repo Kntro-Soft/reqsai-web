@@ -1,13 +1,7 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
 export type SessionStatus =
-  | 'DRAFT'
-  | 'RECORDING'
-  | 'PAUSED'
-  | 'STOPPED'
-  | 'PROCESSING'
-  | 'COMPLETED'
-  | 'FAILED';
+  'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
 export interface DiscoverySessionResponse {
   id: string;
@@ -202,6 +196,8 @@ export interface DisplayStory {
    * events, older REST payloads).
    */
   acceptanceCriteria: AcceptanceCriterion[];
+  /** Review status (DRAFT/APPROVED/…) when the source carried it (REST backlog). */
+  status?: string | null;
 }
 
 export interface PageResponse<T> {
