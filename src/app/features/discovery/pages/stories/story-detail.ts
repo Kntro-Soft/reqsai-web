@@ -10,7 +10,13 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { lucideArrowLeft, lucidePlus, lucideTrash2, lucideUpload } from '@ng-icons/lucide';
+import {
+  lucideArrowLeft,
+  lucideArrowUpRight,
+  lucidePlus,
+  lucideTrash2,
+  lucideUpload,
+} from '@ng-icons/lucide';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
@@ -45,15 +51,19 @@ import {
   criterionToRow,
   emptyCriterionRow,
   isCompleteRow,
+  isRowChanged,
   rowToRequest,
 } from './story-form.helpers';
+import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
 
 /**
- * Story detail / edit page. Loads a story with its acceptance criteria; the core
- * fields are edited and persisted via PUT ("Guardar"), while criteria are managed
- * inline — each row saves individually (POST for a new row, PUT for an existing
- * one) and removes via DELETE (a not-yet-saved new row is just dropped). Back link
- * returns to the backlog list.
+ * Story detail / edit page. The saved title leads, with the story's review status
+ * (draft = awaiting review, approved = validated) and origin (AI from a session,
+ * linked back to it, or manual) underneath. The core fields read top-down as the
+ * story sentence in auto-growing fields and persist via PUT ("Guardar"), enabled
+ * only once something changed. Criteria are Gherkin rows managed inline — each
+ * saves individually (POST for a new row, PUT for an existing one), flags unsaved
+ * edits, and removes via DELETE (a not-yet-saved new row is just dropped).
  */
 @Component({
   selector: 'app-story-detail',
@@ -63,6 +73,8 @@ import {
     RouterLink,
     Modal,
     Select,
+    OriginBadge,
+    StoryStatusBadge,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -71,20 +83,48 @@ import {
     HlmSpinner,
     TranslocoPipe,
   ],
-  viewProviders: [provideIcons({ lucideArrowLeft, lucidePlus, lucideTrash2, lucideUpload })],
+  viewProviders: [
+    provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucidePlus, lucideTrash2, lucideUpload }),
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-3">
         <a
           [routerLink]="['/projects', projectId(), 'stories']"
-          class="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          class="flex w-fit items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           data-testid="story-detail-back"
         >
           <hlm-icon name="lucideArrowLeft" size="15px" />
           {{ 'storyForm.back' | transloco }}
         </a>
-        <div class="flex items-start justify-between gap-3">
-          <h1 class="text-2xl font-bold tracking-tight">{{ 'storyForm.editTitle' | transloco }}</h1>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <!-- The page is about THIS story: its saved title leads, with its review
+                 status and origin right under it. -->
+            <h1 class="text-2xl font-bold tracking-tight text-balance" data-testid="story-heading">
+              {{ story()?.title || ('storyForm.editTitle' | transloco) }}
+            </h1>
+            @if (story(); as st) {
+              <div class="mt-2 flex flex-wrap items-center gap-2" data-testid="story-provenance">
+                <app-story-status-badge [status]="st.status" />
+                <app-origin-badge [sessionId]="st.sessionId" />
+                @if (st.sessionId) {
+                  <a
+                    [routerLink]="['/projects', projectId(), 'sessions']"
+                    [queryParams]="{ session: st.sessionId }"
+                    class="inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:underline"
+                    data-testid="story-source-session"
+                  >
+                    {{ 'storyForm.viewSession' | transloco }}
+                    <hlm-icon name="lucideArrowUpRight" size="12px" aria-hidden="true" />
+                  </a>
+                }
+              </div>
+              <p class="mt-1.5 text-xs text-muted-foreground">
+                {{ 'stories.statusHint.' + statusKey(st.status) | transloco }}
+              </p>
+            }
+          </div>
           @if (state() === 'ready') {
             <div class="flex shrink-0 items-center gap-2">
               @if (integrationsEnabled) {
@@ -108,10 +148,10 @@ import {
               <button
                 hlmBtn
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 type="button"
                 (click)="deleteOpen.set(true)"
-                class="text-destructive hover:text-destructive"
+                class="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                 data-testid="story-delete"
               >
                 <hlm-icon name="lucideTrash2" size="15px" />
@@ -132,39 +172,49 @@ import {
           <hlm-skeleton class="h-24 w-full rounded-md" />
         </section>
       } @else if (state() === 'error') {
-        <p class="text-sm text-destructive">{{ 'storyForm.loadError' | transloco }}</p>
+        <div class="flex flex-wrap items-center gap-3" role="alert">
+          <p class="text-sm text-destructive">{{ 'storyForm.loadError' | transloco }}</p>
+          <button hlmBtn size="sm" variant="outline" type="button" (click)="reload()">
+            {{ 'discovery.retry' | transloco }}
+          </button>
+        </div>
       } @else {
-        <!-- Core fields -->
+        <!-- Core fields: the story as its sentence, one full-width line per part. -->
         <form
           [formGroup]="form"
           (ngSubmit)="save()"
-          class="flex flex-col gap-4 rounded-2xl border border-border p-5"
+          class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5"
         >
+          <h2 class="text-base font-semibold">{{ 'storyForm.storySection' | transloco }}</h2>
           <div class="flex flex-col gap-1.5">
             <label hlmLabel for="title">{{ 'storyForm.fieldTitle' | transloco }}</label>
             <input hlmInput id="title" formControlName="title" data-testid="story-title" />
           </div>
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="role">{{ 'storyForm.fieldRole' | transloco }}</label>
-              <textarea hlmInput id="role" rows="2" formControlName="role"></textarea>
+          @for (part of storyParts; track part.control) {
+            <div class="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start sm:gap-4">
+              <label hlmLabel [for]="part.control" class="leading-snug sm:pt-2.5">
+                {{ part.label | transloco }}
+                <span class="mt-0.5 block text-xs font-normal text-muted-foreground">{{
+                  part.lead | transloco
+                }}</span>
+              </label>
+              <textarea
+                hlmInput
+                rows="1"
+                class="min-h-10"
+                [id]="part.control"
+                [formControlName]="part.control"
+                [attr.data-testid]="'story-' + part.control"
+              ></textarea>
             </div>
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="action">{{ 'storyForm.fieldAction' | transloco }}</label>
-              <textarea hlmInput id="action" rows="2" formControlName="action"></textarea>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="benefit">{{ 'storyForm.fieldBenefit' | transloco }}</label>
-              <textarea hlmInput id="benefit" rows="2" formControlName="benefit"></textarea>
-            </div>
-          </div>
-          <div class="flex flex-wrap items-end gap-3">
+          }
+          <div class="flex flex-wrap items-end gap-3 border-t border-border pt-4">
             <div class="flex flex-col gap-1.5">
               <span hlmLabel>{{ 'storyForm.fieldPriority' | transloco }}</span>
               <app-select
                 [options]="priorityOptions()"
                 [value]="form.controls.priority.value"
-                (valueChange)="form.controls.priority.setValue($any($event))"
+                (valueChange)="setPriority($event)"
                 [ariaLabel]="'storyForm.fieldPriority' | transloco"
               />
             </div>
@@ -179,29 +229,47 @@ import {
                 formControlName="storyPoints"
               />
             </div>
-            <button
-              hlmBtn
-              size="sm"
-              type="submit"
-              class="ml-auto"
-              [disabled]="form.invalid || saving()"
-              data-testid="story-save"
-            >
-              @if (saving()) {
-                <hlm-spinner class="h-4 w-4" />
+            <div class="ml-auto flex items-center gap-3">
+              @if (form.dirty) {
+                <span class="text-xs font-medium text-pending" data-testid="story-unsaved">
+                  {{ 'storyForm.unsaved' | transloco }}
+                </span>
               }
-              {{ 'storyForm.save' | transloco }}
-            </button>
+              <button
+                hlmBtn
+                size="sm"
+                type="submit"
+                [disabled]="form.invalid || form.pristine || saving()"
+                data-testid="story-save"
+              >
+                @if (saving()) {
+                  <hlm-spinner class="h-4 w-4" />
+                }
+                {{ 'storyForm.save' | transloco }}
+              </button>
+            </div>
           </div>
           @if (formError()) {
-            <p class="text-sm text-destructive" data-testid="story-form-error">{{ formError() }}</p>
+            <p class="text-sm text-destructive" role="alert" data-testid="story-form-error">
+              {{ formError() }}
+            </p>
           }
         </form>
 
-        <!-- Acceptance criteria (managed inline) -->
-        <section class="flex flex-col gap-3 rounded-2xl border border-border p-5">
-          <div class="flex items-center justify-between">
-            <h2 class="text-base font-semibold">{{ 'storyForm.criteriaTitle' | transloco }}</h2>
+        <!-- Acceptance criteria (managed inline, each saved on its own). -->
+        <section class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="text-base font-semibold">
+                {{ 'storyForm.criteriaTitle' | transloco }}
+                <span class="ml-1 text-sm font-normal text-muted-foreground tabular-nums">{{
+                  criteria().length
+                }}</span>
+              </h2>
+              <p class="mt-0.5 text-xs text-muted-foreground">
+                {{ 'storyForm.criteriaHint' | transloco }}
+              </p>
+            </div>
             <button
               hlmBtn
               size="sm"
@@ -223,82 +291,93 @@ import {
             </p>
           }
 
-          @for (row of criteria(); track $index; let i = $index) {
-            <div
-              class="flex flex-col gap-2.5 rounded-xl border border-border bg-muted/20 p-3"
-              data-testid="criteria-row"
-            >
-              <div class="flex items-start gap-2">
-                <input
-                  hlmInput
-                  class="flex-1"
-                  [value]="row.scenario"
-                  (input)="patch(i, 'scenario', $any($event.target).value)"
-                  [placeholder]="'storyForm.criteriaScenario' | transloco"
-                  data-testid="criteria-scenario"
-                />
-                <button
-                  type="button"
-                  (click)="removeRow(i)"
-                  [attr.aria-label]="'storyForm.criteriaRemove' | transloco"
-                  class="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                  data-testid="criteria-remove"
-                >
-                  <hlm-icon name="lucideTrash2" size="15px" />
-                </button>
-              </div>
-              <div class="grid gap-2 sm:grid-cols-3">
-                <label hlmLabel class="flex flex-col gap-1 text-xs">
-                  {{ 'storyForm.criteriaGiven' | transloco }}
-                  <textarea
-                    hlmInput
-                    rows="2"
-                    [value]="row.given"
-                    (input)="patch(i, 'given', $any($event.target).value)"
-                    data-testid="criteria-given"
-                  ></textarea>
-                </label>
-                <label hlmLabel class="flex flex-col gap-1 text-xs">
-                  {{ 'storyForm.criteriaWhen' | transloco }}
-                  <textarea
-                    hlmInput
-                    rows="2"
-                    [value]="row.when"
-                    (input)="patch(i, 'when', $any($event.target).value)"
-                    data-testid="criteria-when"
-                  ></textarea>
-                </label>
-                <label hlmLabel class="flex flex-col gap-1 text-xs">
-                  {{ 'storyForm.criteriaThen' | transloco }}
-                  <textarea
-                    hlmInput
-                    rows="2"
-                    [value]="row.then"
-                    (input)="patch(i, 'then', $any($event.target).value)"
-                    data-testid="criteria-then"
-                  ></textarea>
-                </label>
-              </div>
-              <div class="flex justify-end">
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  [disabled]="rowBusy() === i"
-                  (click)="saveRow(i)"
-                  data-testid="criteria-save"
-                >
-                  @if (rowBusy() === i) {
-                    <hlm-spinner class="h-4 w-4" />
+          <ol class="flex flex-col">
+            @for (row of criteria(); track $index; let i = $index) {
+              @let changed = rowChanged(i);
+              <li
+                class="flex flex-col gap-3 border-t border-border py-4 first:border-t-0 first:pt-0 last:pb-0"
+                data-testid="criteria-row"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-muted-foreground">
+                    {{ 'discovery.suggestion.criterion' | transloco }} {{ i + 1 }}
+                  </span>
+                  @if (!row.id) {
+                    <span
+                      class="rounded-full bg-pending-soft px-2 py-0.5 text-[11px] font-medium text-pending"
+                      >{{ 'storyForm.criteriaNew' | transloco }}</span
+                    >
+                  } @else if (changed) {
+                    <span
+                      class="rounded-full bg-pending-soft px-2 py-0.5 text-[11px] font-medium text-pending"
+                      data-testid="criteria-unsaved"
+                      >{{ 'storyForm.unsaved' | transloco }}</span
+                    >
                   }
-                  {{
-                    (row.id ? 'storyForm.criteriaUpdate' : 'storyForm.criteriaCreate') | transloco
-                  }}
-                </button>
-              </div>
-            </div>
-          }
+                  <button
+                    type="button"
+                    (click)="removeRow(i)"
+                    [disabled]="rowBusy() === i"
+                    [attr.aria-label]="'storyForm.criteriaRemove' | transloco"
+                    class="ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    data-testid="criteria-remove"
+                  >
+                    <hlm-icon name="lucideTrash2" size="15px" />
+                  </button>
+                </div>
+                <!-- Gherkin layout: the keyword stays in a gutter beside each step. -->
+                <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2">
+                  <label
+                    class="pt-2.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-muted-foreground"
+                    [for]="'crit-' + i + '-scenario'"
+                    >{{ 'discovery.suggestion.scenario' | transloco }}</label
+                  >
+                  <input
+                    hlmInput
+                    [id]="'crit-' + i + '-scenario'"
+                    [value]="row.scenario"
+                    (input)="patch(i, 'scenario', $any($event.target).value)"
+                    [placeholder]="'discovery.suggestion.scenarioPlaceholder' | transloco"
+                    data-testid="criteria-scenario"
+                  />
+                  @for (step of steps; track step.key) {
+                    <label
+                      class="pt-2.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-muted-foreground"
+                      [for]="'crit-' + i + '-' + step.key"
+                      >{{ step.label | transloco }}</label
+                    >
+                    <textarea
+                      hlmInput
+                      rows="1"
+                      class="min-h-10"
+                      [id]="'crit-' + i + '-' + step.key"
+                      [value]="row[step.key]"
+                      (input)="patch(i, step.key, $any($event.target).value)"
+                      [attr.data-testid]="'criteria-' + step.key"
+                    ></textarea>
+                  }
+                </div>
+                <div class="flex justify-end">
+                  <button
+                    hlmBtn
+                    size="sm"
+                    [variant]="changed ? 'default' : 'outline'"
+                    type="button"
+                    [disabled]="rowBusy() === i || !changed"
+                    (click)="saveRow(i)"
+                    data-testid="criteria-save"
+                  >
+                    @if (rowBusy() === i) {
+                      <hlm-spinner class="h-4 w-4" />
+                    }
+                    {{
+                      (row.id ? 'storyForm.criteriaUpdate' : 'storyForm.criteriaCreate') | transloco
+                    }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ol>
         </section>
       }
     </div>
@@ -357,6 +436,22 @@ export class StoryDetail implements OnInit {
   protected readonly deleting = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly criteria = signal<CriterionRow[]>([]);
+  /** The loaded/last-saved story (drives the heading, status and origin). */
+  protected readonly story = signal<UserStoryResponse | null>(null);
+  /** Last saved version of each persisted criterion, keyed by id (unsaved-edit flags). */
+  private readonly savedCriteria = signal<ReadonlyMap<string, CriterionRow>>(new Map());
+
+  /** The three parts of the story sentence, in reading order. */
+  protected readonly storyParts = [
+    { control: 'role', label: 'storyForm.fieldRole', lead: 'storyForm.leadRole' },
+    { control: 'action', label: 'storyForm.fieldAction', lead: 'storyForm.leadAction' },
+    { control: 'benefit', label: 'storyForm.fieldBenefit', lead: 'storyForm.leadBenefit' },
+  ] as const;
+  protected readonly steps = [
+    { key: 'given', label: 'storyForm.criteriaGiven' },
+    { key: 'when', label: 'storyForm.criteriaWhen' },
+    { key: 'then', label: 'storyForm.criteriaThen' },
+  ] as const;
   /** Index of the criterion row currently saving/deleting, or null. */
   protected readonly rowBusy = signal<number | null>(null);
 
@@ -395,7 +490,38 @@ export class StoryDetail implements OnInit {
     });
   }
 
+  protected reload(): void {
+    this.load();
+  }
+
+  protected setPriority(value: string): void {
+    this.form.controls.priority.setValue(value as StoryPriority);
+    this.form.controls.priority.markAsDirty();
+  }
+
+  /** Status key for the status hint (unknown values read as DRAFT, like the badge). */
+  protected statusKey(status: string | null | undefined): string {
+    const key = (status ?? 'DRAFT').toUpperCase();
+    return ['DRAFT', 'APPROVED', 'REJECTED', 'MERGED', 'EXPORTED'].includes(key) ? key : 'DRAFT';
+  }
+
+  /** True when the row at `index` has edits not yet saved (or was never saved). */
+  protected rowChanged(index: number): boolean {
+    const row = this.criteria()[index];
+    if (!row) return false;
+    return isRowChanged(row, row.id ? this.savedCriteria().get(row.id) : undefined);
+  }
+
+  private rememberSaved(rows: readonly CriterionRow[]): void {
+    this.savedCriteria.update((map) => {
+      const next = new Map(map);
+      for (const row of rows) if (row.id) next.set(row.id, { ...row });
+      return next;
+    });
+  }
+
   private seed(story: UserStoryResponse): void {
+    this.story.set(story);
     this.form.reset({
       title: story.title,
       role: story.role,
@@ -408,6 +534,8 @@ export class StoryDetail implements OnInit {
       .filter((c): c is AcceptanceCriterionResponse => !!c && 'id' in c)
       .map(criterionToRow);
     this.criteria.set(rows);
+    this.savedCriteria.set(new Map());
+    this.rememberSaved(rows);
   }
 
   protected save(): void {
@@ -425,8 +553,10 @@ export class StoryDetail implements OnInit {
         raw.storyPoints != null && `${raw.storyPoints}` !== '' ? Number(raw.storyPoints) : null,
     };
     this.api.updateStory(this.projectId(), this.storyId(), body).subscribe({
-      next: () => {
+      next: (updated) => {
         this.saving.set(false);
+        this.form.markAsPristine();
+        this.story.update((current) => ({ ...(current ?? updated), ...updated }));
         this.toast.success(this.transloco.translate('storyForm.saved'));
       },
       error: (err: unknown) => {
@@ -543,9 +673,9 @@ export class StoryDetail implements OnInit {
     call.subscribe({
       next: (saved) => {
         this.rowBusy.set(null);
-        this.criteria.update((list) =>
-          list.map((r, i) => (i === index ? criterionToRow(saved) : r)),
-        );
+        const savedRow = criterionToRow(saved);
+        this.criteria.update((list) => list.map((r, i) => (i === index ? savedRow : r)));
+        this.rememberSaved([savedRow]);
         this.toast.success(this.transloco.translate('storyForm.criteriaSaved'));
       },
       error: (err) => {
