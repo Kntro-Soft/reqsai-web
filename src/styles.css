@@ -145,11 +145,11 @@
 }
 
 /* Dark theme: red used as TEXT (links, active tabs) takes the lighter step so it stays
- * legible on navy, while red FILLS keep --primary so white button labels pass AA. */
-@layer utilities {
-  .dark .text-primary {
-    color: var(--primary-text);
-  }
+ * legible on navy, while red FILLS keep --primary so white button labels pass AA. Kept
+ * unlayered on purpose: Tailwind's utilities are imported unlayered, so a layered rule
+ * would always lose to `.text-primary`; here the extra `.dark` specificity wins. */
+.dark .text-primary {
+  color: var(--primary-text);
 }
 
 /* Motion: keep everything tasteful and reduced-motion-safe. The single guard at the
