@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { vi } from 'vitest';
 import { SessionBar } from './session-bar';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
+import { AudioSource } from '../../../../core/audio/audio-source';
 import { DiscoverySessionResponse, SessionStatus } from '../../data/discovery.models';
 
 function session(status: SessionStatus): DiscoverySessionResponse {
@@ -31,6 +33,9 @@ class FakeRecordingService {
 
 class FakeAudioRecorderService {
   readonly levels = signal<readonly number[]>([]);
+  readonly source = signal<AudioSource>('mic');
+  readonly meetingAudio = signal(false);
+  readonly shareMeetingAudio = vi.fn(() => Promise.resolve(true));
 }
 
 describe('SessionBar', () => {

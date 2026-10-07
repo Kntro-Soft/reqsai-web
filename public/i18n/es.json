@@ -1094,7 +1094,10 @@
       "paused": "En pausa",
       "pause": "Pausar",
       "resume": "Reanudar",
-      "stop": "Detener"
+      "stop": "Detener",
+      "meetingAudio": "Grabando micrófono + audio de la reunión",
+      "meetingAudioLost": "No se está capturando el audio de la reunión. Vuelve a compartir la pestaña de la reunión.",
+      "reshare": "Compartir de nuevo"
     },
     "rec": {
       "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",

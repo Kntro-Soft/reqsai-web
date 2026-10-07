@@ -1094,7 +1094,10 @@
       "paused": "Paused",
       "pause": "Pause",
       "resume": "Resume",
-      "stop": "Stop"
+      "stop": "Stop",
+      "meetingAudio": "Recording microphone + meeting audio",
+      "meetingAudioLost": "Meeting audio is not being captured. Share the meeting tab again.",
+      "reshare": "Share again"
     },
     "rec": {
       "micDenied": "Microphone permission denied. Enable it in your browser settings.",
