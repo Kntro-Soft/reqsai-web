@@ -13,6 +13,19 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **Discovery — virtual-meeting audio capture** (`feature/system-audio-capture`): the analyst can now
+  record a Zoom / Google Meet / Teams call, not only a face-to-face meeting. A compact **audio-source
+  picker** next to the record button chooses **In person (microphone)** or **Virtual meeting (microphone +
+  meeting audio)**, remembered per user in localStorage. The virtual source opens the browser's
+  screen-share picker straight from the record click (`getDisplayMedia` with tab/window/system audio, voice
+  processing off and ReqsAI's own tab hidden), drops the unused video track and mixes the shared audio with
+  the mic in one mono Web Audio mixer — the backend keeps receiving the same 16 kHz Int16 PCM on `/ws/stt`,
+  and the level meter shows the mix. Sharing without ticking "Share tab audio" warns and lets the user
+  retry; a dismissed picker stays idle silently; "Stop sharing" mid-session keeps recording the mic with a
+  notice and a **Share again** action in the session bar; pausing keeps the shared tab, so resuming never
+  re-opens the picker. The virtual option is disabled (with the reason) outside desktop Chrome/Edge, and a
+  hint recommends headphones to avoid a duplicated transcript (`discovery.source.*` plus new
+  `discovery.rec.*` / `discovery.bar.*` keys, en/es).
 - **Discovery — live session presence** (`feature/discovery-presence`): the discovery chat now shows who
   else is viewing the **live** session — an overlapping avatar stack with a live pulse, a "+N" overflow
   bubble and a viewer count, in both the page header and the live session bar. It is fed by a new
