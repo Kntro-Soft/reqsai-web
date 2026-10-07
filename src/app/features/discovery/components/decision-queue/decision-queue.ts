@@ -1,12 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
+  model,
   output,
   signal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
@@ -65,9 +69,9 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
     @if (store.queue().length > 0) {
       <!-- Anchored to the feed column (the page wraps the feed in a relative box), so the
            tray never covers the session bar, the header actions or the side panel; the
-           bottom inset (sm+) keeps the live edge (latest line + AI status) in view below it. -->
+           bottom inset (sm+) keeps the live edge (latest lines + AI status) in view below it. -->
       <div
-        class="pointer-events-none absolute inset-x-2 bottom-2 top-2 z-20 flex flex-col items-center sm:inset-x-4 sm:bottom-[4.75rem]"
+        class="pointer-events-none absolute inset-x-2 bottom-2 top-2 z-20 flex flex-col items-center sm:inset-x-4 sm:bottom-[9.5rem]"
         data-testid="decision-queue"
       >
         @if (collapsed()) {
@@ -93,16 +97,23 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
         } @else {
           <!-- The tray is its own surface (frosted, AI-violet edge) so the transcript
                scrolling underneath never bleeds through between header and card. -->
+          <!-- Keyboard: ←/→ browse, Esc minimizes (ignored while typing in a field). After
+               a decision, focus returns here instead of falling to the page body. -->
           <section
-            class="queue-card pointer-events-auto flex max-h-full min-h-0 w-full max-w-2xl flex-col rounded-[1.375rem] border border-ai-border/70 bg-background/85 p-2 shadow-xl backdrop-blur-md"
+            #tray
+            tabindex="-1"
+            (keydown)="onTrayKeydown($event)"
+            class="queue-card pointer-events-auto flex max-h-full min-h-0 w-full max-w-2xl flex-col rounded-[1.375rem] border border-ai-border/70 bg-background/85 p-2 shadow-xl outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-ring"
             [attr.aria-label]="'discovery.queue.title' | transloco"
+            [attr.aria-keyshortcuts]="'ArrowLeft ArrowRight Escape'"
           >
             <!-- Tray header: what this is (AI, awaiting review), where you are, how to
                  move, and how to get it out of the way. -->
             <div class="mb-2.5 flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-0.5">
               <hlm-icon name="lucideSparkles" size="15px" class="text-ai" aria-hidden="true" />
               <span class="ml-1 min-w-0 truncate text-xs font-semibold text-foreground">
-                {{ 'discovery.queue.title' | transloco }}
+                <span class="sm:hidden">{{ 'discovery.queue.titleShort' | transloco }}</span>
+                <span class="hidden sm:inline">{{ 'discovery.queue.title' | transloco }}</span>
               </span>
               <span class="ml-auto flex shrink-0 items-center">
                 @if (store.queue().length > 1) {
@@ -308,7 +319,10 @@ export class DecisionQueue {
   readonly decideDismiss = output<SuggestionResponse>();
   readonly openTarget = output<string>();
 
-  protected readonly collapsed = signal(false);
+  /** Minimized to the badge. Two-way bound so the page can fold it (e.g. focus moved under it). */
+  readonly collapsed = model(false);
+
+  private readonly tray = viewChild<ElementRef<HTMLElement>>('tray');
 
   protected readonly safeIndex = computed(() => {
     const length = this.store.queue().length;
@@ -519,6 +533,36 @@ export class DecisionQueue {
     effect(() => {
       if (this.store.queue().length === 0) this.collapsed.set(false);
     });
+    // A decided card leaves the DOM with the focused button in it, dropping focus to the
+    // page body. Bring it back to the tray so keyboard review can carry on.
+    let previousLength = 0;
+    effect(() => {
+      const length = this.store.queue().length;
+      const shrank = length < previousLength;
+      previousLength = length;
+      if (!shrank || length === 0 || untracked(() => this.collapsed())) return;
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body) this.tray()?.nativeElement.focus();
+      });
+    });
+  }
+
+  /** ←/→ browse the deck and Esc minimizes — unless the key belongs to a field being edited. */
+  protected onTrayKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable="true"], [role="listbox"]'))
+      return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.collapsed.set(true);
+    } else if (event.key === 'ArrowLeft' && this.safeIndex() > 0) {
+      event.preventDefault();
+      this.prev();
+    } else if (event.key === 'ArrowRight' && this.safeIndex() < this.store.queue().length - 1) {
+      event.preventDefault();
+      this.next();
+    }
   }
 
   /** Applies a committed drag outcome as a carousel navigation. */

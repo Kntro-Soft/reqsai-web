@@ -243,6 +243,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           <div
             #feed
             (scroll)="onScroll()"
+            (focusin)="onFeedFocus($event)"
             class="scrollbar-thin relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
             data-testid="discovery-feed"
           >
@@ -605,6 +606,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           </div>
 
           <app-decision-queue
+            [(collapsed)]="queueCollapsed"
             [canDecide]="canDecide()"
             (decideAccept)="accept($event.suggestion, $event.body)"
             (decideDismiss)="dismiss($event)"
@@ -630,7 +632,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           @if (canRecord()) {
             <!-- Locked once a session is live: the recorder owns the source then. -->
             <app-audio-source-picker
-              class="min-w-0 flex-1 sm:flex-none"
+              class="min-w-0 flex-1 sm:flex-none sm:shrink-0"
               [value]="audioSource()"
               (valueChange)="setAudioSource($event)"
               [meetingSupported]="meetingSupported"
@@ -833,6 +835,8 @@ export class DiscoveryChat implements OnInit {
       window.matchMedia('(min-width: 768px)').matches,
   );
   protected readonly focusStoryId = signal<string | null>(null);
+  /** The review tray's minimized state (two-way bound with the decision queue). */
+  protected readonly queueCollapsed = signal(false);
   /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
   protected readonly atBottom = signal(true);
   /**
@@ -1010,6 +1014,22 @@ export class DiscoveryChat implements OnInit {
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
     if (focus) this.store.showSession(focus);
+  }
+
+  /**
+   * Keyboard focus moving onto a feed control that the expanded review tray covers
+   * (e.g. "Go to story") minimizes the tray, so the focused control is never hidden
+   * behind it (WCAG 2.4.11).
+   */
+  protected onFeedFocus(event: FocusEvent): void {
+    if (this.queueCollapsed() || this.store.queue().length === 0) return;
+    const tray = this.feed()?.nativeElement.parentElement?.querySelector('.queue-card');
+    const target = event.target as HTMLElement | null;
+    if (!tray || !target) return;
+    const a = tray.getBoundingClientRect();
+    const b = target.getBoundingClientRect();
+    const covered = b.top < a.bottom && b.bottom > a.top && b.left < a.right && b.right > a.left;
+    if (covered) this.queueCollapsed.set(true);
   }
 
   /** Lazy-loads older sessions when the feed is scrolled near the top, preserving scroll position. */

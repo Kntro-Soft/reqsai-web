@@ -180,6 +180,40 @@ describe('DecisionQueue', () => {
     expect(counter?.getAttribute('aria-live')).toBe('polite');
   });
 
+  it('browses with the arrow keys and minimizes on Escape', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tray = el.querySelector<HTMLElement>('section.queue-card')!;
+
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(store.queueIndex()).toBe(1);
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    expect(store.queueIndex()).toBe(0);
+
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="queue-badge"]')).not.toBeNull();
+  });
+
+  it('leaves arrow keys alone while a field is being edited', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tray = el.querySelector<HTMLElement>('section.queue-card')!;
+    const field = document.createElement('textarea');
+    tray.appendChild(field);
+
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(store.queueIndex()).toBe(0);
+    expect(el.querySelector('[data-testid="queue-badge"]')).toBeNull();
+  });
+
   it('docks inside the feed column instead of floating over the page', () => {
     store.setQueue([suggestion()]);
     const el = render();
