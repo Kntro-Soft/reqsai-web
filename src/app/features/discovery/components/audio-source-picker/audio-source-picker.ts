@@ -45,7 +45,7 @@ interface SourceOption {
           [attr.aria-disabled]="disabled() || unavailable"
           [attr.aria-label]="opt.label | transloco"
           [title]="(unavailable ? 'discovery.source.unsupported' : opt.label) | transloco"
-          class="flex h-full min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="flex h-full min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap sm:flex-none rounded-full px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           [class]="optionClass(opt.value, unavailable)"
           [attr.data-testid]="'audio-source-' + opt.value"
         >
