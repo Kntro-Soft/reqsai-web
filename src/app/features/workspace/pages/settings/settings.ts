@@ -23,6 +23,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { MemberResponse, UpdateOrganizationRequest } from '../../data/workspace.models';
@@ -342,22 +343,25 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
         </section>
 
         @if (isOwner()) {
-          <!-- Transfer ownership -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-1 p-5">
-              <h2 class="text-base font-semibold">{{ 'orgSettings.transfer' | transloco }}</h2>
-              <p class="text-sm text-muted-foreground">
-                {{ 'orgSettings.transferDesc' | transloco }}
-              </p>
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <button hlmBtn size="sm" variant="outline" type="button" (click)="openTransfer()">
-                {{ 'orgSettings.transferCta' | transloco }}
-              </button>
-            </div>
-          </section>
+          <!-- Transfer ownership: hands the org to another member, so it follows the
+               members feature flag (without it there is nobody to pick, nor a way to invite). -->
+          @if (membersEnabled) {
+            <section class="overflow-hidden rounded-2xl border border-border">
+              <div class="flex flex-col gap-1 p-5">
+                <h2 class="text-base font-semibold">{{ 'orgSettings.transfer' | transloco }}</h2>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'orgSettings.transferDesc' | transloco }}
+                </p>
+              </div>
+              <div
+                class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
+              >
+                <button hlmBtn size="sm" variant="outline" type="button" (click)="openTransfer()">
+                  {{ 'orgSettings.transferCta' | transloco }}
+                </button>
+              </div>
+            </section>
+          }
 
           <!-- Delete organization -->
           <section class="overflow-hidden rounded-2xl border border-destructive/40">
@@ -683,6 +687,8 @@ export class OrgSettings {
 
   protected readonly languageOptions = LANGUAGE_OPTIONS;
   protected readonly skeletonCards = [0, 1, 2];
+  /** Ownership transfer needs other members, so it follows the `members` feature flag. */
+  protected readonly membersEnabled = inject(FeatureFlags).isEnabled('members');
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal<OrgField | null>(null);
@@ -815,9 +821,12 @@ export class OrgSettings {
       },
       error: () => this.state.set('error'),
     });
-    this.api.listMembers(orgId).subscribe({
-      next: (members) => this.members.set(members),
-    });
+    // The member list only feeds the ownership-transfer picker.
+    if (this.membersEnabled) {
+      this.api.listMembers(orgId).subscribe({
+        next: (members) => this.members.set(members),
+      });
+    }
   }
 
   protected saveField(field: OrgField): void {

@@ -104,6 +104,7 @@ function toDisplayStory(story: UserStoryResponse): DisplayStory {
     storyPoints: story.storyPoints,
     createdAt: story.createdAt ?? null,
     acceptanceCriteria: suggestionCriteria(story.acceptanceCriteria),
+    status: story.status ?? null,
   };
 }
 

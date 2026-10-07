@@ -51,8 +51,13 @@ export const environment = {
   production: false,
   apiUrl: '',
   wsUrl: '',
+  features: { billing: false, usage: false, integrations: false, /* … */ } satisfies FeatureFlagMap,
 } as const;
 ```
+
+`features` son los feature flags de build: el MVP oculta billing, usage, integraciones (Jira),
+miembros/invitaciones, roles personalizados y los placeholders de cuenta. Ponlos en `true` en
+**ambos** archivos para reactivarlos — ver [`docs/FEATURE-FLAGS.md`](docs/FEATURE-FLAGS.md).
 
 ---
 
@@ -130,6 +135,7 @@ Detalle en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 |------------------------------------------------------|-----------------------------------------------------|
 | [`docs/adr/`](docs/adr/)                             | Architecture Decision Records (el *por qué*)        |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)           | Docker · AWS S3 + CloudFront · variables de entorno |
+| [`docs/FEATURE-FLAGS.md`](docs/FEATURE-FLAGS.md)     | Feature flags del MVP y cómo reactivarlos           |
 | [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) | Flujo de trabajo, ramas, commits, PR                |
 | [`CHANGELOG.md`](CHANGELOG.md)                       | Historial de cambios (Keep a Changelog)             |
 | [`.github/SECURITY.md`](.github/SECURITY.md)         | Política de seguridad y reporte de vulnerabilidades |

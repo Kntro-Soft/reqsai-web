@@ -168,15 +168,68 @@ describe('DecisionQueue', () => {
     expect(el.querySelector('[data-testid="queue-badge-count"]')?.textContent?.trim()).toBe('3');
   });
 
-  it('shows the "n de m" counter in the corner tab of the active card', () => {
+  it('shows the "n de m" counter in the tray header, outside the card body', () => {
     store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
     const el = render();
 
-    const tab = el.querySelector('[data-testid="queue-counter"]');
-    expect(tab).not.toBeNull();
+    const counter = el.querySelector('[data-testid="queue-counter"]');
+    expect(counter).not.toBeNull();
     // The Transloco test module has no messages, so it echoes the key; the point
-    // is the counter lives in a dedicated tab element, not overlapping the body.
-    expect(tab?.classList.contains('queue-tab')).toBe(true);
+    // is the counter sits in the tray header (between prev/next), never over the card.
+    expect(el.querySelector('[data-testid="queue-card"]')?.contains(counter)).toBe(false);
+    expect(counter?.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('browses with the arrow keys and minimizes on Escape', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tray = el.querySelector<HTMLElement>('section.queue-card')!;
+
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(store.queueIndex()).toBe(1);
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    expect(store.queueIndex()).toBe(0);
+
+    tray.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="queue-badge"]')).not.toBeNull();
+  });
+
+  it('leaves arrow keys alone while a field is being edited', () => {
+    store.setQueue([suggestion({ id: 'a' }), suggestion({ id: 'b' })]);
+    const fixture = TestBed.createComponent(DecisionQueue);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const tray = el.querySelector<HTMLElement>('section.queue-card')!;
+    const field = document.createElement('textarea');
+    tray.appendChild(field);
+
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(store.queueIndex()).toBe(0);
+    expect(el.querySelector('[data-testid="queue-badge"]')).toBeNull();
+  });
+
+  it('docks inside the feed column instead of floating over the page', () => {
+    store.setQueue([suggestion()]);
+    const el = render();
+
+    const tray = el.querySelector('[data-testid="decision-queue"]');
+    expect(tray?.classList.contains('absolute')).toBe(true);
+    expect(tray?.classList.contains('fixed')).toBe(false);
+  });
+
+  it('labels every pending card as an AI suggestion', () => {
+    store.setQueue([suggestion({ type: 'EDGE_CASE' })]);
+    const el = render();
+
+    const card = el.querySelector('[data-testid="suggestion-card"]');
+    expect(card?.getAttribute('aria-label')).toContain('discovery.suggestion.aiLabel');
+    expect(el.querySelector('[data-testid="suggestion-type"]')).not.toBeNull();
   });
 
   it('renders no decorative stack behind a single pending card', () => {
@@ -250,7 +303,9 @@ describe('DecisionQueue', () => {
     swipe(handle, -300);
     fixture.detectChanges();
     expect(
-      el.querySelector<HTMLElement>('[data-testid="queue-card"]')!.classList.contains('card-exiting'),
+      el
+        .querySelector<HTMLElement>('[data-testid="queue-card"]')!
+        .classList.contains('card-exiting'),
     ).toBe(true);
 
     // A second swipe mid-fling must be ignored — the index still hasn't advanced.

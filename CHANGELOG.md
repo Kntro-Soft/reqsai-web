@@ -13,6 +13,29 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Added
 
+- **MVP feature flags** (`feature/mvp-feature-flags`): a typed `features` map in both environment
+  files (`FeatureKey` union + `FeatureFlags.isEnabled()`), all **off** by default, so the deployed
+  product shows only the MVP. A `featureGuard()` `canMatch` makes a disabled route behave like an
+  unknown URL (falls through to `/projects`), and the sidebar, command palette, buttons and cards
+  drop what it hides: `billing` (billing pages, checkout returns, Upgrade CTA), `usage`,
+  `integrations` (Jira pages + OAuth callback, job banner, import/push actions), `members` (org +
+  project members, invitation landing, palette action/hits, ownership transfer), `customRoles`
+  (project roles), and the `notifications` / `tokens` account placeholders. The sidebar also hides
+  a **Settings** entry with no reachable sub-page. Flipping a flag restores the feature with no
+  other change; see `docs/FEATURE-FLAGS.md` (incl. the backend's FREE-plan limits).
+- **Discovery — virtual-meeting audio capture** (`feature/system-audio-capture`): the analyst can now
+  record a Zoom / Google Meet / Teams call, not only a face-to-face meeting. A compact **audio-source
+  picker** next to the record button chooses **In person (microphone)** or **Virtual meeting (microphone +
+  meeting audio)**, remembered per user in localStorage. The virtual source opens the browser's
+  screen-share picker straight from the record click (`getDisplayMedia` with tab/window/system audio, voice
+  processing off and ReqsAI's own tab hidden), drops the unused video track and mixes the shared audio with
+  the mic in one mono Web Audio mixer — the backend keeps receiving the same 16 kHz Int16 PCM on `/ws/stt`,
+  and the level meter shows the mix. Sharing without ticking "Share tab audio" warns and lets the user
+  retry; a dismissed picker stays idle silently; "Stop sharing" mid-session keeps recording the mic with a
+  notice and a **Share again** action in the session bar; pausing keeps the shared tab, so resuming never
+  re-opens the picker. The virtual option is disabled (with the reason) outside desktop Chrome/Edge, and a
+  hint recommends headphones to avoid a duplicated transcript (`discovery.source.*` plus new
+  `discovery.rec.*` / `discovery.bar.*` keys, en/es).
 - **Discovery — live session presence** (`feature/discovery-presence`): the discovery chat now shows who
   else is viewing the **live** session — an overlapping avatar stack with a live pulse, a "+N" overflow
   bubble and a viewer count, in both the page header and the live session bar. It is fed by a new
@@ -194,6 +217,55 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed
 
+- **CI — deploy through reqsai-infra** (`ci/deploy-via-infra`): `deploy.yml` no longer syncs to S3 and
+  invalidates CloudFront; that stack no longer exists, so the old workflow would fail on the next push to
+  `main`. A push to `main` now asks `Kntro-Soft/reqsai-infra` to run its `deploy-mvp.yml` workflow with
+  `web_ref` set to the pushed commit; that workflow builds the linux/arm64 nginx image and deploys it to the
+  single-EC2 MVP host over SSM, and rebuilds reqsai-api from its `main`. Needs the repository secret
+  `INFRA_DEPLOY_TOKEN` (fine-grained PAT with Actions read and write on `reqsai-infra` only); without it the
+  job logs a notice and succeeds, so `main` never goes red. Manual runs only dispatch from `main`.
+- **UX — MVP usability polish** (`feature/mvp-ux-polish`): a refinement pass on the MVP surfaces driven by
+  a heuristic evaluation with 6 users (Nielsen, impeccable critique: live session 20 → 26/40, stories
+  20 → 24/40), keeping the brand, behaviour and copy.
+  - *Live session*: the AI suggestion queue docks to the feed column as a framed **review tray** ("AI
+    suggestions to review", counter with prev/next, minimize) instead of floating over the session bar,
+    header actions and side panel; from `sm` it stops short of the feed bottom so the latest lines stay
+    visible. ←/→ browse it, Esc minimizes it, focus returns to it after a decision, and focusing a feed
+    control it covers minimizes it (WCAG 2.4.11). A status line at the live edge says what the AI is doing — listening
+    (with the last suggestion's age), paused, **processing the final stories after Stop**, or failed with
+    the backend reason. The transcript recedes into neutral bubbles with visible speaker/time
+    ("Participante n" in Spanish); human decisions become compact "accepted/resolved by the analyst"
+    rows; accepting confirms that the story landed in the backlog as a draft.
+  - *AI vs human provenance*: new `ai` / `verified` / `pending` tokens. Everything the AI proposed reads
+    violet (suggestion cards, generated stories, "IA" origin chip); human-validated content reads emerald;
+    drafts awaiting review read amber. Priority gets its own glyph scale (critical red, high orange,
+    medium/low neutral), so red is no longer brand, AI, danger and priority at once.
+  - *Readable stories*: `hlmInput` textareas grow with their content (they were clipped at a fixed
+    height); stories read as their sentence and criteria as **Gherkin** steps with a keyword gutter in the
+    suggestion card, side panel, story detail and create page. The story detail leads with the title,
+    review status (with what it means) and origin, links an AI story to its capture session, and flags
+    unsaved story and criterion edits.
+  - *Backlog order*: sortable headers with a direction arrow and `aria-sort`, a visible "sorted by"
+    caption, priority re-ordered by meaning on the page (the API sorts the enum alphabetically), origin
+    and status chips (draft as an amber dashed outline), a page-scrolling chip-row layout below `sm`,
+    unambiguous dates, an empty state with next steps and retry on load errors. Story forms flag empty
+    required fields inline.
+  - *Audio source*: the picker is a labelled segmented control (In person / Virtual meeting) next to a
+    record button with a record dot and label; the virtual-meeting guidance is a calm two-step note
+    (share the meeting tab with its audio; wear headphones) and the missing-audio notice offers "Share
+    again" in place.
+  - *Project forms*: only the name is required and both forms say so; the optional technical profile is
+    one group (business context + tech stack, example placeholders, Enter-to-add hint). Settings go from
+    eight one-field cards to General and Technical profile, and the logo card is titled for the project.
+  - *Accessibility*: the brand red fill is `#dc2626` so white labels pass AA (4.83:1), red text in dark
+    uses a lighter step, muted text and the default focus outline meet AA, filter inputs show focus,
+    story titles are keyboard links, panel tabs/sort chips expose their state, the mobile session-bar
+    status stays announced, and new suggestions are announced politely. All measured chips are ≥ 4.5:1
+    in both themes.
+  - Report screenshots (light, 1440×900, Spanish demo data) in `docs/screenshots/mvp/`. New
+    `discovery.ai.*`, `discovery.queue.*`, `discovery.suggestion.*`, `stories.statusHint.*`,
+    `stories.origin.*`, `storyForm.*`, `projectCreate.*`, `projectSettings.*` and `common.optional/required`
+    keys (EN + ES); `discovery.source.hint` is replaced by `hintShare` / `hintHeadphones`.
 - **Core — centralized backend error handling** (`feature/frontend-error-handling`): a shared
   `messageForError` helper resolves backend errors by their machine-readable `code` against a single
   top-level `errors.<CODE>` i18n block (network / per-status / generic fallback chain). Extended from the

@@ -7,7 +7,9 @@
     "create": "Crear",
     "loading": "Cargando",
     "back": "Volver",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "optional": "Opcional",
+    "required": "Obligatorio"
   },
   "toast": {
     "dismiss": "Descartar",
@@ -374,8 +376,14 @@
   "projectCreate": {
     "title": "Nuevo proyecto",
     "subtitle": "Dale un nombre. Puedes agregar el perfil técnico luego — ayuda a la IA pero es opcional.",
-    "advanced": "Opciones avanzadas",
-    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias."
+    "advanced": "Perfil técnico",
+    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias.",
+    "namePlaceholder": "p. ej. Portal de citas",
+    "descriptionPlaceholder": "¿Qué problema resuelve y para quién?",
+    "contextGroup": "Contexto del negocio",
+    "stackGroup": "Stack técnico",
+    "chipHint": "Escribe un valor y pulsa Enter para añadirlo.",
+    "example": "p. ej. {{value}}"
   },
   "orgPicker": {
     "title": "Elige una organización",
@@ -670,7 +678,10 @@
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
     "errorValidation": "Revisa los datos e intenta de nuevo.",
-    "errorGeneric": "No se pudieron guardar los cambios."
+    "errorGeneric": "No se pudieron guardar los cambios.",
+    "logo": "Logo del proyecto",
+    "general": "General",
+    "techProfile": "Perfil técnico"
   },
   "projectRoles": {
     "title": "Roles",
@@ -882,7 +893,23 @@
       "REJECTED": "Rechazada",
       "MERGED": "Fusionada",
       "EXPORTED": "Exportada"
-    }
+    },
+    "statusHint": {
+      "DRAFT": "Borrador: todavía no está aprobada; puedes editarla antes de aprobarla.",
+      "APPROVED": "Aprobada: validada por el equipo.",
+      "REJECTED": "Rechazada: el equipo la descartó.",
+      "MERGED": "Fusionada: se integró en otra historia.",
+      "EXPORTED": "Exportada: enviada a un gestor externo (p. ej., Jira)."
+    },
+    "origin": {
+      "ai": "IA",
+      "manual": "Manual",
+      "aiHint": "Generada por la IA en una sesión de captura",
+      "manualHint": "Creada manualmente"
+    },
+    "colOrigin": "Origen",
+    "sortedBy": "Ordenadas por: {{sort}}",
+    "emptyRecord": "Grabar una sesión"
   },
   "storyForm": {
     "back": "Volver a historias",
@@ -918,7 +945,16 @@
     "criteriaSaved": "Criterio guardado.",
     "criteriaDeleted": "Criterio eliminado.",
     "criteriaIncomplete": "Completa Dado, Cuando y Entonces en cada criterio.",
-    "criteriaPartial": "Historia creada, pero {{count}} criterio(s) no se pudieron guardar. Añádelos aquí."
+    "criteriaPartial": "Historia creada, pero {{count}} criterio(s) no se pudieron guardar. Añádelos aquí.",
+    "storySection": "Historia de usuario",
+    "leadRole": "Como…",
+    "leadAction": "quiero…",
+    "leadBenefit": "para…",
+    "viewSession": "Ver la sesión de origen",
+    "unsaved": "Cambios sin guardar",
+    "criteriaNew": "Nuevo · sin guardar",
+    "criteriaHint": "Escribe cada criterio como escenario Gherkin: Dado (contexto), Cuando (acción), Entonces (resultado esperado).",
+    "required": "Completa este campo."
   },
   "glossaryPage": {
     "title": "Glosario",
@@ -1044,8 +1080,8 @@
     "sessionSeparator": "Sesión",
     "sessionStories": "{{count}} historias",
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
-    "generatedStory": "Historia generada",
-    "speaker": "Usuario {{n}}",
+    "generatedStory": "Generada por la IA",
+    "speaker": "Participante {{n}}",
     "goToStory": "Ir a la historia",
     "time": {
       "justNow": "hace un momento",
@@ -1062,7 +1098,11 @@
     },
     "decision": {
       "accepted": "Aceptada",
-      "dismissed": "Descartada"
+      "dismissed": "Descartada",
+      "acceptedBy": "Aceptada por el analista",
+      "resolvedBy": "Resuelta por el analista",
+      "acceptedToast": "Sugerencia aceptada: la historia quedó en el backlog como borrador.",
+      "resolvedToast": "Pregunta marcada como resuelta."
     },
     "live": {
       "banner": "Sesión en vivo en curso — {{language}}"
@@ -1074,7 +1114,8 @@
     "composer": {
       "placeholder": "Escribe a discovery…",
       "comingSoon": "La entrada de texto llegará pronto.",
-      "record": "Iniciar grabación"
+      "record": "Iniciar grabación",
+      "recordShort": "Grabar"
     },
     "language": {
       "label": "Idioma de la reunión",
@@ -1082,12 +1123,26 @@
       "empty": "No se encontró el idioma.",
       "locked": "El idioma queda fijo al iniciar la grabación."
     },
+    "source": {
+      "label": "Fuente de audio",
+      "mic": "Presencial (micrófono)",
+      "meeting": "Reunión virtual (micrófono + audio de la reunión)",
+      "unsupported": "Reunión virtual: disponible en Chrome o Edge de escritorio.",
+      "micShort": "Presencial",
+      "meetingShort": "Reunión virtual",
+      "hintShare": "Al pulsar Grabar, elige la pestaña de la reunión y activa «Compartir audio de la pestaña».",
+      "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
+    },
     "bar": {
       "recording": "Grabando",
       "paused": "En pausa",
       "pause": "Pausar",
       "resume": "Reanudar",
-      "stop": "Detener"
+      "stop": "Detener",
+      "meetingAudio": "Grabando micrófono + audio de la reunión",
+      "meetingAudioLost": "No se está capturando el audio de la reunión. Vuelve a compartir la pestaña de la reunión.",
+      "reshare": "Compartir de nuevo",
+      "meetingAudioShort": "Audio de la reunión"
     },
     "rec": {
       "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",
@@ -1095,17 +1150,25 @@
       "wsError": "No se pudo conectar con el servidor de transcripción.",
       "wsClosed": "Se cerró la conexión de transcripción.",
       "initFailed": "No se pudo iniciar la grabación.",
-      "audioInitFailed": "No se pudo inicializar el procesador de audio local."
+      "audioInitFailed": "No se pudo inicializar el procesador de audio local.",
+      "noMeetingAudio": "No se compartió audio. Elige la pestaña de la reunión y marca «Compartir audio de la pestaña».",
+      "meetingAudioEnded": "Se dejó de compartir el audio de la reunión. La grabación continúa solo con el micrófono.",
+      "meetingUnsupported": "Tu navegador no puede capturar el audio de la reunión. Usa Chrome o Edge de escritorio.",
+      "shareFailed": "No se pudo capturar la pestaña, ventana o pantalla elegida."
     },
     "queue": {
       "pendingBadge": "{{count}} sugerencias pendientes",
-      "pendingBadgeLabel": "sugerencias pendientes",
+      "pendingBadgeLabel": "sugerencias por revisar",
       "counter": "{{n}} de {{m}}",
       "prev": "Sugerencia anterior",
       "next": "Sugerencia siguiente",
       "collapse": "Contraer",
       "minimize": "Minimizar",
-      "dragHint": "Arrastra para navegar las sugerencias"
+      "dragHint": "Arrastra para navegar las sugerencias",
+      "title": "Sugerencias de la IA por revisar",
+      "announce": "{{count}} sugerencias de la IA por revisar",
+      "expand": "Mostrar las sugerencias por revisar",
+      "titleShort": "IA · por revisar"
     },
     "suggestion": {
       "type": {
@@ -1137,7 +1200,7 @@
       "saveAndAccept": "Guardar y aceptar",
       "dismiss": "Descartar",
       "edit": "Editar",
-      "cancelEdit": "Cancelar",
+      "cancelEdit": "Cancelar edición",
       "done": "Listo",
       "titleField": "Título",
       "scenario": "Escenario",
@@ -1151,7 +1214,16 @@
       "removeCriterion": "Eliminar criterio",
       "given": "Dado",
       "when": "cuando",
-      "then": "entonces"
+      "then": "entonces",
+      "aiLabel": "Sugerencia de la IA",
+      "aiHint": "Propuesta por la IA a partir de la conversación. Pendiente de tu revisión.",
+      "questionHint": "Resolverla solo la marca como atendida; no cambia el backlog.",
+      "changedHint": "Resaltado: lo que la IA propone cambiar",
+      "criteriaCount": "Criterios de aceptación ({{count}})",
+      "roleField": "Rol · Como…",
+      "actionField": "Acción · quiero…",
+      "benefitField": "Beneficio · para…",
+      "scenarioPlaceholder": "Opcional"
     },
     "panel": {
       "stories": "Historias",
@@ -1213,6 +1285,19 @@
       "body": "¿Salir de esta página de todos modos? La sesión sigue grabando en segundo plano y permanece activa.",
       "stay": "Quedarse",
       "leave": "Salir de todos modos"
+    },
+    "retry": "Reintentar",
+    "pendingReview": "Pendiente de revisión",
+    "ai": {
+      "listening": "La IA está escuchando la conversación",
+      "listeningHint": "Propone historias, casos límite y preguntas a medida que avanza la reunión; aparecerán arriba para tu revisión.",
+      "lastSuggestion": "Última sugerencia {{time}} · revísala en la bandeja de arriba.",
+      "paused": "Grabación en pausa",
+      "pausedHint": "La IA retomará el análisis cuando reanudes la grabación.",
+      "processing": "Procesando la sesión",
+      "processingHint": "La IA está generando las historias finales. Puede tardar unos minutos.",
+      "failed": "No se pudo procesar la sesión",
+      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde."
     }
   },
   "integrations": {

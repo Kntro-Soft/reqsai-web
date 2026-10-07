@@ -16,7 +16,7 @@ import { lucideChevronLeft, lucideMenu, lucideSearch, lucideX } from '@ng-icons/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { PermissionsStore } from '../../core/authz/permissions.store';
-import { OrgRole } from '../../core/authz/permissions.models';
+import { FeatureFlags } from '../../core/features/feature-flags';
 import { PageTitleService } from '../../core/layout/page-title.service';
 import { modLabel } from '../../core/platform/shortcut';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
@@ -29,6 +29,16 @@ import { ToastHost } from '../../shared/toast/toast-host';
 import { RecordingMinibar } from '../../features/discovery/components/recording-minibar/recording-minibar';
 import { IntegrationJobsBanner } from '../../features/workspace/components/integration-jobs-banner/integration-jobs-banner';
 import { HlmIcon } from '../../shared/ui';
+import {
+  ACCOUNT_NAV,
+  NavAccess,
+  NavSeg,
+  ORG_ROOT_NAV,
+  ORG_SETTINGS_NAV,
+  PROJECT_ROOT_NAV,
+  PROJECT_SETTINGS_NAV,
+  visibleNavSegs,
+} from './shell-nav';
 
 interface NavItem {
   /** Route segment + i18n key (`nav.<seg>`) + nav-icon name. */
@@ -37,18 +47,6 @@ interface NavItem {
   link: unknown[];
   /** When true the item is a disabled placeholder rendered with a "Soon" badge. */
   soon?: boolean;
-}
-
-/**
- * A nav item template before its link is resolved. `permission` / `role` (when set)
- * gate the item to callers who hold that project permission / org role — used to hide
- * settings entries a member can't reach.
- */
-interface NavSeg {
-  seg: string;
-  soon?: boolean;
-  permission?: string;
-  role?: OrgRole;
 }
 
 /** The sidebar context derived from the URL: which nav list, back link and heading to show. */
@@ -158,7 +156,7 @@ interface Crumb {
             } @else {
               <a
                 [routerLink]="item.link"
-                routerLinkActive="nav-link-active bg-primary/15 text-primary"
+                routerLinkActive="nav-link-active bg-primary/10 text-sidebar-accent-foreground"
                 [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
                 class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
@@ -243,7 +241,9 @@ interface Crumb {
         </header>
 
         <!-- Global background-job progress (Jira import / push-all), any page of the project. -->
-        <app-integration-jobs-banner [projectId]="projectId()" />
+        @if (integrationsEnabled) {
+          <app-integration-jobs-banner [projectId]="projectId()" />
+        }
 
         <main class="min-h-0 flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
           <div class="mx-auto flex h-full w-full max-w-5xl flex-col">
@@ -269,15 +269,15 @@ interface Crumb {
         position: absolute;
         left: 0;
         top: 50%;
-        height: 0;
+        height: 1.15rem;
         width: 3px;
         border-radius: 9999px;
         background: var(--primary);
-        transform: translateY(-50%);
-        transition: height 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(-50%) scaleY(0);
+        transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
       }
       .nav-link-active::before {
-        height: 1.15rem;
+        transform: translateY(-50%) scaleY(1);
       }
       @media (prefers-reduced-motion: reduce) {
         .nav-link::before {
@@ -291,6 +291,7 @@ export class Shell {
   protected readonly auth = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
   private readonly permissions = inject(PermissionsStore);
+  private readonly flags = inject(FeatureFlags);
   private readonly router = inject(Router);
   private readonly pageTitle = inject(PageTitleService);
 
@@ -298,6 +299,8 @@ export class Shell {
   protected readonly shortcut = modLabel('K');
   protected readonly mobileOpen = signal(false);
   protected readonly paletteOpen = signal(false);
+  /** The Jira job banner only exists while the `integrations` feature is on. */
+  protected readonly integrationsEnabled = this.flags.isEnabled('integrations');
 
   /** Open the command palette on Cmd/Ctrl+K from anywhere in the shell. */
   @HostListener('document:keydown', ['$event'])
@@ -308,40 +311,13 @@ export class Shell {
     }
   }
 
-  // Nav item segments per context; links are resolved in `navContext()` where the
-  // active project id is known. `soon` marks disabled placeholder items. `permission`
-  // / `role` gate the item to what the caller may reach — items they can't use are
-  // filtered out so the aside never offers a dead end (the guards + backend still enforce).
-  private readonly orgRootSegs: NavSeg[] = [{ seg: 'projects' }, { seg: 'settings' }];
-  private readonly orgSettingsSegs: NavSeg[] = [
-    { seg: 'general', role: 'OWNER' },
-    { seg: 'members', role: 'ADMIN' },
-    { seg: 'billing', role: 'OWNER' },
-    { seg: 'integrations', role: 'ADMIN' },
-    { seg: 'usage', role: 'OWNER' },
-  ];
-  private readonly projectRootSegs: NavSeg[] = [
-    { seg: 'overview' },
-    { seg: 'sessions', permission: 'SESSION_READ' },
-    { seg: 'stories', permission: 'STORY_READ' },
-    { seg: 'glossary', permission: 'GLOSSARY_READ' },
-    { seg: 'constraints', permission: 'CONSTRAINT_READ' },
-    { seg: 'settings' },
-  ];
-  private readonly projectSettingsSegs: NavSeg[] = [
-    { seg: 'general', permission: 'PROJECT_UPDATE' },
-    { seg: 'roles', permission: 'ROLE_READ' },
-    { seg: 'members', permission: 'MEMBER_READ' },
-    { seg: 'integrations', permission: 'INTEGRATION_READ' },
-    { seg: 'danger', permission: 'PROJECT_DELETE' },
-  ];
-  private readonly accountSegs: NavSeg[] = [
-    { seg: 'profile' },
-    { seg: 'security' },
-    { seg: 'appearance' },
-    { seg: 'notifications', soon: true },
-    { seg: 'tokens', soon: true },
-  ];
+  /** The caller's grants and the build's feature flags, as the nav filter reads them. */
+  private readonly navAccess: NavAccess = {
+    isOrgOwner: () => this.permissions.isOrgOwner(),
+    isOrgOwnerOrAdmin: () => this.permissions.isOrgOwnerOrAdmin(),
+    has: (permission) => this.permissions.has(permission),
+    isEnabled: (feature) => this.flags.isEnabled(feature),
+  };
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -388,7 +364,7 @@ export class Shell {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         headingKey: 'nav.account',
         ariaKey: 'nav.accountAria',
-        items: this.accountSegs.map((s) => ({
+        items: this.visibleSegs(ACCOUNT_NAV).map((s) => ({
           seg: s.seg,
           link: ['/account', s.seg],
           soon: s.soon,
@@ -407,21 +383,21 @@ export class Shell {
           },
           headingKey: 'nav.settings',
           ariaKey: 'nav.projectAria',
-          items: this.visibleSegs(this.projectSettingsSegs).map((s) => ({
+          items: this.visibleSegs(PROJECT_SETTINGS_NAV).map((s) => ({
             seg: s.seg,
             link: ['/projects', pid, 'settings', s.seg],
             soon: s.soon,
           })),
         };
       }
-      // Project root.
+      // Project root. "Settings" is dropped when no settings sub-page is reachable.
+      const hasSettings = this.visibleSegs(PROJECT_SETTINGS_NAV).length > 0;
       return {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         ariaKey: 'nav.projectAria',
-        items: this.visibleSegs(this.projectRootSegs).map((s) => ({
-          seg: s.seg,
-          link: ['/projects', pid, s.seg],
-        })),
+        items: this.visibleSegs(PROJECT_ROOT_NAV)
+          .filter((s) => s.seg !== 'settings' || hasSettings)
+          .map((s) => ({ seg: s.seg, link: ['/projects', pid, s.seg] })),
       };
     }
 
@@ -431,7 +407,7 @@ export class Shell {
         back: { link: ['/projects'], labelKey: 'nav.allProjects' },
         headingKey: 'nav.settings',
         ariaKey: 'nav.orgAria',
-        items: this.visibleSegs(this.orgSettingsSegs).map((s) => ({
+        items: this.visibleSegs(ORG_SETTINGS_NAV).map((s) => ({
           seg: s.seg,
           link: ['/settings', s.seg],
           soon: s.soon,
@@ -439,30 +415,26 @@ export class Shell {
       };
     }
 
-    // Org root.
+    // Org root. "Settings" opens the first org settings page the caller can reach (the
+    // fixed `general` default is owner-only) and is dropped when there is none.
+    const settingsLanding = this.visibleSegs(ORG_SETTINGS_NAV)[0]?.seg;
     return {
       back: null,
       ariaKey: 'nav.orgAria',
-      items: this.orgRootSegs.map((s) => ({ seg: s.seg, link: ['/' + s.seg] })),
+      items: ORG_ROOT_NAV.flatMap((s) => {
+        if (s.seg !== 'settings') return [{ seg: s.seg, link: ['/' + s.seg] }];
+        return settingsLanding ? [{ seg: s.seg, link: ['/settings', settingsLanding] }] : [];
+      }),
     };
   });
 
   /**
-   * Keeps only the nav segments the caller may reach: an item with a `role` needs that
-   * org role (owner always passes; `'ADMIN'` admits owner + admin), an item with a
-   * `permission` needs that project permission (owner/admin bypass). Ungated items always
-   * show. Reads the permission signals so the list re-renders when authorization arrives.
+   * Keeps only the nav segments the caller may reach (feature flag, org role, project
+   * permission — see {@link visibleNavSegs}). Reads the permission signals so the list
+   * re-renders when authorization arrives.
    */
-  private visibleSegs(segs: NavSeg[]): NavSeg[] {
-    return segs.filter((s) => {
-      if (s.role) {
-        const ok =
-          s.role === 'OWNER' ? this.permissions.isOrgOwner() : this.permissions.isOrgOwnerOrAdmin();
-        if (!ok) return false;
-      }
-      if (s.permission && !this.permissions.has(s.permission)) return false;
-      return true;
-    });
+  private visibleSegs(segs: readonly NavSeg[]): NavSeg[] {
+    return visibleNavSegs(segs, this.navAccess);
   }
 
   /** Breadcrumb trail for the top bar: the context ancestors (clickable) then the

@@ -196,6 +196,8 @@ export interface DisplayStory {
    * events, older REST payloads).
    */
   acceptanceCriteria: AcceptanceCriterion[];
+  /** Review status (DRAFT/APPROVED/…) when the source carried it (REST backlog). */
+  status?: string | null;
 }
 
 export interface PageResponse<T> {

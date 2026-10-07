@@ -10,11 +10,17 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideArrowUpDown,
   lucideDownload,
+  lucideMic,
   lucidePlus,
+  lucideRotateCw,
   lucideSearch,
   lucideTrash2,
   lucideUpload,
@@ -29,6 +35,7 @@ import {
 } from '../../../workspace/data/integrations.models';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
+import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { Indeterminate } from '../../../../shared/directives/indeterminate';
@@ -46,6 +53,12 @@ import { Select, SelectOption } from '../../../../shared/components/select/selec
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmSkeleton } from '../../../../shared/ui';
 import {
+  OriginBadge,
+  PriorityBadge,
+  StoryStatusBadge,
+} from '../../components/story-badges/story-badges';
+import { sortByPriority } from './story-sort';
+import {
   allSelectedOnPage,
   someSelectedOnPage,
   toggleAllOnPage,
@@ -55,18 +68,33 @@ import {
 /** A sort control value: a backend sort field paired with a direction. */
 type SortValue = `${StorySort}:${StorySortDirection}`;
 
+/** The sort preset each sortable column header applies (matches the sort dropdown). */
+const COLUMN_SORT: Record<StorySort, SortValue> = {
+  createdAt: 'createdAt:DESC',
+  title: 'title:ASC',
+  priority: 'priority:DESC',
+  status: 'status:ASC',
+};
+
 /**
  * The project's user-story backlog as a Members-style table, filtered and paged
  * entirely server-side: a debounced text search, status + priority selects, a
  * created-date range, a sort control and real pagination all drive the
- * `GET /stories` query. A "New story" button opens the dedicated create page;
- * clicking a row navigates to that story's detail/edit page.
+ * `GET /stories` query. The active order is always visible (sortable column
+ * headers with a direction arrow and `aria-sort`, plus a "sorted by" caption).
+ * Each row shows its review status and origin (AI from a session vs manual);
+ * below `sm` the columns collapse into a chip row under the title. A "New story"
+ * button opens the dedicated create page; the title links to the detail page.
  */
 @Component({
   selector: 'app-project-stories',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     RouterLink,
+    OriginBadge,
+    PriorityBadge,
+    StoryStatusBadge,
     Select,
     Modal,
     Indeterminate,
@@ -80,65 +108,80 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
     TranslocoPipe,
   ],
   viewProviders: [
-    provideIcons({ lucideDownload, lucidePlus, lucideSearch, lucideTrash2, lucideUpload }),
+    provideIcons({
+      lucideArrowDown,
+      lucideArrowUp,
+      lucideArrowUpDown,
+      lucideDownload,
+      lucideMic,
+      lucidePlus,
+      lucideRotateCw,
+      lucideSearch,
+      lucideTrash2,
+      lucideUpload,
+    }),
   ],
-  host: { class: 'flex h-full min-h-0 flex-col' },
+  // Below sm the page itself scrolls (no nested scroll box); from sm the table scrolls
+  // inside the viewport-high layout with its sticky header.
+  host: { class: 'flex flex-col sm:h-full sm:min-h-0' },
   template: `
-    <div class="flex h-full min-h-0 flex-col gap-6">
+    <div class="flex flex-col gap-6 sm:h-full sm:min-h-0">
       <div class="flex shrink-0 items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <button
-            *appHasPermission="'INTEGRATION_SYNC'"
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="openImport()"
-            [disabled]="importPreviewing() || importJobRunning() || jiraConfigured() !== true"
-            [title]="
-              importJobRunning()
-                ? ('integrations.jobs.alreadyRunning' | transloco)
-                : jiraConfigured() === false
-                  ? ('integrations.push.notConfigured' | transloco)
-                  : ''
-            "
-            data-testid="stories-import"
-          >
-            @if (importPreviewing() || importJobRunning()) {
-              <hlm-spinner class="h-4 w-4" />
-            } @else {
-              <hlm-icon name="lucideDownload" size="15px" />
-            }
-            {{ 'integrations.import.action' | transloco }}
-          </button>
-          <button
-            *appHasPermission="'INTEGRATION_SYNC'"
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="pushAll()"
-            [disabled]="pushAllBusy() || jiraConfigured() !== true"
-            [title]="
-              pushJobRunning()
-                ? ('integrations.jobs.alreadyRunning' | transloco)
-                : jiraConfigured() === false
-                  ? ('integrations.push.notConfigured' | transloco)
-                  : ''
-            "
-            data-testid="stories-push-all"
-          >
-            @if (pushAllBusy()) {
-              <hlm-spinner class="h-4 w-4" />
-            } @else {
-              <hlm-icon name="lucideUpload" size="15px" />
-            }
-            {{ 'integrations.push.pushAll' | transloco }}
-          </button>
+          @if (integrationsEnabled) {
+            <button
+              *appHasPermission="'INTEGRATION_SYNC'"
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="openImport()"
+              [disabled]="importPreviewing() || importJobRunning() || jiraConfigured() !== true"
+              [title]="
+                importJobRunning()
+                  ? ('integrations.jobs.alreadyRunning' | transloco)
+                  : jiraConfigured() === false
+                    ? ('integrations.push.notConfigured' | transloco)
+                    : ''
+              "
+              data-testid="stories-import"
+            >
+              @if (importPreviewing() || importJobRunning()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideDownload" size="15px" />
+              }
+              {{ 'integrations.import.action' | transloco }}
+            </button>
+            <button
+              *appHasPermission="'INTEGRATION_SYNC'"
+              hlmBtn
+              size="sm"
+              variant="outline"
+              type="button"
+              (click)="pushAll()"
+              [disabled]="pushAllBusy() || jiraConfigured() !== true"
+              [title]="
+                pushJobRunning()
+                  ? ('integrations.jobs.alreadyRunning' | transloco)
+                  : jiraConfigured() === false
+                    ? ('integrations.push.notConfigured' | transloco)
+                    : ''
+              "
+              data-testid="stories-push-all"
+            >
+              @if (pushAllBusy()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideUpload" size="15px" />
+              }
+              {{ 'integrations.push.pushAll' | transloco }}
+            </button>
+          }
           <a
             *appHasPermission="'STORY_WRITE'"
             hlmBtn
@@ -172,30 +215,32 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             {{ 'stories.clearSelection' | transloco }}
           </button>
           <div class="ml-auto flex items-center gap-2">
-            <button
-              *appHasPermission="'INTEGRATION_SYNC'"
-              hlmBtn
-              size="sm"
-              variant="outline"
-              type="button"
-              (click)="pushSelected()"
-              [disabled]="pushAllBusy() || jiraConfigured() !== true"
-              [title]="
-                pushJobRunning()
-                  ? ('integrations.jobs.alreadyRunning' | transloco)
-                  : jiraConfigured() === false
-                    ? ('integrations.push.notConfigured' | transloco)
-                    : ''
-              "
-              data-testid="stories-push-selected"
-            >
-              @if (pushAllBusy()) {
-                <hlm-spinner class="h-4 w-4" />
-              } @else {
-                <hlm-icon name="lucideUpload" size="15px" />
-              }
-              {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
-            </button>
+            @if (integrationsEnabled) {
+              <button
+                *appHasPermission="'INTEGRATION_SYNC'"
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="pushSelected()"
+                [disabled]="pushAllBusy() || jiraConfigured() !== true"
+                [title]="
+                  pushJobRunning()
+                    ? ('integrations.jobs.alreadyRunning' | transloco)
+                    : jiraConfigured() === false
+                      ? ('integrations.push.notConfigured' | transloco)
+                      : ''
+                "
+                data-testid="stories-push-selected"
+              >
+                @if (pushAllBusy()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUpload" size="15px" />
+                }
+                {{ 'stories.bulkPush' | transloco: { count: selectedCount() } }}
+              </button>
+            }
             <button
               *appHasPermission="'STORY_DELETE'"
               hlmBtn
@@ -216,7 +261,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
       <div class="flex shrink-0 flex-col gap-2">
         <div class="flex flex-wrap items-center gap-2">
           <div
-            class="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-input bg-background px-3"
+            class="flex min-w-0 flex-1 basis-56 items-center gap-2 rounded-md border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
           >
             <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
             <input
@@ -224,6 +269,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               [value]="query()"
               (input)="onSearch($any($event.target).value)"
               [placeholder]="'stories.searchPlaceholder' | transloco"
+              [attr.aria-label]="'stories.searchPlaceholder' | transloco"
               class="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               autocomplete="off"
               spellcheck="false"
@@ -249,31 +295,35 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             [ariaLabel]="'stories.sortAria' | transloco"
           />
         </div>
-        <div class="flex flex-wrap items-center gap-2 text-sm">
-          <label class="text-muted-foreground" for="stories-after">
-            {{ 'stories.createdAfter' | transloco }}
-          </label>
-          <input
-            hlmInput
-            id="stories-after"
-            type="date"
-            class="w-44"
-            [value]="createdAfter()"
-            (change)="onDateChange('after', $any($event.target).value)"
-            data-testid="stories-after"
-          />
-          <label class="text-muted-foreground" for="stories-before">
-            {{ 'stories.createdBefore' | transloco }}
-          </label>
-          <input
-            hlmInput
-            id="stories-before"
-            type="date"
-            class="w-44"
-            [value]="createdBefore()"
-            (change)="onDateChange('before', $any($event.target).value)"
-            data-testid="stories-before"
-          />
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <div class="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+            <label class="w-12 shrink-0 text-muted-foreground sm:w-auto" for="stories-after">
+              {{ 'stories.createdAfter' | transloco }}
+            </label>
+            <input
+              hlmInput
+              id="stories-after"
+              type="date"
+              class="min-w-0 flex-1 sm:w-44 sm:flex-none"
+              [value]="createdAfter()"
+              (change)="onDateChange('after', $any($event.target).value)"
+              data-testid="stories-after"
+            />
+          </div>
+          <div class="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+            <label class="w-12 shrink-0 text-muted-foreground sm:w-auto" for="stories-before">
+              {{ 'stories.createdBefore' | transloco }}
+            </label>
+            <input
+              hlmInput
+              id="stories-before"
+              type="date"
+              class="min-w-0 flex-1 sm:w-44 sm:flex-none"
+              [value]="createdBefore()"
+              (change)="onDateChange('before', $any($event.target).value)"
+              data-testid="stories-before"
+            />
+          </div>
           @if (createdAfter() || createdBefore()) {
             <button
               hlmBtn
@@ -291,7 +341,7 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
 
       @if (state() === 'loading') {
         <div
-          class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border"
+          class="overflow-hidden rounded-2xl border border-border sm:min-h-0 sm:flex-1 sm:overflow-auto"
           data-testid="stories-skeleton"
         >
           @for (i of skeletonRows; track i) {
@@ -306,25 +356,61 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
           }
         </div>
       } @else if (state() === 'error') {
-        <p class="shrink-0 text-sm text-destructive">{{ 'stories.loadError' | transloco }}</p>
+        <div class="flex shrink-0 flex-wrap items-center gap-3" role="alert">
+          <p class="text-sm text-destructive">{{ 'stories.loadError' | transloco }}</p>
+          <button hlmBtn size="sm" variant="outline" type="button" (click)="reload()">
+            <hlm-icon name="lucideRotateCw" size="14px" />
+            {{ 'discovery.retry' | transloco }}
+          </button>
+        </div>
       } @else if (stories().length === 0) {
-        <p
-          class="min-h-0 flex-1 rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+        <div
+          class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border px-6 py-10 text-center sm:min-h-0 sm:flex-1"
           data-testid="stories-empty"
         >
-          {{ (hasFilters() ? 'stories.noMatches' : 'stories.emptyBody') | transloco }}
-        </p>
+          <p class="max-w-md text-sm text-muted-foreground">
+            {{ (hasFilters() ? 'stories.noMatches' : 'stories.emptyBody') | transloco }}
+          </p>
+          @if (!hasFilters()) {
+            <div class="flex flex-wrap justify-center gap-2">
+              <a
+                hlmBtn
+                size="sm"
+                variant="outline"
+                [routerLink]="['/projects', projectId(), 'sessions']"
+              >
+                <hlm-icon name="lucideMic" size="15px" />
+                {{ 'stories.emptyRecord' | transloco }}
+              </a>
+              <a *appHasPermission="'STORY_WRITE'" hlmBtn size="sm" [routerLink]="['new']">
+                <hlm-icon name="lucidePlus" size="15px" />
+                {{ 'stories.new' | transloco }}
+              </a>
+            </div>
+          }
+        </div>
       } @else {
-        <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
-          <table class="w-full min-w-[720px] text-sm">
-            <thead>
+        <p class="-mb-3 shrink-0 text-xs text-muted-foreground" data-testid="stories-sorted-by">
+          {{ 'stories.sortedBy' | transloco: { sort: sortLabel() } }}
+        </p>
+        <div
+          class="overflow-x-auto rounded-2xl border border-border sm:min-h-0 sm:flex-1 sm:overflow-auto"
+        >
+          <table class="w-full text-sm sm:min-w-[760px]">
+            <caption class="sr-only">
+              {{
+                'stories.title' | transloco
+              }}
+              ·
+              {{
+                'stories.sortedBy' | transloco: { sort: sortLabel() }
+              }}
+            </caption>
+            <thead class="hidden sm:table-header-group">
               <tr
                 class="sticky top-0 z-10 border-b border-border bg-card text-left text-xs text-muted-foreground"
               >
-                <th
-                  *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
-                  class="w-10 px-4 py-2.5 font-medium"
-                >
+                <th *appHasPermission="selectPermissions" class="w-10 px-4 py-2.5 font-medium">
                   <input
                     type="checkbox"
                     class="h-4 w-4 shrink-0 align-middle accent-primary"
@@ -335,14 +421,33 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                     data-testid="stories-select-all"
                   />
                 </th>
-                <th class="px-4 py-2.5 font-medium">{{ 'stories.colTitle' | transloco }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ 'stories.colPriority' | transloco }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ 'stories.colStatus' | transloco }}</th>
+                <th class="px-4 py-2.5 font-medium" [attr.aria-sort]="ariaSort('title')">
+                  <ng-container
+                    [ngTemplateOutlet]="sortButton"
+                    [ngTemplateOutletContext]="{ field: 'title', label: 'stories.colTitle' }"
+                  />
+                </th>
+                <th class="px-3 py-2.5 font-medium" [attr.aria-sort]="ariaSort('priority')">
+                  <ng-container
+                    [ngTemplateOutlet]="sortButton"
+                    [ngTemplateOutletContext]="{ field: 'priority', label: 'stories.colPriority' }"
+                  />
+                </th>
+                <th class="px-3 py-2.5 font-medium" [attr.aria-sort]="ariaSort('status')">
+                  <ng-container
+                    [ngTemplateOutlet]="sortButton"
+                    [ngTemplateOutletContext]="{ field: 'status', label: 'stories.colStatus' }"
+                  />
+                </th>
+                <th class="px-3 py-2.5 font-medium">{{ 'stories.colOrigin' | transloco }}</th>
                 <th class="px-3 py-2.5 text-right font-medium">
                   {{ 'stories.colPoints' | transloco }}
                 </th>
-                <th class="px-3 py-2.5 whitespace-nowrap font-medium">
-                  {{ 'stories.colCreated' | transloco }}
+                <th class="px-3 py-2.5 font-medium" [attr.aria-sort]="ariaSort('createdAt')">
+                  <ng-container
+                    [ngTemplateOutlet]="sortButton"
+                    [ngTemplateOutletContext]="{ field: 'createdAt', label: 'stories.colCreated' }"
+                  />
                 </th>
                 <th
                   *appHasPermission="'STORY_DELETE'"
@@ -355,14 +460,14 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
             <tbody>
               @for (s of stories(); track s.id) {
                 <tr
-                  class="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-accent/50"
+                  class="cursor-pointer border-b border-border align-top transition-colors last:border-0 hover:bg-secondary/60 sm:align-middle"
                   [class.bg-muted]="selected().has(s.id)"
                   (click)="openDetail(s)"
                   data-testid="story-row"
                 >
                   <td
-                    *appHasPermission="['STORY_DELETE', 'INTEGRATION_SYNC']"
-                    class="w-10 px-4 py-3"
+                    *appHasPermission="selectPermissions"
+                    class="w-10 py-3 pl-3 pr-1 sm:px-4"
                     (click)="$event.stopPropagation()"
                   >
                     <input
@@ -374,34 +479,52 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
                       [attr.data-testid]="'story-select-' + s.id"
                     />
                   </td>
-                  <td class="max-w-xs px-4 py-3">
-                    <p class="truncate font-medium">{{ s.title }}</p>
-                    <p class="truncate text-xs text-muted-foreground">
+                  <td class="max-w-0 px-3 py-3 sm:max-w-sm sm:px-4">
+                    <!-- The title is the row's real link (keyboard + screen readers); the
+                         row click stays as a mouse convenience. -->
+                    <a
+                      [routerLink]="['/projects', projectId(), 'stories', s.id]"
+                      (click)="$event.stopPropagation()"
+                      class="block truncate font-medium text-foreground hover:underline focus-visible:underline"
+                      data-testid="story-link"
+                      >{{ s.title }}</a
+                    >
+                    <p
+                      class="line-clamp-2 text-xs leading-relaxed text-muted-foreground sm:line-clamp-1"
+                    >
                       {{ 'stories.as' | transloco }} {{ s.role }}{{ 'stories.want' | transloco }}
                       {{ s.action }}
                     </p>
+                    <!-- Below sm the other columns collapse into this chip row. -->
+                    <div class="mt-2 flex flex-wrap items-center gap-1.5 sm:hidden">
+                      <app-priority-badge [priority]="s.priority" />
+                      <app-story-status-badge [status]="s.status" />
+                      <app-origin-badge [sessionId]="s.sessionId" />
+                      @if (s.storyPoints !== null) {
+                        <span class="text-xs tabular-nums text-muted-foreground">{{
+                          'discovery.panel.points' | transloco: { n: s.storyPoints }
+                        }}</span>
+                      }
+                    </div>
                   </td>
-                  <td class="px-3 py-3">
-                    <span
-                      class="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      [class]="priorityClass(s.priority)"
-                    >
-                      {{ 'stories.priority.' + s.priority | transloco }}
-                    </span>
+                  <td class="hidden px-3 py-3 sm:table-cell">
+                    <app-priority-badge [priority]="s.priority" />
                   </td>
-                  <td class="px-3 py-3">
-                    <span
-                      class="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      [class]="statusClass(s.status)"
-                    >
-                      {{ 'stories.status.' + s.status | transloco }}
-                    </span>
+                  <td class="hidden px-3 py-3 sm:table-cell">
+                    <app-story-status-badge [status]="s.status" />
                   </td>
-                  <td class="px-3 py-3 text-right whitespace-nowrap text-muted-foreground">
+                  <td class="hidden px-3 py-3 sm:table-cell">
+                    <app-origin-badge [sessionId]="s.sessionId" />
+                  </td>
+                  <td
+                    class="hidden px-3 py-3 text-right whitespace-nowrap tabular-nums text-muted-foreground sm:table-cell"
+                  >
                     {{ s.storyPoints ?? '—' }}
                   </td>
-                  <td class="px-3 py-3 whitespace-nowrap text-muted-foreground">
-                    {{ formatDate(s.createdAt) }}
+                  <td
+                    class="hidden px-3 py-3 whitespace-nowrap tabular-nums text-muted-foreground sm:table-cell"
+                  >
+                    <time [attr.datetime]="s.createdAt">{{ formatDate(s.createdAt) }}</time>
                   </td>
                   <td *appHasPermission="'STORY_DELETE'" class="w-12 px-3 py-3 text-right">
                     <button
@@ -427,33 +550,54 @@ type SortValue = `${StorySort}:${StorySortDirection}`;
               'stories.pageOf' | transloco: { page: page() + 1, total: totalPages() }
             }}</span>
           </div>
-          <div class="flex gap-2">
-            <button
-              hlmBtn
-              size="sm"
-              variant="outline"
-              type="button"
-              [disabled]="page() === 0 || state() === 'loading'"
-              (click)="goToPage(page() - 1)"
-              data-testid="stories-prev"
-            >
-              {{ 'stories.prev' | transloco }}
-            </button>
-            <button
-              hlmBtn
-              size="sm"
-              variant="outline"
-              type="button"
-              [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
-              (click)="goToPage(page() + 1)"
-              data-testid="stories-next"
-            >
-              {{ 'stories.next' | transloco }}
-            </button>
-          </div>
+          @if (totalPages() > 1) {
+            <div class="flex gap-2">
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                [disabled]="page() === 0 || state() === 'loading'"
+                (click)="goToPage(page() - 1)"
+                data-testid="stories-prev"
+              >
+                {{ 'stories.prev' | transloco }}
+              </button>
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                [disabled]="page() >= totalPages() - 1 || state() === 'loading'"
+                (click)="goToPage(page() + 1)"
+                data-testid="stories-next"
+              >
+                {{ 'stories.next' | transloco }}
+              </button>
+            </div>
+          }
         </div>
       }
     </div>
+
+    <!-- Header sort control: names the column and shows the active direction. -->
+    <ng-template #sortButton let-field="field" let-label="label">
+      <button
+        type="button"
+        (click)="sortByColumn(field)"
+        class="-mx-1 inline-flex items-center gap-1 whitespace-nowrap rounded px-1 py-0.5 transition-colors hover:text-foreground"
+        [class.text-foreground]="sortField() === field"
+        [attr.data-testid]="'stories-sort-' + field"
+      >
+        {{ label | transloco }}
+        <hlm-icon
+          [name]="sortIcon(field)"
+          size="13px"
+          [class.opacity-40]="sortField() !== field"
+          aria-hidden="true"
+        />
+      </button>
+    </ng-template>
 
     <!-- Delete a single story -->
     <app-modal [(open)]="deleteOpen">
@@ -613,6 +757,16 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   readonly projectId = input.required<string>();
 
+  /** Jira import / push (and their job tracking) belong to the `integrations` feature. */
+  protected readonly integrationsEnabled = inject(FeatureFlags).isEnabled('integrations');
+  /**
+   * Row selection only exists to feed the bulk actions, so the checkbox column shows to
+   * callers who can run at least one of them — bulk delete, or bulk push while Jira is on.
+   */
+  protected readonly selectPermissions: readonly string[] = this.integrationsEnabled
+    ? ['STORY_DELETE', 'INTEGRATION_SYNC']
+    : ['STORY_DELETE'];
+
   // Background-job state: the 202 request itself is brief (pushStarting), then the
   // jobs store owns the RUNNING state — the buttons stay disabled from it while the
   // work happens server-side, without blocking the page.
@@ -730,10 +884,12 @@ export class ProjectStories implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.load();
-    this.integrations.getProjectTarget(this.projectId()).subscribe({
-      next: () => this.jiraConfigured.set(true),
-      error: () => this.jiraConfigured.set(false),
-    });
+    if (this.integrationsEnabled) {
+      this.integrations.getProjectTarget(this.projectId()).subscribe({
+        next: () => this.jiraConfigured.set(true),
+        error: () => this.jiraConfigured.set(false),
+      });
+    }
     // A finished background job (import or push-all) changes the backlog — new
     // stories, or statuses flipped to EXPORTED — so refresh the visible page.
     this.jobs.completed$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((job) => {
@@ -773,6 +929,35 @@ export class ProjectStories implements OnInit, OnDestroy {
   protected onSortChange(value: string): void {
     this.sort.set(value as SortValue);
     this.resetAndLoad();
+  }
+
+  /** The field the list is currently ordered by. */
+  protected readonly sortField = computed(() => this.sort().split(':')[0] as StorySort);
+
+  /** The active sort's label, for the visible "sorted by" caption. */
+  protected readonly sortLabel = computed(
+    () => this.sortOptions().find((o) => o.value === this.sort())?.label ?? '',
+  );
+
+  /** Column header click: apply that column's sort (same presets as the dropdown). */
+  protected sortByColumn(field: StorySort): void {
+    if (this.sort() === COLUMN_SORT[field]) return;
+    this.onSortChange(COLUMN_SORT[field]);
+  }
+
+  protected ariaSort(field: StorySort): 'ascending' | 'descending' | null {
+    if (this.sortField() !== field) return null;
+    return this.sort().endsWith(':ASC') ? 'ascending' : 'descending';
+  }
+
+  protected sortIcon(field: StorySort): string {
+    if (this.sortField() !== field) return 'lucideArrowUpDown';
+    return this.sort().endsWith(':ASC') ? 'lucideArrowUp' : 'lucideArrowDown';
+  }
+
+  /** Retries the current page after a load error. */
+  protected reload(): void {
+    this.load();
   }
 
   protected goToPage(next: number): void {
@@ -1018,7 +1203,11 @@ export class ProjectStories implements OnInit, OnDestroy {
     this.state.set('loading');
     this.api.listProjectStories(this.projectId(), filters).subscribe({
       next: (res) => {
-        this.stories.set(res.content);
+        // The backend sorts the priority enum alphabetically; keep the page in the
+        // order the "Prioridad" header promises (Critical → Low).
+        this.stories.set(
+          sortBy === 'priority' ? sortByPriority(res.content, sortDirection) : res.content,
+        );
         this.totalPages.set(Math.max(1, res.page?.totalPages ?? 1));
         this.total.set(res.page?.totalElements ?? res.content.length);
         this.state.set('ready');
@@ -1027,31 +1216,16 @@ export class ProjectStories implements OnInit, OnDestroy {
     });
   }
 
-  protected priorityClass(priority: string): string {
-    const classes: Record<string, string> = {
-      CRITICAL: 'bg-destructive/20 text-destructive',
-      HIGH: 'bg-destructive/15 text-destructive',
-      MEDIUM: 'bg-amber-500/15 text-amber-600',
-      LOW: 'bg-secondary text-muted-foreground',
-    };
-    return classes[priority] ?? 'bg-secondary text-muted-foreground';
-  }
-
-  protected statusClass(status: string): string {
-    const classes: Record<string, string> = {
-      APPROVED: 'bg-emerald-500/15 text-emerald-500',
-      REJECTED: 'bg-destructive/15 text-destructive',
-      MERGED: 'bg-primary/15 text-primary',
-      EXPORTED: 'bg-primary/15 text-primary',
-      DRAFT: 'bg-secondary text-muted-foreground',
-    };
-    return classes[status] ?? 'bg-secondary text-muted-foreground';
-  }
-
+  /** An unambiguous short date in the UI language ("7 oct 2026"), never "7/10/2026". */
   protected formatDate(iso: string | null | undefined): string {
     if (!iso) return '—';
     const date = new Date(iso);
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString();
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat(this.transloco.getActiveLang(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
   }
 }
 

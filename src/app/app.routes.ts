@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { featureGuard } from './core/guards/feature.guard';
 import { launchGuard } from './core/guards/launch.guard';
 import { onboardingGuard, orgGuard } from './core/guards/org.guard';
 import {
@@ -21,9 +22,12 @@ export const routes: Routes = [
   },
 
   // Invitation landing: chrome-less, no auth guard so logged-out invitees can view it.
+  // Part of the `members` feature: while it is off nobody can invite or manage members,
+  // so a stale invite link falls through to the fallback like any unknown URL.
   {
     path: 'invitations/accept',
     title: 'titles.acceptInvitation',
+    canMatch: [featureGuard('members')],
     loadComponent: () =>
       import('./features/workspace/pages/accept-invitation/accept-invitation').then(
         (m) => m.AcceptInvitation,
@@ -43,6 +47,7 @@ export const routes: Routes = [
   {
     path: 'settings/integrations/jira/callback',
     title: 'titles.integrations',
+    canMatch: [featureGuard('integrations')],
     canActivate: [authGuard, termsGuard],
     loadComponent: () =>
       import('./features/workspace/pages/jira-oauth-callback/jira-oauth-callback').then(
@@ -133,6 +138,7 @@ export const routes: Routes = [
           {
             path: 'members',
             title: 'titles.members',
+            canMatch: [featureGuard('members')],
             canActivate: [requireOrgRole('ADMIN')],
             data: { orgRole: 'ADMIN' },
             loadComponent: () =>
@@ -141,6 +147,7 @@ export const routes: Routes = [
           {
             path: 'billing',
             title: 'titles.billing',
+            canMatch: [featureGuard('billing')],
             canActivate: [requireOrgRole('OWNER')],
             data: { orgRole: 'OWNER' },
             loadComponent: () =>
@@ -149,6 +156,7 @@ export const routes: Routes = [
           {
             path: 'integrations',
             title: 'titles.integrations',
+            canMatch: [featureGuard('integrations')],
             canActivate: [requireOrgRole('ADMIN')],
             data: { orgRole: 'ADMIN' },
             loadComponent: () =>
@@ -159,6 +167,7 @@ export const routes: Routes = [
           {
             path: 'usage',
             title: 'titles.usage',
+            canMatch: [featureGuard('usage')],
             canActivate: [requireOrgRole('OWNER')],
             data: { orgRole: 'OWNER' },
             loadComponent: () =>
@@ -170,6 +179,7 @@ export const routes: Routes = [
       {
         path: 'billing/success',
         title: 'titles.billing',
+        canMatch: [featureGuard('billing')],
         loadComponent: () =>
           import('./features/billing/pages/checkout-result/checkout-result').then(
             (m) => m.CheckoutResult,
@@ -179,6 +189,7 @@ export const routes: Routes = [
       {
         path: 'billing/cancel',
         title: 'titles.billing',
+        canMatch: [featureGuard('billing')],
         loadComponent: () =>
           import('./features/billing/pages/checkout-result/checkout-result').then(
             (m) => m.CheckoutResult,
@@ -214,6 +225,7 @@ export const routes: Routes = [
           {
             path: 'notifications',
             title: 'titles.notifications',
+            canMatch: [featureGuard('notifications')],
             loadComponent: () =>
               import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
             data: { titleKey: 'titles.notifications', icon: 'lucideBell' },
@@ -221,6 +233,7 @@ export const routes: Routes = [
           {
             path: 'tokens',
             title: 'titles.tokens',
+            canMatch: [featureGuard('tokens')],
             loadComponent: () =>
               import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
             data: { titleKey: 'titles.tokens', icon: 'lucideKey' },
@@ -322,7 +335,7 @@ export const routes: Routes = [
               {
                 path: 'roles',
                 title: 'titles.projectRoles',
-                canMatch: [requirePermissionMatch('ROLE_READ')],
+                canMatch: [featureGuard('customRoles', requirePermissionMatch('ROLE_READ'))],
                 canActivate: [requirePermission('ROLE_READ')],
                 data: { permission: 'ROLE_READ' },
                 loadComponent: () =>
@@ -333,6 +346,7 @@ export const routes: Routes = [
               {
                 path: 'roles/new',
                 title: 'titles.newRole',
+                canMatch: [featureGuard('customRoles')],
                 canActivate: [requirePermission('ROLE_CREATE')],
                 data: { permission: 'ROLE_CREATE' },
                 loadComponent: () =>
@@ -343,6 +357,7 @@ export const routes: Routes = [
               {
                 path: 'roles/:roleId/edit',
                 title: 'titles.editRole',
+                canMatch: [featureGuard('customRoles')],
                 canActivate: [requirePermission('ROLE_UPDATE')],
                 data: { permission: 'ROLE_UPDATE' },
                 loadComponent: () =>
@@ -353,7 +368,7 @@ export const routes: Routes = [
               {
                 path: 'members',
                 title: 'titles.projectMembers',
-                canMatch: [requirePermissionMatch('MEMBER_READ')],
+                canMatch: [featureGuard('members', requirePermissionMatch('MEMBER_READ'))],
                 canActivate: [requirePermission('MEMBER_READ')],
                 data: { permission: 'MEMBER_READ' },
                 loadComponent: () =>
@@ -364,7 +379,9 @@ export const routes: Routes = [
               {
                 path: 'integrations',
                 title: 'titles.integrations',
-                canMatch: [requirePermissionMatch('INTEGRATION_READ')],
+                canMatch: [
+                  featureGuard('integrations', requirePermissionMatch('INTEGRATION_READ')),
+                ],
                 canActivate: [requirePermission('INTEGRATION_READ')],
                 data: { permission: 'INTEGRATION_READ' },
                 loadComponent: () =>
@@ -390,5 +407,6 @@ export const routes: Routes = [
     ],
   },
 
+  // Unknown URLs — and the routes of a disabled feature (see featureGuard) — land here.
   { path: '**', redirectTo: 'projects' },
 ];

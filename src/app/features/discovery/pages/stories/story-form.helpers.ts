@@ -76,3 +76,17 @@ export function partitionNewCriteria(rows: readonly EditableCriterion[]): {
   });
   return { requests, incompleteIndexes };
 }
+
+/**
+ * Whether a criterion row differs from its last saved version: a row with no server
+ * id (never saved) always counts as changed; otherwise any edited field does.
+ */
+export function isRowChanged(row: CriterionRow, saved: CriterionRow | undefined): boolean {
+  if (!row.id || !saved) return true;
+  return (
+    row.scenario !== saved.scenario ||
+    row.given !== saved.given ||
+    row.when !== saved.when ||
+    row.then !== saved.then
+  );
+}

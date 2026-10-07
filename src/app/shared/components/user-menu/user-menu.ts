@@ -15,6 +15,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { FeatureFlags } from '../../../core/features/feature-flags';
 import { ThemeMode, ThemeService } from '../../../core/theme/theme.service';
 import { Lang, SUPPORTED_LANGS, saveLang } from '../../../core/i18n/language';
 import { Avatar } from '../avatar/avatar';
@@ -157,17 +158,19 @@ import { HlmIcon } from '../../ui';
           <hlm-icon name="lucideLogOut" size="16px" class="text-muted-foreground" />
         </button>
 
-        <div class="mt-1 px-1 pb-1">
-          <button
-            type="button"
-            (click)="upgrade()"
-            data-testid="upgrade"
-            class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <hlm-icon name="lucideSparkles" size="15px" />
-            {{ 'userMenu.upgrade' | transloco }}
-          </button>
-        </div>
+        @if (billingEnabled) {
+          <div class="mt-1 px-1 pb-1">
+            <button
+              type="button"
+              (click)="upgrade()"
+              data-testid="upgrade"
+              class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <hlm-icon name="lucideSparkles" size="15px" />
+              {{ 'userMenu.upgrade' | transloco }}
+            </button>
+          </div>
+        }
       </div>
     </ng-template>
   `,
@@ -191,6 +194,8 @@ export class UserMenu {
 
   protected readonly positions = ABOVE_START;
   protected readonly open = signal(false);
+  /** The "Upgrade" CTA belongs to the `billing` feature. */
+  protected readonly billingEnabled = inject(FeatureFlags).isEnabled('billing');
 
   protected toggle(): void {
     this.open.update((v) => !v);
