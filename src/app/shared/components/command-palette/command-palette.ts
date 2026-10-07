@@ -31,18 +31,29 @@ import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } fr
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { FeatureFlags, FeatureKey } from '../../../core/features/feature-flags';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
 import { Avatar } from '../avatar/avatar';
 import { HlmIcon } from '../../ui';
 import { CommandRegistry, SearchItem } from '../../search/command-registry';
-import { SearchApiService, SearchHitResponse } from '../../search/search-api.service';
+import {
+  SearchApiService,
+  SearchHitResponse,
+  SearchHitType,
+} from '../../search/search-api.service';
 import { translateFn } from '../../../core/i18n/translate-fn';
 
 /** localStorage key for the small most-recently-used list of activated item ids. */
 const RECENT_KEY = 'commandPalette.recent';
 /** How many recent items to remember / surface. */
 const RECENT_MAX = 5;
+
+/**
+ * Backend search-hit types whose result opens a feature-flagged page; hits of a disabled
+ * feature are dropped so the palette never jumps to a route that no longer matches.
+ */
+const HIT_FEATURES: Partial<Record<SearchHitType, FeatureKey>> = { MEMBER: 'members' };
 
 /** A search item paired with its flat index across all visible groups (for keyboard nav). */
 interface IndexedItem {
@@ -179,6 +190,7 @@ export class CommandPalette {
   private readonly transloco = inject(TranslocoService);
   private readonly registry = inject(CommandRegistry);
   private readonly searchApi = inject(SearchApiService);
+  private readonly flags = inject(FeatureFlags);
 
   /** Two-way bound visibility — the shell flips this on ⌘K / search focus. */
   readonly open = model(false);
@@ -213,13 +225,18 @@ export class CommandPalette {
         icon: 'lucidePlus',
         run: () => this.go(['/projects/new']),
       },
-      {
-        id: 'action:members',
-        label: t('commandPalette.actions.members'),
-        group: 'commandPalette.groups.actions',
-        icon: 'lucideUsers',
-        run: () => this.go(['/settings/members']),
-      },
+      // Org members live behind the `members` feature flag.
+      ...(this.flags.isEnabled('members')
+        ? [
+            {
+              id: 'action:members',
+              label: t('commandPalette.actions.members'),
+              group: 'commandPalette.groups.actions',
+              icon: 'lucideUsers',
+              run: () => this.go(['/settings/members']),
+            },
+          ]
+        : []),
       {
         id: 'action:settings',
         label: t('commandPalette.actions.settings'),
@@ -347,7 +364,11 @@ export class CommandPalette {
         ),
         takeUntilDestroyed(),
       )
-      .subscribe(([q, hits]) => this.backendResults.set(hits.map((h) => this.toItem(h, q))));
+      .subscribe(([q, hits]) =>
+        this.backendResults.set(
+          hits.filter((h) => this.hitEnabled(h)).map((h) => this.toItem(h, q)),
+        ),
+      );
     // On open: reset query/selection and focus the input.
     effect(() => {
       if (this.open()) {
@@ -453,6 +474,12 @@ export class CommandPalette {
       this.workspace.loadProjects(orgId);
       void this.router.navigate(['/projects']);
     });
+  }
+
+  /** False for a hit whose page belongs to a disabled feature (see {@link HIT_FEATURES}). */
+  private hitEnabled(hit: SearchHitResponse): boolean {
+    const feature = HIT_FEATURES[hit.type];
+    return !feature || this.flags.isEnabled(feature);
   }
 
   /** Map a backend search hit to a palette item. `keywords: q` guarantees it survives the client
