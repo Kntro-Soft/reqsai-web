@@ -218,11 +218,13 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 ### Changed
 
 - **UX — MVP usability polish** (`feature/mvp-ux-polish`): a refinement pass on the MVP surfaces driven by
-  a heuristic evaluation with 6 users (Nielsen; impeccable critique before: 20/40 on both the live session
-  and the stories pages), keeping the brand, behaviour and copy.
+  a heuristic evaluation with 6 users (Nielsen, impeccable critique: live session 20 → 26/40, stories
+  20 → 24/40), keeping the brand, behaviour and copy.
   - *Live session*: the AI suggestion queue docks to the feed column as a framed **review tray** ("AI
     suggestions to review", counter with prev/next, minimize) instead of floating over the session bar,
-    header actions and side panel. A status line at the live edge says what the AI is doing — listening
+    header actions and side panel; from `sm` it stops short of the feed bottom so the latest lines stay
+    visible. ←/→ browse it, Esc minimizes it, focus returns to it after a decision, and focusing a feed
+    control it covers minimizes it (WCAG 2.4.11). A status line at the live edge says what the AI is doing — listening
     (with the last suggestion's age), paused, **processing the final stories after Stop**, or failed with
     the backend reason. The transcript recedes into neutral bubbles with visible speaker/time
     ("Participante n" in Spanish); human decisions become compact "accepted/resolved by the analyst"
@@ -238,8 +240,9 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
     unsaved story and criterion edits.
   - *Backlog order*: sortable headers with a direction arrow and `aria-sort`, a visible "sorted by"
     caption, priority re-ordered by meaning on the page (the API sorts the enum alphabetically), origin
-    and status chips, a chip-row layout below `sm`, unambiguous dates, an empty state with next steps and
-    retry on load errors.
+    and status chips (draft as an amber dashed outline), a page-scrolling chip-row layout below `sm`,
+    unambiguous dates, an empty state with next steps and retry on load errors. Story forms flag empty
+    required fields inline.
   - *Audio source*: the picker is a labelled segmented control (In person / Virtual meeting) next to a
     record button with a record dot and label; the virtual-meeting guidance is a calm two-step note
     (share the meeting tab with its audio; wear headphones) and the missing-audio notice offers "Share
