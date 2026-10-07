@@ -21,8 +21,10 @@ import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowDown,
   lucideArrowUpRight,
-  lucideCheck,
-  lucideCircleHelp,
+  lucideCircleAlert,
+  lucideCircleCheck,
+  lucideCircleDashed,
+  lucideCircleX,
   lucideClock,
   lucideHeadphones,
   lucideHistory,
@@ -30,9 +32,11 @@ import {
   lucideLanguages,
   lucideMic,
   lucidePanelRight,
+  lucidePause,
+  lucideRotateCw,
+  lucideScreenShare,
   lucideSparkles,
   lucideTriangleAlert,
-  lucideX,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
@@ -42,13 +46,14 @@ import { AudioRecorderService } from '../../../../core/audio/audio-recorder.serv
 import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-source';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
-import { SpeakerDisplay } from '../../data/feed';
+import { DecisionEntry, SpeakerDisplay } from '../../data/feed';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
   AcceptSuggestionRequest,
   SessionTranscriptSegmentMessage,
   SuggestionResponse,
 } from '../../data/discovery.models';
+import { AiActivity, aiActivityFor } from '../../data/ai-activity';
 import { SessionBar } from '../../components/session-bar/session-bar';
 import { AudioSourcePicker } from '../../components/audio-source-picker/audio-source-picker';
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
@@ -62,13 +67,15 @@ import { audioSourceStorageKey, resolveAudioSource } from '../../data/audio-sour
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
- * The default discovery view: a GPT/Claude-style chat. The center feed is a
- * chronological, read-only stream of transcript bubbles and resolved decision
- * cards, chunked by session; scrolling to the top lazily loads older sessions.
- * The composer at the bottom pairs a disabled ("coming soon") text input with
- * the audio-source picker (in person vs. virtual meeting) and the record
- * button. Pending AI suggestions surface in the floating decision
- * queue; the side panel exposes the project's stories/info/glossary/constraints.
+ * The default discovery view. The center feed is a chronological, read-only
+ * stream chunked by session: neutral transcript bubbles, compact human decision
+ * rows (accepted = validated by the analyst), AI-generated stories and, at the
+ * live edge, a status line saying what the AI is doing (listening, paused,
+ * processing, failed). Scrolling to the top lazily loads older sessions. Pending
+ * AI suggestions wait in a review tray docked over the top of the feed column —
+ * never over the session bar or the side panel. The composer pairs the
+ * audio-source picker (in person vs. virtual meeting) with the record button;
+ * the side panel exposes the project's stories/info/glossary/constraints.
  */
 @Component({
   selector: 'app-discovery-chat',
@@ -92,8 +99,10 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     provideIcons({
       lucideArrowDown,
       lucideArrowUpRight,
-      lucideCheck,
-      lucideCircleHelp,
+      lucideCircleAlert,
+      lucideCircleCheck,
+      lucideCircleDashed,
+      lucideCircleX,
       lucideClock,
       lucideHeadphones,
       lucideHistory,
@@ -101,9 +110,11 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideLanguages,
       lucideMic,
       lucidePanelRight,
+      lucidePause,
+      lucideRotateCw,
+      lucideScreenShare,
       lucideSparkles,
       lucideTriangleAlert,
-      lucideX,
     }),
   ],
   host: { class: 'flex min-h-0 flex-1 flex-col' },
@@ -204,9 +215,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           >
             <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
               <span
-                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60"
+                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60 motion-reduce:animate-none"
               ></span>
-              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary"></span>
             </span>
             {{ 'discovery.live.banner' | transloco: { language: liveLabel } }}
           </div>
@@ -217,7 +228,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           <button
             type="button"
             (click)="openPendingPrevious()"
-            class="mb-2 inline-flex w-fit items-center gap-2 self-center rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-500/20"
+            class="mb-2 inline-flex w-fit items-center gap-2 self-center rounded-full border border-pending-border bg-pending-soft px-3 py-1.5 text-sm font-medium text-pending transition-colors hover:brightness-95"
             data-testid="pending-previous-chip"
           >
             <hlm-icon name="lucideClock" size="14px" />
@@ -225,288 +236,395 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           </button>
         }
 
-        <!-- Feed -->
-        <div
-          #feed
-          (scroll)="onScroll()"
-          class="scrollbar-thin relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
-          data-testid="discovery-feed"
-        >
-          @switch (store.state()) {
-            @case ('loading') {
-              <div class="flex flex-1 items-center justify-center">
-                <hlm-spinner class="h-6 w-6" />
-              </div>
-            }
-            @case ('error') {
-              <p class="py-10 text-center text-sm text-destructive">
-                {{ 'discovery.loadError' | transloco }}
-              </p>
-            }
-            @default {
-              @if (store.loadingOlder()) {
+        <!-- Feed column: the transcript stream, with the AI review tray docked over its
+             top edge (inside this relative box, so it never covers the session bar,
+             the header actions or the side panel). -->
+        <div class="relative flex min-h-0 flex-1 flex-col">
+          <div
+            #feed
+            (scroll)="onScroll()"
+            (focusin)="onFeedFocus($event)"
+            class="scrollbar-thin relative flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-2xl border border-border bg-card/30 p-4"
+            data-testid="discovery-feed"
+          >
+            @switch (store.state()) {
+              @case ('loading') {
+                <div class="flex flex-1 items-center justify-center">
+                  <hlm-spinner class="h-6 w-6" />
+                </div>
+              }
+              @case ('error') {
                 <div
-                  class="flex items-center justify-center gap-2 py-1 text-xs text-muted-foreground"
-                  data-testid="loading-older"
+                  class="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center"
                 >
-                  <hlm-spinner class="h-3 w-3" />
-                  {{ 'discovery.loadingOlder' | transloco }}
-                </div>
-              } @else if (!store.hasOlder() && store.blocks().length > 0 && projectCreatedAt()) {
-                <div class="flex items-center gap-3 py-1" data-testid="feed-start-marker">
-                  <span class="h-px flex-1 bg-border"></span>
-                  <span class="text-xs font-medium text-muted-foreground">
-                    {{
-                      'discovery.startMarker'
-                        | transloco: { date: projectCreatedAt() | date: 'mediumDate' }
-                    }}
-                  </span>
-                  <span class="h-px flex-1 bg-border"></span>
-                </div>
-              }
-
-              @if (store.blocks().length === 0) {
-                <div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-                  <span
-                    class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary"
+                  <p class="text-sm text-destructive" role="alert">
+                    {{ 'discovery.loadError' | transloco }}
+                  </p>
+                  <button
+                    hlmBtn
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    (click)="retryLoad()"
+                    data-testid="feed-retry"
                   >
-                    <hlm-icon name="lucideMic" size="22px" />
-                  </span>
-                  <div>
-                    <p class="font-medium">{{ 'discovery.emptyTitle' | transloco }}</p>
-                    <p class="text-sm text-muted-foreground">
-                      {{ 'discovery.emptyBody' | transloco }}
-                    </p>
-                  </div>
+                    <hlm-icon name="lucideRotateCw" size="14px" />
+                    {{ 'discovery.retry' | transloco }}
+                  </button>
                 </div>
               }
-
-              @for (block of store.blocks(); track block.session.id) {
-                <div [attr.data-session-id]="block.session.id" class="flex flex-col gap-3">
-                  <!-- Session separator (sticks to the top of the feed while this
-                       session's messages are on screen, WhatsApp/iMessage-style). -->
-                  <div class="sticky top-0 z-10 -mx-1 flex items-center gap-3 py-1.5">
+              @default {
+                @if (store.loadingOlder()) {
+                  <div
+                    class="flex items-center justify-center gap-2 py-1 text-xs text-muted-foreground"
+                    data-testid="loading-older"
+                  >
+                    <hlm-spinner class="h-3 w-3" />
+                    {{ 'discovery.loadingOlder' | transloco }}
+                  </div>
+                } @else if (!store.hasOlder() && store.blocks().length > 0 && projectCreatedAt()) {
+                  <div class="flex items-center gap-3 py-1" data-testid="feed-start-marker">
                     <span class="h-px flex-1 bg-border"></span>
-                    @let sessionAt = block.session.startedAt ?? block.session.createdAt;
-                    <span
-                      class="rounded-full border border-border bg-card/85 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
-                      [title]="sessionAt | date: 'd MMM y, HH:mm'"
-                    >
-                      {{ 'discovery.sessionSeparator' | transloco }}
-                      @let sessionTime = timeLabel(sessionAt);
-                      @if (sessionTime.kind === 'relative') {
-                        {{ sessionTime.key | transloco: sessionTime.params }}
-                      } @else {
-                        {{ sessionAt | date: 'MMM d · HH:mm' }}
-                      }
-                      @if (
-                        block.session.storiesGeneratedCount !== null &&
-                        block.session.storiesGeneratedCount !== undefined
-                      ) {
-                        ·
-                        {{
-                          'discovery.sessionStories'
-                            | transloco: { count: block.session.storiesGeneratedCount }
-                        }}
-                      }
+                    <span class="text-xs font-medium text-muted-foreground">
+                      {{
+                        'discovery.startMarker'
+                          | transloco: { date: projectCreatedAt() | date: 'mediumDate' }
+                      }}
                     </span>
                     <span class="h-px flex-1 bg-border"></span>
                   </div>
+                }
 
-                  @if (!block.loaded) {
-                    <div class="flex justify-center py-2"><hlm-spinner class="h-4 w-4" /></div>
-                  }
+                @if (store.blocks().length === 0) {
+                  <div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+                    <span
+                      class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary"
+                    >
+                      <hlm-icon name="lucideMic" size="22px" />
+                    </span>
+                    <div>
+                      <p class="font-medium">{{ 'discovery.emptyTitle' | transloco }}</p>
+                      <p class="text-sm text-muted-foreground">
+                        {{ 'discovery.emptyBody' | transloco }}
+                      </p>
+                    </div>
+                  </div>
+                }
 
-                  @for (item of block.items; track item.id) {
-                    @switch (item.kind) {
-                      @case ('paragraph') {
-                        <div class="max-w-[80%] rounded-2xl bg-secondary px-3.5 py-2">
-                          <p class="text-sm leading-relaxed">{{ item.text }}</p>
-                        </div>
-                      }
-                      @case ('segment') {
-                        @let speaker = speakerFor(block, item.segment);
-                        <div
-                          class="flex max-w-[80%] flex-col"
-                          [class.self-end]="speaker?.side === 'right'"
-                          [class.items-end]="speaker?.side === 'right'"
-                          data-testid="segment-bubble"
-                          [attr.data-side]="speaker?.side ?? 'left'"
-                        >
-                          @if (speaker) {
-                            <span
-                              class="mb-0.5 px-1 text-[11px] font-medium text-muted-foreground"
-                              data-testid="segment-speaker"
-                            >
-                              {{ 'discovery.speaker' | transloco: { n: speaker.index } }}
-                            </span>
-                          }
+                @for (block of store.blocks(); track block.session.id) {
+                  <div [attr.data-session-id]="block.session.id" class="flex flex-col gap-3">
+                    <!-- Session separator: a pill that sticks to the top of the feed while
+                       this session's messages are on screen (no flanking rules, so it never
+                       strikes through the bubbles scrolling under it). -->
+                    <div class="pointer-events-none sticky top-0 z-10 flex justify-center py-1.5">
+                      @let sessionAt = block.session.startedAt ?? block.session.createdAt;
+                      <span
+                        class="pointer-events-auto rounded-full border border-border bg-card/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+                        [title]="sessionAt | date: 'd MMM y, HH:mm'"
+                      >
+                        {{ 'discovery.sessionSeparator' | transloco }}
+                        @let sessionTime = timeLabel(sessionAt);
+                        @if (sessionTime.kind === 'relative') {
+                          {{ sessionTime.key | transloco: sessionTime.params }}
+                        } @else {
+                          {{ sessionAt | date: 'MMM d · HH:mm' }}
+                        }
+                        @if (
+                          block.session.storiesGeneratedCount !== null &&
+                          block.session.storiesGeneratedCount !== undefined
+                        ) {
+                          ·
+                          {{
+                            'discovery.sessionStories'
+                              | transloco: { count: block.session.storiesGeneratedCount }
+                          }}
+                        }
+                      </span>
+                    </div>
+
+                    @if (!block.loaded) {
+                      <div class="flex justify-center py-2"><hlm-spinner class="h-4 w-4" /></div>
+                    }
+
+                    @for (item of block.items; track item.id) {
+                      @switch (item.kind) {
+                        @case ('paragraph') {
                           <div
-                            class="group rounded-2xl px-3.5 py-2"
-                            [class]="segmentBubbleClass(speaker)"
-                            [class.opacity-60]="!item.segment.isFinal"
+                            class="max-w-[85%] rounded-2xl rounded-tl-md bg-secondary px-3.5 py-2"
                           >
-                            <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
-                            <!-- Segments keep the meeting's internal clock (absolute HH:mm),
-                                 revealed on hover; full datetime in the tooltip. -->
-                            <p
-                              class="mt-0.5 text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                              [title]="item.segment.occurredAt | date: 'd MMM y, HH:mm'"
-                            >
-                              {{ item.segment.occurredAt | date: 'HH:mm' }}
-                            </p>
+                            <p class="text-sm leading-relaxed">{{ item.text }}</p>
                           </div>
-                        </div>
-                      }
-                      @case ('decision') {
-                        <div
-                          class="group flex w-full max-w-[80%] flex-col gap-2 self-center rounded-2xl border px-3.5 py-2.5 text-sm"
-                          [class]="decisionClass(item.decision.outcome)"
-                          [class.opacity-75]="item.decision.outcome === 'DISMISSED'"
-                          data-testid="decision-entry"
-                          [attr.data-outcome]="item.decision.outcome"
-                        >
-                          <!-- Top row: outcome + type badge on the left, action on the right. -->
-                          <div class="flex items-start justify-between gap-2">
-                            <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                              <span class="inline-flex items-center gap-1.5 font-medium">
-                                @if (item.decision.outcome === 'ACCEPTED') {
-                                  <hlm-icon name="lucideCheck" size="14px" />
-                                  {{ 'discovery.decision.accepted' | transloco }}
-                                } @else {
-                                  <hlm-icon name="lucideX" size="14px" />
-                                  {{ 'discovery.decision.dismissed' | transloco }}
-                                }
-                              </span>
-                              <span
-                                class="inline-flex items-center rounded-full border border-border bg-background/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-                                data-testid="decision-type"
+                        }
+                        @case ('segment') {
+                          <!-- Transcript: neutral bubbles (speaker 1 filled, speaker 2 outlined),
+                             so the conversation recedes behind AI and human decisions. -->
+                          @let speaker = speakerFor(block, item.segment);
+                          <div
+                            class="flex max-w-[85%] flex-col"
+                            [class.self-end]="speaker?.side === 'right'"
+                            [class.items-end]="speaker?.side === 'right'"
+                            data-testid="segment-bubble"
+                            [attr.data-side]="speaker?.side ?? 'left'"
+                          >
+                            <span
+                              class="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
+                            >
+                              @if (speaker) {
+                                <span class="font-medium" data-testid="segment-speaker">{{
+                                  'discovery.speaker' | transloco: { n: speaker.index }
+                                }}</span>
+                                <span aria-hidden="true">·</span>
+                              }
+                              <time
+                                class="tabular-nums"
+                                [attr.datetime]="item.segment.occurredAt"
+                                [title]="item.segment.occurredAt | date: 'd MMM y, HH:mm'"
+                                >{{ item.segment.occurredAt | date: 'HH:mm' }}</time
                               >
-                                @if (item.decision.type === 'CLARIFYING_QUESTION') {
-                                  <hlm-icon name="lucideCircleHelp" size="10px" class="mr-1" />
-                                }
-                                {{ 'discovery.suggestion.type.' + item.decision.type | transloco }}
-                              </span>
+                            </span>
+                            <div
+                              class="rounded-2xl px-3.5 py-2 text-foreground"
+                              [class]="segmentBubbleClass(speaker)"
+                              [class.opacity-60]="!item.segment.isFinal"
+                            >
+                              <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
+                            </div>
+                          </div>
+                        }
+                        @case ('decision') {
+                          <!-- A human decision on an AI suggestion: a compact event row. Accepted
+                             reads "validated by the analyst" (emerald), dismissed stays neutral. -->
+                          @let accepted = item.decision.outcome === 'ACCEPTED';
+                          <div
+                            class="flex w-full max-w-[85%] items-start gap-2.5 self-center rounded-xl px-3 py-2 text-sm"
+                            [class]="decisionClass(item.decision.outcome)"
+                            data-testid="decision-entry"
+                            [attr.data-outcome]="item.decision.outcome"
+                          >
+                            <hlm-icon
+                              [name]="accepted ? 'lucideCircleCheck' : 'lucideCircleX'"
+                              size="16px"
+                              class="mt-0.5 shrink-0"
+                              [class.text-verified]="accepted"
+                              aria-hidden="true"
+                            />
+                            <div class="min-w-0 flex-1">
+                              <p class="flex flex-wrap items-center gap-x-1.5 text-xs">
+                                <span class="font-semibold" [class.text-verified]="accepted">{{
+                                  decisionLabel(item.decision) | transloco
+                                }}</span>
+                                <span class="text-muted-foreground" data-testid="decision-type"
+                                  >·
+                                  {{
+                                    'discovery.suggestion.type.' + item.decision.type | transloco
+                                  }}</span
+                                >
+                                @let decisionTime = timeLabel(item.decision.occurredAt);
+                                <time
+                                  class="text-muted-foreground"
+                                  [attr.datetime]="item.decision.occurredAt"
+                                  [title]="item.decision.occurredAt | date: 'd MMM y, HH:mm'"
+                                >
+                                  ·
+                                  @if (decisionTime.kind === 'relative') {
+                                    {{ decisionTime.key | transloco: decisionTime.params }}
+                                  } @else {
+                                    {{ item.decision.occurredAt | date: 'd MMM' }}
+                                  }
+                                </time>
+                              </p>
+                              @if (item.decision.label) {
+                                <p
+                                  class="mt-0.5 leading-snug"
+                                  [class.text-foreground]="accepted"
+                                  [class.line-through]="!accepted"
+                                  data-testid="decision-label"
+                                >
+                                  {{ item.decision.label }}
+                                </p>
+                              }
                             </div>
                             @if (item.decision.storyId) {
                               <button
                                 type="button"
                                 (click)="focusStory(item.decision.storyId)"
-                                class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
                                 [attr.aria-label]="'discovery.goToStory' | transloco"
                                 [title]="'discovery.goToStory' | transloco"
                                 data-testid="decision-go-to-story"
                               >
                                 <hlm-icon name="lucideArrowUpRight" size="12px" />
-                                {{ 'discovery.goToStory' | transloco }}
+                                <span class="hidden sm:inline">{{
+                                  'discovery.goToStory' | transloco
+                                }}</span>
                               </button>
                             }
                           </div>
-
-                          <!-- Label, struck through for a dismissed suggestion. -->
-                          @if (item.decision.label) {
-                            <p
-                              class="leading-relaxed"
-                              [class.text-muted-foreground]="item.decision.outcome === 'DISMISSED'"
-                              [class.line-through]="item.decision.outcome === 'DISMISSED'"
-                              data-testid="decision-label"
-                            >
-                              {{ item.decision.label }}
-                            </p>
-                          }
-
-                          <!-- Relative time bottom-right, revealed on hover; full
-                               datetime in the tooltip, absolute fallback ≥ 7d. -->
-                          @let decisionTime = timeLabel(item.decision.occurredAt);
-                          <span
-                            class="self-end text-[11px] opacity-0 transition-opacity group-hover:opacity-100"
-                            [title]="item.decision.occurredAt | date: 'd MMM y, HH:mm'"
+                        }
+                        @case ('story') {
+                          <!-- A story the AI generated when the session was processed: violet
+                             provenance plus an explicit "awaiting review" state. -->
+                          <div
+                            class="rounded-2xl border border-ai-border bg-card p-3.5"
+                            data-testid="feed-story"
                           >
-                            @if (decisionTime.kind === 'relative') {
-                              {{ decisionTime.key | transloco: decisionTime.params }}
-                            } @else {
-                              {{ item.decision.occurredAt | date: 'd MMM' }}
-                            }
-                          </span>
-                        </div>
-                      }
-                      @case ('story') {
-                        <div
-                          class="group rounded-2xl border border-border bg-card p-3.5"
-                          data-testid="feed-story"
-                        >
-                          <span
-                            class="mb-1 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                          >
-                            <hlm-icon name="lucideSparkles" size="11px" />
-                            {{ 'discovery.generatedStory' | transloco }}
-                          </span>
-                          <p class="text-sm font-medium">{{ item.story.title }}</p>
-                          <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-                            {{ 'discovery.story.as' | transloco }}
-                            <span class="text-foreground">{{ item.story.role }}</span
-                            >{{ 'discovery.story.want' | transloco }}
-                            <span class="text-foreground">{{ item.story.action }}</span
-                            >{{ 'discovery.story.soThat' | transloco }}
-                            <span class="text-foreground">{{ item.story.benefit }}</span
-                            >.
-                          </p>
-                          <div class="mt-1 flex items-center gap-2">
-                            @if (item.story.createdAt; as storyAt) {
-                              <!-- Relative time revealed on hover (like decisions);
-                                   full datetime tooltip, absolute fallback ≥ 7d. -->
-                              @let storyTime = timeLabel(storyAt);
-                              <p
-                                class="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                                [title]="storyAt | date: 'd MMM y, HH:mm'"
+                            <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                              <span
+                                class="inline-flex items-center gap-1 rounded-full bg-ai-soft px-2 py-0.5 text-xs font-medium text-ai"
                               >
-                                @if (storyTime.kind === 'relative') {
-                                  {{ storyTime.key | transloco: storyTime.params }}
-                                } @else {
-                                  {{ storyAt | date: 'd MMM' }}
-                                }
-                              </p>
-                            }
-                            <button
-                              type="button"
-                              (click)="focusStory(item.story.id)"
-                              class="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
-                              [attr.aria-label]="'discovery.goToStory' | transloco"
-                              [title]="'discovery.goToStory' | transloco"
-                              data-testid="story-go-to-story"
-                            >
-                              <hlm-icon name="lucideArrowUpRight" size="12px" />
-                              {{ 'discovery.goToStory' | transloco }}
-                            </button>
+                                <hlm-icon name="lucideSparkles" size="12px" aria-hidden="true" />
+                                {{ 'discovery.generatedStory' | transloco }}
+                              </span>
+                              <span
+                                class="inline-flex items-center gap-1 rounded-full bg-pending-soft px-2 py-0.5 text-xs font-medium text-pending"
+                              >
+                                <hlm-icon
+                                  name="lucideCircleDashed"
+                                  size="12px"
+                                  aria-hidden="true"
+                                />
+                                {{ 'discovery.pendingReview' | transloco }}
+                              </span>
+                            </div>
+                            <p class="text-sm font-semibold">{{ item.story.title }}</p>
+                            <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+                              {{ 'discovery.story.as' | transloco }}
+                              <span class="text-foreground">{{ item.story.role }}</span
+                              >{{ 'discovery.story.want' | transloco }}
+                              <span class="text-foreground">{{ item.story.action }}</span
+                              >{{ 'discovery.story.soThat' | transloco }}
+                              <span class="text-foreground">{{ item.story.benefit }}</span
+                              >.
+                            </p>
+                            <div class="mt-2 flex items-center gap-2">
+                              @if (item.story.createdAt; as storyAt) {
+                                @let storyTime = timeLabel(storyAt);
+                                <time
+                                  class="text-xs text-muted-foreground"
+                                  [attr.datetime]="storyAt"
+                                  [title]="storyAt | date: 'd MMM y, HH:mm'"
+                                >
+                                  @if (storyTime.kind === 'relative') {
+                                    {{ storyTime.key | transloco: storyTime.params }}
+                                  } @else {
+                                    {{ storyAt | date: 'd MMM' }}
+                                  }
+                                </time>
+                              }
+                              <button
+                                type="button"
+                                (click)="focusStory(item.story.id)"
+                                class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                [attr.aria-label]="'discovery.goToStory' | transloco"
+                                [title]="'discovery.goToStory' | transloco"
+                                data-testid="story-go-to-story"
+                              >
+                                <hlm-icon name="lucideArrowUpRight" size="12px" />
+                                {{ 'discovery.goToStory' | transloco }}
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        }
                       }
                     }
-                  }
-                </div>
+
+                    <!-- What the AI is doing for this session right now: listening while
+                       recording, waiting while paused, generating stories after Stop, or
+                       why processing failed. A chat-style status line at the live edge. -->
+                    @if (activityFor(block); as activity) {
+                      <div
+                        class="flex max-w-[85%] items-start gap-2.5 self-start rounded-2xl px-3.5 py-2.5 text-sm"
+                        [class]="activityClass(activity.state)"
+                        role="status"
+                        data-testid="ai-activity"
+                        [attr.data-state]="activity.state"
+                      >
+                        @switch (activity.state) {
+                          @case ('listening') {
+                            <span
+                              class="ai-dots mt-1.5 flex shrink-0 items-center gap-1"
+                              aria-hidden="true"
+                            >
+                              <span></span><span></span><span></span>
+                            </span>
+                          }
+                          @case ('paused') {
+                            <hlm-icon name="lucidePause" size="15px" class="mt-0.5 shrink-0" />
+                          }
+                          @case ('processing') {
+                            <hlm-spinner class="mt-0.5 h-4 w-4 shrink-0" />
+                          }
+                          @case ('failed') {
+                            <hlm-icon
+                              name="lucideCircleAlert"
+                              size="15px"
+                              class="mt-0.5 shrink-0"
+                            />
+                          }
+                        }
+                        <div class="min-w-0">
+                          <p class="font-medium text-foreground">
+                            {{ 'discovery.ai.' + activity.state | transloco }}
+                          </p>
+                          @if (activity.detail; as detail) {
+                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                              {{ detail }}
+                            </p>
+                          } @else if (activity.state === 'listening' && activity.last) {
+                            <p class="mt-0.5 text-xs text-muted-foreground">
+                              {{
+                                'discovery.ai.lastSuggestion'
+                                  | transloco
+                                    : {
+                                        time: (activity.last.key | transloco: activity.last.params),
+                                      }
+                              }}
+                            </p>
+                          } @else {
+                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                              {{ 'discovery.ai.' + activity.state + 'Hint' | transloco }}
+                            </p>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               }
             }
-          }
-          @if (!atBottom()) {
-            <button
-              type="button"
-              (click)="jumpToBottom()"
-              class="sticky bottom-2 z-10 inline-flex items-center gap-1.5 self-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
-              data-testid="scroll-bottom"
-            >
-              <hlm-icon name="lucideArrowDown" size="14px" />
-              {{ 'discovery.scrollToBottom' | transloco }}
-            </button>
-          }
+            @if (!atBottom()) {
+              <button
+                type="button"
+                (click)="jumpToBottom()"
+                class="sticky bottom-2 z-10 inline-flex items-center gap-1.5 self-center rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
+                data-testid="scroll-bottom"
+              >
+                <hlm-icon name="lucideArrowDown" size="14px" />
+                {{ 'discovery.scrollToBottom' | transloco }}
+              </button>
+            }
+          </div>
+
+          <app-decision-queue
+            [(collapsed)]="queueCollapsed"
+            [canDecide]="canDecide()"
+            (decideAccept)="accept($event.suggestion, $event.body)"
+            (decideDismiss)="dismiss($event)"
+            (openTarget)="focusStory($event)"
+          />
         </div>
 
-        <!-- Composer -->
+        <!-- Composer: the source of the next recording and the record action. -->
         <div class="mt-3 flex items-center gap-2">
-          <div class="relative flex-1" [title]="'discovery.composer.comingSoon' | transloco">
+          <div
+            class="relative hidden min-w-0 flex-1 sm:block"
+            [title]="'discovery.composer.comingSoon' | transloco"
+          >
             <input
               type="text"
               disabled
               [placeholder]="'discovery.composer.placeholder' | transloco"
+              [attr.aria-label]="'discovery.composer.comingSoon' | transloco"
               class="h-11 w-full cursor-not-allowed rounded-full border border-border bg-secondary/40 px-4 text-sm text-muted-foreground outline-none"
               data-testid="composer-input"
             />
@@ -514,6 +632,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           @if (canRecord()) {
             <!-- Locked once a session is live: the recorder owns the source then. -->
             <app-audio-source-picker
+              class="min-w-0 flex-1 sm:flex-none sm:shrink-0"
               [value]="audioSource()"
               (valueChange)="setAudioSource($event)"
               [meetingSupported]="meetingSupported"
@@ -526,56 +645,87 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               [disabled]="startLocked()"
               (click)="record()"
               [attr.aria-label]="'discovery.composer.record' | transloco"
-              class="h-11 w-11 shrink-0 rounded-full p-0"
+              [title]="'discovery.composer.record' | transloco"
+              class="h-11 w-11 shrink-0 gap-2 rounded-full p-0 sm:w-auto sm:px-5"
               data-testid="composer-record"
             >
               @if (recording.busy() || preparingCapture()) {
                 <hlm-spinner class="h-4 w-4" />
               } @else {
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path
-                    d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3ZM19 10v2a7 7 0 0 1-14 0v-2M12 19v4"
-                  />
-                </svg>
+                <span class="h-3 w-3 rounded-full bg-primary-foreground" aria-hidden="true"></span>
               }
+              <span class="hidden sm:inline">{{
+                'discovery.composer.recordShort' | transloco
+              }}</span>
             </button>
           }
         </div>
         @if (recorder.error(); as errKey) {
-          <p class="mt-1.5 text-center text-xs text-destructive">{{ errKey | transloco }}</p>
+          <div
+            class="mt-2 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs leading-relaxed text-foreground"
+            role="alert"
+            data-testid="recorder-error"
+          >
+            <hlm-icon
+              name="lucideCircleAlert"
+              size="14px"
+              class="mt-px shrink-0 text-destructive"
+            />
+            <span>{{ errKey | transloco }}</span>
+          </div>
         } @else if (recorder.notice(); as noticeKey) {
-          <p
-            class="mx-auto mt-1.5 flex w-fit max-w-full items-start gap-1.5 text-xs text-amber-600"
+          <div
+            class="mt-2 flex items-start gap-2 rounded-xl border border-pending-border bg-pending-soft px-3 py-2.5 text-xs leading-relaxed text-foreground"
             role="status"
             data-testid="recorder-notice"
           >
-            <hlm-icon name="lucideTriangleAlert" size="13px" class="mt-px shrink-0" />
-            <span>{{ noticeKey | transloco }}</span>
-          </p>
-        } @else if (sourceHint(); as hintKey) {
-          <p
-            class="mx-auto mt-1.5 flex w-fit max-w-full items-start gap-1.5 text-xs text-muted-foreground"
-            data-testid="audio-source-hint"
-          >
-            <hlm-icon
-              [name]="
-                hintKey === 'discovery.source.unsupported' ? 'lucideInfo' : 'lucideHeadphones'
-              "
-              size="13px"
-              class="mt-px shrink-0"
-            />
-            <span>{{ hintKey | transloco }}</span>
-          </p>
+            <hlm-icon name="lucideTriangleAlert" size="14px" class="mt-px shrink-0 text-pending" />
+            <span class="flex-1">{{ noticeKey | transloco }}</span>
+            @if (canRecord() && noticeKey === 'discovery.rec.noMeetingAudio') {
+              <button
+                type="button"
+                (click)="retryMeetingShare()"
+                class="shrink-0 rounded-md px-1.5 py-0.5 font-medium text-foreground underline underline-offset-2 hover:bg-pending-soft"
+                data-testid="recorder-notice-retry"
+              >
+                {{ 'discovery.bar.reshare' | transloco }}
+              </button>
+            }
+          </div>
+        } @else if (sourceHint(); as hint) {
+          @if (hint === 'unsupported') {
+            <p
+              class="mt-2 flex items-start gap-2 px-1 text-xs leading-relaxed text-muted-foreground"
+              data-testid="audio-source-hint"
+            >
+              <hlm-icon name="lucideInfo" size="14px" class="mt-px shrink-0" />
+              <span>{{ 'discovery.source.unsupported' | transloco }}</span>
+            </p>
+          } @else {
+            <!-- Virtual meeting: the two things to get right, before the browser's share
+                 dialog covers the page. Calm and neutral — guidance, not a warning. -->
+            <ul
+              class="mt-2 flex flex-col gap-1.5 rounded-xl border border-border bg-card/70 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground"
+              data-testid="audio-source-hint"
+            >
+              <li class="flex items-start gap-2">
+                <hlm-icon
+                  name="lucideScreenShare"
+                  size="14px"
+                  class="mt-px shrink-0 text-foreground"
+                />
+                <span>{{ 'discovery.source.hintShare' | transloco }}</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <hlm-icon
+                  name="lucideHeadphones"
+                  size="14px"
+                  class="mt-px shrink-0 text-foreground"
+                />
+                <span>{{ 'discovery.source.hintHeadphones' | transloco }}</span>
+              </li>
+            </ul>
+          }
         }
       </div>
 
@@ -592,13 +742,45 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       }
     </div>
 
-    <!-- Floating decision queue -->
-    <app-decision-queue
-      [canDecide]="canDecide()"
-      (decideAccept)="accept($event.suggestion, $event.body)"
-      (decideDismiss)="dismiss($event)"
-      (openTarget)="focusStory($event)"
-    />
+    <!-- Screen readers hear the review queue grow (the tray itself is visual). -->
+    <p class="sr-only" aria-live="polite" data-testid="queue-announcer">
+      @if (store.queue().length > 0) {
+        {{ 'discovery.queue.announce' | transloco: { count: store.queue().length } }}
+      }
+    </p>
+
+    <style>
+      .ai-dots span {
+        width: 0.375rem;
+        height: 0.375rem;
+        border-radius: 9999px;
+        background: currentColor;
+        opacity: 0.85;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .ai-dots span {
+          animation: ai-dot 1.4s ease-in-out infinite;
+        }
+        .ai-dots span:nth-child(2) {
+          animation-delay: 0.18s;
+        }
+        .ai-dots span:nth-child(3) {
+          animation-delay: 0.36s;
+        }
+      }
+      @keyframes ai-dot {
+        0%,
+        70%,
+        100% {
+          opacity: 0.35;
+          transform: translateY(0);
+        }
+        35% {
+          opacity: 1;
+          transform: translateY(-2px);
+        }
+      }
+    </style>
 
     <!-- Leave-while-recording confirmation (in-app navigation guard) -->
     <app-modal [(open)]="leaveOpen">
@@ -653,6 +835,8 @@ export class DiscoveryChat implements OnInit {
       window.matchMedia('(min-width: 768px)').matches,
   );
   protected readonly focusStoryId = signal<string | null>(null);
+  /** The review tray's minimized state (two-way bound with the decision queue). */
+  protected readonly queueCollapsed = signal(false);
   /** True while the feed is scrolled to (or near) the bottom — drives auto-stick and the jump button. */
   protected readonly atBottom = signal(true);
   /**
@@ -757,10 +941,10 @@ export class DiscoveryChat implements OnInit {
    * The composer's guidance line before recording: why the virtual option is
    * unavailable, or how to share the meeting audio (and to wear headphones).
    */
-  protected readonly sourceHint = computed<string | null>(() => {
+  protected readonly sourceHint = computed<'unsupported' | 'meeting' | null>(() => {
     if (!this.canRecord() || this.recording.isActive()) return null;
-    if (this.meetingUnavailableHint()) return 'discovery.source.unsupported';
-    return this.audioSource() === 'meeting' ? 'discovery.source.hint' : null;
+    if (this.meetingUnavailableHint()) return 'unsupported';
+    return this.audioSource() === 'meeting' ? 'meeting' : null;
   });
 
   /** Uppercased primary subtag of the editable language, for the select's mobile trigger. */
@@ -832,6 +1016,22 @@ export class DiscoveryChat implements OnInit {
     if (focus) this.store.showSession(focus);
   }
 
+  /**
+   * Keyboard focus moving onto a feed control that the expanded review tray covers
+   * (e.g. "Go to story") minimizes the tray, so the focused control is never hidden
+   * behind it (WCAG 2.4.11).
+   */
+  protected onFeedFocus(event: FocusEvent): void {
+    if (this.queueCollapsed() || this.store.queue().length === 0) return;
+    const tray = this.feed()?.nativeElement.parentElement?.querySelector('.queue-card');
+    const target = event.target as HTMLElement | null;
+    if (!tray || !target) return;
+    const a = tray.getBoundingClientRect();
+    const b = target.getBoundingClientRect();
+    const covered = b.top < a.bottom && b.bottom > a.top && b.left < a.right && b.right > a.left;
+    if (covered) this.queueCollapsed.set(true);
+  }
+
   /** Lazy-loads older sessions when the feed is scrolled near the top, preserving scroll position. */
   protected onScroll(): void {
     const el = this.feed()?.nativeElement;
@@ -894,6 +1094,16 @@ export class DiscoveryChat implements OnInit {
 
   protected accept(suggestion: SuggestionResponse, body: AcceptSuggestionRequest): void {
     this.store.decide(suggestion, 'ACCEPTED', body).subscribe({
+      // Confirm where the accepted content went: a question is only marked as
+      // addressed, everything else lands in the backlog as a draft.
+      next: () =>
+        this.toast.success(
+          this.transloco.translate(
+            suggestion.type === 'CLARIFYING_QUESTION'
+              ? 'discovery.decision.resolvedToast'
+              : 'discovery.decision.acceptedToast',
+          ),
+        ),
       error: (err: HttpErrorResponse) => this.handleDecideError(err, suggestion.id),
     });
   }
@@ -951,8 +1161,56 @@ export class DiscoveryChat implements OnInit {
 
   protected decisionClass(outcome: 'ACCEPTED' | 'DISMISSED'): string {
     return outcome === 'ACCEPTED'
-      ? 'border-emerald-500/30 bg-emerald-500/10'
-      : 'border-border bg-secondary/60 text-muted-foreground';
+      ? 'bg-verified-soft ring-1 ring-inset ring-verified-border'
+      : 'bg-muted/70 text-muted-foreground';
+  }
+
+  /** "Accepted/resolved by the analyst" makes the human validation explicit; questions are resolved. */
+  protected decisionLabel(decision: DecisionEntry): string {
+    if (decision.outcome === 'DISMISSED') return 'discovery.decision.dismissed';
+    return decision.type === 'CLARIFYING_QUESTION'
+      ? 'discovery.decision.resolvedBy'
+      : 'discovery.decision.acceptedBy';
+  }
+
+  /**
+   * What the AI is doing for a session block (live/paused/processing/failed), or
+   * null for a settled session. "Last suggestion" is the newest pending one of
+   * this session still in the review queue.
+   */
+  protected activityFor(block: RenderBlock): AiActivity | null {
+    const pending = this.store.queue().filter((s) => s.sessionId === block.session.id);
+    return aiActivityFor(block.session, pending, this.now());
+  }
+
+  protected activityClass(state: AiActivity['state']): string {
+    switch (state) {
+      case 'listening':
+      case 'processing':
+        return 'bg-ai-soft text-ai';
+      case 'failed':
+        return 'border border-destructive/30 bg-destructive/5 text-destructive';
+      default:
+        return 'bg-muted/70 text-muted-foreground';
+    }
+  }
+
+  /** Re-runs the initial feed load after an error. */
+  protected retryLoad(): void {
+    this.store.init(this.projectId());
+  }
+
+  /**
+   * "Share again" from the no-meeting-audio notice: mid-session it re-opens the
+   * share picker for the running recording; before one, it simply retries the
+   * record flow (both straight from the click, which the picker needs).
+   */
+  protected retryMeetingShare(): void {
+    if (this.recording.isActive()) {
+      void this.recorder.shareMeetingAudio();
+      return;
+    }
+    void this.record();
   }
 
   /**
@@ -968,9 +1226,14 @@ export class DiscoveryChat implements OnInit {
     return label ? block.speakers.get(label) : undefined;
   }
 
-  /** Bubble styling per side: the right (2nd) speaker gets the primary tint to read as "the other side". */
+  /**
+   * Bubble styling per side, kept neutral so the transcript recedes behind AI and
+   * human decisions: the left speaker is filled, the right (2nd) one outlined.
+   */
   protected segmentBubbleClass(speaker: SpeakerDisplay | undefined): string {
-    return speaker?.side === 'right' ? 'bg-primary/10' : 'bg-secondary';
+    return speaker?.side === 'right'
+      ? 'rounded-tr-md border border-border bg-card'
+      : 'rounded-tl-md bg-secondary';
   }
 
   /** Picks a language and persists it as this user's per-project override. */

@@ -69,20 +69,28 @@ describe('SessionBar', () => {
     expect(stop.getAttribute('title')).toBeTruthy();
   });
 
-  it('hides the pause/stop button labels and the status label below the sm breakpoint', () => {
+  it('hides the pause/stop button labels below the sm breakpoint', () => {
     const { el } = render();
 
     const pause = el.querySelector('[data-testid="session-bar-pause"]') as HTMLButtonElement;
     const stop = el.querySelector('[data-testid="session-bar-stop"]') as HTMLButtonElement;
-    const status = el.querySelector('[data-testid="session-bar-status"]') as HTMLElement;
 
     // "hidden sm:inline" is the app's established mobile-icon-only pattern
     // (see the discovery header's history/panel-toggle buttons).
     expect(pause.querySelector('span')?.className).toContain('hidden');
     expect(pause.querySelector('span')?.className).toContain('sm:inline');
     expect(stop.querySelector('span')?.className).toContain('hidden');
-    expect(status.className).toContain('hidden');
-    expect(status.className).toContain('sm:inline');
+  });
+
+  it('keeps the status label announced on mobile (visually hidden, not removed)', () => {
+    const { el } = render();
+
+    const status = el.querySelector('[data-testid="session-bar-status"]') as HTMLElement;
+
+    expect(status.className).toContain('sr-only');
+    expect(status.className).toContain('sm:not-sr-only');
+    expect(status.className).not.toContain('hidden');
+    expect(status.getAttribute('aria-live')).toBe('polite');
   });
 
   it('always renders the icon and the elapsed timer regardless of viewport', () => {

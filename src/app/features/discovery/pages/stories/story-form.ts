@@ -66,7 +66,8 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-6">
-        <section class="flex flex-col gap-4 rounded-2xl border border-border p-5">
+        <section class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
+          <h2 class="text-base font-semibold">{{ 'storyForm.storySection' | transloco }}</h2>
           <div class="flex flex-col gap-1.5">
             <label hlmLabel for="title">{{ 'storyForm.fieldTitle' | transloco }}</label>
             <input
@@ -74,42 +75,45 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
               id="title"
               formControlName="title"
               [placeholder]="'storyForm.placeholderTitle' | transloco"
+              [attr.aria-invalid]="form.controls.title.invalid && form.controls.title.touched"
+              aria-describedby="title-error"
               data-testid="story-title"
             />
+            @if (form.controls.title.invalid && form.controls.title.touched) {
+              <p id="title-error" class="text-xs text-destructive">
+                {{ 'storyForm.required' | transloco }}
+              </p>
+            }
           </div>
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="role">{{ 'storyForm.fieldRole' | transloco }}</label>
-              <textarea
-                hlmInput
-                id="role"
-                rows="2"
-                formControlName="role"
-                [placeholder]="'storyForm.placeholderRole' | transloco"
-              ></textarea>
+          @for (part of storyParts; track part.control) {
+            <div class="grid gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-start sm:gap-4">
+              <label hlmLabel [for]="part.control" class="leading-snug sm:pt-2.5">
+                {{ part.label | transloco }}
+                <span class="mt-0.5 block text-xs font-normal text-muted-foreground">{{
+                  part.lead | transloco
+                }}</span>
+              </label>
+              @let control = form.controls[part.control];
+              <div class="flex min-w-0 flex-col gap-1">
+                <textarea
+                  hlmInput
+                  rows="1"
+                  class="min-h-10"
+                  [id]="part.control"
+                  [formControlName]="part.control"
+                  [placeholder]="part.placeholder | transloco"
+                  [attr.aria-invalid]="control.invalid && control.touched"
+                  [attr.aria-describedby]="part.control + '-error'"
+                ></textarea>
+                @if (control.invalid && control.touched) {
+                  <p [id]="part.control + '-error'" class="text-xs text-destructive">
+                    {{ 'storyForm.required' | transloco }}
+                  </p>
+                }
+              </div>
             </div>
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="action">{{ 'storyForm.fieldAction' | transloco }}</label>
-              <textarea
-                hlmInput
-                id="action"
-                rows="2"
-                formControlName="action"
-                [placeholder]="'storyForm.placeholderAction' | transloco"
-              ></textarea>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label hlmLabel for="benefit">{{ 'storyForm.fieldBenefit' | transloco }}</label>
-              <textarea
-                hlmInput
-                id="benefit"
-                rows="2"
-                formControlName="benefit"
-                [placeholder]="'storyForm.placeholderBenefit' | transloco"
-              ></textarea>
-            </div>
-          </div>
-          <div class="flex flex-wrap items-end gap-3">
+          }
+          <div class="flex flex-wrap items-end gap-3 border-t border-border pt-4">
             <div class="flex flex-col gap-1.5">
               <span hlmLabel>{{ 'storyForm.fieldPriority' | transloco }}</span>
               <app-select
@@ -134,7 +138,7 @@ import { CriterionRow, emptyCriterionRow, partitionNewCriteria } from './story-f
           </div>
         </section>
 
-        <section class="rounded-2xl border border-border p-5">
+        <section class="rounded-2xl border border-border bg-card p-5">
           <app-criteria-editor [(rows)]="criteria" [invalidIndexes]="invalidCriteria()" />
         </section>
 
@@ -176,6 +180,28 @@ export class StoryCreate {
   protected readonly formError = signal<string | null>(null);
   protected readonly criteria = signal<CriterionRow[]>([emptyCriterionRow()]);
   protected readonly invalidCriteria = signal<number[]>([]);
+
+  /** The three parts of the story sentence, in reading order. */
+  protected readonly storyParts = [
+    {
+      control: 'role',
+      label: 'storyForm.fieldRole',
+      lead: 'storyForm.leadRole',
+      placeholder: 'storyForm.placeholderRole',
+    },
+    {
+      control: 'action',
+      label: 'storyForm.fieldAction',
+      lead: 'storyForm.leadAction',
+      placeholder: 'storyForm.placeholderAction',
+    },
+    {
+      control: 'benefit',
+      label: 'storyForm.fieldBenefit',
+      lead: 'storyForm.leadBenefit',
+      placeholder: 'storyForm.placeholderBenefit',
+    },
+  ] as const;
 
   protected readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(200)]],

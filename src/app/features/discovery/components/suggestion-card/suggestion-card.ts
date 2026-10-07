@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   linkedSignal,
   output,
@@ -9,9 +10,15 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircleHelp, lucidePlus, lucideSparkles, lucideTrash2 } from '@ng-icons/lucide';
+import {
+  lucideArrowUpRight,
+  lucideCircleHelp,
+  lucidePlus,
+  lucideSparkles,
+  lucideTrash2,
+} from '@ng-icons/lucide';
 import {
   AcceptSuggestionRequest,
   DisplayStory,
@@ -24,49 +31,85 @@ import {
   emptyEditableCriterion,
   suggestionCriteria,
 } from '../../data/discovery.models';
+import { Select, SelectOption } from '../../../../shared/components/select/select';
+import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
+import { GherkinSteps } from '../gherkin-steps/gherkin-steps';
+import { PriorityBadge } from '../story-badges/story-badges';
 
 const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
+/** Story fields an UPDATE_STORY suggestion can change (highlighted on the proposed side). */
+type StoryField = 'title' | 'role' | 'action' | 'benefit';
+
 /**
  * One AI suggestion rendered per type (draft story, story update diff, edge
- * case, clarifying question) with an inline edit-before-accept flow. Clicking
- * "Edit" opens an editable form inside the card; accepting sends only the
- * changed fields to the backend. Read-only when `canDecide` is false.
- * `openTarget` asks the page to reveal the target story in the side panel.
+ * case, clarifying question) with an inline edit-before-accept flow. Everything
+ * the AI proposed carries the violet "AI" provenance (type chip, card border),
+ * so it never reads like content an analyst already validated. The story reads
+ * as its canonical sentence ("Como …, quiero …, para …") and criteria as
+ * Given/When/Then steps. Clicking "Edit" opens labelled, auto-growing fields;
+ * accepting sends only the changed fields to the backend. Read-only when
+ * `canDecide` is false. `openTarget` asks the page to reveal the target story.
  */
 @Component({
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, FormsModule, HlmButton, HlmInput, HlmIcon, HlmSpinner, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideCircleHelp, lucidePlus, lucideSparkles, lucideTrash2 })],
+  imports: [
+    NgTemplateOutlet,
+    FormsModule,
+    Select,
+    GherkinSteps,
+    PriorityBadge,
+    HlmButton,
+    HlmInput,
+    HlmIcon,
+    HlmSpinner,
+    TranslocoPipe,
+  ],
+  viewProviders: [
+    provideIcons({
+      lucideArrowUpRight,
+      lucideCircleHelp,
+      lucidePlus,
+      lucideSparkles,
+      lucideTrash2,
+    }),
+  ],
+  host: { class: 'flex min-h-0 flex-col' },
   template: `
-    <div
-      class="flex max-h-[70vh] flex-col rounded-2xl border border-primary/30 bg-card shadow-lg"
+    <article
+      class="flex min-h-0 flex-col rounded-2xl border border-ai-border bg-card shadow-lg"
+      [attr.aria-label]="
+        ('discovery.suggestion.aiLabel' | transloco) +
+        ': ' +
+        ('discovery.suggestion.type.' + suggestion().type | transloco)
+      "
       data-testid="suggestion-card"
     >
-      <!-- Header: type + priority + related topic -->
-      <div class="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 pb-2.5 pt-3.5">
+      <!-- Header: AI provenance + type, then priority/points, topic on the right. -->
+      <header
+        class="flex flex-wrap items-center gap-1.5 border-b border-border/70 px-4 pb-2.5 pt-3"
+      >
         <span
-          class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+          class="inline-flex items-center gap-1.5 rounded-full bg-ai-soft px-2 py-0.5 text-xs font-medium text-ai"
+          [title]="'discovery.suggestion.aiHint' | transloco"
+          data-testid="suggestion-type"
         >
-          @if (suggestion().type === 'CLARIFYING_QUESTION') {
-            <hlm-icon name="lucideCircleHelp" size="12px" />
-          } @else {
-            <hlm-icon name="lucideSparkles" size="12px" />
-          }
+          <hlm-icon
+            [name]="
+              suggestion().type === 'CLARIFYING_QUESTION' ? 'lucideCircleHelp' : 'lucideSparkles'
+            "
+            size="12px"
+            aria-hidden="true"
+          />
           {{ 'discovery.suggestion.type.' + suggestion().type | transloco }}
         </span>
         @if (suggestion().type !== 'CLARIFYING_QUESTION') {
-          <span
-            class="rounded-full px-2 py-0.5 text-[11px] font-medium"
-            [class]="priorityClass(displayPriority())"
-          >
-            {{ 'discovery.suggestion.priority.' + displayPriority() | transloco }}
-          </span>
+          <app-priority-badge [priority]="displayPriority()" />
           @if (displayStoryPoints() !== null) {
             <span
-              class="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              class="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground tabular-nums"
               data-testid="suggestion-points"
             >
               {{ 'discovery.panel.points' | transloco: { n: displayStoryPoints() } }}
@@ -75,76 +118,72 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         }
         @if (suggestion().relatedTopic; as topic) {
           <span
-            class="max-w-[14rem] truncate rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground"
+            class="ml-auto max-w-[14rem] truncate text-xs text-muted-foreground"
             [title]="topic"
           >
             {{ topic }}
           </span>
         }
-      </div>
+      </header>
 
       <!-- Body (scrolls when long) -->
       <div class="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-4 py-3">
         @switch (suggestion().type) {
           @case ('CLARIFYING_QUESTION') {
-            <p class="text-sm leading-relaxed">{{ suggestion().question }}</p>
+            <p class="text-[15px] font-medium leading-relaxed text-foreground">
+              {{ suggestion().question }}
+            </p>
+            <p class="mt-2 text-xs text-muted-foreground">
+              {{ 'discovery.suggestion.questionHint' | transloco }}
+            </p>
           }
           @case ('UPDATE_STORY') {
             <!-- BEFORE / AFTER: the current story (read-only) beside the proposed
-                 (editable) version, changed fields highlighted. -->
+                 (editable) version, every changed field highlighted. -->
             <p class="mb-2.5 text-sm">
-              <span class="font-medium text-muted-foreground"
+              <span class="text-muted-foreground"
                 >{{ 'discovery.suggestion.updates' | transloco }} </span
               ><span class="font-medium text-foreground">{{
                 targetStory()?.title ?? ('discovery.suggestion.storyNotFound' | transloco)
               }}</span>
             </p>
             <div class="grid gap-3 sm:grid-cols-2">
-              <div class="rounded-xl border border-border bg-background/40 p-3">
-                <p class="mb-1 text-[11px] font-medium uppercase text-muted-foreground">
+              <div class="rounded-xl bg-muted/60 p-3">
+                <p class="mb-1.5 text-xs font-medium text-muted-foreground">
                   {{ 'discovery.suggestion.current' | transloco }}
                 </p>
                 @if (targetStory(); as cur) {
-                  <p class="text-sm font-medium">{{ cur.title }}</p>
-                  <dl class="mt-2 flex flex-col gap-1.5">
-                    <div class="flex items-baseline gap-2">
-                      <dt
-                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {{ 'discovery.suggestion.role' | transloco }}
-                      </dt>
-                      <dd class="text-xs leading-snug text-foreground">{{ cur.role }}</dd>
-                    </div>
-                    <div class="flex items-baseline gap-2">
-                      <dt
-                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {{ 'discovery.suggestion.action' | transloco }}
-                      </dt>
-                      <dd class="text-xs leading-snug text-foreground">{{ cur.action }}</dd>
-                    </div>
-                    <div class="flex items-baseline gap-2">
-                      <dt
-                        class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                      >
-                        {{ 'discovery.suggestion.benefit' | transloco }}
-                      </dt>
-                      <dd class="text-xs leading-snug text-muted-foreground">{{ cur.benefit }}</dd>
-                    </div>
-                  </dl>
+                  <p class="text-sm font-medium leading-snug">{{ cur.title }}</p>
+                  <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {{ 'discovery.story.as' | transloco
+                    }}<span class="text-foreground">{{ cur.role }}</span
+                    >{{ 'discovery.story.want' | transloco
+                    }}<span class="text-foreground">{{ cur.action }}</span
+                    >{{ 'discovery.story.soThat' | transloco
+                    }}<span class="text-foreground">{{ cur.benefit }}</span
+                    >.
+                  </p>
                 } @else {
                   <p class="text-xs text-muted-foreground">
                     {{ 'discovery.suggestion.storyNotFound' | transloco }}
                   </p>
                 }
               </div>
-              <div class="rounded-xl border border-primary/40 p-3">
-                <p class="mb-1 text-[11px] font-medium uppercase text-primary">
+              <div class="rounded-xl border border-ai-border p-3">
+                <p class="mb-1.5 text-xs font-medium text-ai">
                   {{ 'discovery.suggestion.proposed' | transloco }}
                 </p>
                 <ng-container [ngTemplateOutlet]="storyBody" />
               </div>
             </div>
+            @if (!editing() && hasChanges()) {
+              <p class="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span
+                  class="inline-block h-2.5 w-4 rounded-sm bg-ai-soft ring-1 ring-ai-border"
+                ></span>
+                {{ 'discovery.suggestion.changedHint' | transloco }}
+              </p>
+            }
             <!-- UPDATE_STORY edits BOTH the story content AND its acceptance
                  criteria (product-owner confirmed): keep the criteria editor
                  prominent below the before/after diff. -->
@@ -154,7 +193,7 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
             <!-- A new criterion to add to an existing story (read-only target). -->
             @if (targetStory(); as cur) {
               <p class="mb-2.5 text-sm">
-                <span class="font-medium text-muted-foreground"
+                <span class="text-muted-foreground"
                   >{{ 'discovery.suggestion.forStory' | transloco }} </span
                 ><span class="font-medium text-foreground">{{ cur.title }}</span>
               </p>
@@ -163,8 +202,8 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
                 {{ 'discovery.suggestion.storyNotFound' | transloco }}
               </p>
             }
-            <div class="rounded-xl border border-primary/40 p-3">
-              <p class="mb-1.5 text-[11px] font-medium uppercase text-primary">
+            <div class="rounded-xl border border-ai-border p-3">
+              <p class="mb-2 text-xs font-medium text-ai">
                 {{ 'discovery.suggestion.scenarioToAdd' | transloco }}
               </p>
               <ng-container [ngTemplateOutlet]="edgeCaseBody" />
@@ -179,32 +218,14 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         <!-- Read-only criteria preview: only when not editing and a valid one exists.
              EDGE_CASE renders its own criterion above, so exclude it here. -->
         @if (!editing() && suggestion().type !== 'EDGE_CASE' && criteria().length > 0) {
-          <div class="mt-3">
-            <p class="mb-1.5 text-[11px] font-medium uppercase text-muted-foreground">
-              {{ 'discovery.suggestion.criteria' | transloco }}
+          <div class="mt-4">
+            <p class="mb-2 text-xs font-medium text-muted-foreground">
+              {{ 'discovery.suggestion.criteriaCount' | transloco: { count: criteria().length } }}
             </p>
             <ul class="flex flex-col gap-2" data-testid="suggestion-criteria">
               @for (criterion of criteria(); track $index) {
-                <li
-                  class="rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-xs leading-relaxed"
-                >
-                  @if (criterion.scenario) {
-                    <p class="mb-0.5 font-medium text-foreground">{{ criterion.scenario }}</p>
-                  }
-                  <p class="text-muted-foreground">
-                    <span class="font-semibold text-primary">{{
-                      'discovery.suggestion.criteriaGiven' | transloco
-                    }}</span>
-                    {{ criterion.given }} ·
-                    <span class="font-semibold text-primary">{{
-                      'discovery.suggestion.criteriaWhen' | transloco
-                    }}</span>
-                    {{ criterion.when }} ·
-                    <span class="font-semibold text-primary">{{
-                      'discovery.suggestion.criteriaThen' | transloco
-                    }}</span>
-                    {{ criterion.then }}
-                  </p>
+                <li class="rounded-lg bg-muted/60 px-3 py-2.5">
+                  <app-gherkin-steps [criterion]="criterion" />
                 </li>
               }
             </ul>
@@ -214,17 +235,18 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
         @if (suggestion().targetStoryId && suggestion().type !== 'NEW_STORY') {
           <button
             type="button"
-            class="mt-2.5 text-xs font-medium text-primary hover:underline"
+            class="mt-3 inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:underline"
             (click)="openTarget.emit(suggestion().targetStoryId!)"
             data-testid="suggestion-open-target"
           >
+            <hlm-icon name="lucideArrowUpRight" size="13px" aria-hidden="true" />
             {{ 'discovery.suggestion.viewTarget' | transloco }}
           </button>
         }
       </div>
 
       @if (canDecide()) {
-        <div class="flex flex-wrap gap-2 border-t border-border/70 px-4 py-3">
+        <footer class="flex flex-wrap items-center gap-2 border-t border-border/70 px-4 py-3">
           <button
             hlmBtn
             size="sm"
@@ -254,20 +276,22 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
               }}
             </button>
           }
+          <!-- Discard is irreversible: kept apart from Edit/Cancel and visually quiet. -->
           <button
             hlmBtn
             size="sm"
-            variant="outline"
+            variant="ghost"
             type="button"
+            class="ml-auto text-muted-foreground"
             [disabled]="busy()"
             (click)="dismiss.emit()"
             data-testid="suggestion-dismiss"
           >
             {{ 'discovery.suggestion.dismiss' | transloco }}
           </button>
-        </div>
+        </footer>
       }
-    </div>
+    </article>
 
     <!-- Story body: editable story fields (NEW_STORY / UPDATE_STORY proposed side). -->
     <ng-template #storyBody>
@@ -279,83 +303,72 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
             }}</span>
             <textarea
               hlmInput
-              rows="2"
-              class="min-h-[3rem] resize-y leading-relaxed"
+              rows="1"
+              class="min-h-10 font-medium"
               [ngModel]="model().title"
               (ngModelChange)="patch({ title: $event })"
               data-testid="edit-title"
             ></textarea>
           </label>
-          <div class="grid gap-3 sm:grid-cols-3">
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-medium text-muted-foreground">{{
-                'discovery.suggestion.role' | transloco
-              }}</span>
-              <textarea
-                hlmInput
-                rows="2"
-                class="min-h-[3.5rem] resize-y leading-relaxed"
-                [placeholder]="'discovery.suggestion.role' | transloco"
-                [ngModel]="model().role"
-                (ngModelChange)="patch({ role: $event })"
-                data-testid="edit-role"
-              ></textarea>
-            </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-medium text-muted-foreground">{{
-                'discovery.suggestion.action' | transloco
-              }}</span>
-              <textarea
-                hlmInput
-                rows="2"
-                class="min-h-[3.5rem] resize-y leading-relaxed"
-                [placeholder]="'discovery.suggestion.action' | transloco"
-                [ngModel]="model().action"
-                (ngModelChange)="patch({ action: $event })"
-                data-testid="edit-action"
-              ></textarea>
-            </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-medium text-muted-foreground">{{
-                'discovery.suggestion.benefit' | transloco
-              }}</span>
-              <textarea
-                hlmInput
-                rows="2"
-                class="min-h-[3.5rem] resize-y leading-relaxed"
-                [placeholder]="'discovery.suggestion.benefit' | transloco"
-                [ngModel]="model().benefit"
-                (ngModelChange)="patch({ benefit: $event })"
-                data-testid="edit-benefit"
-              ></textarea>
-            </label>
-          </div>
-          <div class="flex items-end gap-3">
-            <label class="flex flex-col gap-1">
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground">{{
+              'discovery.suggestion.roleField' | transloco
+            }}</span>
+            <textarea
+              hlmInput
+              rows="1"
+              class="min-h-10"
+              [ngModel]="model().role"
+              (ngModelChange)="patch({ role: $event })"
+              data-testid="edit-role"
+            ></textarea>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground">{{
+              'discovery.suggestion.actionField' | transloco
+            }}</span>
+            <textarea
+              hlmInput
+              rows="2"
+              [ngModel]="model().action"
+              (ngModelChange)="patch({ action: $event })"
+              data-testid="edit-action"
+            ></textarea>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground">{{
+              'discovery.suggestion.benefitField' | transloco
+            }}</span>
+            <textarea
+              hlmInput
+              rows="2"
+              [ngModel]="model().benefit"
+              (ngModelChange)="patch({ benefit: $event })"
+              data-testid="edit-benefit"
+            ></textarea>
+          </label>
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-foreground">{{
                 'discovery.suggestion.priorityField' | transloco
               }}</span>
-              <select
-                class="h-10 rounded-md border border-input bg-background px-2.5 text-sm"
-                [ngModel]="model().priority"
-                (ngModelChange)="patch({ priority: $event })"
+              <app-select
+                [options]="priorityOptions()"
+                [value]="model().priority"
+                (valueChange)="patch({ priority: $any($event) })"
+                [ariaLabel]="'discovery.suggestion.priorityField' | transloco"
                 data-testid="edit-priority"
-              >
-                @for (p of priorities; track p) {
-                  <option [value]="p">
-                    {{ 'discovery.suggestion.priority.' + p | transloco }}
-                  </option>
-                }
-              </select>
-            </label>
+              />
+            </div>
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-foreground">{{
                 'discovery.suggestion.points' | transloco
               }}</span>
               <input
                 hlmInput
-                class="h-10 w-24"
+                class="w-24"
                 type="number"
+                min="0"
                 [ngModel]="model().storyPoints"
                 (ngModelChange)="patch({ storyPoints: $event })"
                 data-testid="edit-points"
@@ -364,69 +377,44 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
           </div>
         </div>
       } @else {
-        <p class="text-sm font-medium" [class.text-primary]="isChanged('title')">
+        <p
+          class="text-base font-semibold leading-snug text-foreground"
+          [class]="changedClass('title')"
+        >
           {{ suggestion().draftTitle }}
         </p>
-        <dl class="mt-2 flex flex-col gap-1.5">
-          <div class="flex items-baseline gap-2">
-            <dt
-              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
-            >
-              {{ 'discovery.suggestion.role' | transloco }}
-            </dt>
-            <dd class="text-sm leading-snug text-foreground">{{ suggestion().draftRole }}</dd>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <dt
-              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
-            >
-              {{ 'discovery.suggestion.action' | transloco }}
-            </dt>
-            <dd class="text-sm leading-snug text-foreground">{{ suggestion().draftAction }}</dd>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <dt
-              class="w-16 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
-            >
-              {{ 'discovery.suggestion.benefit' | transloco }}
-            </dt>
-            <dd class="text-sm leading-snug text-muted-foreground">
-              {{ suggestion().draftBenefit }}
-            </dd>
-          </div>
-        </dl>
+        <p
+          class="mt-1.5 text-sm leading-relaxed text-muted-foreground"
+          data-testid="story-sentence"
+        >
+          {{ 'discovery.story.as' | transloco
+          }}<span class="font-medium text-foreground" [class]="changedClass('role')">{{
+            suggestion().draftRole
+          }}</span
+          >{{ 'discovery.story.want' | transloco
+          }}<span class="font-medium text-foreground" [class]="changedClass('action')">{{
+            suggestion().draftAction
+          }}</span
+          >{{ 'discovery.story.soThat' | transloco
+          }}<span class="text-foreground" [class]="changedClass('benefit')">{{
+            suggestion().draftBenefit
+          }}</span
+          >.
+        </p>
       }
     </ng-template>
 
     <!-- Edge-case body: a single editable criterion (scenario/given/when/then). -->
     <ng-template #edgeCaseBody>
       @if (editing()) {
-        <div class="flex flex-col gap-2" data-testid="edge-criterion-edit">
+        <div data-testid="edge-criterion-edit">
           <ng-container
             [ngTemplateOutlet]="criterionFields"
             [ngTemplateOutletContext]="{ criterion: model().criteria[0], index: 0 }"
           />
         </div>
       } @else if (firstCriterion(); as c) {
-        <div class="text-sm leading-relaxed">
-          @if (c.scenario) {
-            <p class="font-medium">{{ c.scenario }}</p>
-          }
-          <p class="mt-1 text-muted-foreground">
-            <span class="font-semibold text-primary">{{
-              'discovery.suggestion.criteriaGiven' | transloco
-            }}</span>
-            {{ c.given }} ·
-            <span class="font-semibold text-primary">{{
-              'discovery.suggestion.criteriaWhen' | transloco
-            }}</span>
-            {{ c.when }} ·
-            <span class="font-semibold text-primary">{{
-              'discovery.suggestion.criteriaThen' | transloco
-            }}</span>
-            {{ c.then }}
-          </p>
-        </div>
+        <app-gherkin-steps [criterion]="c" />
       } @else {
         <p class="text-sm text-muted-foreground">
           {{ 'discovery.suggestion.noCriterion' | transloco }}
@@ -437,19 +425,19 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
     <!-- NEW_STORY criteria list editor: add / edit / remove. -->
     <ng-template #criteriaEditor>
       @if (editing()) {
-        <div class="mt-3 flex flex-col gap-2" data-testid="criteria-editor">
-          <p class="text-[11px] font-medium uppercase text-muted-foreground">
+        <div class="mt-4 flex flex-col gap-2.5" data-testid="criteria-editor">
+          <p class="text-xs font-medium text-muted-foreground">
             {{ 'discovery.suggestion.criteria' | transloco }}
           </p>
           @for (criterion of model().criteria; track $index) {
-            <div class="rounded-lg border border-border bg-background/40 p-2.5">
-              <div class="mb-1.5 flex items-center justify-between">
-                <span class="text-[10px] font-medium uppercase text-muted-foreground">
+            <div class="rounded-xl bg-muted/60 p-3">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-xs font-medium text-muted-foreground">
                   {{ 'discovery.suggestion.criterion' | transloco }} {{ $index + 1 }}
                 </span>
                 <button
                   type="button"
-                  class="text-muted-foreground transition-colors hover:text-destructive"
+                  class="grid h-8 w-8 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   (click)="removeCriterion($index)"
                   [attr.aria-label]="'discovery.suggestion.removeCriterion' | transloco"
                   data-testid="remove-criterion"
@@ -476,47 +464,41 @@ const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
       }
     </ng-template>
 
-    <!-- Shared editable G/W/T fields for one criterion at the given index. -->
+    <!-- Shared editable G/W/T fields for one criterion: the keyword stays visible as a
+         label in a fixed gutter, so a filled field never loses its meaning. -->
     <ng-template #criterionFields let-criterion="criterion" let-index="index">
-      <div class="flex flex-col gap-2">
+      <div class="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2">
+        <label
+          class="pt-2.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-muted-foreground"
+          [attr.for]="fieldId(index, 'scenario')"
+          >{{ 'discovery.suggestion.scenario' | transloco }}</label
+        >
         <textarea
           hlmInput
-          rows="2"
-          class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
-          [placeholder]="'discovery.suggestion.scenario' | transloco"
+          rows="1"
+          class="min-h-10"
+          [id]="fieldId(index, 'scenario')"
+          [placeholder]="'discovery.suggestion.scenarioPlaceholder' | transloco"
           [ngModel]="criterion.scenario"
           (ngModelChange)="patchCriterion(index, { scenario: $event })"
           data-testid="criterion-scenario"
         ></textarea>
-        <div class="grid gap-2 sm:grid-cols-3">
+        @for (step of steps; track step.key) {
+          <label
+            class="pt-2.5 text-[11px] font-semibold uppercase leading-4 tracking-wide text-muted-foreground"
+            [attr.for]="fieldId(index, step.key)"
+            >{{ step.label | transloco }}</label
+          >
           <textarea
             hlmInput
-            rows="2"
-            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
-            [placeholder]="'discovery.suggestion.criteriaGiven' | transloco"
-            [ngModel]="criterion.given"
-            (ngModelChange)="patchCriterion(index, { given: $event })"
-            data-testid="criterion-given"
+            rows="1"
+            class="min-h-10"
+            [id]="fieldId(index, step.key)"
+            [ngModel]="criterion[step.key]"
+            (ngModelChange)="patchCriterionStep(index, step.key, $event)"
+            [attr.data-testid]="'criterion-' + step.key"
           ></textarea>
-          <textarea
-            hlmInput
-            rows="2"
-            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
-            [placeholder]="'discovery.suggestion.criteriaWhen' | transloco"
-            [ngModel]="criterion.when"
-            (ngModelChange)="patchCriterion(index, { when: $event })"
-            data-testid="criterion-when"
-          ></textarea>
-          <textarea
-            hlmInput
-            rows="2"
-            class="min-h-[2.75rem] resize-y text-sm leading-relaxed"
-            [placeholder]="'discovery.suggestion.criteriaThen' | transloco"
-            [ngModel]="criterion.then"
-            (ngModelChange)="patchCriterion(index, { then: $event })"
-            data-testid="criterion-then"
-          ></textarea>
-        </div>
+        }
       </div>
     </ng-template>
   `,
@@ -534,7 +516,21 @@ export class SuggestionCard {
   readonly openTarget = output<string>();
 
   protected readonly editing = signal(false);
-  protected readonly priorities = PRIORITIES;
+  protected readonly steps = [
+    { key: 'given', label: 'discovery.suggestion.criteriaGiven' },
+    { key: 'when', label: 'discovery.suggestion.criteriaWhen' },
+    { key: 'then', label: 'discovery.suggestion.criteriaThen' },
+  ] as const;
+
+  private readonly translate = translateFn(inject(TranslocoService));
+
+  /** Options for the edit-mode priority select, highest first. */
+  protected readonly priorityOptions = computed<SelectOption[]>(() => {
+    const t = this.translate();
+    return [...PRIORITIES]
+      .reverse()
+      .map((p) => ({ value: p, label: t ? t('discovery.suggestion.priority.' + p) : p }));
+  });
 
   /** Proposed acceptance criteria, normalized for the read-only preview. */
   protected readonly criteria = computed(() =>
@@ -574,6 +570,11 @@ export class SuggestionCard {
         : 'discovery.suggestion.accept',
   );
 
+  /** True when an UPDATE_STORY proposal differs from its target in any story field. */
+  protected readonly hasChanges = computed(() =>
+    (['title', 'role', 'action', 'benefit'] as const).some((f) => this.isChanged(f)),
+  );
+
   protected toggleEditing(): void {
     if (this.editing()) {
       // Cancel: discard edits by re-seeding from the draft.
@@ -593,6 +594,10 @@ export class SuggestionCard {
     }));
   }
 
+  protected patchCriterionStep(index: number, key: 'given' | 'when' | 'then', value: string): void {
+    this.patchCriterion(index, { [key]: value });
+  }
+
   protected addCriterion(): void {
     this.model.update((m) => ({ ...m, criteria: [...m.criteria, emptyEditableCriterion()] }));
   }
@@ -601,18 +606,30 @@ export class SuggestionCard {
     this.model.update((m) => ({ ...m, criteria: m.criteria.filter((_, i) => i !== index) }));
   }
 
+  /** A stable, unique id for a criterion field so its gutter label can point at it. */
+  protected fieldId(index: number, field: string): string {
+    return `sg-${this.suggestion().id}-c${index}-${field}`;
+  }
+
   /** True when the proposed field differs from the target story (UPDATE_STORY highlight). */
-  protected isChanged(field: 'title' | 'role' | 'action' | 'benefit'): boolean {
+  protected isChanged(field: StoryField): boolean {
     if (this.suggestion().type !== 'UPDATE_STORY') return false;
     const target = this.targetStory();
     if (!target) return false;
-    const draft: Record<typeof field, string | null> = {
+    const draft: Record<StoryField, string | null> = {
       title: this.suggestion().draftTitle,
       role: this.suggestion().draftRole,
       action: this.suggestion().draftAction,
       benefit: this.suggestion().draftBenefit,
     };
     return (draft[field] ?? '') !== (target[field] ?? '');
+  }
+
+  /** Highlight for a changed field on the proposed side of an UPDATE_STORY diff. */
+  protected changedClass(field: StoryField): string {
+    return this.isChanged(field)
+      ? 'rounded-sm bg-ai-soft px-0.5 text-foreground ring-1 ring-ai-border'
+      : '';
   }
 
   protected onAccept(): void {
@@ -622,15 +639,5 @@ export class SuggestionCard {
     }
     this.accept.emit(editableToAcceptRequest(this.suggestion(), this.model()));
     this.editing.set(false);
-  }
-
-  protected priorityClass(priority: string): string {
-    const classes: Record<string, string> = {
-      CRITICAL: 'bg-destructive/20 text-destructive',
-      HIGH: 'bg-destructive/15 text-destructive',
-      MEDIUM: 'bg-amber-500/15 text-amber-600',
-      LOW: 'bg-secondary text-muted-foreground',
-    };
-    return classes[priority] ?? 'bg-secondary text-muted-foreground';
   }
 }

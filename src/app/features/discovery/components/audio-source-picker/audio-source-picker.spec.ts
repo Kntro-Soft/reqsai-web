@@ -29,6 +29,16 @@ describe('AudioSourcePicker', () => {
     expect(option(el, 'mic').getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('labels each source with visible text, not an icon alone', () => {
+    const { el } = render();
+
+    expect(option(el, 'mic').textContent).toContain('discovery.source.micShort');
+    expect(option(el, 'meeting').textContent).toContain('discovery.source.meetingShort');
+    // The full description stays the accessible name and tooltip.
+    expect(option(el, 'meeting').getAttribute('aria-label')).toContain('discovery.source.meeting');
+    expect(option(el, 'meeting').getAttribute('aria-label')).not.toContain('meetingShort');
+  });
+
   it('switches to the virtual meeting source', () => {
     const { fixture, el } = render();
     const changes: AudioSource[] = [];

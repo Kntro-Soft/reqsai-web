@@ -29,21 +29,14 @@ import {
   HlmSpinner,
 } from '../../../../shared/ui';
 
-/** The saveable project fields — one per bordered card. */
-type PField =
-  | 'name'
-  | 'description'
-  | 'programmingLanguages'
-  | 'frameworks'
-  | 'clientPlatforms'
-  | 'databases'
-  | 'architecture'
-  | 'domain';
+/** The saveable sections of the page — one bordered card each. */
+type PField = 'general' | 'tech';
 
-/** Project settings: a logo card (immediate upload) plus one bordered card per editable field (name,
- * description, tech-stack chip lists, architecture, domain), each with its own footer Save. The
- * backend update is a full PUT, so every card's Save sends the complete current value; only the
- * "changed since load" gating differs per card. Vercel-style, matching org settings. */
+/** Project settings: a logo card (immediate upload), a General card (name, description) and one
+ * optional Technical profile card (domain, architecture and the stack chip lists), each with its own
+ * footer Save — grouped by meaning instead of one card per field. The backend update is a full PUT,
+ * so every Save sends the complete current value; only the "changed since load" gating differs per
+ * card. Vercel-style, matching org settings. */
 @Component({
   selector: 'app-project-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,10 +93,10 @@ type PField =
         <p class="text-sm text-destructive">{{ 'projectSettings.errorGeneric' | transloco }}</p>
       } @else {
         <!-- Logo -->
-        <section class="overflow-hidden rounded-2xl border border-border">
+        <section class="overflow-hidden rounded-2xl border border-border bg-card">
           <div class="flex items-center justify-between gap-4 p-5">
             <div class="flex flex-col gap-1">
-              <h2 class="text-base font-semibold">{{ 'orgSettings.logo' | transloco }}</h2>
+              <h2 class="text-base font-semibold">{{ 'projectSettings.logo' | transloco }}</h2>
               <p class="text-sm text-muted-foreground">{{ 'orgSettings.logoDesc' | transloco }}</p>
             </div>
             <button
@@ -144,13 +137,40 @@ type PField =
         </section>
 
         <div [formGroup]="form" class="flex flex-col gap-6">
-          <!-- Name -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <label hlmLabel for="name" class="text-base font-semibold">
-                {{ 'projects.name' | transloco }}
-              </label>
-              <input hlmInput id="name" formControlName="name" class="max-w-md" />
+          <!-- General: what the project is called and what it is about. -->
+          <section class="overflow-hidden rounded-2xl border border-border bg-card">
+            <div class="flex flex-col gap-5 p-5">
+              <h2 class="text-base font-semibold">{{ 'projectSettings.general' | transloco }}</h2>
+              <div class="flex flex-col gap-2">
+                <div class="flex max-w-xl items-baseline justify-between gap-3">
+                  <label hlmLabel for="name">{{ 'projects.name' | transloco }}</label>
+                  <span class="text-xs text-muted-foreground">{{
+                    'common.required' | transloco
+                  }}</span>
+                </div>
+                <input
+                  hlmInput
+                  id="name"
+                  formControlName="name"
+                  aria-required="true"
+                  class="max-w-xl"
+                />
+              </div>
+              <div class="flex flex-col gap-2">
+                <div class="flex max-w-xl items-baseline justify-between gap-3">
+                  <label hlmLabel for="description">{{ 'projects.description' | transloco }}</label>
+                  <span class="text-xs text-muted-foreground">{{
+                    'common.optional' | transloco
+                  }}</span>
+                </div>
+                <textarea
+                  hlmInput
+                  id="description"
+                  rows="2"
+                  formControlName="description"
+                  class="max-w-xl"
+                ></textarea>
+              </div>
             </div>
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
@@ -158,145 +178,73 @@ type PField =
               <ng-container
                 [ngTemplateOutlet]="saveBar"
                 [ngTemplateOutletContext]="{
-                  field: 'name',
-                  dirty: dirtyName(),
+                  field: 'general',
+                  dirty: dirtyGeneral(),
                   invalid: form.controls.name.invalid,
                 }"
               />
             </div>
           </section>
 
-          <!-- Description -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <label hlmLabel for="description" class="text-base font-semibold">
-                {{ 'projects.description' | transloco }}
-              </label>
-              <input hlmInput id="description" formControlName="description" class="max-w-md" />
+          <!-- Technical profile: one optional block instead of six separate cards. -->
+          <section class="overflow-hidden rounded-2xl border border-border bg-card">
+            <div class="flex flex-col gap-5 p-5">
+              <div>
+                <h2 class="flex flex-wrap items-center gap-2 text-base font-semibold">
+                  {{ 'projectSettings.techProfile' | transloco }}
+                  <span
+                    class="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                    >{{ 'common.optional' | transloco }}</span
+                  >
+                </h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                  {{ 'projectCreate.advancedHint' | transloco }}
+                </p>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="flex flex-col gap-2">
+                  <label hlmLabel for="domain">{{ 'projects.domain' | transloco }}</label>
+                  <input hlmInput id="domain" formControlName="domain" />
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label hlmLabel for="architecture">{{
+                    'projects.architecture' | transloco
+                  }}</label>
+                  <input hlmInput id="architecture" formControlName="architecture" />
+                </div>
+              </div>
+              <div class="flex flex-col gap-3 border-t border-border pt-5">
+                <div>
+                  <h3 class="text-sm font-semibold">
+                    {{ 'projectCreate.stackGroup' | transloco }}
+                  </h3>
+                  <p id="settings-chip-hint" class="mt-0.5 text-xs text-muted-foreground">
+                    {{ 'projectCreate.chipHint' | transloco }}
+                  </p>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  @for (f of chipFields; track f.key) {
+                    <div class="flex flex-col gap-2">
+                      <label hlmLabel [for]="'settings-chip-' + f.key">{{
+                        f.labelKey | transloco
+                      }}</label>
+                      <app-chip-input
+                        [inputId]="'settings-chip-' + f.key"
+                        describedBy="settings-chip-hint"
+                        [value]="f.list()"
+                        (valueChange)="f.list.set($event)"
+                      />
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
             <div
               class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
             >
               <ng-container
                 [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'description', dirty: dirtyDescription() }"
-              />
-            </div>
-          </section>
-
-          <!-- Programming languages -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <span hlmLabel class="text-base font-semibold">
-                {{ 'projects.programmingLanguages' | transloco }}
-              </span>
-              <app-chip-input
-                [value]="programmingLanguages()"
-                (valueChange)="programmingLanguages.set($event)"
-              />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{
-                  field: 'programmingLanguages',
-                  dirty: dirtyProgrammingLanguages(),
-                }"
-              />
-            </div>
-          </section>
-
-          <!-- Frameworks -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <span hlmLabel class="text-base font-semibold">
-                {{ 'projects.frameworks' | transloco }}
-              </span>
-              <app-chip-input [value]="frameworks()" (valueChange)="frameworks.set($event)" />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'frameworks', dirty: dirtyFrameworks() }"
-              />
-            </div>
-          </section>
-
-          <!-- Client platforms -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <span hlmLabel class="text-base font-semibold">
-                {{ 'projects.clientPlatforms' | transloco }}
-              </span>
-              <app-chip-input
-                [value]="clientPlatforms()"
-                (valueChange)="clientPlatforms.set($event)"
-              />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'clientPlatforms', dirty: dirtyClientPlatforms() }"
-              />
-            </div>
-          </section>
-
-          <!-- Databases -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <span hlmLabel class="text-base font-semibold">
-                {{ 'projects.databases' | transloco }}
-              </span>
-              <app-chip-input [value]="databases()" (valueChange)="databases.set($event)" />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'databases', dirty: dirtyDatabases() }"
-              />
-            </div>
-          </section>
-
-          <!-- Architecture -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <label hlmLabel for="architecture" class="text-base font-semibold">
-                {{ 'projects.architecture' | transloco }}
-              </label>
-              <input hlmInput id="architecture" formControlName="architecture" class="max-w-md" />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'architecture', dirty: dirtyArchitecture() }"
-              />
-            </div>
-          </section>
-
-          <!-- Domain -->
-          <section class="overflow-hidden rounded-2xl border border-border">
-            <div class="flex flex-col gap-3 p-5">
-              <label hlmLabel for="domain" class="text-base font-semibold">
-                {{ 'projects.domain' | transloco }}
-              </label>
-              <input hlmInput id="domain" formControlName="domain" class="max-w-md" />
-            </div>
-            <div
-              class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
-            >
-              <ng-container
-                [ngTemplateOutlet]="saveBar"
-                [ngTemplateOutletContext]="{ field: 'domain', dirty: dirtyDomain() }"
+                [ngTemplateOutletContext]="{ field: 'tech', dirty: dirtyTech() }"
               />
             </div>
           </section>
@@ -311,10 +259,7 @@ type PField =
     <!-- Shared footer save bar: a "Saved" indicator + a Save gated on dirty/invalid/saving. -->
     <ng-template #saveBar let-field="field" let-dirty="dirty" let-invalid="invalid">
       @if (savedField() === field) {
-        <span
-          class="flex items-center gap-1 text-xs text-emerald-500"
-          data-testid="settings-saved"
-        >
+        <span class="flex items-center gap-1 text-xs text-emerald-500" data-testid="settings-saved">
           <hlm-icon name="lucideCheck" size="13px" />
           {{ 'projectSettings.saved' | transloco }}
         </span>
@@ -344,7 +289,7 @@ export class ProjectSettings implements OnInit {
 
   readonly projectId = input.required<string>();
 
-  protected readonly skeletonFields = [0, 1, 2, 3, 4, 5, 6, 7];
+  protected readonly skeletonFields = [0, 1];
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal<PField | null>(null);
   protected readonly savedField = signal<PField | null>(null);
@@ -408,6 +353,31 @@ export class ProjectSettings implements OnInit {
   protected readonly dirtyDatabases = computed(() =>
     this.listChanged(this.databases(), this.initial().databases),
   );
+
+  /** The General card's Save enables once its name or description changed. */
+  protected readonly dirtyGeneral = computed(() => this.dirtyName() || this.dirtyDescription());
+  /** The Technical profile card's Save enables once any of its fields changed. */
+  protected readonly dirtyTech = computed(
+    () =>
+      this.dirtyArchitecture() ||
+      this.dirtyDomain() ||
+      this.dirtyProgrammingLanguages() ||
+      this.dirtyFrameworks() ||
+      this.dirtyClientPlatforms() ||
+      this.dirtyDatabases(),
+  );
+
+  /** The stack chip lists, in the same order as on the create page. */
+  protected readonly chipFields = [
+    {
+      key: 'lang',
+      labelKey: 'projects.programmingLanguages',
+      list: this.programmingLanguages,
+    },
+    { key: 'fw', labelKey: 'projects.frameworks', list: this.frameworks },
+    { key: 'plat', labelKey: 'projects.clientPlatforms', list: this.clientPlatforms },
+    { key: 'db', labelKey: 'projects.databases', list: this.databases },
+  ];
 
   private listChanged(a: string[], b: string[]): boolean {
     return a.length !== b.length || a.some((x, i) => x !== b[i]);

@@ -23,6 +23,8 @@ import {
   ProjectContextApiService,
 } from '../../data/project-context-api.service';
 import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
+import { GherkinSteps } from '../gherkin-steps/gherkin-steps';
+import { PriorityBadge, StoryStatusBadge } from '../story-badges/story-badges';
 
 export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
 
@@ -45,7 +47,7 @@ const QUICK_VIEW_SIZE = 100;
 @Component({
   selector: 'app-side-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmIcon, HlmSpinner, TranslocoPipe],
+  imports: [HlmIcon, HlmSpinner, GherkinSteps, PriorityBadge, StoryStatusBadge, TranslocoPipe],
   viewProviders: [provideIcons({ lucideChevronDown, lucideSearch, lucideX })],
   host: { class: 'block h-full min-h-0' },
   template: `
@@ -54,21 +56,25 @@ const QUICK_VIEW_SIZE = 100;
     >
       <!-- Tabs -->
       <div class="flex items-center gap-1 border-b border-border p-2">
-        @for (t of tabs; track t) {
-          <button
-            type="button"
-            (click)="tab.set(t)"
-            class="rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors"
-            [class]="
-              tab() === t
-                ? 'bg-primary/15 text-primary'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-            "
-            [attr.data-testid]="'panel-tab-' + t"
-          >
-            {{ 'discovery.panel.' + t | transloco }}
-          </button>
-        }
+        <div class="flex min-w-0 items-center gap-1 overflow-x-auto" role="tablist">
+          @for (t of tabs; track t) {
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="tab() === t"
+              (click)="tab.set(t)"
+              class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors"
+              [class]="
+                tab() === t
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              "
+              [attr.data-testid]="'panel-tab-' + t"
+            >
+              {{ 'discovery.panel.' + t | transloco }}
+            </button>
+          }
+        </div>
         <button
           type="button"
           (click)="open.set(false)"
@@ -83,13 +89,16 @@ const QUICK_VIEW_SIZE = 100;
       <!-- Filter (not for Info) -->
       @if (tab() !== 'info') {
         <div class="border-b border-border p-2">
-          <div class="flex items-center gap-2 rounded-md border border-input bg-background px-2.5">
+          <div
+            class="flex items-center gap-2 rounded-md border border-input bg-background px-2.5 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1 focus-within:ring-offset-background"
+          >
             <hlm-icon name="lucideSearch" size="13px" class="shrink-0 text-muted-foreground" />
             <input
               type="text"
               [value]="query()"
               (input)="query.set($any($event.target).value)"
               [placeholder]="'discovery.panel.filter' | transloco"
+              [attr.aria-label]="'discovery.panel.filter' | transloco"
               class="h-8 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               autocomplete="off"
               data-testid="panel-filter"
@@ -111,11 +120,12 @@ const QUICK_VIEW_SIZE = 100;
                   <button
                     type="button"
                     (click)="sort.set(option)"
-                    class="rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors"
+                    [attr.aria-pressed]="sort() === option"
+                    class="rounded-md px-2 py-0.5 text-xs font-medium transition-colors"
                     [class]="
                       sort() === option
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     "
                     [attr.data-testid]="'panel-sort-' + option"
                   >
@@ -128,11 +138,12 @@ const QUICK_VIEW_SIZE = 100;
                   <button
                     type="button"
                     (click)="togglePriority(chip)"
-                    class="rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors"
+                    [attr.aria-pressed]="priorityFilter() === chip"
+                    class="rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors"
                     [class]="
                       priorityFilter() === chip
-                        ? 'border-primary bg-primary/15 text-primary'
-                        : 'border-border text-muted-foreground hover:bg-accent'
+                        ? 'border-primary/40 bg-accent text-accent-foreground'
+                        : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground'
                     "
                     [attr.data-testid]="'panel-priority-' + chip"
                   >
@@ -154,7 +165,7 @@ const QUICK_VIEW_SIZE = 100;
                   class="overflow-hidden rounded-xl border transition-colors"
                   [class]="
                     story.id === focusStoryId()
-                      ? 'border-primary/60 bg-primary/10'
+                      ? 'border-primary/50 bg-accent/60'
                       : 'border-border bg-background/40'
                   "
                   [class.story-flash]="story.id === flashStoryId()"
@@ -176,21 +187,22 @@ const QUICK_VIEW_SIZE = 100;
                     />
                     <span class="min-w-0 flex-1">
                       <span class="block text-sm font-medium">{{ story.title }}</span>
-                      <span class="mt-1 flex flex-wrap items-center gap-1.5">
-                        <span
-                          class="rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide"
-                          [class]="priorityClass(story.priority)"
+                      <span class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <app-priority-badge
+                          size="sm"
+                          [priority]="story.priority"
                           data-testid="panel-story-priority"
-                        >
-                          {{ 'discovery.suggestion.priority.' + story.priority | transloco }}
-                        </span>
+                        />
                         @if (story.storyPoints !== null && story.storyPoints !== undefined) {
                           <span
-                            class="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                            class="rounded-full bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-secondary-foreground tabular-nums"
                             data-testid="panel-story-points"
                           >
                             {{ 'discovery.panel.points' | transloco: { n: story.storyPoints } }}
                           </span>
+                        }
+                        @if (story.status) {
+                          <app-story-status-badge [status]="story.status" />
                         }
                       </span>
                     </span>
@@ -212,33 +224,13 @@ const QUICK_VIEW_SIZE = 100;
                         >.
                       </p>
                       @if (story.acceptanceCriteria.length > 0) {
-                        <p
-                          class="mb-1.5 mt-3 text-[11px] font-medium uppercase text-muted-foreground"
-                        >
+                        <p class="mb-1.5 mt-3 text-xs font-medium text-muted-foreground">
                           {{ 'discovery.suggestion.criteria' | transloco }}
                         </p>
                         <ul class="flex flex-col gap-1.5" data-testid="panel-story-criteria">
                           @for (c of story.acceptanceCriteria; track $index) {
-                            <li
-                              class="rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-xs leading-relaxed"
-                            >
-                              @if (c.scenario) {
-                                <p class="mb-0.5 font-medium text-foreground">{{ c.scenario }}</p>
-                              }
-                              <p class="text-muted-foreground">
-                                <span class="font-semibold text-primary">{{
-                                  'discovery.suggestion.criteriaGiven' | transloco
-                                }}</span>
-                                {{ c.given }} ·
-                                <span class="font-semibold text-primary">{{
-                                  'discovery.suggestion.criteriaWhen' | transloco
-                                }}</span>
-                                {{ c.when }} ·
-                                <span class="font-semibold text-primary">{{
-                                  'discovery.suggestion.criteriaThen' | transloco
-                                }}</span>
-                                {{ c.then }}
-                              </p>
+                            <li class="rounded-lg bg-muted/60 px-2.5 py-2">
+                              <app-gherkin-steps [criterion]="c" size="sm" />
                             </li>
                           }
                         </ul>
@@ -513,16 +505,6 @@ export class SidePanel {
   /** Toggles a priority filter chip: clicking the active one clears the filter. */
   protected togglePriority(priority: SuggestionPriority): void {
     this.priorityFilter.update((current) => (current === priority ? null : priority));
-  }
-
-  protected priorityClass(priority: string): string {
-    const classes: Record<string, string> = {
-      CRITICAL: 'bg-destructive/20 text-destructive',
-      HIGH: 'bg-destructive/15 text-destructive',
-      MEDIUM: 'bg-amber-500/15 text-amber-600',
-      LOW: 'bg-secondary text-muted-foreground',
-    };
-    return classes[priority?.toUpperCase()] ?? 'bg-secondary text-muted-foreground';
   }
 
   private loadGlossary(): void {
