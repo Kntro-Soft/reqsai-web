@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import { lucideX } from '@ng-icons/lucide';
 import { HlmIcon } from '../../ui';
@@ -6,39 +7,42 @@ import { HlmIcon } from '../../ui';
 /**
  * Tag/chip input: type a value and press Enter to add it as a chip shown below the field. No
  * comma parsing. Two-way bound via `[(value)]` to a string[]. Skips blanks and duplicates.
+ * `inputId` lets an external `<label for>` name the field; `describedBy` links a hint.
  */
 @Component({
   selector: 'app-chip-input',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmIcon],
+  imports: [HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideX })],
   template: `
     <div class="flex flex-col gap-2">
       <input
         type="text"
+        [id]="inputId() || null"
+        [attr.aria-describedby]="describedBy() || null"
         [placeholder]="placeholder()"
         (keydown.enter)="add($event); $event.preventDefault()"
         (blur)="add($event)"
-        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       />
       @if (value().length) {
-        <div class="flex flex-wrap gap-1.5">
+        <ul class="flex flex-wrap gap-1.5">
           @for (tag of value(); track tag; let i = $index) {
-            <span
-              class="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground"
+            <li
+              class="inline-flex items-center gap-1 rounded-full bg-secondary py-1 pl-2.5 pr-1 text-xs text-secondary-foreground"
             >
               {{ tag }}
               <button
                 type="button"
                 (click)="remove(i)"
-                class="inline-flex items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="remove"
+                class="grid h-5 w-5 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                [attr.aria-label]="('common.remove' | transloco) + ' ' + tag"
               >
                 <hlm-icon name="lucideX" size="12px" />
               </button>
-            </span>
+            </li>
           }
-        </div>
+        </ul>
       }
     </div>
   `,
@@ -46,6 +50,8 @@ import { HlmIcon } from '../../ui';
 export class ChipInput {
   readonly value = model<string[]>([]);
   readonly placeholder = input('');
+  readonly inputId = input('');
+  readonly describedBy = input('');
 
   protected add(event: Event): void {
     const input = event.target as HTMLInputElement;
