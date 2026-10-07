@@ -5,6 +5,7 @@ import { lucideCircleAlert } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { RouterLink } from '@angular/router';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { HlmButton, HlmIcon, HlmSkeleton } from '../../../../shared/ui';
 import { BillingStore } from '../../data/billing.store';
 
@@ -98,9 +99,11 @@ import { BillingStore } from '../../data/billing.store';
                 {{ 'billing.planName.' + u.planType | transloco }}
               </p>
             </div>
-            <a hlmBtn size="sm" variant="outline" routerLink="/settings/billing">
-              {{ 'usage.managePlan' | transloco }}
-            </a>
+            @if (billingEnabled) {
+              <a hlmBtn size="sm" variant="outline" routerLink="/settings/billing">
+                {{ 'usage.managePlan' | transloco }}
+              </a>
+            }
           </div>
         </section>
       }
@@ -113,6 +116,8 @@ export class Usage {
 
   protected readonly usage = this.store.usage;
   protected readonly usageState = this.store.usageState;
+  /** "Manage plan" opens the billing page, so it needs the `billing` feature as well. */
+  protected readonly billingEnabled = inject(FeatureFlags).isEnabled('billing');
 
   protected readonly clampedPercentage = computed(() => {
     const pct = this.usage()?.usagePercentage ?? 0;
