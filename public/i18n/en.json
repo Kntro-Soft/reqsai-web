@@ -895,7 +895,7 @@
       "EXPORTED": "Exported"
     },
     "statusHint": {
-      "DRAFT": "Draft: awaiting review, not validated by the team yet.",
+      "DRAFT": "Draft: not approved yet; you can still edit it before approving.",
       "APPROVED": "Approved: validated by the team.",
       "REJECTED": "Rejected: discarded by the team.",
       "MERGED": "Merged: folded into another story.",
@@ -953,7 +953,8 @@
     "viewSession": "View source session",
     "unsaved": "Unsaved changes",
     "criteriaNew": "New · not saved",
-    "criteriaHint": "Write each criterion as a Gherkin scenario: Given (context), When (action), Then (expected outcome)."
+    "criteriaHint": "Write each criterion as a Gherkin scenario: Given (context), When (action), Then (expected outcome).",
+    "required": "Fill in this field."
   },
   "glossaryPage": {
     "title": "Glossary",
@@ -1166,7 +1167,8 @@
       "dragHint": "Drag to browse suggestions",
       "title": "AI suggestions to review",
       "announce": "{{count}} AI suggestions to review",
-      "expand": "Show the suggestions to review"
+      "expand": "Show the suggestions to review",
+      "titleShort": "AI · to review"
     },
     "suggestion": {
       "type": {

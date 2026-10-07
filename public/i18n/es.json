@@ -895,7 +895,7 @@
       "EXPORTED": "Exportada"
     },
     "statusHint": {
-      "DRAFT": "Borrador: pendiente de revisión, aún no la validó el equipo.",
+      "DRAFT": "Borrador: todavía no está aprobada; puedes editarla antes de aprobarla.",
       "APPROVED": "Aprobada: validada por el equipo.",
       "REJECTED": "Rechazada: el equipo la descartó.",
       "MERGED": "Fusionada: se integró en otra historia.",
@@ -953,7 +953,8 @@
     "viewSession": "Ver la sesión de origen",
     "unsaved": "Cambios sin guardar",
     "criteriaNew": "Nuevo · sin guardar",
-    "criteriaHint": "Escribe cada criterio como escenario Gherkin: Dado (contexto), Cuando (acción), Entonces (resultado esperado)."
+    "criteriaHint": "Escribe cada criterio como escenario Gherkin: Dado (contexto), Cuando (acción), Entonces (resultado esperado).",
+    "required": "Completa este campo."
   },
   "glossaryPage": {
     "title": "Glosario",
@@ -1166,7 +1167,8 @@
       "dragHint": "Arrastra para navegar las sugerencias",
       "title": "Sugerencias de la IA por revisar",
       "announce": "{{count}} sugerencias de la IA por revisar",
-      "expand": "Mostrar las sugerencias por revisar"
+      "expand": "Mostrar las sugerencias por revisar",
+      "titleShort": "IA · por revisar"
     },
     "suggestion": {
       "type": {
