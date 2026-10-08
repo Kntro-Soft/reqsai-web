@@ -40,6 +40,34 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
     is classified by the real AI, reviewed and applied, and its term and constraint reach the glossary
     and constraints pages. An executable disguised as a PDF is refused by the API.
 
+### Added (US40 — Identify the speakers of a meeting — `feature/discovery-speaker-labels`)
+
+- **Transcript bubbles name their speaker.** Each diarized voice shows as "Hablante 1", "Hablante 2"…
+  (was "Participante N"), numbered by first appearance in the session, with its own color.
+- **Each session lists its speakers under its separator.** One chip per voice shows its color, name and
+  side, followed by "Editar hablantes".
+  - The dialog edits each speaker's real name and a Cliente / Equipo toggle, and saves one speaker at
+    a time.
+  - The new name and side apply to every segment of that speaker, past and future.
+  - The client tag stands out on the bubbles. Client bubbles sit on the left and team bubbles on the
+    right; unclassified voices alternate as before.
+  - Members without `SESSION_RUN` see the speakers read-only ("Ver hablantes").
+- **Works wherever a session shows:** live capture, an uploaded recording, and a session opened from the
+  history. Renames by someone else arrive live (`SPEAKER_UPDATED`).
+- **Overlapping voices are flagged.** When the API reports stretches where speakers talked at once, the
+  session shows "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+- **API:** `GET /projects/{projectId}/sessions/{sessionId}/speakers` loads the names, sides and overlaps
+  when a session's segments carry speakers. It loads again when a new voice appears or the session
+  changes status. `PUT …/speakers/{label}` saves a speaker.
+- **New error message:** `SPEAKER_NOT_FOUND`.
+- **Tests:**
+  - `speakers.spec.ts`: default names, colors, feed side, merging with the feed's labels, load key and
+    overlap notice;
+  - `session-speakers.store.spec.ts`: loading, renaming and live updates;
+  - `discovery-chat.store.spec.ts`: speakers of a block and `SPEAKER_UPDATED`;
+  - `e2e/speaker-labels.spec.ts`: upload the Spanish meeting, name the first voice as the client, and
+    check the bubbles, the API, and the session reopened from the history.
+
 ### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
 
 - **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid

@@ -1152,7 +1152,25 @@
     "sessionStories": "{{count}} historias",
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Generada por la IA",
-    "speaker": "Participante {{n}}",
+    "speaker": "Hablante {{n}}",
+    "speakers": {
+      "title": "Hablantes de la sesión",
+      "description": "Pon a cada voz su nombre real y marca si es del cliente o del equipo. Se aplica a todas sus intervenciones, y la IA prioriza lo que pide el cliente: lo que dice el equipo es contexto.",
+      "edit": "Editar hablantes",
+      "view": "Ver hablantes",
+      "close": "Cerrar",
+      "empty": "Esta sesión no distingue hablantes.",
+      "nameLabel": "Nombre de {{name}}",
+      "sideLabel": "Lado de la reunión",
+      "side": {
+        "CLIENT": "Cliente",
+        "TEAM": "Equipo"
+      },
+      "segments": "{{count}} intervenciones",
+      "save": "Guardar",
+      "saved": "Hablante actualizado: {{name}}.",
+      "overlapWarning": "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+    },
     "goToStory": "Ir a la historia",
     "time": {
       "justNow": "hace un momento",
@@ -1623,6 +1641,7 @@
     },
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
     "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "SPEAKER_NOT_FOUND": "Ese hablante no participó en esta sesión.",
     "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
   },
   "share": {

@@ -16,12 +16,15 @@ import {
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
+  SessionSpeakerResponse,
+  SessionSpeakersResponse,
   StoryListFilters,
   SuggestionMode,
   StoryReviewStatus,
   SuggestionResponse,
   SuggestionStatus,
   TranscriptResponse,
+  UpdateSessionSpeakerRequest,
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
@@ -142,6 +145,24 @@ export class DiscoveryApiService {
       params = params.set('beforeSequence', beforeSequence);
     }
     return this.http.get<unknown>(`/api/sessions/${sessionId}/segments`, { params });
+  }
+
+  /** The diarized speakers of a session and where they talked over each other (US40). */
+  listSpeakers(projectId: string, sessionId: string): Observable<SessionSpeakersResponse> {
+    return this.http.get<SessionSpeakersResponse>(`${this.base(projectId)}/${sessionId}/speakers`);
+  }
+
+  /** Names a speaker and sets their side; applies to all their segments, past and future. */
+  updateSpeaker(
+    projectId: string,
+    sessionId: string,
+    label: string,
+    request: UpdateSessionSpeakerRequest,
+  ): Observable<SessionSpeakerResponse> {
+    return this.http.put<SessionSpeakerResponse>(
+      `${this.base(projectId)}/${sessionId}/speakers/${encodeURIComponent(label)}`,
+      request,
+    );
   }
 
   /** Uploads an audio file for transcription (session-scoped endpoint). */
