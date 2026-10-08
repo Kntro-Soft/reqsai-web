@@ -1,13 +1,14 @@
 # Dependabot opens its PRs from branches named:
 #   dependabot/<ecosystem>/<target-branch>/<group-or-dependency>
-# e.g. dependabot/npm_and_yarn/develop/minor-and-patch
+# e.g. dependabot/bun/develop/minor-and-patch
 #      dependabot/github-actions/develop/actions
 # (the <target-branch> segment appears because we set target-branch: develop.)
 
 version: 2
 updates:
-  # npm / bun dependencies
-  - package-ecosystem: "npm"
+  # Bun dependencies. The "bun" ecosystem updates bun.lock together with package.json; the
+  # "npm" one only touched package.json, so CI's `bun install --frozen-lockfile` refused its PRs.
+  - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -17,6 +18,10 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "build(deps)"
+    ignore:
+      # The Angular toolchain pins TypeScript (Angular 22: >=6.0 <6.1); it moves with Angular.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       angular:
         patterns:
@@ -26,6 +31,9 @@ updates:
       spartan:
         patterns:
           - "@spartan-ng/*"
+      ng-icons:
+        patterns:
+          - "@ng-icons/*"
       minor-and-patch:
         update-types:
           - "minor"

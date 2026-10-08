@@ -11,6 +11,16 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Fixed (Dependabot PRs failed on the lockfile — `bugfix/dependabot-bun-lockfile`)
+
+- **Dependabot now uses the `bun` ecosystem.** It updates `bun.lock` together with `package.json`. With
+  `npm` it touched only `package.json`, so CI's `bun install --frozen-lockfile` refused every PR.
+- **`@ng-icons/*` are grouped** so `core` and `lucide` move together.
+- **TypeScript minor and major bumps are ignored.** Angular 22 requires `>=6.0 <6.1`, so TypeScript
+  moves with Angular.
+- **Bumps applied here with the lockfile:** `@ng-icons/core` and `@ng-icons/lucide` 33 → 34, and
+  `@types/node` 25 → 26. These supersede Dependabot #37, #38 and #40.
+
 ### Added (US28 — Demo project — `feature/workspace-demo-project`)
 
 - **Every new organization starts with a demo project** with sample data, "Demo · Restaurante La
