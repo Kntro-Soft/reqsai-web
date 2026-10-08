@@ -172,7 +172,9 @@ test.describe.serial('Full product', () => {
     expect(await page.getByTestId('toast').count()).toBe(0);
   });
 
-  test('billing upgrades the organization to Pro and usage reflects it', async ({ page }) => {
+  test('billing upgrades the organization to Pro (or hands off to Stripe) and usage reflects it', async ({
+    page,
+  }) => {
     await uiLogin(page, owner.email, PASSWORD);
 
     // The user menu's Upgrade CTA opens billing.
@@ -183,12 +185,27 @@ test.describe.serial('Full product', () => {
     await page.getByRole('button', { name: 'Cambiar a Pro' }).click();
     await expect(page.getByText('Confirmar cambio de plan')).toBeVisible();
     await page.getByRole('button', { name: 'Mejorar plan' }).click();
-    await expect(page.getByText('Tu plan fue actualizado.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Pro', level: 2 })).toBeVisible();
+
+    // The default fake gateway activates the plan at once; the Stripe gateway hands off to
+    // Stripe Checkout instead (paid end to end in billing-stripe.spec.ts).
+    const gateway = await Promise.race([
+      page.waitForURL(/checkout\.stripe\.com/, { timeout: 20_000 }).then(() => 'stripe' as const),
+      page
+        .getByText('Tu plan fue actualizado.')
+        .waitFor({ timeout: 20_000 })
+        .then(() => 'fake' as const),
+    ]);
+    let plan = 'Pro';
+    if (gateway === 'stripe') {
+      await expect(page.getByText('49,00', { exact: false }).first()).toBeVisible();
+      plan = 'Gratis';
+    } else {
+      await expect(page.getByRole('heading', { name: 'Pro', level: 2 })).toBeVisible();
+    }
 
     await page.goto('/settings/usage');
     await expect(page.getByRole('heading', { name: 'Tokens de IA' })).toBeVisible();
-    await expect(page.getByRole('main').getByText('Pro', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText(plan, { exact: true })).toBeVisible();
   });
 
   test('Jira: the org offers both ways to connect and a project without a mapping refuses to push', async ({
