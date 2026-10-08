@@ -64,8 +64,6 @@
     "profile": "Profile",
     "security": "Security",
     "appearance": "Appearance",
-    "notifications": "Notifications",
-    "tokens": "API tokens",
     "newRole": "New role",
     "editRole": "Edit role",
     "discovery": "Discovery",
@@ -90,7 +88,6 @@
     "allProjects": "All Projects",
     "find": "Find…",
     "openMenu": "Open menu",
-    "soon": "Soon",
     "account": "Account",
     "general": "General",
     "billing": "Billing",
@@ -99,13 +96,7 @@
     "danger": "Danger",
     "profile": "Profile",
     "security": "Security",
-    "appearance": "Appearance",
-    "notifications": "Notifications",
-    "tokens": "API tokens"
-  },
-  "comingSoon": {
-    "title": "Coming soon",
-    "subtitle": "This section isn't available yet. It's on the roadmap — check back soon."
+    "appearance": "Appearance"
   },
   "authz": {
     "noAccess": "You don't have sufficient permissions.",

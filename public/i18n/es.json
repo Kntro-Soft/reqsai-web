@@ -64,8 +64,6 @@
     "profile": "Perfil",
     "security": "Seguridad",
     "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API",
     "newRole": "Nuevo rol",
     "editRole": "Editar rol",
     "discovery": "Captura",
@@ -90,7 +88,6 @@
     "allProjects": "Todos los proyectos",
     "find": "Buscar…",
     "openMenu": "Abrir menú",
-    "soon": "Pronto",
     "account": "Cuenta",
     "general": "General",
     "billing": "Facturación",
@@ -99,13 +96,7 @@
     "danger": "Peligro",
     "profile": "Perfil",
     "security": "Seguridad",
-    "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API"
-  },
-  "comingSoon": {
-    "title": "Próximamente",
-    "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
+    "appearance": "Apariencia"
   },
   "authz": {
     "noAccess": "No tienes permisos suficientes.",

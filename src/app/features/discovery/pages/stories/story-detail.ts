@@ -41,7 +41,6 @@ import { HasPermission } from '../../../../shared/directives/has-permission';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
-import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import {
   HlmButton,
@@ -164,24 +163,22 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
                   </button>
                 }
               </ng-container>
-              @if (integrationsEnabled) {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  (click)="pushToJira()"
-                  [disabled]="pushing()"
-                  data-testid="story-push-jira"
-                >
-                  @if (pushing()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  } @else {
-                    <hlm-icon name="lucideUpload" size="15px" />
-                  }
-                  {{ 'integrations.push.pushStory' | transloco }}
-                </button>
-              }
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="pushToJira()"
+                [disabled]="pushing()"
+                data-testid="story-push-jira"
+              >
+                @if (pushing()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUpload" size="15px" />
+                }
+                {{ 'integrations.push.pushStory' | transloco }}
+              </button>
               <button
                 hlmBtn
                 size="sm"
@@ -484,9 +481,6 @@ export class StoryDetail implements OnInit {
   /** Both bound from the route via withComponentInputBinding(). */
   readonly projectId = input.required<string>();
   readonly storyId = input.required<string>();
-
-  /** "Push to Jira" belongs to the `integrations` feature. */
-  protected readonly integrationsEnabled = inject(FeatureFlags).isEnabled('integrations');
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
