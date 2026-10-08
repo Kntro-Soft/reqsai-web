@@ -1173,6 +1173,14 @@
       "hintHeadphones": "Wear headphones so your microphone doesn't pick up the meeting again and duplicate the transcript."
     },
     "bar": {
+      "modeAuto": "AI: automatic",
+      "modeManual": "AI: manual",
+      "modeHint": "Choose when the AI analyzes: automatic (on its own) or manual (only on “Analyze now”)",
+      "modeAutoToast": "The AI analyzes the conversation on its own again.",
+      "modeManualToast": "Manual mode: the AI only analyzes when you press “Analyze now”.",
+      "analyze": "Analyze now",
+      "analyzed": "The AI analyzed the conversation: {{count}} new suggestions to review.",
+      "analyzedNothing": "The AI analyzed the conversation: no new suggestions.",
       "recording": "Recording",
       "paused": "Paused",
       "pause": "Pause",
@@ -1328,6 +1336,8 @@
     "retry": "Retry",
     "pendingReview": "Awaiting review",
     "ai": {
+      "manual": "Manual mode",
+      "manualHint": "The AI stays quiet: it analyzes when you press “Analyze now”.",
       "listening": "The AI is listening to the conversation",
       "listeningHint": "It proposes stories, edge cases and questions as the meeting goes on; they appear above for your review.",
       "lastSuggestion": "Last suggestion {{time}} · review it in the tray above.",

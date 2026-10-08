@@ -3,6 +3,14 @@
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
+/** When the assistant analyzes a live session: on its own, or only on "Analizar ahora" (US46). */
+export type SuggestionMode = 'AUTO' | 'MANUAL';
+
+/** Result of POST /projects/{projectId}/sessions/{sessionId}/analyze. */
+export interface AnalyzeSessionResponse {
+  suggestionsCreated: number;
+}
+
 export interface DiscoverySessionResponse {
   id: string;
   projectId: string;
@@ -30,6 +38,8 @@ export interface DiscoverySessionResponse {
   suggestionsPending?: number | null;
   /** Clarifying questions the AI raised in this session. */
   questionsAsked?: number | null;
+  /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
+  suggestionMode?: SuggestionMode;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */

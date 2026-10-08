@@ -2,7 +2,7 @@ import { DiscoverySessionResponse, SuggestionResponse } from './discovery.models
 import { RelativeTime, relativeTime } from './relative-time';
 
 /** What the AI is doing for a session, as shown at the live edge of its feed block. */
-type AiActivityState = 'listening' | 'paused' | 'processing' | 'failed';
+type AiActivityState = 'listening' | 'manual' | 'paused' | 'processing' | 'failed';
 
 export interface AiActivity {
   state: AiActivityState;
@@ -23,13 +23,18 @@ export interface AiActivity {
  * - FAILED → failed, carrying the backend's reason when it sent one.
  */
 export function aiActivityFor(
-  session: Pick<DiscoverySessionResponse, 'status' | 'processingError'>,
+  session: Pick<DiscoverySessionResponse, 'status' | 'processingError' | 'suggestionMode'>,
   pending: readonly Pick<SuggestionResponse, 'createdAt'>[],
   now: number,
 ): AiActivity | null {
   switch (session.status) {
     case 'RECORDING':
-      return { state: 'listening', detail: null, last: newestPending(pending, now) };
+      // In manual mode the AI waits for "Analizar ahora" instead of listening on its own (US46).
+      return {
+        state: session.suggestionMode === 'MANUAL' ? 'manual' : 'listening',
+        detail: null,
+        last: newestPending(pending, now),
+      };
     case 'PAUSED':
       return { state: 'paused', detail: null, last: null };
     case 'STOPPED':
