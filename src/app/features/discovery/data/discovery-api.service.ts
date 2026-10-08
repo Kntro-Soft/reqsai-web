@@ -5,6 +5,8 @@ import {
   AcceptSuggestionRequest,
   AcceptanceCriterionRequest,
   AcceptanceCriterionResponse,
+  AssistantExchangeResponse,
+  AssistantMessageResponse,
   BatchDeleteStoriesRequest,
   BatchDeleteStoriesResult,
   ChangeStoryStatusRequest,
@@ -304,6 +306,53 @@ export class DiscoveryApiService {
     return this.http.post<SuggestionResponse>(
       `/api/sessions/${sessionId}/suggestions/${suggestionId}/dismiss`,
       {},
+    );
+  }
+
+  /**
+   * Accepts any suggestion of the project by id — the route for suggestions raised from the
+   * assistant chat, which belong to no session.
+   */
+  acceptProjectSuggestion(
+    projectId: string,
+    suggestionId: string,
+    request: AcceptSuggestionRequest,
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/projects/${projectId}/suggestions/${suggestionId}/accept`,
+      request,
+    );
+  }
+
+  /** Dismisses any suggestion of the project by id (assistant-chat suggestions have no session). */
+  dismissProjectSuggestion(
+    projectId: string,
+    suggestionId: string,
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/projects/${projectId}/suggestions/${suggestionId}/dismiss`,
+      {},
+    );
+  }
+
+  // ---- Assistant chat ----
+
+  /** The newest messages of the project's assistant chat, oldest first. */
+  listAssistantMessages(projectId: string, limit = 50): Observable<AssistantMessageResponse[]> {
+    return this.http.get<AssistantMessageResponse[]>(
+      `/api/projects/${projectId}/assistant/messages`,
+      { params: new HttpParams().set('limit', limit) },
+    );
+  }
+
+  /**
+   * Sends a message to ReqsAI: a question is answered from the project, a requirement comes back as
+   * suggestions in the reply.
+   */
+  sendAssistantMessage(projectId: string, content: string): Observable<AssistantExchangeResponse> {
+    return this.http.post<AssistantExchangeResponse>(
+      `/api/projects/${projectId}/assistant/messages`,
+      { content },
     );
   }
 }

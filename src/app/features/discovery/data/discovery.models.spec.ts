@@ -195,7 +195,9 @@ describe('editableToAcceptRequest', () => {
         { scenario: '', given: 'd', when: '', then: 'f' },
       ],
     });
-    expect(req.editedAcceptanceCriteria).toEqual([{ scenario: 'x', given: 'a', when: 'b', then: 'c' }]);
+    expect(req.editedAcceptanceCriteria).toEqual([
+      { scenario: 'x', given: 'a', when: 'b', then: 'c' },
+    ]);
   });
 
   it('projects an EDGE_CASE criterion onto both flat fields and the structured list', () => {

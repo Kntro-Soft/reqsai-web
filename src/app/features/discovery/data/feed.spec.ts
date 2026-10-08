@@ -143,7 +143,11 @@ describe('upsertSegment', () => {
   });
 
   it('never overwrites a historical segment that already carries occurredAt', () => {
-    const list = upsertSegment([], segment(1, { occurredAt: '2026-07-04T09:00:00Z' }), '2030-01-01T00:00:00Z');
+    const list = upsertSegment(
+      [],
+      segment(1, { occurredAt: '2026-07-04T09:00:00Z' }),
+      '2030-01-01T00:00:00Z',
+    );
     expect(list[0].occurredAt).toBe('2026-07-04T09:00:00Z');
   });
 });
@@ -308,7 +312,9 @@ describe('buildSessionItems', () => {
       transcript: 'Earlier recording.',
       segments: [segment(0), segment(1)],
       decisions: [decision({ anchorSequence: 0 })],
-      stories: [displayStory({ id: 'story-2', title: 'Other', priority: 'LOW', storyPoints: null })],
+      stories: [
+        displayStory({ id: 'story-2', title: 'Other', priority: 'LOW', storyPoints: null }),
+      ],
     });
     expect(items.map((i) => i.kind)).toEqual([
       'paragraph',
@@ -347,7 +353,9 @@ describe('buildSessionItems', () => {
       transcript: null,
       segments: [],
       decisions: [decision({ storyId: 'story-1' })],
-      stories: [displayStory({ id: 'story-1', title: 'Covered', priority: 'HIGH', storyPoints: 5 })],
+      stories: [
+        displayStory({ id: 'story-1', title: 'Covered', priority: 'HIGH', storyPoints: 5 }),
+      ],
     });
     expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
   });

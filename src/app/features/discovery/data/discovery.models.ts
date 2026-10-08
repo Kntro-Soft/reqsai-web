@@ -239,7 +239,8 @@ export type SuggestionPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface SuggestionResponse {
   id: string;
-  sessionId: string;
+  /** The session it came from; null when it was raised from the assistant chat. */
+  sessionId: string | null;
   projectId: string;
   type: SuggestionType;
   status: SuggestionStatus;
@@ -553,4 +554,25 @@ export interface ProjectSessionLifecycleMessage {
   title?: string | null;
   language?: string | null;
   startedAt?: string | null;
+}
+
+/** Who wrote an assistant chat message: the analyst, or ReqsAI answering. */
+export type AssistantMessageRole = 'ANALYST' | 'ASSISTANT';
+
+/**
+ * One message of a project's assistant chat (GET/POST /projects/{projectId}/assistant/messages).
+ * A reply carries the suggestions it raised, in their current review state.
+ */
+export interface AssistantMessageResponse {
+  id: string;
+  role: AssistantMessageRole;
+  content: string;
+  createdAt: string;
+  suggestions: SuggestionResponse[];
+}
+
+/** One round of the assistant chat: what the analyst typed and ReqsAI's reply. */
+export interface AssistantExchangeResponse {
+  question: AssistantMessageResponse;
+  answer: AssistantMessageResponse;
 }
