@@ -71,6 +71,7 @@
     "history": "Historial de sesiones",
     "glossary": "Glosario",
     "constraints": "Restricciones",
+    "documents": "Documentos del cliente",
     "share": "Historias compartidas"
   },
   "nav": {
@@ -79,6 +80,7 @@
     "stories": "Historias",
     "glossary": "Glosario",
     "constraints": "Restricciones",
+    "documents": "Documentos",
     "members": "Miembros",
     "roles": "Roles",
     "settings": "Ajustes",
@@ -1032,6 +1034,66 @@
     "deleteAfter": "",
     "menuAria": "Acciones de la restricción"
   },
+  "clientDocuments": {
+    "title": "Documentos del cliente",
+    "subtitle": "Sube documentos del cliente (PDF o Word) y ReqsAI extraerá su glosario, sus restricciones y el contexto del proyecto que usará la IA.",
+    "upload": {
+      "title": "Subir un documento",
+      "description": "PDF o Word (.docx), hasta 50 MB. ReqsAI extrae el texto y la IA lo clasifica; tú revisas el resultado antes de guardarlo.",
+      "choose": "Arrastra un archivo aquí o haz clic para elegirlo",
+      "hint": "PDF o Word (.docx) · máx. 50 MB",
+      "analyze": "Analizar documento",
+      "uploading": "Subiendo… {{percent}} %",
+      "uploadingUnknown": "Subiendo…",
+      "analyzing": "Extrayendo el texto y clasificándolo con IA…",
+      "problem": {
+        "type": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+        "size": "El archivo supera el máximo de 50 MB.",
+        "empty": "El archivo está vacío."
+      }
+    },
+    "review": {
+      "title": "Revisa lo que encontró la IA",
+      "file": "{{name}} · {{size}} · {{chars}} caracteres de texto",
+      "unclassified": "La IA no pudo clasificar este documento. Puedes guardarlo igualmente como contexto y añadir términos o restricciones a mano.",
+      "truncated": "El documento es muy largo: se guardaron sus primeros 200 000 caracteres y la IA analizó el inicio.",
+      "name": "Nombre del documento",
+      "type": "Tipo de documento",
+      "context": "Contexto del proyecto",
+      "contextHint": "Resumen que la IA usará como contexto del proyecto en la captura y el asistente. Puedes editarlo.",
+      "glossary": "Términos del glosario",
+      "constraints": "Restricciones",
+      "selectedOf": "{{selected}} de {{total}} seleccionados",
+      "selectAll": "Seleccionar todo",
+      "clearAll": "Quitar selección",
+      "exists": "Ya existe",
+      "noGlossary": "La IA no encontró términos de glosario en este documento.",
+      "noConstraints": "La IA no encontró restricciones en este documento.",
+      "noTermPermission": "No tienes permiso para añadir términos al glosario.",
+      "noConstraintPermission": "No tienes permiso para añadir restricciones.",
+      "discard": "Descartar",
+      "apply": "Aplicar ({{terms}} términos, {{constraints}} restricciones)",
+      "applied": "Documento guardado: {{terms}} términos y {{constraints}} restricciones añadidos.",
+      "discarded": "Análisis descartado."
+    },
+    "list": {
+      "title": "Documentos guardados",
+      "empty": "Aún no hay documentos. Los que apliques aparecerán aquí y la IA los usará como contexto del proyecto.",
+      "loadError": "No se pudieron cargar los documentos.",
+      "noSummary": "Sin resumen de contexto.",
+      "delete": "Eliminar documento",
+      "deleteTitle": "Eliminar documento",
+      "deleteBody": "Se eliminará «{{name}}» y la IA dejará de usarlo como contexto. Los términos y restricciones que añadiste se conservan.",
+      "deleted": "Documento eliminado."
+    },
+    "types": {
+      "BUSINESS_RULES": "Reglas de negocio",
+      "TECHNICAL_SPEC": "Especificación técnica",
+      "MEETING_NOTES": "Acta o notas de reunión",
+      "GLOSSARY_SOURCE": "Fuente de glosario",
+      "REFERENCE": "Referencia"
+    }
+  },
   "projectRoleForm": {
     "back": "Volver a roles",
     "createTitle": "Crear rol",
@@ -1488,6 +1550,11 @@
     "PROJECT_DOCUMENT_NOT_FOUND": "Ese documento ya no existe.",
     "PROJECT_DOCUMENT_ALREADY_EXISTS": "Ya existe un documento con ese nombre.",
     "PROJECT_DOCUMENT_PLAN_LIMIT_EXCEEDED": "Has alcanzado el límite de documentos de tu plan.",
+    "PROJECT_DOCUMENT_NOT_PENDING": "Este documento ya se aplicó o se descartó.",
+    "DOCUMENT_TYPE_NOT_ALLOWED": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+    "DOCUMENT_TOO_LARGE": "El documento supera el máximo de 50 MB.",
+    "DOCUMENT_EMPTY": "No se encontró texto en el documento. Si es un escaneo, súbelo como PDF con texto seleccionable.",
+    "DOCUMENT_UNREADABLE": "No se pudo leer el documento: puede estar dañado o protegido con contraseña.",
     "INSUFFICIENT_PERMISSIONS": "No tienes permiso para hacer eso.",
     "MEMBER_NOT_FOUND": "Ese miembro ya no existe.",
     "MEMBER_ALREADY_EXISTS": "Esa persona ya es miembro o ya fue invitada.",
@@ -1507,6 +1574,7 @@
     "INVALID_FIELD": "Uno de los campos no es válido. Revísalo e inténtalo de nuevo.",
     "INVALID_VALUE": "Uno de los valores no es válido. Revísalo e inténtalo de nuevo.",
     "UNPROCESSABLE_REQUEST": "No pudimos procesar esa solicitud. Revísala e inténtalo de nuevo.",
+    "PAYLOAD_TOO_LARGE": "El archivo supera el tamaño máximo permitido (50 MB).",
     "PERMISSION_DENIED": "No tienes permiso para hacer eso.",
     "TENANT_ACCESS_DENIED": "No tienes acceso a este espacio de trabajo.",
     "ORGANIZATION_NOT_OWNED": "No eres propietario de esa organización.",

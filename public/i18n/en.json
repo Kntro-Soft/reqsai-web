@@ -71,6 +71,7 @@
     "history": "Session history",
     "glossary": "Glossary",
     "constraints": "Constraints",
+    "documents": "Client documents",
     "share": "Shared stories"
   },
   "nav": {
@@ -79,6 +80,7 @@
     "stories": "Stories",
     "glossary": "Glossary",
     "constraints": "Constraints",
+    "documents": "Documents",
     "members": "Members",
     "roles": "Roles",
     "settings": "Settings",
@@ -1032,6 +1034,66 @@
     "deleteAfter": "",
     "menuAria": "Constraint actions"
   },
+  "clientDocuments": {
+    "title": "Client documents",
+    "subtitle": "Upload your client's documents (PDF or Word) and ReqsAI extracts their glossary, constraints and the project context the AI will use.",
+    "upload": {
+      "title": "Upload a document",
+      "description": "PDF or Word (.docx), up to 50 MB. ReqsAI extracts the text and the AI classifies it; you review the result before saving it.",
+      "choose": "Drop a file here or click to choose one",
+      "hint": "PDF or Word (.docx) · max. 50 MB",
+      "analyze": "Analyze document",
+      "uploading": "Uploading… {{percent}} %",
+      "uploadingUnknown": "Uploading…",
+      "analyzing": "Extracting the text and classifying it with AI…",
+      "problem": {
+        "type": "Only PDF (.pdf) or Word (.docx) documents are accepted. Executables and other formats are not allowed.",
+        "size": "The file exceeds the 50 MB maximum.",
+        "empty": "The file is empty."
+      }
+    },
+    "review": {
+      "title": "Review what the AI found",
+      "file": "{{name}} · {{size}} · {{chars}} characters of text",
+      "unclassified": "The AI could not classify this document. You can still keep it as context and add terms or constraints by hand.",
+      "truncated": "The document is very long: its first 200,000 characters were kept and the AI analyzed the beginning.",
+      "name": "Document name",
+      "type": "Document type",
+      "context": "Project context",
+      "contextHint": "Summary the AI uses as project context in capture and in the assistant. You can edit it.",
+      "glossary": "Glossary terms",
+      "constraints": "Constraints",
+      "selectedOf": "{{selected}} of {{total}} selected",
+      "selectAll": "Select all",
+      "clearAll": "Clear selection",
+      "exists": "Already exists",
+      "noGlossary": "The AI found no glossary terms in this document.",
+      "noConstraints": "The AI found no constraints in this document.",
+      "noTermPermission": "You don't have permission to add glossary terms.",
+      "noConstraintPermission": "You don't have permission to add constraints.",
+      "discard": "Discard",
+      "apply": "Apply ({{terms}} terms, {{constraints}} constraints)",
+      "applied": "Document saved: {{terms}} terms and {{constraints}} constraints added.",
+      "discarded": "Analysis discarded."
+    },
+    "list": {
+      "title": "Saved documents",
+      "empty": "No documents yet. The ones you apply show up here and the AI uses them as project context.",
+      "loadError": "Could not load the documents.",
+      "noSummary": "No context summary.",
+      "delete": "Delete document",
+      "deleteTitle": "Delete document",
+      "deleteBody": "“{{name}}” will be deleted and the AI will stop using it as context. The terms and constraints you added are kept.",
+      "deleted": "Document deleted."
+    },
+    "types": {
+      "BUSINESS_RULES": "Business rules",
+      "TECHNICAL_SPEC": "Technical specification",
+      "MEETING_NOTES": "Minutes or meeting notes",
+      "GLOSSARY_SOURCE": "Glossary source",
+      "REFERENCE": "Reference"
+    }
+  },
   "projectRoleForm": {
     "back": "Back to roles",
     "createTitle": "Create role",
@@ -1488,6 +1550,11 @@
     "PROJECT_DOCUMENT_NOT_FOUND": "That document no longer exists.",
     "PROJECT_DOCUMENT_ALREADY_EXISTS": "A document with that name already exists.",
     "PROJECT_DOCUMENT_PLAN_LIMIT_EXCEEDED": "You've reached the document limit for your plan.",
+    "PROJECT_DOCUMENT_NOT_PENDING": "This document was already applied or discarded.",
+    "DOCUMENT_TYPE_NOT_ALLOWED": "Only PDF (.pdf) or Word (.docx) documents are accepted. Executables and other formats are not allowed.",
+    "DOCUMENT_TOO_LARGE": "The document exceeds the 50 MB maximum.",
+    "DOCUMENT_EMPTY": "No text was found in the document. If it is a scan, upload a PDF with selectable text.",
+    "DOCUMENT_UNREADABLE": "The document could not be read: it may be damaged or password-protected.",
     "INSUFFICIENT_PERMISSIONS": "You don't have permission to do that.",
     "MEMBER_NOT_FOUND": "That member no longer exists.",
     "MEMBER_ALREADY_EXISTS": "That person is already a member or invited.",
@@ -1507,6 +1574,7 @@
     "INVALID_FIELD": "One of the fields is invalid. Please check and try again.",
     "INVALID_VALUE": "One of the values is invalid. Please check and try again.",
     "UNPROCESSABLE_REQUEST": "We couldn't process that request. Please review and try again.",
+    "PAYLOAD_TOO_LARGE": "The file exceeds the maximum allowed size (50 MB).",
     "PERMISSION_DENIED": "You don't have permission to do that.",
     "TENANT_ACCESS_DENIED": "You don't have access to this workspace.",
     "ORGANIZATION_NOT_OWNED": "You don't own that organization.",

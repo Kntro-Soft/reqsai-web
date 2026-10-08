@@ -11,6 +11,35 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US22 — Client documents — `feature/workspace-client-documents`)
+
+- **New "Documentos" page in the project sidebar** (`/projects/:id/documents`, needs `DOCUMENT_READ`).
+  The analyst uploads the client's documents and ReqsAI turns them into project context.
+- **Upload.** A drop zone takes a PDF (`.pdf`) or Word (`.docx`) file of up to 50 MB (`DOCUMENT_CREATE`).
+  - Executables, other formats, empty files and files over 50 MB are refused before anything is sent.
+    The API checks the content again and its errors are translated.
+  - A progress bar shows the upload, then "Extrayendo el texto y clasificándolo con IA…".
+- **Review.** The AI proposes a context summary, glossary terms (term + definition), constraints and a
+  document type.
+  - New terms and constraints come preselected. The ones the project already has show "Ya existe" and
+    cannot be selected. Selection is turned off without `GLOSSARY_TERM_WRITE` / `CONSTRAINT_WRITE`.
+  - The name, the type and the summary can be edited.
+  - "Aplicar" adds the selected items and keeps the document. "Descartar" deletes the analysis.
+  - A notice explains when the AI could not classify the document, or when the text was cut at
+    200,000 characters.
+- **Saved documents** are listed with their type, file, size, date and summary, and can be deleted
+  (`DOCUMENT_DELETE`). Their summaries feed the AI in capture and in the assistant.
+- A document found in the command palette now opens the project's documents page.
+- **i18n:** `clientDocuments.*`, `nav.documents`, `titles.documents`, and the errors
+  `DOCUMENT_TYPE_NOT_ALLOWED`, `DOCUMENT_TOO_LARGE`, `DOCUMENT_EMPTY`, `DOCUMENT_UNREADABLE`,
+  `PROJECT_DOCUMENT_NOT_PENDING` and `PAYLOAD_TOO_LARGE`, in Spanish and English.
+- **Tests:**
+  - `client-documents.spec.ts`: file checks, review selection and the apply request;
+  - `documents.spec.ts`: the page refuses an executable, then uploads, reviews, applies and discards;
+  - `e2e/client-documents.spec.ts`: a terms-of-reference PDF (`e2e/fixtures/terminos-de-referencia.pdf`)
+    is classified by the real AI, reviewed and applied, and its term and constraint reach the glossary
+    and constraints pages. An executable disguised as a PDF is refused by the API.
+
 ### Added (US40 — Identify the speakers of a meeting — `feature/discovery-speaker-labels`)
 
 - **Transcript bubbles name their speaker.** Each diarized voice shows as "Hablante 1", "Hablante 2"…

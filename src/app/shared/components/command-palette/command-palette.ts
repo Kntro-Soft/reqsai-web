@@ -519,7 +519,8 @@ export class CommandPalette {
           group: 'commandPalette.groups.document',
           icon: 'lucideFile',
           keywords: q,
-          run: () => this.go(hit.projectId ? ['/projects', hit.projectId] : ['/projects']),
+          run: () =>
+            this.go(hit.projectId ? ['/projects', hit.projectId, 'documents'] : ['/projects']),
         };
     }
   }
