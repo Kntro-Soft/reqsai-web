@@ -34,6 +34,15 @@ bun start        # dev-server con HMR → http://localhost:4200
 | `bun run e2e`     | Tests e2e con Playwright                              |
 | `bun run knip`    | Detecta exports, archivos y deps sin uso              |
 
+Los tests e2e (`bunx playwright test`) corren contra el stack local:
+- el API en `:8080` con Postgres y Mailpit (`docker compose --profile core up -d` en `reqsai-api`);
+- la web en `:4200` (`bun start`).
+
+`e2e/product.spec.ts` recorre el producto completo: glosario, restricciones, historias y su
+aprobación, invitaciones, roles, facturación, uso y Jira. `e2e/discovery.spec.ts` graba una reunión con
+un micrófono falso (`e2e/fixtures/meeting-es.wav`) y usa los proveedores reales de voz a texto e IA
+que tenga configurados el API.
+
 ## Environments
 
 | Archivo                                | Cuándo se usa                                  |

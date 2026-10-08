@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { AuthService } from '../../../core/auth/auth.service';
 import { Logo } from '../logo/logo';
 import { LanguageSwitcher } from '../language-switcher/language-switcher';
 import { ThemeToggle } from '../theme-toggle/theme-toggle';
@@ -13,7 +14,8 @@ import { HlmIcon } from '../../ui';
  * flows: a bottom-bordered bar with the language + theme controls on the right.
  * When `backHref` is set, a back link sits on the left and the brand logo is
  * centered; otherwise (e.g. onboarding, where there is nowhere to go back to)
- * the logo sits on the left.
+ * the logo sits on the left. `showSignOut` adds a sign-out button, so a user
+ * with no organization yet is never stuck on onboarding.
  */
 @Component({
   selector: 'app-create-page-header',
@@ -45,6 +47,16 @@ import { HlmIcon } from '../../ui';
       <div class="flex items-center justify-end gap-1">
         <app-language-switcher />
         <app-theme-toggle />
+        @if (showSignOut()) {
+          <button
+            type="button"
+            (click)="signOut()"
+            class="ml-1 text-sm text-muted-foreground hover:text-foreground"
+            data-testid="header-sign-out"
+          >
+            {{ 'userMenu.signOut' | transloco }}
+          </button>
+        }
       </div>
     </header>
   `,
@@ -54,4 +66,12 @@ export class CreatePageHeader {
   readonly backHref = input<string | null>(null);
   /** Pixel size of the brand logo. */
   readonly logoSize = input(24);
+  /** Shows a sign-out button next to the language and theme controls. */
+  readonly showSignOut = input(false);
+
+  private readonly auth = inject(AuthService);
+
+  protected signOut(): void {
+    this.auth.logout();
+  }
 }

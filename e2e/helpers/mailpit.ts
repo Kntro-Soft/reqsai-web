@@ -27,6 +27,16 @@ export function getResetToken(request: APIRequestContext, email: string): Promis
   return getEmailToken(request, email, 'Restablece', /reset-password\?token=([A-Za-z0-9._~-]+)/);
 }
 
+/** Token from the `…/invitations/accept?token=…` link of the invitation email. */
+export function getInvitationToken(request: APIRequestContext, email: string): Promise<string> {
+  return getEmailToken(
+    request,
+    email,
+    'Te invitaron',
+    /invitations\/accept\?token=([A-Za-z0-9._~-]+)/,
+  );
+}
+
 /**
  * Polls Mailpit for the most recent message to `email` whose subject contains
  * `subjectIncludes`, then extracts the token matching `linkPattern` from its

@@ -164,6 +164,7 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
                 }
               </ng-container>
               <button
+                *appHasPermission="'INTEGRATION_SYNC'"
                 hlmBtn
                 size="sm"
                 variant="outline"
@@ -180,6 +181,7 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
                 {{ 'integrations.push.pushStory' | transloco }}
               </button>
               <button
+                *appHasPermission="'STORY_DELETE'"
                 hlmBtn
                 size="sm"
                 variant="ghost"

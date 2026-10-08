@@ -133,7 +133,11 @@ export class IntegrationsApiService {
 
   /** The project's Jira push target, or a 404 error when none is configured. */
   getProjectTarget(projectId: string): Observable<ProjectJiraTargetResponse> {
-    return this.http.get<ProjectJiraTargetResponse>(`${this.projectBase(projectId)}/target`);
+    // The backlog looks this up eagerly to enable its Jira buttons — a 403 for a member
+    // without integration access is expected, so keep it out of the global toast.
+    return this.http.get<ProjectJiraTargetResponse>(`${this.projectBase(projectId)}/target`, {
+      context: silentForbidden(),
+    });
   }
 
   /** Set or replace the project's Jira push target. */
