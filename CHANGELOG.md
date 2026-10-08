@@ -11,6 +11,26 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US28 — Demo project — `feature/workspace-demo-project`)
+
+- **Every new organization starts with a demo project** with sample data, "Demo · Restaurante La
+  Tradición — Reservas en línea", so the user explores ReqsAI without starting from scratch.
+  - The organization form says so: "Te crearemos un proyecto de demostración…".
+  - The projects list (cards and table), the project switcher and the overview mark it with a "Demo"
+    badge (`ProjectResponse.demo`).
+- **The overview explains the demo** in a banner and offers **"Restaurar datos de prueba"**. The danger
+  zone offers it too.
+  - Shown only on the demo project, to org owners/admins and members with `PROJECT_UPDATE`.
+  - A confirmation modal warns that sessions, stories, suggestions, assistant messages, glossary and
+    constraints are replaced.
+  - `POST /api/organizations/{orgId}/projects/{projectId}/demo/restore`; the project is refreshed in the
+    store and a toast confirms it. `PROJECT_NOT_DEMO` is translated.
+- **Tests:**
+  - `demo-restore.spec.ts`, `demo-badge.spec.ts`;
+  - `e2e/demo-project.spec.ts`: register, create an organization, see the demo with its badge and six
+    stories, delete one, restore the sample data and see it back;
+  - `e2e/workspace.spec.ts` now expects the demo project after onboarding.
+
 ### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
 
 - **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid

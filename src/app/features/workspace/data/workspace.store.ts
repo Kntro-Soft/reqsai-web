@@ -69,6 +69,11 @@ export class WorkspaceStore {
       .pipe(tap((project) => this._projects.update((list) => [project, ...list])));
   }
 
+  /** Replaces a project already in the list with a fresh copy from the backend (e.g. after a restore). */
+  replaceProject(project: ProjectResponse): void {
+    this._projects.update((list) => list.map((p) => (p.id === project.id ? project : p)));
+  }
+
   reset(): void {
     this._organizations.set([]);
     this._projects.set([]);

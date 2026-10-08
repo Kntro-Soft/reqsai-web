@@ -28,7 +28,8 @@
     "profileSaved": "Profile updated.",
     "projectArchived": "Project archived.",
     "projectRestored": "Project restored.",
-    "projectDeleted": "Project deleted."
+    "projectDeleted": "Project deleted.",
+    "demoRestored": "Sample data restored"
   },
   "language": {
     "label": "Language",
@@ -231,6 +232,18 @@
   "overview": {
     "subtitle": "A quick view of this project and shortcuts to its sections."
   },
+  "demo": {
+    "badge": "Demo",
+    "badgeTitle": "Demo project with sample data",
+    "bannerTitle": "This is a demo project",
+    "bannerBody": "We created it with sample data — a session with its transcript, user stories, glossary and constraints — so you can explore ReqsAI without starting from scratch. Change it freely: you can restore the sample data at any time.",
+    "restore": "Restore sample data",
+    "restoreDesc": "Reloads the demo project's original content.",
+    "restoreHint": "Replaces the sessions, stories, suggestions, glossary and constraints.",
+    "restoreTitle": "Restore sample data",
+    "restoreBody": "This deletes this project's sessions, user stories, suggestions, assistant messages, glossary terms and constraints, and loads the original demo content again. This can't be undone.",
+    "restoreConfirm": "Restore"
+  },
   "account": {
     "title": "Account",
     "subtitle": "Manage your profile, password and preferences.",
@@ -328,6 +341,7 @@
   "createOrg": {
     "title": "Create your organization",
     "subtitle": "Your organization is your workspace: inside it you create projects and discovery sessions.",
+    "demoHint": "We'll create a demo project with sample data so you can explore ReqsAI without starting from scratch.",
     "name": "Organization name",
     "language": "Meeting language",
     "advanced": "Advanced options",
@@ -1465,6 +1479,7 @@
     "PROJECT_NOT_FOUND": "That project no longer exists.",
     "PROJECT_NAME_ALREADY_EXISTS": "A project with that name already exists.",
     "PROJECT_PLAN_LIMIT_EXCEEDED": "You've reached the project limit for your plan.",
+    "PROJECT_NOT_DEMO": "Only the demo project can restore its sample data.",
     "PROJECT_CONSTRAINT_ALREADY_EXISTS": "That constraint already exists on this project.",
     "PROJECT_CONSTRAINT_NOT_FOUND": "That constraint no longer exists.",
     "PROJECT_DOCUMENT_NOT_FOUND": "That document no longer exists.",

@@ -18,17 +18,29 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
+import { DemoRestore } from '../../components/demo-restore/demo-restore';
 
 /**
  * Project danger zone (Vercel-style, mirrors the org danger zone): archive (reversible, plain confirm),
  * restore (shown only when the project is ARCHIVED), and delete (type-to-confirm: the project name plus
- * a literal phrase). Only org owners/admins may act; on success we navigate back to /projects. The
- * backend additionally enforces the PROJECT_* permissions per request.
+ * a literal phrase), plus "restore sample data" on the demo project. Only org owners/admins may act;
+ * after archiving or deleting we navigate back to /projects. The backend additionally enforces the
+ * PROJECT_* permissions per request.
  */
 @Component({
   selector: 'app-project-danger',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InlineEntity, Modal, HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner, TranslocoPipe],
+  imports: [
+    InlineEntity,
+    Modal,
+    DemoRestore,
+    HlmButton,
+    HlmInput,
+    HlmLabel,
+    HlmSkeleton,
+    HlmSpinner,
+    TranslocoPipe,
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -53,6 +65,27 @@ import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../..
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'projectDanger.errorGeneric' | transloco }}</p>
       } @else if (canManage()) {
+        <!-- Demo project: put the original sample data back -->
+        @if (demo() && !archived()) {
+          <section
+            class="overflow-hidden rounded-2xl border border-border"
+            data-testid="demo-section"
+          >
+            <div class="flex flex-col gap-1 p-5">
+              <h2 class="text-base font-semibold">{{ 'demo.restore' | transloco }}</h2>
+              <p class="text-sm text-muted-foreground">{{ 'demo.restoreDesc' | transloco }}</p>
+            </div>
+            <div
+              class="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3"
+            >
+              <span class="text-xs text-muted-foreground">{{
+                'demo.restoreHint' | transloco
+              }}</span>
+              <app-demo-restore [projectId]="projectId()" />
+            </div>
+          </section>
+        }
+
         <!-- Archive / restore -->
         <section class="overflow-hidden rounded-2xl border border-border">
           <div class="flex flex-col gap-1 p-5">
@@ -60,14 +93,18 @@ import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../..
               {{ (archived() ? 'projectDanger.restore' : 'projectDanger.archive') | transloco }}
             </h2>
             <p class="text-sm text-muted-foreground">
-              {{ (archived() ? 'projectDanger.restoreDesc' : 'projectDanger.archiveDesc') | transloco }}
+              {{
+                (archived() ? 'projectDanger.restoreDesc' : 'projectDanger.archiveDesc') | transloco
+              }}
             </p>
           </div>
           <div
             class="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3"
           >
             <span class="text-xs text-muted-foreground">
-              {{ (archived() ? 'projectDanger.restoreHint' : 'projectDanger.archiveHint') | transloco }}
+              {{
+                (archived() ? 'projectDanger.restoreHint' : 'projectDanger.archiveHint') | transloco
+              }}
             </span>
             @if (archived()) {
               <button
@@ -105,7 +142,9 @@ import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../..
             <h2 class="text-base font-semibold text-destructive">
               {{ 'projectDanger.delete' | transloco }}
             </h2>
-            <p class="text-sm text-muted-foreground">{{ 'projectDanger.deleteDesc' | transloco }}</p>
+            <p class="text-sm text-muted-foreground">
+              {{ 'projectDanger.deleteDesc' | transloco }}
+            </p>
           </div>
           <div
             class="flex items-center justify-between gap-2 border-t border-destructive/30 bg-destructive/5 px-5 py-3"
@@ -173,7 +212,11 @@ import { HlmButton, HlmInput, HlmLabel, HlmSkeleton, HlmSpinner } from '../../..
         <div class="flex flex-col gap-4">
           <p>
             {{ 'projectDanger.deleteModalBodyBefore' | transloco }}
-            <app-inline-entity [name]="projectName()" [seed]="projectId()" [imageUrl]="avatarUrl()" />
+            <app-inline-entity
+              [name]="projectName()"
+              [seed]="projectId()"
+              [imageUrl]="avatarUrl()"
+            />
             {{ 'projectDanger.deleteModalBodyAfter' | transloco }}
           </p>
           <div class="flex flex-col gap-1.5">
@@ -255,6 +298,7 @@ export class ProjectDanger implements OnInit {
   protected readonly projectName = signal('');
   protected readonly avatarUrl = signal<string | null>(null);
   protected readonly status = signal<string>('ACTIVE');
+  protected readonly demo = signal(false);
   private readonly orgMembers = signal<MemberResponse[]>([]);
 
   protected readonly archived = computed(() => this.status() === 'ARCHIVED');
@@ -283,8 +327,7 @@ export class ProjectDanger implements OnInit {
   private bold(text: string): string {
     const escaped = text.replace(
       /[&<>"']/g,
-      (c) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string,
     );
     return `<strong>${escaped}</strong>`;
   }
@@ -311,6 +354,7 @@ export class ProjectDanger implements OnInit {
         this.projectName.set(project.name);
         this.avatarUrl.set(project.avatarUrl);
         this.status.set(project.status);
+        this.demo.set(project.demo);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
