@@ -16,7 +16,6 @@ import { lucideChevronLeft, lucideMenu, lucideSearch, lucideX } from '@ng-icons/
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../core/auth/auth.store';
 import { PermissionsStore } from '../../core/authz/permissions.store';
-import { FeatureFlags } from '../../core/features/feature-flags';
 import { PageTitleService } from '../../core/layout/page-title.service';
 import { modLabel } from '../../core/platform/shortcut';
 import { WorkspaceStore } from '../../features/workspace/data/workspace.store';
@@ -45,8 +44,6 @@ interface NavItem {
   seg: string;
   /** Router link commands for this item (precomputed per active context). */
   link: unknown[];
-  /** When true the item is a disabled placeholder rendered with a "Soon" badge. */
-  soon?: boolean;
 }
 
 /** The sidebar context derived from the URL: which nav list, back link and heading to show. */
@@ -142,28 +139,15 @@ interface Crumb {
             >
           }
           @for (item of navContext().items; track item.seg) {
-            @if (item.soon) {
-              <span
-                class="flex cursor-default items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground/50"
-              >
-                <app-nav-icon [name]="item.seg" [size]="18" />
-                <span class="flex-1">{{ 'nav.' + item.seg | transloco }}</span>
-                <span
-                  class="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/70"
-                  >{{ 'nav.soon' | transloco }}</span
-                >
-              </span>
-            } @else {
-              <a
-                [routerLink]="item.link"
-                routerLinkActive="nav-link-active bg-primary/10 text-sidebar-accent-foreground"
-                [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
-                class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <app-nav-icon [name]="item.seg" [size]="18" />
-                {{ 'nav.' + item.seg | transloco }}
-              </a>
-            }
+            <a
+              [routerLink]="item.link"
+              routerLinkActive="nav-link-active bg-primary/10 text-sidebar-accent-foreground"
+              [routerLinkActiveOptions]="{ exact: item.seg === 'projects' }"
+              class="nav-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <app-nav-icon [name]="item.seg" [size]="18" />
+              {{ 'nav.' + item.seg | transloco }}
+            </a>
           }
         </nav>
 
@@ -241,9 +225,7 @@ interface Crumb {
         </header>
 
         <!-- Global background-job progress (Jira import / push-all), any page of the project. -->
-        @if (integrationsEnabled) {
-          <app-integration-jobs-banner [projectId]="projectId()" />
-        }
+        <app-integration-jobs-banner [projectId]="projectId()" />
 
         <main class="min-h-0 flex-1 overflow-y-auto px-4 pb-20 pt-5 md:px-6 md:pb-8">
           <div class="mx-auto flex h-full w-full max-w-5xl flex-col">
@@ -291,7 +273,6 @@ export class Shell {
   protected readonly auth = inject(AuthStore);
   protected readonly workspace = inject(WorkspaceStore);
   private readonly permissions = inject(PermissionsStore);
-  private readonly flags = inject(FeatureFlags);
   private readonly router = inject(Router);
   private readonly pageTitle = inject(PageTitleService);
 
@@ -299,8 +280,6 @@ export class Shell {
   protected readonly shortcut = modLabel('K');
   protected readonly mobileOpen = signal(false);
   protected readonly paletteOpen = signal(false);
-  /** The Jira job banner only exists while the `integrations` feature is on. */
-  protected readonly integrationsEnabled = this.flags.isEnabled('integrations');
 
   /** Open the command palette on Cmd/Ctrl+K from anywhere in the shell. */
   @HostListener('document:keydown', ['$event'])
@@ -311,12 +290,11 @@ export class Shell {
     }
   }
 
-  /** The caller's grants and the build's feature flags, as the nav filter reads them. */
+  /** The caller's grants, as the nav filter reads them. */
   private readonly navAccess: NavAccess = {
     isOrgOwner: () => this.permissions.isOrgOwner(),
     isOrgOwnerOrAdmin: () => this.permissions.isOrgOwnerOrAdmin(),
     has: (permission) => this.permissions.has(permission),
-    isEnabled: (feature) => this.flags.isEnabled(feature),
   };
 
   private readonly url = toSignal(
@@ -367,7 +345,6 @@ export class Shell {
         items: this.visibleSegs(ACCOUNT_NAV).map((s) => ({
           seg: s.seg,
           link: ['/account', s.seg],
-          soon: s.soon,
         })),
       };
     }
@@ -386,7 +363,6 @@ export class Shell {
           items: this.visibleSegs(PROJECT_SETTINGS_NAV).map((s) => ({
             seg: s.seg,
             link: ['/projects', pid, 'settings', s.seg],
-            soon: s.soon,
           })),
         };
       }
@@ -410,7 +386,6 @@ export class Shell {
         items: this.visibleSegs(ORG_SETTINGS_NAV).map((s) => ({
           seg: s.seg,
           link: ['/settings', s.seg],
-          soon: s.soon,
         })),
       };
     }
@@ -429,8 +404,8 @@ export class Shell {
   });
 
   /**
-   * Keeps only the nav segments the caller may reach (feature flag, org role, project
-   * permission — see {@link visibleNavSegs}). Reads the permission signals so the list
+   * Keeps only the nav segments the caller may reach (org role, project permission — see
+   * {@link visibleNavSegs}). Reads the permission signals so the list
    * re-renders when authorization arrives.
    */
   private visibleSegs(segs: readonly NavSeg[]): NavSeg[] {

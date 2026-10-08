@@ -11,6 +11,23 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Changed (Full product, no feature flags — `feature/remove-feature-flags`)
+
+- **The build now ships the whole product.** The MVP release hid every non-MVP area behind
+  build-time feature flags. They are gone, so these areas are back for everyone who has the role or
+  permission they need:
+  - billing, with the **Upgrade** CTA in the user menu;
+  - usage;
+  - Jira integrations: org and project settings, import from Jira, push to Jira, and the job banner;
+  - members and invitations, including **Transfer ownership**;
+  - custom project roles.
+- **Removed the flag machinery:** `FeatureFlags`, `featureGuard`, the `features` map in both
+  environment files and `docs/FEATURE-FLAGS.md`. Route, nav and palette access now depend only on
+  org roles and project permissions.
+- **Removed the account "Notifications" and "API tokens" placeholders.** They were "Soon" entries with
+  no feature behind them, only hidden by their flags. Their routes now fall back to `/projects` like
+  any unknown URL, and the unused `ComingSoon` page and its strings are deleted.
+
 ### Added (Story approval — `feature/discovery-story-approval`)
 
 - **The story detail can now approve, reject or send a story back to draft.** Every story used to stay
