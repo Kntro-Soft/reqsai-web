@@ -365,7 +365,17 @@ describe('DiscoveryChatStore', () => {
     http
       .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
       .flush(page<SuggestionResponse>([]));
-    http.match(() => true).forEach((r) => r.flush(page<never>([])));
+    // Settle the historical block with each endpoint's real shape: the session's segments and
+    // suggestions are plain arrays (a page here would break the pending-queue reduce), its
+    // stories a page, its transcript an object.
+    http
+      .match(() => true)
+      .forEach((r) => {
+        const url = r.request.url;
+        if (url.endsWith('/transcript')) r.flush({ sessionId: 'sess-1', transcript: '' });
+        else if (url.endsWith('/stories')) r.flush(page<never>([]));
+        else r.flush([]);
+      });
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     store.applyRealtime({
