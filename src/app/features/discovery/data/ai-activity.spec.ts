@@ -36,6 +36,24 @@ describe('aiActivityFor', () => {
     expect(activity?.last).toBeNull();
   });
 
+  it('waits for "Analizar ahora" while recording in manual mode (US46)', () => {
+    const activity = aiActivityFor(
+      { status: 'RECORDING', processingError: null, suggestionMode: 'MANUAL' },
+      [],
+      NOW,
+    );
+    expect(activity?.state).toBe('manual');
+  });
+
+  it('listens on its own while recording in automatic mode', () => {
+    const activity = aiActivityFor(
+      { status: 'RECORDING', processingError: null, suggestionMode: 'AUTO' },
+      [],
+      NOW,
+    );
+    expect(activity?.state).toBe('listening');
+  });
+
   it('is paused while the recording is paused', () => {
     expect(
       aiActivityFor(session('PAUSED'), [{ createdAt: '2026-10-07T14:57:00Z' }], NOW)?.state,

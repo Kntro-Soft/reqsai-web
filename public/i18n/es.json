@@ -1150,6 +1150,14 @@
       "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
     },
     "bar": {
+      "modeAuto": "IA: automática",
+      "modeManual": "IA: manual",
+      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
+      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
+      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
+      "analyze": "Analizar ahora",
+      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
+      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas.",
       "recording": "Grabando",
       "paused": "En pausa",
       "pause": "Pausar",
@@ -1305,6 +1313,8 @@
     "retry": "Reintentar",
     "pendingReview": "Pendiente de revisión",
     "ai": {
+      "manual": "Modo manual",
+      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora».",
       "listening": "La IA está escuchando la conversación",
       "listeningHint": "Propone historias, casos límite y preguntas a medida que avanza la reunión; aparecerán arriba para tu revisión.",
       "lastSuggestion": "Última sugerencia {{time}} · revísala en la bandeja de arriba.",
