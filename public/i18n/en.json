@@ -1118,9 +1118,18 @@
       "viewing": "{{count}} viewing",
       "more": "{{count}} more"
     },
+    "chat": {
+      "placeholder": "Ask or request a story…",
+      "noPermission": "You don't have permission to write to ReqsAI in this project.",
+      "inputAria": "Message to ReqsAI",
+      "send": "Send",
+      "separator": "Chat with ReqsAI",
+      "you": "You",
+      "thinking": "ReqsAI is thinking…",
+      "accepted": "Accepted",
+      "dismissed": "Dismissed"
+    },
     "composer": {
-      "placeholder": "Message discovery…",
-      "comingSoon": "Text to pipeline is coming soon.",
       "record": "Start recording",
       "recordShort": "Record"
     },

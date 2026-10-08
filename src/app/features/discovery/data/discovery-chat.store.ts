@@ -407,10 +407,16 @@ export class DiscoveryChatStore {
     outcome: 'ACCEPTED' | 'DISMISSED',
     body: AcceptSuggestionRequest = {},
   ): Observable<SuggestionResponse> {
+    // A suggestion raised from the assistant chat has no session: decide it through its project.
+    const sessionId = suggestion.sessionId;
     const call =
       outcome === 'ACCEPTED'
-        ? this.api.acceptSuggestion(suggestion.sessionId, suggestion.id, body)
-        : this.api.dismissSuggestion(suggestion.sessionId, suggestion.id);
+        ? sessionId
+          ? this.api.acceptSuggestion(sessionId, suggestion.id, body)
+          : this.api.acceptProjectSuggestion(suggestion.projectId, suggestion.id, body)
+        : sessionId
+          ? this.api.dismissSuggestion(sessionId, suggestion.id)
+          : this.api.dismissProjectSuggestion(suggestion.projectId, suggestion.id);
     this._deciding.update((ids) => (ids.includes(suggestion.id) ? ids : [...ids, suggestion.id]));
     const clearDeciding = (): void =>
       this._deciding.update((ids) => ids.filter((id) => id !== suggestion.id));
@@ -886,16 +892,18 @@ export class DiscoveryChatStore {
     suggestion: SuggestionResponse,
     occurredAt?: string,
   ): void {
-    const block = this._blocks().find((b) => b.session.id === suggestion.sessionId);
-    // Decisions on sessions not currently in the feed (e.g. chip items from an
-    // unloaded session) simply have nowhere to render — that is fine.
-    if (!block || block.decisions.some((d) => d.id === suggestion.id)) return;
+    const sessionId = suggestion.sessionId;
+    // Assistant-chat suggestions (no session) are shown by the chat itself, and decisions on
+    // sessions not currently in the feed (e.g. chip items from an unloaded session) simply have
+    // nowhere to render — that is fine.
+    const block = sessionId ? this._blocks().find((b) => b.session.id === sessionId) : undefined;
+    if (!sessionId || !block || block.decisions.some((d) => d.id === suggestion.id)) return;
     // Anchor the decision at the transcript moment of the SUGGESTION it resolves
     // (its createdAt), not the accept-time latest sequence — so an accepted
     // story lands chronologically among the segments instead of at the bottom.
     const anchor = anchorSequenceForSuggestion(block.segments, suggestion.createdAt);
     const entry = toDecisionEntry(suggestion, outcome, anchor, occurredAt);
-    this.updateBlock(suggestion.sessionId, (b) => ({ ...b, decisions: [...b.decisions, entry] }));
+    this.updateBlock(sessionId, (b) => ({ ...b, decisions: [...b.decisions, entry] }));
   }
 
   /**
