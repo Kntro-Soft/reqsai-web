@@ -11,6 +11,52 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
+
+- **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid
+  7, 14, 30 or 90 days. The URL is shown once with a copy button. Earlier links are listed as active,
+  revoked or expired, and active ones can be revoked.
+- **Public page `/share/:token`**, chrome-less like the invitation landing and needing no account.
+  - The client signs with a name (remembered on the device) and reads each story with its criteria.
+  - They approve a story or leave a comment, and see the feedback already left.
+  - Revoked or expired links show one dead-end.
+- **"Comentarios del cliente" in the story detail** lists the approvals and comments clients left. The
+  review status stays the team's decision.
+- `ShareApiService` and `share.models.ts`, `share-links.ts` helpers with specs, and `e2e/share-with-client.spec.ts`.
+
+### Added (US46 — Choose when the AI analyzes — `feature/discovery-analyze-on-demand`)
+
+- **The live session bar has an "IA: automática / manual" switch.**
+  - In manual mode the AI stays quiet, and the status line says "Modo manual: la IA analiza cuando
+    pulses «Analizar ahora»".
+  - It uses `PATCH …/sessions/{id}/suggestion-mode`.
+- **New "Analizar ahora" button** (`POST …/sessions/{id}/analyze`). It analyzes the recent conversation
+  right away, and a toast says how many suggestions reached the review tray.
+- **Tests:**
+  - `session-bar.spec.ts` and `ai-activity.spec.ts`: the mode switch, the analyze button and the
+    manual status;
+  - `e2e/analyze-on-demand.spec.ts` (fake microphone, real STT and AI): in manual mode the whole meeting
+    is transcribed with no suggestion, until "Analizar ahora" raises one.
+
+### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
+
+- **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no
+  session is live.
+- **The dialog takes an audio file and a session title.**
+  - Accepted formats: MP3, WAV, M4A, OGG, WEBM and others, up to 50 MB.
+  - The title comes from the file name until the analyst edits it.
+- **Uploading runs the same pipeline as a live session:**
+  - `POST /projects/{id}/sessions` creates the session in the capture's meeting language;
+  - `POST /sessions/{id}/upload` transcribes the audio;
+  - `POST /sessions/{id}/process` has the AI extract the stories with the project's glossary and context.
+- **Feedback:** each step shows its progress, and the new session joins the feed with its stories. A
+  toast says how many stories reached the backlog.
+- **Rejected before anything is sent:** a file that is not audio, an empty file, or one over 50 MB.
+- **Tests:**
+  - `recording-upload.spec.ts`: file checks and title derivation;
+  - `e2e/upload-recording.spec.ts`: a PDF is refused; then the Spanish meeting is uploaded and the
+    stories reach the backlog, with the real speech-to-text and AI.
+
 ### Added (Assistant chat on the capture page — `feature/discovery-assistant-chat`)
 
 - **The capture page's text box now talks to ReqsAI, with or without a live session.** It used to be a

@@ -1,11 +1,13 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, finalize, switchMap, tap } from 'rxjs';
 import { AudioRecorderService } from '../../../core/audio/audio-recorder.service';
 import { DiscoveryApiService } from './discovery-api.service';
 import {
+  AnalyzeSessionResponse,
   CreateDiscoverySessionRequest,
   DiscoverySessionResponse,
   SessionStatus,
+  SuggestionMode,
 } from './discovery.models';
 
 /**
@@ -109,6 +111,28 @@ export class SessionRecordingService {
     } else {
       this.accumulatedMs = Math.max(0, Date.now() - startedAt);
     }
+  }
+
+  /** True while an on-demand analysis ("Analizar ahora") is running. */
+  readonly analyzing = signal(false);
+
+  /** Switches the live session between automatic and on-demand analysis (US46). */
+  setSuggestionMode(mode: SuggestionMode): Observable<DiscoverySessionResponse> | null {
+    const session = this._session();
+    if (!session) return null;
+    return this.api
+      .changeSuggestionMode(session.projectId, session.id, mode)
+      .pipe(tap((updated) => this._session.set({ ...session, ...updated })));
+  }
+
+  /** "Analizar ahora": the suggestions arrive through the realtime topic like any other. */
+  analyzeNow(): Observable<AnalyzeSessionResponse> | null {
+    const session = this._session();
+    if (!session || this.analyzing()) return null;
+    this.analyzing.set(true);
+    return this.api
+      .analyzeSession(session.projectId, session.id)
+      .pipe(finalize(() => this.analyzing.set(false)));
   }
 
   pause(): Observable<DiscoverySessionResponse> | null {

@@ -60,6 +60,7 @@ import {
 } from './story-form.helpers';
 import { reviewTargets } from './story-review.helpers';
 import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
+import { ClientFeedback } from '../../components/client-feedback/client-feedback';
 
 /**
  * Story detail / edit page. The saved title leads, with the story's review status
@@ -82,6 +83,7 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
     Select,
     OriginBadge,
     StoryStatusBadge,
+    ClientFeedback,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -437,6 +439,9 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
             }
           </ol>
         </section>
+
+        <!-- What the client said through share links (US50). -->
+        <app-client-feedback [projectId]="projectId()" [storyId]="storyId()" />
       }
     </div>
 

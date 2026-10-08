@@ -9,7 +9,8 @@
     "back": "Volver",
     "remove": "Quitar",
     "optional": "Opcional",
-    "required": "Obligatorio"
+    "required": "Obligatorio",
+    "close": "Cerrar"
   },
   "toast": {
     "dismiss": "Descartar",
@@ -69,7 +70,8 @@
     "discovery": "Captura",
     "history": "Historial de sesiones",
     "glossary": "Glosario",
-    "constraints": "Restricciones"
+    "constraints": "Restricciones",
+    "share": "Historias compartidas"
   },
   "nav": {
     "projects": "Proyectos",
@@ -1129,6 +1131,27 @@
       "accepted": "Aceptada",
       "dismissed": "Descartada"
     },
+    "upload": {
+      "button": "Subir grabación",
+      "title": "Subir grabación de una reunión",
+      "description": "Sube el audio de una reunión pasada. ReqsAI lo transcribe y genera las historias con el glosario y el contexto de este proyecto.",
+      "choose": "Elige un archivo de audio",
+      "hint": "MP3, WAV, M4A, OGG o WEBM, hasta 50 MB.",
+      "titleLabel": "Título de la sesión",
+      "submit": "Subir y procesar",
+      "done": "Grabación procesada: {{count}} historias nuevas en el backlog.",
+      "failed": "No pudimos generar historias de la grabación. Reintenta el procesamiento desde la sesión.",
+      "problem": {
+        "type": "Ese archivo no es de audio.",
+        "size": "El archivo supera los 50 MB.",
+        "empty": "El archivo está vacío."
+      },
+      "stage": {
+        "creating": "Creando la sesión",
+        "transcribing": "Transcribiendo el audio",
+        "generating": "Generando historias con la IA"
+      }
+    },
     "composer": {
       "record": "Iniciar grabación",
       "recordShort": "Grabar"
@@ -1150,6 +1173,14 @@
       "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
     },
     "bar": {
+      "modeAuto": "IA: automática",
+      "modeManual": "IA: manual",
+      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
+      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
+      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
+      "analyze": "Analizar ahora",
+      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
+      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas.",
       "recording": "Grabando",
       "paused": "En pausa",
       "pause": "Pausar",
@@ -1305,6 +1336,8 @@
     "retry": "Reintentar",
     "pendingReview": "Pendiente de revisión",
     "ai": {
+      "manual": "Modo manual",
+      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora».",
       "listening": "La IA está escuchando la conversación",
       "listeningHint": "Propone historias, casos límite y preguntas a medida que avanza la reunión; aparecerán arriba para tu revisión.",
       "lastSuggestion": "Última sugerencia {{time}} · revísala en la bandeja de arriba.",
@@ -1521,6 +1554,62 @@
       "503": "El servicio no está disponible temporalmente. Inténtalo de nuevo en breve."
     },
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
-    "generic": "Algo salió mal. Inténtalo de nuevo."
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
+  },
+  "share": {
+    "action": "Compartir con el cliente",
+    "title": "Compartir historias con el cliente",
+    "description": "Crea un enlace para que tu cliente lea las historias sin crear una cuenta. Podrá aprobarlas o dejar comentarios; tu equipo sigue decidiendo el estado de cada historia.",
+    "validFor": "Válido por",
+    "days": "{{count}} días",
+    "create": "Crear enlace",
+    "createdHint": "Copia el enlace ahora: por seguridad no se vuelve a mostrar.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "existing": "Enlaces creados",
+    "none": "Aún no compartiste este proyecto.",
+    "createdAt": "Creado el",
+    "expires": "Vence el",
+    "revokedAt": "Revocado el",
+    "expiredAt": "Venció el",
+    "state": {
+      "active": "Activo",
+      "revoked": "Revocado",
+      "expired": "Vencido"
+    },
+    "revoke": "Revocar",
+    "feedback": {
+      "title": "Comentarios del cliente",
+      "hint": "Lo que el cliente dijo desde el enlace compartido. No cambia el estado de la historia.",
+      "empty": "El cliente aún no aprobó ni comentó esta historia. Compártela desde el backlog.",
+      "approved": "aprobó",
+      "commented": "comentó"
+    },
+    "public": {
+      "eyebrow": "Revisión de historias",
+      "intro": "Tu equipo te comparte estas historias de usuario para que las revises. Aprueba las que estén bien o deja un comentario en las que haya que ajustar.",
+      "until": "Este enlace está disponible hasta el",
+      "yourName": "Tu nombre",
+      "namePlaceholder": "Ej.: María Quispe",
+      "nameHint": "Se mostrará junto a tus aprobaciones y comentarios.",
+      "nameRequired": "Escribe tu nombre antes de aprobar o comentar.",
+      "empty": "Aún no hay historias para revisar.",
+      "asA": "Como",
+      "iWant": "quiero",
+      "soThat": "para",
+      "criteria": "Criterios de aceptación",
+      "given": "Dado",
+      "when": "cuando",
+      "then": "entonces",
+      "comment": "Comentar",
+      "commentPlaceholder": "¿Qué cambiarías o qué falta?",
+      "send": "Enviar",
+      "approve": "Aprobar",
+      "approvedByYou": "Aprobaste esta historia",
+      "unavailableTitle": "Este enlace ya no está disponible",
+      "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
+      "footer": "Compartido con ReqsAI"
+    }
   }
 }
