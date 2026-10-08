@@ -2,7 +2,6 @@ import {
   DecisionEntry,
   addToQueue,
   anchorSequenceForSuggestion,
-  assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
   comparePriority,
@@ -446,31 +445,6 @@ describe('buildSessionItems', () => {
       });
       expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
     });
-  });
-});
-
-describe('assignSpeakerSides', () => {
-  it('is empty when no segment carries a usable label (diarization off)', () => {
-    const map = assignSpeakerSides([{ speakerLabel: null }, { speakerLabel: '  ' }]);
-    expect(map.size).toBe(0);
-  });
-
-  it('numbers speakers in first-seen order and alternates their side', () => {
-    const map = assignSpeakerSides([
-      { speakerLabel: 'spk_a' },
-      { speakerLabel: 'spk_b' },
-      { speakerLabel: 'spk_a' },
-      { speakerLabel: 'spk_c' },
-    ]);
-    expect(map.get('spk_a')).toEqual({ index: 1, side: 'left' });
-    expect(map.get('spk_b')).toEqual({ index: 2, side: 'right' });
-    expect(map.get('spk_c')).toEqual({ index: 3, side: 'left' });
-  });
-
-  it('trims labels and treats whitespace-padded duplicates as one speaker', () => {
-    const map = assignSpeakerSides([{ speakerLabel: 'A' }, { speakerLabel: ' A ' }]);
-    expect(map.size).toBe(1);
-    expect(map.get('A')).toEqual({ index: 1, side: 'left' });
   });
 });
 

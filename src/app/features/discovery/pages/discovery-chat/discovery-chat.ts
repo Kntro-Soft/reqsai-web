@@ -39,6 +39,7 @@ import {
   lucideSparkles,
   lucideTriangleAlert,
   lucideUpload,
+  lucideUsers,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
@@ -51,7 +52,16 @@ import { AssistantChatStore } from '../../data/assistant-chat.store';
 import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
-import { DecisionEntry, SpeakerDisplay } from '../../data/feed';
+import { DecisionEntry } from '../../data/feed';
+import { SessionSpeakersStore } from '../../data/session-speakers.store';
+import {
+  SpeakerColor,
+  SpeakerView,
+  overlapNotice,
+  speakerColor,
+  speakerName,
+} from '../../data/speakers';
+import { SpeakersPanel } from '../../components/speakers-panel/speakers-panel';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
   AcceptSuggestionRequest,
@@ -99,6 +109,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     SuggestionCard,
     UploadRecording,
     SidePanel,
+    SpeakersPanel,
     Select,
     Modal,
     HlmButton,
@@ -127,6 +138,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideSparkles,
       lucideTriangleAlert,
       lucideUpload,
+      lucideUsers,
     }),
   ],
   providers: [AssistantChatStore],
@@ -376,6 +388,62 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                       <div class="flex justify-center py-2"><hlm-spinner class="h-4 w-4" /></div>
                     }
 
+                    @if (block.speakerList.length > 0) {
+                      <!-- Who spoke (US40): one chip per diarized voice with its color, name and
+                         side; the analyst names them and marks client or team from here. -->
+                      <div
+                        class="flex flex-wrap items-center justify-center gap-1.5"
+                        data-testid="session-speakers"
+                      >
+                        @for (speaker of block.speakerList; track speaker.label) {
+                          <span
+                            class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2 py-0.5 text-xs"
+                            data-testid="speaker-chip"
+                            [attr.data-speaker-label]="speaker.label"
+                          >
+                            <span
+                              class="h-2 w-2 rounded-full"
+                              [class]="colorOf(speaker).dot"
+                              aria-hidden="true"
+                            ></span>
+                            <span class="font-medium">{{ nameOf(speaker) }}</span>
+                            @if (speaker.role) {
+                              <span class="text-muted-foreground"
+                                >· {{ 'discovery.speakers.side.' + speaker.role | transloco }}</span
+                              >
+                            }
+                          </span>
+                        }
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                          (click)="speakersSessionId.set(block.session.id)"
+                          data-testid="speakers-edit"
+                        >
+                          <hlm-icon name="lucideUsers" size="12px" />
+                          {{
+                            (canRecord() ? 'discovery.speakers.edit' : 'discovery.speakers.view')
+                              | transloco
+                          }}
+                        </button>
+                      </div>
+                      @if (overlapNoticeOf(block); as notice) {
+                        <p
+                          class="mx-auto flex w-fit max-w-[85%] items-start gap-2 rounded-lg border border-pending-border bg-pending-soft px-3 py-1.5 text-xs text-pending"
+                          role="status"
+                          data-testid="speakers-overlap-warning"
+                        >
+                          <hlm-icon
+                            name="lucideTriangleAlert"
+                            size="14px"
+                            class="mt-px shrink-0"
+                            aria-hidden="true"
+                          />
+                          {{ notice.key | transloco: notice.params }}
+                        </p>
+                      }
+                    }
+
                     @for (item of block.items; track item.id) {
                       @switch (item.kind) {
                         @case ('paragraph') {
@@ -400,9 +468,28 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                               class="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
                             >
                               @if (speaker) {
-                                <span class="font-medium" data-testid="segment-speaker">{{
-                                  'discovery.speaker' | transloco: { n: speaker.index }
-                                }}</span>
+                                <span
+                                  class="h-2 w-2 shrink-0 rounded-full"
+                                  [class]="colorOf(speaker).dot"
+                                  aria-hidden="true"
+                                ></span>
+                                <span
+                                  class="font-medium"
+                                  [class]="colorOf(speaker).text"
+                                  data-testid="segment-speaker"
+                                  [attr.data-speaker-label]="speaker.label"
+                                  >{{ nameOf(speaker) }}</span
+                                >
+                                @if (speaker.role) {
+                                  <span
+                                    class="rounded px-1 text-[10px] font-medium"
+                                    [class]="roleClass(speaker)"
+                                    data-testid="segment-speaker-side"
+                                    >{{
+                                      'discovery.speakers.side.' + speaker.role | transloco
+                                    }}</span
+                                  >
+                                }
                                 <span aria-hidden="true">·</span>
                               }
                               <time
@@ -1004,6 +1091,33 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       (processed)="onRecordingProcessed($event)"
       (failed)="onRecordingFailed($event)"
     />
+
+    <app-modal
+      [open]="speakersBlock() !== null"
+      (openChange)="$event || speakersSessionId.set(null)"
+    >
+      <span modalTitle>{{ 'discovery.speakers.title' | transloco }}</span>
+      @if (speakersBlock(); as speakersOf) {
+        <app-speakers-panel
+          [projectId]="projectId()"
+          [sessionId]="speakersOf.session.id"
+          [speakers]="speakersOf.speakerList"
+          [overlaps]="speakersOf.overlaps"
+          [canEdit]="canRecord()"
+        />
+      }
+      <button
+        modalFooter
+        hlmBtn
+        size="sm"
+        variant="ghost"
+        type="button"
+        (click)="speakersSessionId.set(null)"
+        data-testid="speakers-close"
+      >
+        {{ 'discovery.speakers.close' | transloco }}
+      </button>
+    </app-modal>
   `,
 })
 export class DiscoveryChat implements OnInit {
@@ -1044,6 +1158,15 @@ export class DiscoveryChat implements OnInit {
 
   /** The "upload a recording" dialog (US41). */
   protected readonly uploadOpen = signal(false);
+
+  private readonly speakers = inject(SessionSpeakersStore);
+  /** Session whose speakers dialog is open (US40), or null. */
+  protected readonly speakersSessionId = signal<string | null>(null);
+  /** The block of the session whose speakers dialog is open. */
+  protected readonly speakersBlock = computed<RenderBlock | null>(() => {
+    const id = this.speakersSessionId();
+    return id ? (this.store.blocks().find((b) => b.session.id === id) ?? null) : null;
+  });
 
   /** Controls the "leave while recording" confirmation modal (in-app nav guard). */
   protected readonly leaveOpen = signal(false);
@@ -1177,6 +1300,16 @@ export class DiscoveryChat implements OnInit {
         el?.scrollIntoView({ block: 'start', behavior: 'smooth' });
         this.store.clearFocus();
       }, 60);
+    });
+    // Speakers (US40): load each diarized session's names, sides and overlaps, again when a new
+    // voice appears or the session changes status (the overlap report is final once it ends).
+    effect(() => {
+      const projectId = this.projectId();
+      for (const block of this.store.blocks()) {
+        const key = block.speakersKey;
+        if (!block.loaded || key === null) continue;
+        untracked(() => this.speakers.ensure(projectId, block.session.id, key));
+      }
     });
     // Auto-stick: when new transcript/decisions arrive and the user is already at the bottom, follow along.
     effect(() => {
@@ -1503,16 +1636,38 @@ export class DiscoveryChat implements OnInit {
   protected speakerFor(
     block: RenderBlock,
     segment: SessionTranscriptSegmentMessage,
-  ): SpeakerDisplay | undefined {
+  ): SpeakerView | undefined {
     const label = segment.speakerLabel?.trim();
     return label ? block.speakers.get(label) : undefined;
+  }
+
+  /** The speaker's name: the analyst's, else "Hablante N" (US40). */
+  protected nameOf(speaker: SpeakerView): string {
+    return speakerName(speaker, (n) => this.transloco.translate('discovery.speaker', { n }));
+  }
+
+  /** The speaker's color, stable by order of first appearance. */
+  protected colorOf(speaker: SpeakerView): SpeakerColor {
+    return speakerColor(speaker.index);
+  }
+
+  /** The client tag stands out (their needs drive the stories); the team tag stays muted. */
+  protected roleClass(speaker: SpeakerView): string {
+    return speaker.role === 'CLIENT'
+      ? 'bg-foreground text-background'
+      : 'bg-secondary text-muted-foreground';
+  }
+
+  /** The overlapping-speech warning of a session, or null. */
+  protected overlapNoticeOf(block: RenderBlock): ReturnType<typeof overlapNotice> {
+    return overlapNotice(block.overlaps);
   }
 
   /**
    * Bubble styling per side, kept neutral so the transcript recedes behind AI and
    * human decisions: the left speaker is filled, the right (2nd) one outlined.
    */
-  protected segmentBubbleClass(speaker: SpeakerDisplay | undefined): string {
+  protected segmentBubbleClass(speaker: SpeakerView | undefined): string {
     return speaker?.side === 'right'
       ? 'rounded-tr-md border border-border bg-card'
       : 'rounded-tl-md bg-secondary';
