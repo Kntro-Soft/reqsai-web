@@ -59,17 +59,19 @@ export class ProjectOverview {
   /**
    * Quick-link cards, filtered to the sections the caller can actually open — a member
    * without a section's read permission shouldn't be offered a card that dead-ends in a
-   * "no access" toast. Owner/admin bypass. `settings` shows when any settings sub-page is
-   * reachable; the settings landing guard then routes to the first accessible one.
+   * "no access" toast. Owner/admin bypass.
+   * `settings` shows when any settings sub-page is reachable; the settings landing guard
+   * then routes to the first accessible one.
    */
   protected readonly links = computed(() => {
     const can = (p: string) => this.permissions.isOrgOwnerOrAdmin() || this.permissions.has(p);
-    const canSettings =
-      can('PROJECT_UPDATE') || can('MEMBER_READ') || can('ROLE_READ') || can('PROJECT_DELETE');
+    const canMembers = can('MEMBER_READ');
+    const canRoles = can('ROLE_READ');
+    const canSettings = can('PROJECT_UPDATE') || canMembers || canRoles || can('PROJECT_DELETE');
     return [
       can('SESSION_READ') && 'sessions',
       can('STORY_READ') && 'stories',
-      can('MEMBER_READ') && 'members',
+      canMembers && 'members',
       canSettings && 'settings',
     ].filter((x): x is string => Boolean(x));
   });

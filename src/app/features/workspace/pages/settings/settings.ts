@@ -342,7 +342,7 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
         </section>
 
         @if (isOwner()) {
-          <!-- Transfer ownership -->
+          <!-- Transfer ownership: hands the org to another member. -->
           <section class="overflow-hidden rounded-2xl border border-border">
             <div class="flex flex-col gap-1 p-5">
               <h2 class="text-base font-semibold">{{ 'orgSettings.transfer' | transloco }}</h2>
@@ -815,6 +815,7 @@ export class OrgSettings {
       },
       error: () => this.state.set('error'),
     });
+    // The member list only feeds the ownership-transfer picker.
     this.api.listMembers(orgId).subscribe({
       next: (members) => this.members.set(members),
     });

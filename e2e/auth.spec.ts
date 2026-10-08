@@ -37,7 +37,12 @@ test.describe('IAM authentication', () => {
     await uiLogin(page, email, PASSWORD);
     // First-time users must accept the terms.
     await expect(page).toHaveURL(/\/terms/);
-    await page.getByTestId('accept-checkbox').check();
+    // Each document must be read to the end before its footer offers to continue.
+    const readToEnd = () =>
+      page.getByRole('main').evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await readToEnd();
+    await page.getByTestId('next-document').click();
+    await readToEnd();
     await page.getByTestId('accept-terms').click();
     // Then onboarding (no organization yet).
     await expect(page).toHaveURL(/\/onboarding/);
@@ -90,9 +95,8 @@ test.describe('IAM authentication', () => {
     await uiLogin(page, email, PASSWORD);
     await expect(page).toHaveURL(/\/onboarding/);
 
-    // Sign out lives under the user menu (avatar).
-    await page.getByRole('button', { name: 'Menú de usuario' }).click();
-    await page.getByTestId('logout').click();
+    // With no organization yet, onboarding's header offers sign out.
+    await page.getByTestId('header-sign-out').click();
     await expect(page).toHaveURL(/\/auth\/sign-in/);
   });
 

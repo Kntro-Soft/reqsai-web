@@ -11,8 +11,7 @@
  *   Angular `date` pipe (an exact calendar date) instead of a relative phrase.
  */
 export type RelativeTime =
-  | { kind: 'relative'; key: string; params?: { n: number } }
-  | { kind: 'absolute' };
+  { kind: 'relative'; key: string; params?: { n: number } } | { kind: 'absolute' };
 
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -38,7 +37,11 @@ export function relativeTime(iso: string, now: number): RelativeTime {
   const age = now - then;
   if (age < MINUTE) return { kind: 'relative', key: 'discovery.time.justNow' };
   if (age < HOUR) {
-    return { kind: 'relative', key: 'discovery.time.minutes', params: { n: Math.floor(age / MINUTE) } };
+    return {
+      kind: 'relative',
+      key: 'discovery.time.minutes',
+      params: { n: Math.floor(age / MINUTE) },
+    };
   }
   if (age < DAY) {
     return { kind: 'relative', key: 'discovery.time.hours', params: { n: Math.floor(age / HOUR) } };

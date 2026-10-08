@@ -52,7 +52,10 @@ describe('relativeTime', () => {
   });
 
   it('at exactly 24 hours is "yesterday"', () => {
-    expect(relativeTime(ago(DAY), NOW)).toEqual({ kind: 'relative', key: 'discovery.time.yesterday' });
+    expect(relativeTime(ago(DAY), NOW)).toEqual({
+      kind: 'relative',
+      key: 'discovery.time.yesterday',
+    });
   });
 
   it('just under 48 hours is still "yesterday"', () => {

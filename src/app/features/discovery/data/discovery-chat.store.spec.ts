@@ -672,6 +672,39 @@ describe('DiscoveryChatStore', () => {
       expect(items.some((i) => i.kind === 'paragraph')).toBe(false);
     });
 
+    it('lists the recorded speakers and relabels them on SPEAKER_UPDATED (US40)', () => {
+      flushLiveBlock({ segments: recorded, transcript: null });
+      http.verify();
+
+      const before = store.blocks()[0];
+      expect(before.speakerList.map((s) => [s.label, s.index, s.displayName, s.side])).toEqual([
+        ['A', 1, null, 'left'],
+        ['B', 2, null, 'right'],
+      ]);
+      expect(before.speakersKey).toBe('RECORDING|A,B');
+      expect(before.overlaps).toBeNull();
+
+      realtime.watch('sessions/sess-1').next({
+        sessionId: 'sess-1',
+        type: 'SPEAKER_UPDATED',
+        occurredAt: '2026-07-04T12:07:00Z',
+        speakerLabel: 'A',
+        displayName: 'Ana',
+        side: 'TEAM',
+      });
+
+      const after = store.blocks()[0];
+      expect(after.speakers.get('A')).toMatchObject({
+        index: 1,
+        displayName: 'Ana',
+        role: 'TEAM',
+        side: 'right',
+      });
+      expect(after.speakers.get('B')?.displayName).toBeNull();
+      // Relabelling is local state: no request goes out.
+      http.verify();
+    });
+
     it('falls back to the joined transcript string when /segments 404s (older backend)', () => {
       flushLiveBlock({ segments: [], segmentsStatus: 404, transcript: 'Persisted line one.' });
       http.verify();

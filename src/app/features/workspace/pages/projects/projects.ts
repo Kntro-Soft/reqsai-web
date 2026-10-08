@@ -28,10 +28,16 @@ const VIEW_KEY = 'projects.view';
   viewProviders: [provideIcons({ lucideSearch, lucidePlus, lucideLayoutGrid, lucideRows3 })],
   template: `
     <div class="flex flex-col gap-5">
+      <!-- Page header, like every other module, so the workspace reads as its own place. -->
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">{{ 'projects.title' | transloco }}</h1>
+        <p class="mt-1 text-sm text-muted-foreground">{{ 'projects.subtitle' | transloco }}</p>
+      </div>
+
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center gap-2">
         <div
-          class="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3"
+          class="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
         >
           <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
           <input
@@ -39,6 +45,7 @@ const VIEW_KEY = 'projects.view';
             [ngModel]="query()"
             (ngModelChange)="query.set($event)"
             [placeholder]="'projects.searchPlaceholder' | transloco"
+            [attr.aria-label]="'projects.searchPlaceholder' | transloco"
             class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             data-testid="projects-search"
           />
@@ -75,7 +82,14 @@ const VIEW_KEY = 'projects.view';
           </button>
         </div>
 
-        <button hlmBtn size="sm" class="h-9" type="button" routerLink="/projects/new" data-testid="add-project">
+        <button
+          hlmBtn
+          size="sm"
+          class="h-9"
+          type="button"
+          routerLink="/projects/new"
+          data-testid="add-project"
+        >
           <hlm-icon name="lucidePlus" size="16px" />
           {{ 'projects.addNew' | transloco }}
         </button>

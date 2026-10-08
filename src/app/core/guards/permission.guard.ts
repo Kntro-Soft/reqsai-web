@@ -163,8 +163,8 @@ export function requireOrgRole(role: OrgRole): CanActivateFn {
  * Landing redirect for the project Settings index. The fixed `general` default is
  * gated by `PROJECT_UPDATE`, so a member who can only reach (say) Members would be
  * bounced with a "no access" toast just for entering Settings. Instead, redirect to the
- * FIRST settings sub-page the caller can actually access; fall back to the project
- * overview when none apply. No toast — this is a silent landing choice, not a denial.
+ * FIRST settings sub-page the caller can actually access, and fall back to the project overview when none apply. No toast:
+ * this is a silent landing choice, not a denial.
  */
 export const projectSettingsLanding: CanActivateFn = async (route: ActivatedRouteSnapshot) => {
   const deps = resolveDeps();

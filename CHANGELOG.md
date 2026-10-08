@@ -11,8 +11,257 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US22 — Client documents — `feature/workspace-client-documents`)
+
+- **New "Documentos" page in the project sidebar** (`/projects/:id/documents`, needs `DOCUMENT_READ`).
+  The analyst uploads the client's documents and ReqsAI turns them into project context.
+- **Upload.** A drop zone takes a PDF (`.pdf`) or Word (`.docx`) file of up to 50 MB (`DOCUMENT_CREATE`).
+  - Executables, other formats, empty files and files over 50 MB are refused before anything is sent.
+    The API checks the content again and its errors are translated.
+  - A progress bar shows the upload, then "Extrayendo el texto y clasificándolo con IA…".
+- **Review.** The AI proposes a context summary, glossary terms (term + definition), constraints and a
+  document type.
+  - New terms and constraints come preselected. The ones the project already has show "Ya existe" and
+    cannot be selected. Selection is turned off without `GLOSSARY_TERM_WRITE` / `CONSTRAINT_WRITE`.
+  - The name, the type and the summary can be edited.
+  - "Aplicar" adds the selected items and keeps the document. "Descartar" deletes the analysis.
+  - A notice explains when the AI could not classify the document, or when the text was cut at
+    200,000 characters.
+- **Saved documents** are listed with their type, file, size, date and summary, and can be deleted
+  (`DOCUMENT_DELETE`). Their summaries feed the AI in capture and in the assistant.
+- A document found in the command palette now opens the project's documents page.
+- **i18n:** `clientDocuments.*`, `nav.documents`, `titles.documents`, and the errors
+  `DOCUMENT_TYPE_NOT_ALLOWED`, `DOCUMENT_TOO_LARGE`, `DOCUMENT_EMPTY`, `DOCUMENT_UNREADABLE`,
+  `PROJECT_DOCUMENT_NOT_PENDING` and `PAYLOAD_TOO_LARGE`, in Spanish and English.
+- **Tests:**
+  - `client-documents.spec.ts`: file checks, review selection and the apply request;
+  - `documents.spec.ts`: the page refuses an executable, then uploads, reviews, applies and discards;
+  - `e2e/client-documents.spec.ts`: a terms-of-reference PDF (`e2e/fixtures/terminos-de-referencia.pdf`)
+    is classified by the real AI, reviewed and applied, and its term and constraint reach the glossary
+    and constraints pages. An executable disguised as a PDF is refused by the API.
+
+### Added (US40 — Identify the speakers of a meeting — `feature/discovery-speaker-labels`)
+
+- **Transcript bubbles name their speaker.** Each diarized voice shows as "Hablante 1", "Hablante 2"…
+  (was "Participante N"), numbered by first appearance in the session, with its own color.
+- **Each session lists its speakers under its separator.** One chip per voice shows its color, name and
+  side, followed by "Editar hablantes".
+  - The dialog edits each speaker's real name and a Cliente / Equipo toggle, and saves one speaker at
+    a time.
+  - The new name and side apply to every segment of that speaker, past and future.
+  - The client tag stands out on the bubbles. Client bubbles sit on the left and team bubbles on the
+    right; unclassified voices alternate as before.
+  - Members without `SESSION_RUN` see the speakers read-only ("Ver hablantes").
+- **Works wherever a session shows:** live capture, an uploaded recording, and a session opened from the
+  history. Renames by someone else arrive live (`SPEAKER_UPDATED`).
+- **Overlapping voices are flagged.** When the API reports stretches where speakers talked at once, the
+  session shows "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+- **API:** `GET /projects/{projectId}/sessions/{sessionId}/speakers` loads the names, sides and overlaps
+  when a session's segments carry speakers. It loads again when a new voice appears or the session
+  changes status. `PUT …/speakers/{label}` saves a speaker.
+- **New error message:** `SPEAKER_NOT_FOUND`.
+- **Tests:**
+  - `speakers.spec.ts`: default names, colors, feed side, merging with the feed's labels, load key and
+    overlap notice;
+  - `session-speakers.store.spec.ts`: loading, renaming and live updates;
+  - `discovery-chat.store.spec.ts`: speakers of a block and `SPEAKER_UPDATED`;
+  - `e2e/speaker-labels.spec.ts`: upload the Spanish meeting, name the first voice as the client, and
+    check the bubbles, the API, and the session reopened from the history.
+
+### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
+
+- **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid
+  7, 14, 30 or 90 days. The URL is shown once with a copy button. Earlier links are listed as active,
+  revoked or expired, and active ones can be revoked.
+- **Public page `/share/:token`**, chrome-less like the invitation landing and needing no account.
+  - The client signs with a name (remembered on the device) and reads each story with its criteria.
+  - They approve a story or leave a comment, and see the feedback already left.
+  - Revoked or expired links show one dead-end.
+- **"Comentarios del cliente" in the story detail** lists the approvals and comments clients left. The
+  review status stays the team's decision.
+- `ShareApiService` and `share.models.ts`, `share-links.ts` helpers with specs, and `e2e/share-with-client.spec.ts`.
+
+### Added (US46 — Choose when the AI analyzes — `feature/discovery-analyze-on-demand`)
+
+- **The live session bar has an "IA: automática / manual" switch.**
+  - In manual mode the AI stays quiet, and the status line says "Modo manual: la IA analiza cuando
+    pulses «Analizar ahora»".
+  - It uses `PATCH …/sessions/{id}/suggestion-mode`.
+- **New "Analizar ahora" button** (`POST …/sessions/{id}/analyze`). It analyzes the recent conversation
+  right away, and a toast says how many suggestions reached the review tray.
+- **Tests:**
+  - `session-bar.spec.ts` and `ai-activity.spec.ts`: the mode switch, the analyze button and the
+    manual status;
+  - `e2e/analyze-on-demand.spec.ts` (fake microphone, real STT and AI): in manual mode the whole meeting
+    is transcribed with no suggestion, until "Analizar ahora" raises one.
+
+### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
+
+- **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no
+  session is live.
+- **The dialog takes an audio file and a session title.**
+  - Accepted formats: MP3, WAV, M4A, OGG, WEBM and others, up to 50 MB.
+  - The title comes from the file name until the analyst edits it.
+- **Uploading runs the same pipeline as a live session:**
+  - `POST /projects/{id}/sessions` creates the session in the capture's meeting language;
+  - `POST /sessions/{id}/upload` transcribes the audio;
+  - `POST /sessions/{id}/process` has the AI extract the stories with the project's glossary and context.
+- **Feedback:** each step shows its progress, and the new session joins the feed with its stories. A
+  toast says how many stories reached the backlog.
+- **Rejected before anything is sent:** a file that is not audio, an empty file, or one over 50 MB.
+- **Tests:**
+  - `recording-upload.spec.ts`: file checks and title derivation;
+  - `e2e/upload-recording.spec.ts`: a PDF is refused; then the Spanish meeting is uploaded and the
+    stories reach the backlog, with the real speech-to-text and AI.
+
+### Added (Assistant chat on the capture page — `feature/discovery-assistant-chat`)
+
+- **The capture page's text box now talks to ReqsAI, with or without a live session.** It used to be a
+  disabled "La entrada de texto llegará pronto" placeholder.
+  - Enter sends the message.
+  - A question about the project ("¿cuántas historias hay?") is answered in the chat.
+  - A requirement ("quiero que el comensal pueda cancelar…") comes back as a suggestion card in the
+    same chat, with the usual accept / edit / dismiss.
+  - A decided suggestion collapses into a decision row with "Ir a la historia".
+- **The conversation is kept.** It loads with the page under a "Chat con ReqsAI" separator after the
+  sessions, and survives a reload.
+- **Feedback:** "ReqsAI está pensando…" shows while the reply is on its way, and a failed send puts the
+  text back in the box.
+- **Recording, deciding and chatting follow the project permissions** (`SESSION_RUN`,
+  `SESSION_DECIDE`; owners and admins always pass). Before, only the org owner could record or decide on
+  this page, even when the API allowed more.
+- **Suggestions with no session (from the chat) are decided through the project.** This also covers
+  ones listed among the pending suggestions of previous sessions.
+- **Tests:**
+  - `assistant-chat.spec.ts`: the chat helpers;
+  - `e2e/assistant-chat.spec.ts`: against the real AI, it answers a question from the backlog, then
+    turns a requirement into a suggestion that is accepted from the chat and is still there after a reload.
+
+### Added (Stripe checkout E2E — `feature/e2e-stripe-billing`)
+
+- **New `e2e/billing-stripe.spec.ts` pays the Pro plan through real Stripe Checkout in test mode**, with
+  the test card 4242:
+  - it returns to `/billing/success`;
+  - it relays the real `checkout.session.completed` event, signed like `stripe listen`;
+  - it checks that the plan becomes Pro;
+  - it cancels the plan, which also cancels the Stripe subscription.
+- **Opt-in:** it only runs when `STRIPE_LOCAL_ENV` points at the local API's Stripe settings.
+
+### Fixed (Members got a "no access" toast on the backlog — `bugfix/integrations-forbidden-toast`)
+
+- **A member without Jira access saw "No tienes permisos suficientes." every time they opened the
+  backlog.**
+  - Since the flags were removed, the backlog always looks up the project's Jira mapping.
+  - That endpoint needs `INTEGRATION_READ`, which the member READ floor does not grant, so the
+    403 hit the global toast.
+  - The lookup now opts out of that toast, like the active-jobs lookup already did. The Jira buttons
+    simply stay disabled.
+- **The story detail no longer offers buttons the member cannot use.** "Enviar a Jira" now needs
+  `INTEGRATION_SYNC` and "Eliminar" needs `STORY_DELETE`, as in the backlog.
+- **Covered by tests:**
+  - `e2e/product.spec.ts`: the teammate with the "Product Owner" role gets the 403 on the lookup, no
+    toast, and neither button;
+  - unit tests: both eager lookups carry `SILENCE_FORBIDDEN_TOAST`.
+
+### Fixed (Found by the full-product E2E — `feature/e2e-full-product`)
+
+- **The user menu's Upgrade button did nothing.** It was a placeholder from the MVP build. It now
+  opens Settings → Billing and only shows for the org owner, the only one who can change the plan.
+- **A user without an organization could not sign out.** Onboarding ("Crea tu organización") had no
+  sign-out control. Its header now has one while the user has no organization.
+
+### Added (End-to-end suite for the whole product — `feature/e2e-full-product`)
+
+- **New `e2e/product.spec.ts`** runs one owner and one invited teammate through the product:
+  - glossary and constraints;
+  - a manual story with criteria that is approved, rejected and sent back to draft, and survives a
+    reload;
+  - an email invitation accepted from the Mailpit link;
+  - a "Product Owner" role with `STORY_APPROVE` assigned to the teammate, who can then review;
+  - the Upgrade button, an upgrade to Pro and the usage page;
+  - Jira: both connect options, the project without a mapping, and the push refusal;
+  - the transfer-ownership card.
+- **`e2e/discovery.spec.ts` now records a real meeting.** Chromium plays `e2e/fixtures/meeting-es.wav`
+  as the microphone, and the test checks the live transcript and the AI suggestion. The accepted
+  suggestion becomes a draft story in the backlog.
+- **Updated the outdated auth and workspace specs** to the current UI: terms read to the end, project
+  creation by name only, and the split org switcher. The whole suite (19 tests) passes against the
+  local stack.
+
+### Changed (Full product, no feature flags — `feature/remove-feature-flags`)
+
+- **The build now ships the whole product.** The MVP release hid every non-MVP area behind
+  build-time feature flags. They are gone, so these areas are back for everyone who has the role or
+  permission they need:
+  - billing, with the **Upgrade** CTA in the user menu;
+  - usage;
+  - Jira integrations: org and project settings, import from Jira, push to Jira, and the job banner;
+  - members and invitations, including **Transfer ownership**;
+  - custom project roles.
+- **Removed the flag machinery:** `FeatureFlags`, `featureGuard`, the `features` map in both
+  environment files and `docs/FEATURE-FLAGS.md`. Route, nav and palette access now depend only on
+  org roles and project permissions.
+- **Removed the account "Notifications" and "API tokens" placeholders.** They were "Soon" entries with
+  no feature behind them, only hidden by their flags. Their routes now fall back to `/projects` like
+  any unknown URL, and the unused `ComingSoon` page and its strings are deleted.
+
+### Added (Story approval — `feature/discovery-story-approval`)
+
+- **The story detail can now approve, reject or send a story back to draft.** Every story used to stay
+  in "Borrador" because nothing changed its status.
+  - The header shows the decisions that apply to the current status: a draft offers **Aprobar** and
+    **Rechazar**; an approved or rejected story offers the other decision and **Volver a borrador**.
+    Merged or exported stories offer none.
+  - Each button calls `PATCH /api/projects/{projectId}/stories/{storyId}/status`, updates the status
+    badge and hint in place, and keeps any unsaved edits in the form.
+  - The buttons only render for members with the new `STORY_APPROVE` permission (org owners and
+    admins always see them).
+- **The role editor lists `STORY_APPROVE` and the missing `STORY_DELETE`** under "Historias de
+  usuario", so a project role (e.g. the Product Owner's) can grant them.
+- **New error message** for `INVALID_STORY_STATUS` in Spanish and English.
+- The button logic lives in the pure helper `reviewTargets` (`story-review.helpers.ts`). It has unit
+  tests, as does the new `changeStoryStatus` API call.
+
+### Fixed (Session history stats and duration — `bugfix/discovery-history-stats-contract`)
+
+- **The session history now shows its stats columns and the duration of live sessions.** The session
+  model expected `storiesGeneratedCount`, `storiesAcceptedCount`, `pendingSuggestionsCount` and
+  `questionsCount`, but the API sends `storiesGenerated`, `storiesAccepted`, `suggestionsPending` and
+  `questionsAsked`. As a result:
+  - the Historias / Aceptadas / Pendientes / Preguntas columns never appeared;
+  - the session separator in Captura never showed its story count.
+
+  The duration cell only read `audioDurationMs`, which live sessions never set, so every live session
+  showed "—".
+- The model now uses the API names and adds `durationSeconds`. The duration cell prefers it and still
+  falls back to `audioDurationMs` for older deployments. The logic lives in the new pure helpers
+  `sessionDuration` and `hasSessionStats` (`history.helpers.ts`), which have unit tests.
+
 ### Added
 
+- **MVP feature flags** (`feature/mvp-feature-flags`): a typed `features` map in both environment
+  files (`FeatureKey` union + `FeatureFlags.isEnabled()`), all **off** by default, so the deployed
+  product shows only the MVP. A `featureGuard()` `canMatch` makes a disabled route behave like an
+  unknown URL (falls through to `/projects`), and the sidebar, command palette, buttons and cards
+  drop what it hides: `billing` (billing pages, checkout returns, Upgrade CTA), `usage`,
+  `integrations` (Jira pages + OAuth callback, job banner, import/push actions), `members` (org +
+  project members, invitation landing, palette action/hits, ownership transfer), `customRoles`
+  (project roles), and the `notifications` / `tokens` account placeholders. The sidebar also hides
+  a **Settings** entry with no reachable sub-page. Flipping a flag restores the feature with no
+  other change; see `docs/FEATURE-FLAGS.md` (incl. the backend's FREE-plan limits).
+- **Discovery — virtual-meeting audio capture** (`feature/system-audio-capture`): the analyst can now
+  record a Zoom / Google Meet / Teams call, not only a face-to-face meeting. A compact **audio-source
+  picker** next to the record button chooses **In person (microphone)** or **Virtual meeting (microphone +
+  meeting audio)**, remembered per user in localStorage. The virtual source opens the browser's
+  screen-share picker straight from the record click (`getDisplayMedia` with tab/window/system audio, voice
+  processing off and ReqsAI's own tab hidden), drops the unused video track and mixes the shared audio with
+  the mic in one mono Web Audio mixer — the backend keeps receiving the same 16 kHz Int16 PCM on `/ws/stt`,
+  and the level meter shows the mix. Sharing without ticking "Share tab audio" warns and lets the user
+  retry; a dismissed picker stays idle silently; "Stop sharing" mid-session keeps recording the mic with a
+  notice and a **Share again** action in the session bar; pausing keeps the shared tab, so resuming never
+  re-opens the picker. The virtual option is disabled (with the reason) outside desktop Chrome/Edge, and a
+  hint recommends headphones to avoid a duplicated transcript (`discovery.source.*` plus new
+  `discovery.rec.*` / `discovery.bar.*` keys, en/es).
 - **Discovery — live session presence** (`feature/discovery-presence`): the discovery chat now shows who
   else is viewing the **live** session — an overlapping avatar stack with a live pulse, a "+N" overflow
   bubble and a viewer count, in both the page header and the live session bar. It is fed by a new
@@ -194,6 +443,55 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed
 
+- **CI — deploy through reqsai-infra** (`ci/deploy-via-infra`): `deploy.yml` no longer syncs to S3 and
+  invalidates CloudFront; that stack no longer exists, so the old workflow would fail on the next push to
+  `main`. A push to `main` now asks `Kntro-Soft/reqsai-infra` to run its `deploy-mvp.yml` workflow with
+  `web_ref` set to the pushed commit; that workflow builds the linux/arm64 nginx image and deploys it to the
+  single-EC2 MVP host over SSM, and rebuilds reqsai-api from its `main`. Needs the repository secret
+  `INFRA_DEPLOY_TOKEN` (fine-grained PAT with Actions read and write on `reqsai-infra` only); without it the
+  job logs a notice and succeeds, so `main` never goes red. Manual runs only dispatch from `main`.
+- **UX — MVP usability polish** (`feature/mvp-ux-polish`): a refinement pass on the MVP surfaces driven by
+  a heuristic evaluation with 6 users (Nielsen, impeccable critique: live session 20 → 26/40, stories
+  20 → 24/40), keeping the brand, behaviour and copy.
+  - *Live session*: the AI suggestion queue docks to the feed column as a framed **review tray** ("AI
+    suggestions to review", counter with prev/next, minimize) instead of floating over the session bar,
+    header actions and side panel; from `sm` it stops short of the feed bottom so the latest lines stay
+    visible. ←/→ browse it, Esc minimizes it, focus returns to it after a decision, and focusing a feed
+    control it covers minimizes it (WCAG 2.4.11). A status line at the live edge says what the AI is doing — listening
+    (with the last suggestion's age), paused, **processing the final stories after Stop**, or failed with
+    the backend reason. The transcript recedes into neutral bubbles with visible speaker/time
+    ("Participante n" in Spanish); human decisions become compact "accepted/resolved by the analyst"
+    rows; accepting confirms that the story landed in the backlog as a draft.
+  - *AI vs human provenance*: new `ai` / `verified` / `pending` tokens. Everything the AI proposed reads
+    violet (suggestion cards, generated stories, "IA" origin chip); human-validated content reads emerald;
+    drafts awaiting review read amber. Priority gets its own glyph scale (critical red, high orange,
+    medium/low neutral), so red is no longer brand, AI, danger and priority at once.
+  - *Readable stories*: `hlmInput` textareas grow with their content (they were clipped at a fixed
+    height); stories read as their sentence and criteria as **Gherkin** steps with a keyword gutter in the
+    suggestion card, side panel, story detail and create page. The story detail leads with the title,
+    review status (with what it means) and origin, links an AI story to its capture session, and flags
+    unsaved story and criterion edits.
+  - *Backlog order*: sortable headers with a direction arrow and `aria-sort`, a visible "sorted by"
+    caption, priority re-ordered by meaning on the page (the API sorts the enum alphabetically), origin
+    and status chips (draft as an amber dashed outline), a page-scrolling chip-row layout below `sm`,
+    unambiguous dates, an empty state with next steps and retry on load errors. Story forms flag empty
+    required fields inline.
+  - *Audio source*: the picker is a labelled segmented control (In person / Virtual meeting) next to a
+    record button with a record dot and label; the virtual-meeting guidance is a calm two-step note
+    (share the meeting tab with its audio; wear headphones) and the missing-audio notice offers "Share
+    again" in place.
+  - *Project forms*: only the name is required and both forms say so; the optional technical profile is
+    one group (business context + tech stack, example placeholders, Enter-to-add hint). Settings go from
+    eight one-field cards to General and Technical profile, and the logo card is titled for the project.
+  - *Accessibility*: the brand red fill is `#dc2626` so white labels pass AA (4.83:1), red text in dark
+    uses a lighter step, muted text and the default focus outline meet AA, filter inputs show focus,
+    story titles are keyboard links, panel tabs/sort chips expose their state, the mobile session-bar
+    status stays announced, and new suggestions are announced politely. All measured chips are ≥ 4.5:1
+    in both themes.
+  - Report screenshots (light, 1440×900, Spanish demo data) in `docs/screenshots/mvp/`. New
+    `discovery.ai.*`, `discovery.queue.*`, `discovery.suggestion.*`, `stories.statusHint.*`,
+    `stories.origin.*`, `storyForm.*`, `projectCreate.*`, `projectSettings.*` and `common.optional/required`
+    keys (EN + ES); `discovery.source.hint` is replaced by `hintShare` / `hintHeadphones`.
 - **Core — centralized backend error handling** (`feature/frontend-error-handling`): a shared
   `messageForError` helper resolves backend errors by their machine-readable `code` against a single
   top-level `errors.<CODE>` i18n block (network / per-status / generic fallback chain). Extended from the

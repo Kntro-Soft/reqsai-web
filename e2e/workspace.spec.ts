@@ -33,18 +33,14 @@ test.describe('Workspace', () => {
     await expect(page).toHaveURL(/\/projects/);
     await expect(page.getByTestId('projects-empty')).toBeVisible();
 
-    // Create the first project.
-    await page.getByRole('button', { name: 'Nuevo proyecto' }).click();
+    // Create the first project: only the name is required.
+    await page.goto('/projects/new');
     await page.getByLabel('Nombre', { exact: true }).fill('Mobile App');
-    await page.getByLabel('Lenguajes (coma)').fill('TypeScript');
-    await page.getByLabel('Frameworks (coma)').fill('Angular');
-    await page.getByLabel('Plataformas (coma)').fill('Web');
-    await page.getByLabel('Bases de datos (coma)').fill('PostgreSQL');
-    await page.getByLabel('Arquitectura').fill('Hexagonal');
-    await page.getByLabel('Dominio').fill('Fintech');
     await page.getByRole('button', { name: 'Crear proyecto' }).click();
+    await expect(page).toHaveURL(/\/projects\/[0-9a-f-]+/i);
 
-    await expect(page.getByTestId('project-row')).toHaveCount(1);
+    await page.goto('/projects');
+    await expect(page.getByTestId('project-card')).toHaveCount(1);
     await expect(page.getByText('Mobile App')).toBeVisible();
   });
 
@@ -64,12 +60,11 @@ test.describe('Workspace', () => {
     await uiLogin(page, email, PASSWORD);
     await expect(page).toHaveURL(/\/projects/);
 
-    // The header switcher reflects the active org and switches to the other.
-    const switcher = page.getByTestId('org-switcher');
-    await expect(switcher).toContainText('Org One');
-    await switcher.click();
+    // The sidebar shows the active org; its chevron opens the switcher.
+    await expect(page.getByRole('button', { name: /Org One/ })).toBeVisible();
+    await page.getByTestId('org-switcher').click();
     await page.getByTestId('org-option').filter({ hasText: 'Org Two' }).click();
     await expect(page).toHaveURL(/\/projects/);
-    await expect(switcher).toContainText('Org Two');
+    await expect(page.getByRole('button', { name: /Org Two/ })).toBeVisible();
   });
 });

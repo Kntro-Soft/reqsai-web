@@ -5,17 +5,26 @@ import {
   AcceptSuggestionRequest,
   AcceptanceCriterionRequest,
   AcceptanceCriterionResponse,
+  AnalyzeSessionResponse,
+  AssistantExchangeResponse,
+  AssistantMessageResponse,
   BatchDeleteStoriesRequest,
   BatchDeleteStoriesResult,
+  ChangeStoryStatusRequest,
   CreateDiscoverySessionRequest,
   CreateUserStoryRequest,
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
+  SessionSpeakerResponse,
+  SessionSpeakersResponse,
   StoryListFilters,
+  SuggestionMode,
+  StoryReviewStatus,
   SuggestionResponse,
   SuggestionStatus,
   TranscriptResponse,
+  UpdateSessionSpeakerRequest,
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
@@ -63,6 +72,26 @@ export class DiscoveryApiService {
     request: CreateDiscoverySessionRequest,
   ): Observable<DiscoverySessionResponse> {
     return this.http.post<DiscoverySessionResponse>(this.base(projectId), request);
+  }
+
+  /** Chooses when the assistant analyzes a session: on its own (AUTO) or only on demand (MANUAL). */
+  changeSuggestionMode(
+    projectId: string,
+    sessionId: string,
+    mode: SuggestionMode,
+  ): Observable<DiscoverySessionResponse> {
+    return this.http.patch<DiscoverySessionResponse>(
+      `${this.base(projectId)}/${sessionId}/suggestion-mode`,
+      { mode },
+    );
+  }
+
+  /** "Analizar ahora": analyzes the live session's recent conversation right away. */
+  analyzeSession(projectId: string, sessionId: string): Observable<AnalyzeSessionResponse> {
+    return this.http.post<AnalyzeSessionResponse>(
+      `${this.base(projectId)}/${sessionId}/analyze`,
+      {},
+    );
   }
 
   getSession(projectId: string, sessionId: string): Observable<DiscoverySessionResponse> {
@@ -116,6 +145,24 @@ export class DiscoveryApiService {
       params = params.set('beforeSequence', beforeSequence);
     }
     return this.http.get<unknown>(`/api/sessions/${sessionId}/segments`, { params });
+  }
+
+  /** The diarized speakers of a session and where they talked over each other (US40). */
+  listSpeakers(projectId: string, sessionId: string): Observable<SessionSpeakersResponse> {
+    return this.http.get<SessionSpeakersResponse>(`${this.base(projectId)}/${sessionId}/speakers`);
+  }
+
+  /** Names a speaker and sets their side; applies to all their segments, past and future. */
+  updateSpeaker(
+    projectId: string,
+    sessionId: string,
+    label: string,
+    request: UpdateSessionSpeakerRequest,
+  ): Observable<SessionSpeakerResponse> {
+    return this.http.put<SessionSpeakerResponse>(
+      `${this.base(projectId)}/${sessionId}/speakers/${encodeURIComponent(label)}`,
+      request,
+    );
   }
 
   /** Uploads an audio file for transcription (session-scoped endpoint). */
@@ -178,6 +225,22 @@ export class DiscoveryApiService {
     return this.http.put<UserStoryResponse>(
       `/api/projects/${projectId}/stories/${storyId}`,
       request,
+    );
+  }
+
+  /**
+   * Records the review decision on a story (PATCH /projects/{projectId}/stories/{storyId}/status):
+   * approve, reject or send it back to draft. Needs STORY_APPROVE; a merged or exported story
+   * answers 422 INVALID_STORY_STATUS.
+   */
+  changeStoryStatus(
+    projectId: string,
+    storyId: string,
+    status: StoryReviewStatus,
+  ): Observable<UserStoryResponse> {
+    return this.http.patch<UserStoryResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/status`,
+      { status } satisfies ChangeStoryStatusRequest,
     );
   }
 
@@ -286,6 +349,53 @@ export class DiscoveryApiService {
     return this.http.post<SuggestionResponse>(
       `/api/sessions/${sessionId}/suggestions/${suggestionId}/dismiss`,
       {},
+    );
+  }
+
+  /**
+   * Accepts any suggestion of the project by id — the route for suggestions raised from the
+   * assistant chat, which belong to no session.
+   */
+  acceptProjectSuggestion(
+    projectId: string,
+    suggestionId: string,
+    request: AcceptSuggestionRequest,
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/projects/${projectId}/suggestions/${suggestionId}/accept`,
+      request,
+    );
+  }
+
+  /** Dismisses any suggestion of the project by id (assistant-chat suggestions have no session). */
+  dismissProjectSuggestion(
+    projectId: string,
+    suggestionId: string,
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/projects/${projectId}/suggestions/${suggestionId}/dismiss`,
+      {},
+    );
+  }
+
+  // ---- Assistant chat ----
+
+  /** The newest messages of the project's assistant chat, oldest first. */
+  listAssistantMessages(projectId: string, limit = 50): Observable<AssistantMessageResponse[]> {
+    return this.http.get<AssistantMessageResponse[]>(
+      `/api/projects/${projectId}/assistant/messages`,
+      { params: new HttpParams().set('limit', limit) },
+    );
+  }
+
+  /**
+   * Sends a message to ReqsAI: a question is answered from the project, a requirement comes back as
+   * suggestions in the reply.
+   */
+  sendAssistantMessage(projectId: string, content: string): Observable<AssistantExchangeResponse> {
+    return this.http.post<AssistantExchangeResponse>(
+      `/api/projects/${projectId}/assistant/messages`,
+      { content },
     );
   }
 }

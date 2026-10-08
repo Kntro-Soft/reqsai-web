@@ -1,12 +1,16 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
+  model,
   output,
   signal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
@@ -44,11 +48,12 @@ const EXIT_DURATION_MS = 200;
 const DRAG_HORIZONTAL_LOCK_PX = 8;
 
 /**
- * The decision queue: pending AI suggestions as floating, non-modal cards
- * anchored top-center over the feed. One card at a time with prev/next arrows
- * (or a horizontal drag) and an "n of m" counter. The user can minimize it to a
- * compact badge that expands on click; new suggestions only bump the count and
- * never change that state. While a decision is in flight the card stays visible
+ * The decision queue: pending AI suggestions as a non-modal review tray docked
+ * to the top of the feed column (never over the session controls or the side
+ * panel). A tray header names it ("AI suggestions to review") and carries the
+ * "n of m" counter with prev/next; a horizontal drag on the card's top handle
+ * also browses. The user can minimize it to a compact badge that expands on
+ * click; new suggestions only bump the count and never change that state. While a decision is in flight the card stays visible
  * with a spinner and disabled actions, and leaves only once the store confirms
  * the resolution.
  */
@@ -59,84 +64,115 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
   viewProviders: [
     provideIcons({ lucideChevronLeft, lucideChevronRight, lucideMinus, lucideSparkles, lucideX }),
   ],
+  host: { class: 'contents' },
   template: `
     @if (store.queue().length > 0) {
+      <!-- Anchored to the feed column (the page wraps the feed in a relative box), so the
+           tray never covers the session bar, the header actions or the side panel; the
+           bottom inset (sm+) keeps the live edge (latest lines + AI status) in view below it. -->
       <div
-        class="pointer-events-none fixed left-1/2 top-14 z-40 w-[min(44rem,calc(100vw-2rem))] -translate-x-1/2"
+        class="pointer-events-none absolute inset-x-2 bottom-2 top-2 z-20 flex flex-col items-center sm:inset-x-4 sm:bottom-[9.5rem]"
         data-testid="decision-queue"
       >
         @if (collapsed()) {
-          <!-- Collapsed: a pill pinned to the app header's bottom border (h-14 =
-               56px). Its center sits on that divider line (-translate-y-1/2), so
-               it stays clear of the header toolbar buttons on narrow viewports. -->
-          <div class="flex -translate-y-1/2 justify-center">
-            <button
-              type="button"
-              (click)="collapsed.set(false)"
-              class="queue-badge pointer-events-auto inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/25 transition-transform hover:scale-[1.03]"
-              data-testid="queue-badge"
-            >
-              <hlm-icon name="lucideSparkles" size="15px" />
+          <button
+            type="button"
+            (click)="collapsed.set(false)"
+            class="queue-badge pointer-events-auto inline-flex items-center gap-2 rounded-full border border-ai-border bg-card py-1.5 pl-2 pr-3.5 text-sm font-medium text-foreground shadow-lg transition-colors hover:bg-accent"
+            [attr.aria-label]="'discovery.queue.expand' | transloco"
+            data-testid="queue-badge"
+          >
+            <span class="grid h-6 w-6 place-items-center rounded-full bg-ai-soft text-ai">
+              <hlm-icon name="lucideSparkles" size="14px" aria-hidden="true" />
+            </span>
+            @for (count of [store.queue().length]; track count) {
               <span
-                class="grid h-5 min-w-5 place-items-center rounded-full bg-primary-foreground px-1.5 text-[11px] font-bold leading-none text-primary"
+                class="queue-count grid h-5 min-w-5 place-items-center rounded-full bg-ai px-1.5 text-[11px] font-bold leading-none text-card tabular-nums"
                 data-testid="queue-badge-count"
-                >{{ store.queue().length }}</span
+                >{{ count }}</span
               >
-              {{ 'discovery.queue.pendingBadgeLabel' | transloco }}
-            </button>
-          </div>
-        } @else {
-          <!-- Expanded: keep the open card at its prior offset (the container now
-               anchors 8px higher, at the header border, for the collapsed pill). -->
-          <div class="queue-card pointer-events-auto relative mt-2">
-            <!-- Top bar: just a clear minimize control (the counter now lives in
-                 the folded-corner tab on the card itself). -->
-            <div class="mb-1.5 flex items-center justify-end px-1">
-              <button
-                type="button"
-                (click)="collapsed.set(true)"
-                class="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
-                [attr.aria-label]="'discovery.queue.minimize' | transloco"
-                [title]="'discovery.queue.minimize' | transloco"
-                data-testid="queue-collapse"
-              >
-                <hlm-icon name="lucideMinus" size="16px" />
-                {{ 'discovery.queue.minimize' | transloco }}
-              </button>
-            </div>
-
-            <!-- Big, RED navigation arrows anchored at the vertical center sides. -->
-            @if (store.queue().length > 1) {
-              <button
-                type="button"
-                (click)="prev()"
-                [disabled]="safeIndex() === 0"
-                class="queue-nav absolute -left-5 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
-                [attr.aria-label]="'discovery.queue.prev' | transloco"
-                data-testid="queue-prev"
-              >
-                <hlm-icon name="lucideChevronLeft" size="24px" />
-              </button>
-              <button
-                type="button"
-                (click)="next()"
-                [disabled]="safeIndex() >= store.queue().length - 1"
-                class="queue-nav absolute -right-5 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-30"
-                [attr.aria-label]="'discovery.queue.next' | transloco"
-                data-testid="queue-next"
-              >
-                <hlm-icon name="lucideChevronRight" size="24px" />
-              </button>
             }
+            {{ 'discovery.queue.pendingBadgeLabel' | transloco }}
+          </button>
+        } @else {
+          <!-- The tray is its own surface (frosted, AI-violet edge) so the transcript
+               scrolling underneath never bleeds through between header and card. -->
+          <!-- Keyboard: ←/→ browse, Esc minimizes (ignored while typing in a field). After
+               a decision, focus returns here instead of falling to the page body. -->
+          <section
+            #tray
+            tabindex="-1"
+            (keydown)="onTrayKeydown($event)"
+            class="queue-card pointer-events-auto flex max-h-full min-h-0 w-full max-w-2xl flex-col rounded-[1.375rem] border border-ai-border/70 bg-background/85 p-2 shadow-xl outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-ring"
+            [attr.aria-label]="'discovery.queue.title' | transloco"
+            [attr.aria-keyshortcuts]="'ArrowLeft ArrowRight Escape'"
+          >
+            <!-- Tray header: what this is (AI, awaiting review), where you are, how to
+                 move, and how to get it out of the way. -->
+            <div class="mb-2.5 flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-0.5">
+              <hlm-icon name="lucideSparkles" size="15px" class="text-ai" aria-hidden="true" />
+              <span class="ml-1 min-w-0 truncate text-xs font-semibold text-foreground">
+                <span class="sm:hidden">{{ 'discovery.queue.titleShort' | transloco }}</span>
+                <span class="hidden sm:inline">{{ 'discovery.queue.title' | transloco }}</span>
+              </span>
+              <span class="ml-auto flex shrink-0 items-center">
+                @if (store.queue().length > 1) {
+                  <button
+                    type="button"
+                    (click)="prev()"
+                    [disabled]="safeIndex() === 0"
+                    class="queue-nav grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
+                    [attr.aria-label]="'discovery.queue.prev' | transloco"
+                    data-testid="queue-prev"
+                  >
+                    <hlm-icon name="lucideChevronLeft" size="16px" />
+                  </button>
+                }
+                <span
+                  class="queue-counter min-w-[3.25rem] text-center text-xs font-medium tabular-nums text-muted-foreground"
+                  aria-live="polite"
+                  data-testid="queue-counter"
+                >
+                  {{
+                    'discovery.queue.counter'
+                      | transloco: { n: safeIndex() + 1, m: store.queue().length }
+                  }}
+                </span>
+                @if (store.queue().length > 1) {
+                  <button
+                    type="button"
+                    (click)="next()"
+                    [disabled]="safeIndex() >= store.queue().length - 1"
+                    class="queue-nav grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
+                    [attr.aria-label]="'discovery.queue.next' | transloco"
+                    data-testid="queue-next"
+                  >
+                    <hlm-icon name="lucideChevronRight" size="16px" />
+                  </button>
+                }
+                <span class="mx-1 h-4 w-px bg-border" aria-hidden="true"></span>
+                <button
+                  type="button"
+                  (click)="collapsed.set(true)"
+                  class="inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  [attr.aria-label]="'discovery.queue.minimize' | transloco"
+                  [title]="'discovery.queue.minimize' | transloco"
+                  data-testid="queue-collapse"
+                >
+                  <hlm-icon name="lucideMinus" size="15px" />
+                  <span class="hidden sm:inline">{{ 'discovery.queue.minimize' | transloco }}</span>
+                </button>
+              </span>
+            </div>
 
             <!-- The stacked "deck": decorative card edges behind the active card,
                  one per remaining pending suggestion (capped), conveying depth.
                  Purely visual — aria-hidden, no pointer events. -->
-            <div class="deck relative">
+            <div class="deck relative flex min-h-0 flex-col">
               @for (layer of stackLayers(); track layer) {
                 <div
                   aria-hidden="true"
-                  class="deck-layer absolute inset-x-0 top-0 h-full rounded-xl border border-border bg-card shadow-md"
+                  class="deck-layer absolute inset-x-0 top-0 h-full rounded-2xl border border-border bg-card shadow-sm"
                   [style.transform]="layerTransform(layer)"
                   [style.opacity]="layerOpacity(layer)"
                   [style.zIndex]="layer"
@@ -148,7 +184,7 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                    the subtle entrance animation for each new suggestion shown. -->
               @for (suggestion of currentAsList(); track suggestion.id) {
                 <div
-                  class="card-swap relative z-10"
+                  class="card-swap relative z-10 flex min-h-0 flex-col"
                   [class.card-dragging]="dragging()"
                   [class.card-exiting]="exiting() !== null"
                   [style.transform]="cardTransform()"
@@ -156,24 +192,13 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                   (transitionend)="onCardTransitionEnd($event)"
                   data-testid="queue-card"
                 >
-                  <!-- Folded-corner tab: the "n de m" counter, clearly detached
-                       from the card body in the top-left corner. -->
-                  <span
-                    class="queue-tab absolute -left-1.5 -top-2.5 z-20 inline-flex items-center rounded-md rounded-bl-sm bg-primary px-2.5 py-1 text-[11px] font-bold leading-none text-primary-foreground shadow-md shadow-primary/30"
-                    data-testid="queue-counter"
-                  >
-                    {{
-                      'discovery.queue.counter'
-                        | transloco: { n: safeIndex() + 1, m: store.queue().length }
-                    }}
-                  </span>
-                  <!-- Dedicated drag strip across the TOP of the card: navigating by
-                       dragging never conflicts with the card's own buttons/inputs.
+                  <!-- Drag handle straddling the card's top edge: swiping it browses the
+                       deck without ever competing with the card's own buttons/inputs.
                        Pointer Events (with capture) drive it identically on mouse and
                        touch; touch-action pan-y keeps vertical page scroll working. -->
                   @if (store.queue().length > 1) {
                     <div
-                      class="queue-drag absolute inset-x-0 -top-1 z-30 flex h-7 cursor-grab touch-pan-y items-center justify-center rounded-t-xl"
+                      class="queue-drag absolute inset-x-0 -top-3 z-30 flex h-6 cursor-grab touch-pan-y items-center justify-center"
                       [class.cursor-grabbing]="dragging()"
                       role="button"
                       tabindex="-1"
@@ -184,7 +209,10 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                       (pointercancel)="onDragCancel($event)"
                       data-testid="queue-drag"
                     >
-                      <span class="h-1 w-9 rounded-full bg-border" aria-hidden="true"></span>
+                      <span
+                        class="h-1.5 w-10 rounded-full border border-border bg-card"
+                        aria-hidden="true"
+                      ></span>
                     </div>
                   }
                   <app-suggestion-card
@@ -199,35 +227,15 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                 </div>
               }
             </div>
-          </div>
+          </section>
         }
       </div>
 
       <style>
-        /* Folded-corner "dog-ear" behind the counter tab, for the tucked look. */
-        .queue-tab::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 100%;
-          border-width: 0 5px 5px 0;
-          border-style: solid;
-          border-color: transparent color-mix(in srgb, var(--primary) 55%, black) transparent
-            transparent;
-        }
         @media (prefers-reduced-motion: reduce) {
-          .queue-nav {
-            transition: none;
-          }
-          .queue-nav:hover {
-            transform: translateY(-50%);
-          }
-          /* The deck is a static offset stack — nothing to animate. */
-          .card-swap {
-            animation: none;
-          }
           /* No spring/fling/enter under reduced motion: the card snaps instantly. */
           .card-swap {
+            animation: none;
             transition: none;
           }
         }
@@ -235,8 +243,10 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
           .queue-card {
             animation: queue-in 160ms ease-out;
           }
-          .queue-badge {
-            animation: queue-badge-pulse 1.8s ease-in-out infinite;
+          /* One-shot bump of the minimized count each time a suggestion arrives
+             (the count is keyed, so a new value remounts and replays it). */
+          .queue-count {
+            animation: queue-count-bump 420ms cubic-bezier(0.16, 1, 0.3, 1);
           }
           /* Enter: the incoming card eases in from a gentle scale + fade rather
              than popping. Replayed on each swap via the keyed @for remount. */
@@ -282,15 +292,15 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
             transform: translateY(0);
           }
         }
-        @keyframes queue-badge-pulse {
-          0%,
-          100% {
-            box-shadow: 0 10px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.25));
+        @keyframes queue-count-bump {
+          0% {
+            transform: scale(1);
           }
-          50% {
-            box-shadow:
-              0 10px 25px -5px var(--tw-shadow-color, rgba(0, 0, 0, 0.25)),
-              0 0 0 6px color-mix(in srgb, var(--primary) 22%, transparent);
+          40% {
+            transform: scale(1.25);
+          }
+          100% {
+            transform: scale(1);
           }
         }
       </style>
@@ -309,7 +319,10 @@ export class DecisionQueue {
   readonly decideDismiss = output<SuggestionResponse>();
   readonly openTarget = output<string>();
 
-  protected readonly collapsed = signal(false);
+  /** Minimized to the badge. Two-way bound so the page can fold it (e.g. focus moved under it). */
+  readonly collapsed = model(false);
+
+  private readonly tray = viewChild<ElementRef<HTMLElement>>('tray');
 
   protected readonly safeIndex = computed(() => {
     const length = this.store.queue().length;
@@ -520,6 +533,36 @@ export class DecisionQueue {
     effect(() => {
       if (this.store.queue().length === 0) this.collapsed.set(false);
     });
+    // A decided card leaves the DOM with the focused button in it, dropping focus to the
+    // page body. Bring it back to the tray so keyboard review can carry on.
+    let previousLength = 0;
+    effect(() => {
+      const length = this.store.queue().length;
+      const shrank = length < previousLength;
+      previousLength = length;
+      if (!shrank || length === 0 || untracked(() => this.collapsed())) return;
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (!active || active === document.body) this.tray()?.nativeElement.focus();
+      });
+    });
+  }
+
+  /** ←/→ browse the deck and Esc minimizes — unless the key belongs to a field being edited. */
+  protected onTrayKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable="true"], [role="listbox"]'))
+      return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.collapsed.set(true);
+    } else if (event.key === 'ArrowLeft' && this.safeIndex() > 0) {
+      event.preventDefault();
+      this.prev();
+    } else if (event.key === 'ArrowRight' && this.safeIndex() < this.store.queue().length - 1) {
+      event.preventDefault();
+      this.next();
+    }
   }
 
   /** Applies a committed drag outcome as a carousel navigation. */

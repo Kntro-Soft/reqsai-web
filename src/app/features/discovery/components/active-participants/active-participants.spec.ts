@@ -21,7 +21,10 @@ describe('ActiveParticipants', () => {
     document.querySelectorAll('.cdk-overlay-container').forEach((el) => el.remove());
   });
 
-  function build(participants: SessionParticipant[], max?: number): ComponentFixture<ActiveParticipants> {
+  function build(
+    participants: SessionParticipant[],
+    max?: number,
+  ): ComponentFixture<ActiveParticipants> {
     TestBed.configureTestingModule({
       imports: [ActiveParticipants, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
     });

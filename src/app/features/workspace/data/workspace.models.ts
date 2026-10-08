@@ -154,9 +154,11 @@ export type Permission =
   | 'SESSION_READ'
   | 'SESSION_RUN'
   | 'SESSION_DECIDE'
-  // User stories
+  // User stories (STORY_APPROVE = the review decision, kept apart from editing)
   | 'STORY_READ'
-  | 'STORY_WRITE';
+  | 'STORY_WRITE'
+  | 'STORY_DELETE'
+  | 'STORY_APPROVE';
 
 /** All permissions, in display order. */
 export const PERMISSIONS: readonly Permission[] = [
@@ -185,6 +187,8 @@ export const PERMISSIONS: readonly Permission[] = [
   'SESSION_DECIDE',
   'STORY_READ',
   'STORY_WRITE',
+  'STORY_DELETE',
+  'STORY_APPROVE',
 ];
 
 /** Permissions grouped by resource, for the role editor UI (group header = `projectRoles.resource.<key>`). */
@@ -212,7 +216,10 @@ export const PERMISSION_GROUPS: readonly PermissionGroup[] = [
     resourceKey: 'session',
     permissions: ['SESSION_READ', 'SESSION_RUN', 'SESSION_DECIDE'],
   },
-  { resourceKey: 'story', permissions: ['STORY_READ', 'STORY_WRITE'] },
+  {
+    resourceKey: 'story',
+    permissions: ['STORY_READ', 'STORY_WRITE', 'STORY_DELETE', 'STORY_APPROVE'],
+  },
 ];
 
 /** A dynamic, per-project role bundling a set of permissions. */

@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslocoTestingModule } from '@jsverse/transloco';
+import { vi } from 'vitest';
 import { SessionBar } from './session-bar';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
+import { AudioSource } from '../../../../core/audio/audio-source';
 import { DiscoverySessionResponse, SessionStatus } from '../../data/discovery.models';
 
 function session(status: SessionStatus): DiscoverySessionResponse {
@@ -27,22 +29,28 @@ class FakeRecordingService {
   readonly status = signal<SessionStatus | null>('RECORDING');
   readonly busy = signal(false);
   readonly elapsedMs = signal(0);
+  readonly analyzing = signal(false);
 }
 
 class FakeAudioRecorderService {
   readonly levels = signal<readonly number[]>([]);
+  readonly source = signal<AudioSource>('mic');
+  readonly meetingAudio = signal(false);
+  readonly shareMeetingAudio = vi.fn(() => Promise.resolve(true));
 }
 
 describe('SessionBar', () => {
   let recording: FakeRecordingService;
+  let recorder: FakeAudioRecorderService;
 
   function render(): { fixture: ComponentFixture<SessionBar>; el: HTMLElement } {
     recording = new FakeRecordingService();
+    recorder = new FakeAudioRecorderService();
     TestBed.configureTestingModule({
       imports: [SessionBar, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
       providers: [
         { provide: SessionRecordingService, useValue: recording },
-        { provide: AudioRecorderService, useValue: new FakeAudioRecorderService() },
+        { provide: AudioRecorderService, useValue: recorder },
       ],
     });
     const fixture = TestBed.createComponent(SessionBar);
@@ -62,20 +70,28 @@ describe('SessionBar', () => {
     expect(stop.getAttribute('title')).toBeTruthy();
   });
 
-  it('hides the pause/stop button labels and the status label below the sm breakpoint', () => {
+  it('hides the pause/stop button labels below the sm breakpoint', () => {
     const { el } = render();
 
     const pause = el.querySelector('[data-testid="session-bar-pause"]') as HTMLButtonElement;
     const stop = el.querySelector('[data-testid="session-bar-stop"]') as HTMLButtonElement;
-    const status = el.querySelector('[data-testid="session-bar-status"]') as HTMLElement;
 
     // "hidden sm:inline" is the app's established mobile-icon-only pattern
     // (see the discovery header's history/panel-toggle buttons).
     expect(pause.querySelector('span')?.className).toContain('hidden');
     expect(pause.querySelector('span')?.className).toContain('sm:inline');
     expect(stop.querySelector('span')?.className).toContain('hidden');
-    expect(status.className).toContain('hidden');
-    expect(status.className).toContain('sm:inline');
+  });
+
+  it('keeps the status label announced on mobile (visually hidden, not removed)', () => {
+    const { el } = render();
+
+    const status = el.querySelector('[data-testid="session-bar-status"]') as HTMLElement;
+
+    expect(status.className).toContain('sr-only');
+    expect(status.className).toContain('sm:not-sr-only');
+    expect(status.className).not.toContain('hidden');
+    expect(status.getAttribute('aria-live')).toBe('polite');
   });
 
   it('always renders the icon and the elapsed timer regardless of viewport', () => {
@@ -102,5 +118,76 @@ describe('SessionBar', () => {
 
     expect(el.querySelector('[data-testid="session-bar-resume"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="session-bar-pause"]')).toBeNull();
+  });
+
+  describe('when the AI analyzes (US46)', () => {
+    it('shows the automatic mode by default and asks the page to toggle it', () => {
+      const { fixture, el } = render();
+      const toggled = vi.fn();
+      fixture.componentInstance.toggleMode.subscribe(toggled);
+      const mode = el.querySelector<HTMLButtonElement>('[data-testid="session-bar-ai-mode"]')!;
+
+      expect(mode.getAttribute('data-mode')).toBe('AUTO');
+      mode.click();
+      expect(toggled).toHaveBeenCalledOnce();
+    });
+
+    it('reflects the manual mode of the live session', () => {
+      const { fixture, el } = render();
+      recording.session.set({ ...session('RECORDING'), suggestionMode: 'MANUAL' });
+      fixture.detectChanges();
+
+      expect(
+        el.querySelector('[data-testid="session-bar-ai-mode"]')!.getAttribute('data-mode'),
+      ).toBe('MANUAL');
+    });
+
+    it('asks for an analysis now, and disables the button while one runs', () => {
+      const { fixture, el } = render();
+      const analyze = vi.fn();
+      fixture.componentInstance.analyzeNow.subscribe(analyze);
+      const button = el.querySelector<HTMLButtonElement>('[data-testid="session-bar-analyze"]')!;
+
+      button.click();
+      expect(analyze).toHaveBeenCalledOnce();
+      recording.analyzing.set(true);
+      fixture.detectChanges();
+      expect(button.disabled).toBe(true);
+    });
+  });
+
+  describe('virtual meeting source', () => {
+    it('shows no meeting controls for an in-person recording', () => {
+      const { el } = render();
+
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).toBeNull();
+      expect(el.querySelector('[data-testid="session-bar-reshare"]')).toBeNull();
+    });
+
+    it('shows the meeting-audio badge while the meeting audio is captured', () => {
+      const { fixture, el } = render();
+      recorder.source.set('meeting');
+      recorder.meetingAudio.set(true);
+      fixture.detectChanges();
+
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="session-bar-reshare"]')).toBeNull();
+    });
+
+    it('offers to share the meeting audio again after "Stop sharing"', () => {
+      const { fixture, el } = render();
+      recorder.source.set('meeting');
+      recorder.meetingAudio.set(false);
+      fixture.detectChanges();
+
+      const reshare = el.querySelector('[data-testid="session-bar-reshare"]') as HTMLButtonElement;
+      expect(reshare).not.toBeNull();
+      expect(reshare.getAttribute('aria-label')).toBeTruthy();
+      expect(el.querySelector('[data-testid="session-bar-meeting-audio"]')).toBeNull();
+
+      reshare.click();
+
+      expect(recorder.shareMeetingAudio).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -1,7 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideCircle, lucidePause, lucidePlay, lucideSquare } from '@ng-icons/lucide';
+import {
+  lucideCircle,
+  lucideMonitorSpeaker,
+  lucidePause,
+  lucidePlay,
+  lucideScreenShare,
+  lucideSparkles,
+  lucideSquare,
+} from '@ng-icons/lucide';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { HlmButton, HlmIcon } from '../../../../shared/ui';
@@ -21,13 +29,25 @@ export function formatElapsed(ms: number): string {
  * The persistent session bar shown while a recording is live: status pulse,
  * elapsed timer, a real input-level meter (AnalyserNode-driven) and
  * pause/resume/stop controls. State lives in {@link SessionRecordingService},
- * so the bar renders the truth from anywhere in the app.
+ * so the bar renders the truth from anywhere in the app. Virtual-meeting
+ * recordings show a meeting-audio badge, or a "share again" action once the
+ * user stops sharing (the recording carries on with the mic meanwhile).
  */
 @Component({
   selector: 'app-session-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HlmButton, HlmIcon, TranslocoPipe],
-  viewProviders: [provideIcons({ lucideCircle, lucidePause, lucidePlay, lucideSquare })],
+  viewProviders: [
+    provideIcons({
+      lucideCircle,
+      lucideSparkles,
+      lucideMonitorSpeaker,
+      lucidePause,
+      lucidePlay,
+      lucideScreenShare,
+      lucideSquare,
+    }),
+  ],
   template: `
     @if (recording.session(); as session) {
       <div
@@ -37,8 +57,10 @@ export function formatElapsed(ms: number): string {
         <span
           class="relative flex h-2.5 w-2.5 shrink-0"
           [attr.title]="
-            (recording.status() === 'RECORDING' ? 'discovery.bar.recording' : 'discovery.bar.paused')
-              | transloco
+            (recording.status() === 'RECORDING'
+              ? 'discovery.bar.recording'
+              : 'discovery.bar.paused'
+            ) | transloco
           "
         >
           @if (recording.status() === 'RECORDING') {
@@ -47,13 +69,17 @@ export function formatElapsed(ms: number): string {
             ></span>
             <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive"></span>
           } @else {
-            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-pending"></span>
           }
         </span>
 
-        <!-- Status label: hidden on mobile to keep the bar compact — the pulse
-             color above already conveys recording (red) vs. paused (amber). -->
-        <span class="hidden text-sm font-medium sm:inline" data-testid="session-bar-status">
+        <!-- Status label: visually hidden on mobile to keep the bar compact (the pulse
+             colour shows recording vs. paused) but always announced to screen readers. -->
+        <span
+          class="sr-only text-sm font-medium sm:not-sr-only"
+          aria-live="polite"
+          data-testid="session-bar-status"
+        >
           {{
             (recording.status() === 'RECORDING'
               ? 'discovery.bar.recording'
@@ -69,6 +95,20 @@ export function formatElapsed(ms: number): string {
           {{ elapsed() }}
         </span>
 
+        @if (recorder.source() === 'meeting' && recorder.meetingAudio()) {
+          <span
+            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
+            [title]="'discovery.bar.meetingAudio' | transloco"
+            data-testid="session-bar-meeting-audio"
+          >
+            <hlm-icon name="lucideMonitorSpeaker" size="14px" aria-hidden="true" />
+            <span class="hidden lg:inline">{{
+              'discovery.bar.meetingAudioShort' | transloco
+            }}</span>
+            <span class="sr-only lg:hidden">{{ 'discovery.bar.meetingAudio' | transloco }}</span>
+          </span>
+        }
+
         <!-- Real input level meter; hidden when the mic is not streaming here. -->
         @if (recorder.levels().length > 0) {
           <div class="flex h-6 flex-1 items-center justify-center gap-[3px]" aria-hidden="true">
@@ -81,6 +121,25 @@ export function formatElapsed(ms: number): string {
           </div>
         } @else {
           <div class="flex-1"></div>
+        }
+
+        <!-- Sharing stopped mid-session: one click re-opens the picker (needs the
+             click's activation, so the recorder is called right from the handler). -->
+        @if (recorder.source() === 'meeting' && !recorder.meetingAudio()) {
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            class="gap-0 border-pending-border bg-pending-soft px-2 text-pending hover:bg-pending-soft hover:text-pending sm:gap-2 sm:px-3"
+            (click)="reshareMeetingAudio()"
+            [attr.aria-label]="'discovery.bar.reshare' | transloco"
+            [title]="'discovery.bar.meetingAudioLost' | transloco"
+            data-testid="session-bar-reshare"
+          >
+            <hlm-icon name="lucideScreenShare" size="14px" />
+            <span class="hidden sm:inline">{{ 'discovery.bar.reshare' | transloco }}</span>
+          </button>
         }
 
         @if (recording.status() === 'RECORDING') {
@@ -115,6 +174,36 @@ export function formatElapsed(ms: number): string {
             <span class="hidden sm:inline">{{ 'discovery.bar.resume' | transloco }}</span>
           </button>
         }
+        <!-- When the AI analyzes (US46): on its own, or only when asked. -->
+        <button
+          hlmBtn
+          size="sm"
+          variant="ghost"
+          type="button"
+          class="hidden px-2 text-xs sm:inline-flex"
+          (click)="toggleMode.emit()"
+          [attr.aria-pressed]="manual()"
+          [title]="'discovery.bar.modeHint' | transloco"
+          data-testid="session-bar-ai-mode"
+          [attr.data-mode]="manual() ? 'MANUAL' : 'AUTO'"
+        >
+          {{ (manual() ? 'discovery.bar.modeManual' : 'discovery.bar.modeAuto') | transloco }}
+        </button>
+        <button
+          hlmBtn
+          size="sm"
+          variant="outline"
+          type="button"
+          class="gap-0 px-2 sm:gap-2 sm:px-3"
+          [disabled]="recording.analyzing()"
+          (click)="analyzeNow.emit()"
+          [attr.aria-label]="'discovery.bar.analyze' | transloco"
+          [title]="'discovery.bar.analyze' | transloco"
+          data-testid="session-bar-analyze"
+        >
+          <hlm-icon name="lucideSparkles" size="14px" class="text-ai" />
+          <span class="hidden sm:inline">{{ 'discovery.bar.analyze' | transloco }}</span>
+        </button>
         <button
           hlmBtn
           size="sm"
@@ -141,6 +230,14 @@ export class SessionBar {
   readonly pauseSession = output<void>();
   readonly resumeSession = output<void>();
   readonly stopSession = output<void>();
+  readonly toggleMode = output<void>();
+  readonly analyzeNow = output<void>();
+
+  protected readonly manual = computed(() => this.recording.session()?.suggestionMode === 'MANUAL');
 
   protected readonly elapsed = computed(() => formatElapsed(this.recording.elapsedMs()));
+
+  protected reshareMeetingAudio(): void {
+    void this.recorder.shareMeetingAudio();
+  }
 }

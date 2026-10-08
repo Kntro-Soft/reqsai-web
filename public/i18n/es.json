@@ -7,7 +7,10 @@
     "create": "Crear",
     "loading": "Cargando",
     "back": "Volver",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "optional": "Opcional",
+    "required": "Obligatorio",
+    "close": "Cerrar"
   },
   "toast": {
     "dismiss": "Descartar",
@@ -62,14 +65,14 @@
     "profile": "Perfil",
     "security": "Seguridad",
     "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API",
     "newRole": "Nuevo rol",
     "editRole": "Editar rol",
     "discovery": "Captura",
     "history": "Historial de sesiones",
     "glossary": "Glosario",
-    "constraints": "Restricciones"
+    "constraints": "Restricciones",
+    "documents": "Documentos del cliente",
+    "share": "Historias compartidas"
   },
   "nav": {
     "projects": "Proyectos",
@@ -77,6 +80,7 @@
     "stories": "Historias",
     "glossary": "Glosario",
     "constraints": "Restricciones",
+    "documents": "Documentos",
     "members": "Miembros",
     "roles": "Roles",
     "settings": "Ajustes",
@@ -88,7 +92,6 @@
     "allProjects": "Todos los proyectos",
     "find": "Buscar…",
     "openMenu": "Abrir menú",
-    "soon": "Pronto",
     "account": "Cuenta",
     "general": "General",
     "billing": "Facturación",
@@ -97,13 +100,7 @@
     "danger": "Peligro",
     "profile": "Perfil",
     "security": "Seguridad",
-    "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API"
-  },
-  "comingSoon": {
-    "title": "Próximamente",
-    "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
+    "appearance": "Apariencia"
   },
   "authz": {
     "noAccess": "No tienes permisos suficientes.",
@@ -374,8 +371,14 @@
   "projectCreate": {
     "title": "Nuevo proyecto",
     "subtitle": "Dale un nombre. Puedes agregar el perfil técnico luego — ayuda a la IA pero es opcional.",
-    "advanced": "Opciones avanzadas",
-    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias."
+    "advanced": "Perfil técnico",
+    "advancedHint": "Contexto opcional que la IA usa para afinar sus sugerencias.",
+    "namePlaceholder": "p. ej. Portal de citas",
+    "descriptionPlaceholder": "¿Qué problema resuelve y para quién?",
+    "contextGroup": "Contexto del negocio",
+    "stackGroup": "Stack técnico",
+    "chipHint": "Escribe un valor y pulsa Enter para añadirlo.",
+    "example": "p. ej. {{value}}"
   },
   "orgPicker": {
     "title": "Elige una organización",
@@ -670,7 +673,10 @@
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
     "errorValidation": "Revisa los datos e intenta de nuevo.",
-    "errorGeneric": "No se pudieron guardar los cambios."
+    "errorGeneric": "No se pudieron guardar los cambios.",
+    "logo": "Logo del proyecto",
+    "general": "General",
+    "techProfile": "Perfil técnico"
   },
   "projectRoles": {
     "title": "Roles",
@@ -733,7 +739,9 @@
       "SESSION_RUN": "Ejecutar sesiones",
       "SESSION_DECIDE": "Decidir sobre sugerencias",
       "STORY_READ": "Ver historias",
-      "STORY_WRITE": "Editar historias"
+      "STORY_WRITE": "Editar historias",
+      "STORY_DELETE": "Eliminar historias",
+      "STORY_APPROVE": "Aprobar historias"
     },
     "groupDesc": {
       "project": "Cambia los ajustes y el ciclo de vida del proyecto",
@@ -770,7 +778,9 @@
       "SESSION_RUN": "Grabar, pausar y detener sesiones de discovery",
       "SESSION_DECIDE": "Aceptar o descartar sugerencias de la IA durante una sesión",
       "STORY_READ": "Ver el backlog de historias de usuario del proyecto",
-      "STORY_WRITE": "Crear y editar historias de usuario y sus criterios de aceptación"
+      "STORY_WRITE": "Crear y editar historias de usuario y sus criterios de aceptación",
+      "STORY_DELETE": "Eliminar historias de usuario del backlog",
+      "STORY_APPROVE": "Aprobar, rechazar o devolver a borrador las historias de usuario (rol del Product Owner)"
     },
     "newRole": "Nuevo rol",
     "filterPlaceholder": "Filtrar roles…",
@@ -882,7 +892,35 @@
       "REJECTED": "Rechazada",
       "MERGED": "Fusionada",
       "EXPORTED": "Exportada"
-    }
+    },
+    "statusHint": {
+      "DRAFT": "Borrador: todavía no está aprobada; puedes editarla antes de aprobarla.",
+      "APPROVED": "Aprobada: validada por el equipo.",
+      "REJECTED": "Rechazada: el equipo la descartó.",
+      "MERGED": "Fusionada: se integró en otra historia.",
+      "EXPORTED": "Exportada: enviada a un gestor externo (p. ej., Jira)."
+    },
+    "review": {
+      "action": {
+        "APPROVED": "Aprobar",
+        "REJECTED": "Rechazar",
+        "DRAFT": "Volver a borrador"
+      },
+      "done": {
+        "APPROVED": "Historia aprobada.",
+        "REJECTED": "Historia rechazada.",
+        "DRAFT": "La historia volvió a borrador."
+      }
+    },
+    "origin": {
+      "ai": "IA",
+      "manual": "Manual",
+      "aiHint": "Generada por la IA en una sesión de captura",
+      "manualHint": "Creada manualmente"
+    },
+    "colOrigin": "Origen",
+    "sortedBy": "Ordenadas por: {{sort}}",
+    "emptyRecord": "Grabar una sesión"
   },
   "storyForm": {
     "back": "Volver a historias",
@@ -918,7 +956,16 @@
     "criteriaSaved": "Criterio guardado.",
     "criteriaDeleted": "Criterio eliminado.",
     "criteriaIncomplete": "Completa Dado, Cuando y Entonces en cada criterio.",
-    "criteriaPartial": "Historia creada, pero {{count}} criterio(s) no se pudieron guardar. Añádelos aquí."
+    "criteriaPartial": "Historia creada, pero {{count}} criterio(s) no se pudieron guardar. Añádelos aquí.",
+    "storySection": "Historia de usuario",
+    "leadRole": "Como…",
+    "leadAction": "quiero…",
+    "leadBenefit": "para…",
+    "viewSession": "Ver la sesión de origen",
+    "unsaved": "Cambios sin guardar",
+    "criteriaNew": "Nuevo · sin guardar",
+    "criteriaHint": "Escribe cada criterio como escenario Gherkin: Dado (contexto), Cuando (acción), Entonces (resultado esperado).",
+    "required": "Completa este campo."
   },
   "glossaryPage": {
     "title": "Glosario",
@@ -987,6 +1034,66 @@
     "deleteAfter": "",
     "menuAria": "Acciones de la restricción"
   },
+  "clientDocuments": {
+    "title": "Documentos del cliente",
+    "subtitle": "Sube documentos del cliente (PDF o Word) y ReqsAI extraerá su glosario, sus restricciones y el contexto del proyecto que usará la IA.",
+    "upload": {
+      "title": "Subir un documento",
+      "description": "PDF o Word (.docx), hasta 50 MB. ReqsAI extrae el texto y la IA lo clasifica; tú revisas el resultado antes de guardarlo.",
+      "choose": "Arrastra un archivo aquí o haz clic para elegirlo",
+      "hint": "PDF o Word (.docx) · máx. 50 MB",
+      "analyze": "Analizar documento",
+      "uploading": "Subiendo… {{percent}} %",
+      "uploadingUnknown": "Subiendo…",
+      "analyzing": "Extrayendo el texto y clasificándolo con IA…",
+      "problem": {
+        "type": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+        "size": "El archivo supera el máximo de 50 MB.",
+        "empty": "El archivo está vacío."
+      }
+    },
+    "review": {
+      "title": "Revisa lo que encontró la IA",
+      "file": "{{name}} · {{size}} · {{chars}} caracteres de texto",
+      "unclassified": "La IA no pudo clasificar este documento. Puedes guardarlo igualmente como contexto y añadir términos o restricciones a mano.",
+      "truncated": "El documento es muy largo: se guardaron sus primeros 200 000 caracteres y la IA analizó el inicio.",
+      "name": "Nombre del documento",
+      "type": "Tipo de documento",
+      "context": "Contexto del proyecto",
+      "contextHint": "Resumen que la IA usará como contexto del proyecto en la captura y el asistente. Puedes editarlo.",
+      "glossary": "Términos del glosario",
+      "constraints": "Restricciones",
+      "selectedOf": "{{selected}} de {{total}} seleccionados",
+      "selectAll": "Seleccionar todo",
+      "clearAll": "Quitar selección",
+      "exists": "Ya existe",
+      "noGlossary": "La IA no encontró términos de glosario en este documento.",
+      "noConstraints": "La IA no encontró restricciones en este documento.",
+      "noTermPermission": "No tienes permiso para añadir términos al glosario.",
+      "noConstraintPermission": "No tienes permiso para añadir restricciones.",
+      "discard": "Descartar",
+      "apply": "Aplicar ({{terms}} términos, {{constraints}} restricciones)",
+      "applied": "Documento guardado: {{terms}} términos y {{constraints}} restricciones añadidos.",
+      "discarded": "Análisis descartado."
+    },
+    "list": {
+      "title": "Documentos guardados",
+      "empty": "Aún no hay documentos. Los que apliques aparecerán aquí y la IA los usará como contexto del proyecto.",
+      "loadError": "No se pudieron cargar los documentos.",
+      "noSummary": "Sin resumen de contexto.",
+      "delete": "Eliminar documento",
+      "deleteTitle": "Eliminar documento",
+      "deleteBody": "Se eliminará «{{name}}» y la IA dejará de usarlo como contexto. Los términos y restricciones que añadiste se conservan.",
+      "deleted": "Documento eliminado."
+    },
+    "types": {
+      "BUSINESS_RULES": "Reglas de negocio",
+      "TECHNICAL_SPEC": "Especificación técnica",
+      "MEETING_NOTES": "Acta o notas de reunión",
+      "GLOSSARY_SOURCE": "Fuente de glosario",
+      "REFERENCE": "Referencia"
+    }
+  },
   "projectRoleForm": {
     "back": "Volver a roles",
     "createTitle": "Crear rol",
@@ -1044,8 +1151,26 @@
     "sessionSeparator": "Sesión",
     "sessionStories": "{{count}} historias",
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
-    "generatedStory": "Historia generada",
-    "speaker": "Usuario {{n}}",
+    "generatedStory": "Generada por la IA",
+    "speaker": "Hablante {{n}}",
+    "speakers": {
+      "title": "Hablantes de la sesión",
+      "description": "Pon a cada voz su nombre real y marca si es del cliente o del equipo. Se aplica a todas sus intervenciones, y la IA prioriza lo que pide el cliente: lo que dice el equipo es contexto.",
+      "edit": "Editar hablantes",
+      "view": "Ver hablantes",
+      "close": "Cerrar",
+      "empty": "Esta sesión no distingue hablantes.",
+      "nameLabel": "Nombre de {{name}}",
+      "sideLabel": "Lado de la reunión",
+      "side": {
+        "CLIENT": "Cliente",
+        "TEAM": "Equipo"
+      },
+      "segments": "{{count}} intervenciones",
+      "save": "Guardar",
+      "saved": "Hablante actualizado: {{name}}.",
+      "overlapWarning": "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+    },
     "goToStory": "Ir a la historia",
     "time": {
       "justNow": "hace un momento",
@@ -1062,7 +1187,11 @@
     },
     "decision": {
       "accepted": "Aceptada",
-      "dismissed": "Descartada"
+      "dismissed": "Descartada",
+      "acceptedBy": "Aceptada por el analista",
+      "resolvedBy": "Resuelta por el analista",
+      "acceptedToast": "Sugerencia aceptada: la historia quedó en el backlog como borrador.",
+      "resolvedToast": "Pregunta marcada como resuelta."
     },
     "live": {
       "banner": "Sesión en vivo en curso — {{language}}"
@@ -1071,10 +1200,41 @@
       "viewing": "{{count}} viendo",
       "more": "{{count}} más"
     },
+    "chat": {
+      "placeholder": "Pregunta o pide una historia…",
+      "noPermission": "No tienes permiso para escribir a ReqsAI en este proyecto.",
+      "inputAria": "Mensaje para ReqsAI",
+      "send": "Enviar",
+      "separator": "Chat con ReqsAI",
+      "you": "Tú",
+      "thinking": "ReqsAI está pensando…",
+      "accepted": "Aceptada",
+      "dismissed": "Descartada"
+    },
+    "upload": {
+      "button": "Subir grabación",
+      "title": "Subir grabación de una reunión",
+      "description": "Sube el audio de una reunión pasada. ReqsAI lo transcribe y genera las historias con el glosario y el contexto de este proyecto.",
+      "choose": "Elige un archivo de audio",
+      "hint": "MP3, WAV, M4A, OGG o WEBM, hasta 50 MB.",
+      "titleLabel": "Título de la sesión",
+      "submit": "Subir y procesar",
+      "done": "Grabación procesada: {{count}} historias nuevas en el backlog.",
+      "failed": "No pudimos generar historias de la grabación. Reintenta el procesamiento desde la sesión.",
+      "problem": {
+        "type": "Ese archivo no es de audio.",
+        "size": "El archivo supera los 50 MB.",
+        "empty": "El archivo está vacío."
+      },
+      "stage": {
+        "creating": "Creando la sesión",
+        "transcribing": "Transcribiendo el audio",
+        "generating": "Generando historias con la IA"
+      }
+    },
     "composer": {
-      "placeholder": "Escribe a discovery…",
-      "comingSoon": "La entrada de texto llegará pronto.",
-      "record": "Iniciar grabación"
+      "record": "Iniciar grabación",
+      "recordShort": "Grabar"
     },
     "language": {
       "label": "Idioma de la reunión",
@@ -1082,12 +1242,34 @@
       "empty": "No se encontró el idioma.",
       "locked": "El idioma queda fijo al iniciar la grabación."
     },
+    "source": {
+      "label": "Fuente de audio",
+      "mic": "Presencial (micrófono)",
+      "meeting": "Reunión virtual (micrófono + audio de la reunión)",
+      "unsupported": "Reunión virtual: disponible en Chrome o Edge de escritorio.",
+      "micShort": "Presencial",
+      "meetingShort": "Reunión virtual",
+      "hintShare": "Al pulsar Grabar, elige la pestaña de la reunión y activa «Compartir audio de la pestaña».",
+      "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
+    },
     "bar": {
       "recording": "Grabando",
       "paused": "En pausa",
       "pause": "Pausar",
       "resume": "Reanudar",
-      "stop": "Detener"
+      "stop": "Detener",
+      "meetingAudio": "Grabando micrófono + audio de la reunión",
+      "meetingAudioLost": "No se está capturando el audio de la reunión. Vuelve a compartir la pestaña de la reunión.",
+      "reshare": "Compartir de nuevo",
+      "meetingAudioShort": "Audio de la reunión",
+      "modeAuto": "IA: automática",
+      "modeManual": "IA: manual",
+      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
+      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
+      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
+      "analyze": "Analizar ahora",
+      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
+      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas."
     },
     "rec": {
       "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",
@@ -1095,17 +1277,25 @@
       "wsError": "No se pudo conectar con el servidor de transcripción.",
       "wsClosed": "Se cerró la conexión de transcripción.",
       "initFailed": "No se pudo iniciar la grabación.",
-      "audioInitFailed": "No se pudo inicializar el procesador de audio local."
+      "audioInitFailed": "No se pudo inicializar el procesador de audio local.",
+      "noMeetingAudio": "No se compartió audio. Elige la pestaña de la reunión y marca «Compartir audio de la pestaña».",
+      "meetingAudioEnded": "Se dejó de compartir el audio de la reunión. La grabación continúa solo con el micrófono.",
+      "meetingUnsupported": "Tu navegador no puede capturar el audio de la reunión. Usa Chrome o Edge de escritorio.",
+      "shareFailed": "No se pudo capturar la pestaña, ventana o pantalla elegida."
     },
     "queue": {
       "pendingBadge": "{{count}} sugerencias pendientes",
-      "pendingBadgeLabel": "sugerencias pendientes",
+      "pendingBadgeLabel": "sugerencias por revisar",
       "counter": "{{n}} de {{m}}",
       "prev": "Sugerencia anterior",
       "next": "Sugerencia siguiente",
       "collapse": "Contraer",
       "minimize": "Minimizar",
-      "dragHint": "Arrastra para navegar las sugerencias"
+      "dragHint": "Arrastra para navegar las sugerencias",
+      "title": "Sugerencias de la IA por revisar",
+      "announce": "{{count}} sugerencias de la IA por revisar",
+      "expand": "Mostrar las sugerencias por revisar",
+      "titleShort": "IA · por revisar"
     },
     "suggestion": {
       "type": {
@@ -1137,7 +1327,7 @@
       "saveAndAccept": "Guardar y aceptar",
       "dismiss": "Descartar",
       "edit": "Editar",
-      "cancelEdit": "Cancelar",
+      "cancelEdit": "Cancelar edición",
       "done": "Listo",
       "titleField": "Título",
       "scenario": "Escenario",
@@ -1151,7 +1341,16 @@
       "removeCriterion": "Eliminar criterio",
       "given": "Dado",
       "when": "cuando",
-      "then": "entonces"
+      "then": "entonces",
+      "aiLabel": "Sugerencia de la IA",
+      "aiHint": "Propuesta por la IA a partir de la conversación. Pendiente de tu revisión.",
+      "questionHint": "Resolverla solo la marca como atendida; no cambia el backlog.",
+      "changedHint": "Resaltado: lo que la IA propone cambiar",
+      "criteriaCount": "Criterios de aceptación ({{count}})",
+      "roleField": "Rol · Como…",
+      "actionField": "Acción · quiero…",
+      "benefitField": "Beneficio · para…",
+      "scenarioPlaceholder": "Opcional"
     },
     "panel": {
       "stories": "Historias",
@@ -1213,6 +1412,21 @@
       "body": "¿Salir de esta página de todos modos? La sesión sigue grabando en segundo plano y permanece activa.",
       "stay": "Quedarse",
       "leave": "Salir de todos modos"
+    },
+    "retry": "Reintentar",
+    "pendingReview": "Pendiente de revisión",
+    "ai": {
+      "listening": "La IA está escuchando la conversación",
+      "listeningHint": "Propone historias, casos límite y preguntas a medida que avanza la reunión; aparecerán arriba para tu revisión.",
+      "lastSuggestion": "Última sugerencia {{time}} · revísala en la bandeja de arriba.",
+      "paused": "Grabación en pausa",
+      "pausedHint": "La IA retomará el análisis cuando reanudes la grabación.",
+      "processing": "Procesando la sesión",
+      "processingHint": "La IA está generando las historias finales. Puede tardar unos minutos.",
+      "failed": "No se pudo procesar la sesión",
+      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde.",
+      "manual": "Modo manual",
+      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora»."
     }
   },
   "integrations": {
@@ -1336,6 +1550,11 @@
     "PROJECT_DOCUMENT_NOT_FOUND": "Ese documento ya no existe.",
     "PROJECT_DOCUMENT_ALREADY_EXISTS": "Ya existe un documento con ese nombre.",
     "PROJECT_DOCUMENT_PLAN_LIMIT_EXCEEDED": "Has alcanzado el límite de documentos de tu plan.",
+    "PROJECT_DOCUMENT_NOT_PENDING": "Este documento ya se aplicó o se descartó.",
+    "DOCUMENT_TYPE_NOT_ALLOWED": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+    "DOCUMENT_TOO_LARGE": "El documento supera el máximo de 50 MB.",
+    "DOCUMENT_EMPTY": "No se encontró texto en el documento. Si es un escaneo, súbelo como PDF con texto seleccionable.",
+    "DOCUMENT_UNREADABLE": "No se pudo leer el documento: puede estar dañado o protegido con contraseña.",
     "INSUFFICIENT_PERMISSIONS": "No tienes permiso para hacer eso.",
     "MEMBER_NOT_FOUND": "Ese miembro ya no existe.",
     "MEMBER_ALREADY_EXISTS": "Esa persona ya es miembro o ya fue invitada.",
@@ -1355,6 +1574,7 @@
     "INVALID_FIELD": "Uno de los campos no es válido. Revísalo e inténtalo de nuevo.",
     "INVALID_VALUE": "Uno de los valores no es válido. Revísalo e inténtalo de nuevo.",
     "UNPROCESSABLE_REQUEST": "No pudimos procesar esa solicitud. Revísala e inténtalo de nuevo.",
+    "PAYLOAD_TOO_LARGE": "El archivo supera el tamaño máximo permitido (50 MB).",
     "PERMISSION_DENIED": "No tienes permiso para hacer eso.",
     "TENANT_ACCESS_DENIED": "No tienes acceso a este espacio de trabajo.",
     "ORGANIZATION_NOT_OWNED": "No eres propietario de esa organización.",
@@ -1363,6 +1583,7 @@
     "SAME_PASSWORD_NOT_ALLOWED": "Tu nueva contraseña debe ser distinta de la actual.",
     "DUPLICATE_USER_STORY": "Esa historia de usuario ya existe.",
     "INVALID_SESSION_STATUS": "El estado de esta sesión no permite esa acción.",
+    "INVALID_STORY_STATUS": "El estado de esta historia no permite esa revisión.",
     "REQUIREMENT_GENERATION_FAILED": "No pudimos generar los requisitos. Inténtalo de nuevo.",
     "SESSION_NOT_FOUND": "Esa sesión ya no existe.",
     "USER_STORY_NOT_FOUND": "Esa historia de usuario ya no existe.",
@@ -1419,6 +1640,63 @@
       "503": "El servicio no está disponible temporalmente. Inténtalo de nuevo en breve."
     },
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
-    "generic": "Algo salió mal. Inténtalo de nuevo."
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "SPEAKER_NOT_FOUND": "Ese hablante no participó en esta sesión.",
+    "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
+  },
+  "share": {
+    "action": "Compartir con el cliente",
+    "title": "Compartir historias con el cliente",
+    "description": "Crea un enlace para que tu cliente lea las historias sin crear una cuenta. Podrá aprobarlas o dejar comentarios; tu equipo sigue decidiendo el estado de cada historia.",
+    "validFor": "Válido por",
+    "days": "{{count}} días",
+    "create": "Crear enlace",
+    "createdHint": "Copia el enlace ahora: por seguridad no se vuelve a mostrar.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "existing": "Enlaces creados",
+    "none": "Aún no compartiste este proyecto.",
+    "createdAt": "Creado el",
+    "expires": "Vence el",
+    "revokedAt": "Revocado el",
+    "expiredAt": "Venció el",
+    "state": {
+      "active": "Activo",
+      "revoked": "Revocado",
+      "expired": "Vencido"
+    },
+    "revoke": "Revocar",
+    "feedback": {
+      "title": "Comentarios del cliente",
+      "hint": "Lo que el cliente dijo desde el enlace compartido. No cambia el estado de la historia.",
+      "empty": "El cliente aún no aprobó ni comentó esta historia. Compártela desde el backlog.",
+      "approved": "aprobó",
+      "commented": "comentó"
+    },
+    "public": {
+      "eyebrow": "Revisión de historias",
+      "intro": "Tu equipo te comparte estas historias de usuario para que las revises. Aprueba las que estén bien o deja un comentario en las que haya que ajustar.",
+      "until": "Este enlace está disponible hasta el",
+      "yourName": "Tu nombre",
+      "namePlaceholder": "Ej.: María Quispe",
+      "nameHint": "Se mostrará junto a tus aprobaciones y comentarios.",
+      "nameRequired": "Escribe tu nombre antes de aprobar o comentar.",
+      "empty": "Aún no hay historias para revisar.",
+      "asA": "Como",
+      "iWant": "quiero",
+      "soThat": "para",
+      "criteria": "Criterios de aceptación",
+      "given": "Dado",
+      "when": "cuando",
+      "then": "entonces",
+      "comment": "Comentar",
+      "commentPlaceholder": "¿Qué cambiarías o qué falta?",
+      "send": "Enviar",
+      "approve": "Aprobar",
+      "approvedByYou": "Aprobaste esta historia",
+      "unavailableTitle": "Este enlace ya no está disponible",
+      "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
+      "footer": "Compartido con ReqsAI"
+    }
   }
 }

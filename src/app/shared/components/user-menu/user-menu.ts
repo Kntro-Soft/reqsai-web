@@ -15,6 +15,7 @@ import {
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthStore } from '../../../core/auth/auth.store';
+import { PermissionsStore } from '../../../core/authz/permissions.store';
 import { ThemeMode, ThemeService } from '../../../core/theme/theme.service';
 import { Lang, SUPPORTED_LANGS, saveLang } from '../../../core/i18n/language';
 import { Avatar } from '../avatar/avatar';
@@ -157,17 +158,20 @@ import { HlmIcon } from '../../ui';
           <hlm-icon name="lucideLogOut" size="16px" class="text-muted-foreground" />
         </button>
 
-        <div class="mt-1 px-1 pb-1">
-          <button
-            type="button"
-            (click)="upgrade()"
-            data-testid="upgrade"
-            class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <hlm-icon name="lucideSparkles" size="15px" />
-            {{ 'userMenu.upgrade' | transloco }}
-          </button>
-        </div>
+        <!-- The plan belongs to the org owner, the only one who can open billing. -->
+        @if (permissions.isOrgOwner()) {
+          <div class="mt-1 px-1 pb-1">
+            <button
+              type="button"
+              (click)="upgrade()"
+              data-testid="upgrade"
+              class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <hlm-icon name="lucideSparkles" size="15px" />
+              {{ 'userMenu.upgrade' | transloco }}
+            </button>
+          </div>
+        }
       </div>
     </ng-template>
   `,
@@ -175,6 +179,7 @@ import { HlmIcon } from '../../ui';
 export class UserMenu {
   protected readonly store = inject(AuthStore);
   protected readonly theme = inject(ThemeService);
+  protected readonly permissions = inject(PermissionsStore);
   private readonly auth = inject(AuthService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
@@ -214,9 +219,10 @@ export class UserMenu {
     void this.router.navigate(['/account']);
   }
 
-  /** Placeholder — billing/upgrade flow is not wired yet. */
+  /** Opens the org's billing page, where the owner picks and confirms a plan. */
   protected upgrade(): void {
     this.close();
+    void this.router.navigate(['/settings/billing']);
   }
 
   protected logout(): void {

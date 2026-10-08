@@ -21,12 +21,25 @@ export const routes: Routes = [
   },
 
   // Invitation landing: chrome-less, no auth guard so logged-out invitees can view it.
+  // Part of the `members` feature: while it is off nobody can invite or manage members,
+  // so a stale invite link falls through to the fallback like any unknown URL.
   {
     path: 'invitations/accept',
     title: 'titles.acceptInvitation',
     loadComponent: () =>
       import('./features/workspace/pages/accept-invitation/accept-invitation').then(
         (m) => m.AcceptInvitation,
+      ),
+  },
+
+  // Share link (US50): chrome-less and public, so a client without an account reviews the
+  // stories the team shared. The token in the URL is the credential.
+  {
+    path: 'share/:token',
+    title: 'titles.share',
+    loadComponent: () =>
+      import('./features/discovery/pages/shared-backlog/shared-backlog').then(
+        (m) => m.SharedBacklog,
       ),
   },
 
@@ -211,20 +224,6 @@ export const routes: Routes = [
                 (m) => m.AccountAppearance,
               ),
           },
-          {
-            path: 'notifications',
-            title: 'titles.notifications',
-            loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.notifications', icon: 'lucideBell' },
-          },
-          {
-            path: 'tokens',
-            title: 'titles.tokens',
-            loadComponent: () =>
-              import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-            data: { titleKey: 'titles.tokens', icon: 'lucideKey' },
-          },
         ],
       },
       {
@@ -293,6 +292,15 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/discovery/pages/constraints/constraints').then(
                 (m) => m.ProjectConstraints,
+              ),
+          },
+          {
+            path: 'documents',
+            title: 'titles.documents',
+            canActivate: [requirePermission('DOCUMENT_READ')],
+            loadComponent: () =>
+              import('./features/discovery/pages/documents/documents').then(
+                (m) => m.ProjectDocuments,
               ),
           },
           // Members moved under Settings; keep the old path working.
@@ -390,5 +398,6 @@ export const routes: Routes = [
     ],
   },
 
+  // Unknown URLs land here.
   { path: '**', redirectTo: 'projects' },
 ];

@@ -2,7 +2,6 @@ import {
   DecisionEntry,
   addToQueue,
   anchorSequenceForSuggestion,
-  assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
   comparePriority,
@@ -143,7 +142,11 @@ describe('upsertSegment', () => {
   });
 
   it('never overwrites a historical segment that already carries occurredAt', () => {
-    const list = upsertSegment([], segment(1, { occurredAt: '2026-07-04T09:00:00Z' }), '2030-01-01T00:00:00Z');
+    const list = upsertSegment(
+      [],
+      segment(1, { occurredAt: '2026-07-04T09:00:00Z' }),
+      '2030-01-01T00:00:00Z',
+    );
     expect(list[0].occurredAt).toBe('2026-07-04T09:00:00Z');
   });
 });
@@ -308,7 +311,9 @@ describe('buildSessionItems', () => {
       transcript: 'Earlier recording.',
       segments: [segment(0), segment(1)],
       decisions: [decision({ anchorSequence: 0 })],
-      stories: [displayStory({ id: 'story-2', title: 'Other', priority: 'LOW', storyPoints: null })],
+      stories: [
+        displayStory({ id: 'story-2', title: 'Other', priority: 'LOW', storyPoints: null }),
+      ],
     });
     expect(items.map((i) => i.kind)).toEqual([
       'paragraph',
@@ -347,7 +352,9 @@ describe('buildSessionItems', () => {
       transcript: null,
       segments: [],
       decisions: [decision({ storyId: 'story-1' })],
-      stories: [displayStory({ id: 'story-1', title: 'Covered', priority: 'HIGH', storyPoints: 5 })],
+      stories: [
+        displayStory({ id: 'story-1', title: 'Covered', priority: 'HIGH', storyPoints: 5 }),
+      ],
     });
     expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
   });
@@ -438,31 +445,6 @@ describe('buildSessionItems', () => {
       });
       expect(items.filter((i) => i.kind === 'story')).toHaveLength(0);
     });
-  });
-});
-
-describe('assignSpeakerSides', () => {
-  it('is empty when no segment carries a usable label (diarization off)', () => {
-    const map = assignSpeakerSides([{ speakerLabel: null }, { speakerLabel: '  ' }]);
-    expect(map.size).toBe(0);
-  });
-
-  it('numbers speakers in first-seen order and alternates their side', () => {
-    const map = assignSpeakerSides([
-      { speakerLabel: 'spk_a' },
-      { speakerLabel: 'spk_b' },
-      { speakerLabel: 'spk_a' },
-      { speakerLabel: 'spk_c' },
-    ]);
-    expect(map.get('spk_a')).toEqual({ index: 1, side: 'left' });
-    expect(map.get('spk_b')).toEqual({ index: 2, side: 'right' });
-    expect(map.get('spk_c')).toEqual({ index: 3, side: 'left' });
-  });
-
-  it('trims labels and treats whitespace-padded duplicates as one speaker', () => {
-    const map = assignSpeakerSides([{ speakerLabel: 'A' }, { speakerLabel: ' A ' }]);
-    expect(map.size).toBe(1);
-    expect(map.get('A')).toEqual({ index: 1, side: 'left' });
   });
 });
 

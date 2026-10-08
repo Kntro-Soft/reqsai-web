@@ -5,59 +5,24 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-  S3_BUCKET: ${{ vars.S3_BUCKET }}
-  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+permissions:
+  contents: read
 
 jobs:
   deploy:
+    name: Trigger the MVP deploy
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build for production
-        run: bun run build
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Sync static assets to S3 (long cache — hashed filenames)
+      - name: Dispatch deploy-mvp in reqsai-infra
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          SHA: ${{ github.sha }}
         run: |
-          aws s3 sync dist/reqsai-web/browser/ s3://${{ env.S3_BUCKET }}/ \
-            --delete \
-            --exclude "index.html" \
-            --exclude "i18n/*" \
-            --cache-control "public,max-age=31536000,immutable"
-
-      - name: Upload index.html and i18n to S3 (no cache — must always be fresh)
-        run: |
-          # index.html and the i18n JSON have STABLE, non-fingerprinted names, so they must
-          # never be served "immutable" — otherwise a browser caches them for a year and never
-          # picks up new translations after a deploy. Serve them revalidatable instead.
-          aws s3 cp dist/reqsai-web/browser/index.html \
-            s3://${{ env.S3_BUCKET }}/index.html \
-            --cache-control "no-cache,no-store,must-revalidate"
-          aws s3 cp dist/reqsai-web/browser/i18n/ \
-            s3://${{ env.S3_BUCKET }}/i18n/ --recursive \
-            --cache-control "no-cache,must-revalidate"
-
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice title=Deploy not triggered::INFRA_DEPLOY_TOKEN is not set. Add a fine-grained PAT with Actions read and write on Kntro-Soft/reqsai-infra to deploy main automatically."
+            exit 0
+          fi
+          gh workflow run deploy-mvp.yml --repo Kntro-Soft/reqsai-infra --ref main -f web_ref="$SHA" -f api_ref=keep
+          echo "Requested the deploy of reqsai-web $SHA: https://github.com/Kntro-Soft/reqsai-infra/actions/workflows/deploy-mvp.yml" >> "$GITHUB_STEP_SUMMARY"

@@ -4,6 +4,7 @@ import {
   emptyCriterionRow,
   isBlankRow,
   isCompleteRow,
+  isRowChanged,
   partitionNewCriteria,
   rowToRequest,
 } from './story-form.helpers';
@@ -58,5 +59,14 @@ describe('story-form helpers', () => {
     expect(requests).toHaveLength(2);
     expect(requests[0].given).toBe('g1');
     expect(incompleteIndexes).toEqual([2]);
+  });
+
+  it('isRowChanged: an unsaved row is always changed, a saved one only when a field differs', () => {
+    const saved = { id: 'c1', scenario: 'S', given: 'g', when: 'w', then: 't' };
+
+    expect(isRowChanged({ ...emptyCriterionRow(), given: 'g' }, undefined)).toBe(true);
+    expect(isRowChanged({ ...saved }, saved)).toBe(false);
+    expect(isRowChanged({ ...saved, then: 't2' }, saved)).toBe(true);
+    expect(isRowChanged({ ...saved, scenario: '' }, saved)).toBe(true);
   });
 });

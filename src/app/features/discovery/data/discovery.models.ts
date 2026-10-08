@@ -3,6 +3,14 @@
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
+/** When the assistant analyzes a live session: on its own, or only on "Analizar ahora" (US46). */
+export type SuggestionMode = 'AUTO' | 'MANUAL';
+
+/** Result of POST /projects/{projectId}/sessions/{sessionId}/analyze. */
+export interface AnalyzeSessionResponse {
+  suggestionsCreated: number;
+}
+
 export interface DiscoverySessionResponse {
   id: string;
   projectId: string;
@@ -15,12 +23,23 @@ export interface DiscoverySessionResponse {
   processingError: string | null;
   createdAt: string;
   updatedAt: string;
-  // Per-session stats being added by a parallel backend branch — absent on older
-  // deployments, so every consumer must degrade gracefully when undefined.
-  storiesGeneratedCount?: number | null;
-  storiesAcceptedCount?: number | null;
-  pendingSuggestionsCount?: number | null;
-  questionsCount?: number | null;
+  /**
+   * Recording length in seconds: the audio length of an uploaded recording, otherwise start to stop of
+   * a live session; null while a live session is still running.
+   */
+  durationSeconds?: number | null;
+  // Per-session stats, only on the get/list endpoints (null on lifecycle responses such as start/stop),
+  // so every consumer must degrade gracefully when null or undefined.
+  /** Backlog stories whose source is this session. */
+  storiesGenerated?: number | null;
+  /** Story suggestions of this session the analyst accepted (questions excluded). */
+  storiesAccepted?: number | null;
+  /** Suggestions of this session still pending review. */
+  suggestionsPending?: number | null;
+  /** Clarifying questions the AI raised in this session. */
+  questionsAsked?: number | null;
+  /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
+  suggestionMode?: SuggestionMode;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */
@@ -74,6 +93,14 @@ export type StorySortDirection = 'ASC' | 'DESC';
 
 /** The review statuses the backend filters stories by (list endpoint `status` param). */
 export type StoryStatus = 'DRAFT' | 'APPROVED' | 'REJECTED' | 'MERGED' | 'EXPORTED';
+
+/** The statuses a reviewer can set on a story; MERGED and EXPORTED come from their own flows. */
+export type StoryReviewStatus = Extract<StoryStatus, 'DRAFT' | 'APPROVED' | 'REJECTED'>;
+
+/** Request body to record a review decision (PATCH /projects/{projectId}/stories/{storyId}/status). */
+export interface ChangeStoryStatusRequest {
+  status: StoryReviewStatus;
+}
 
 /** Request body to manually create a user story (POST /projects/{projectId}/stories). */
 export interface CreateUserStoryRequest {
@@ -196,6 +223,8 @@ export interface DisplayStory {
    * events, older REST payloads).
    */
   acceptanceCriteria: AcceptanceCriterion[];
+  /** Review status (DRAFT/APPROVED/…) when the source carried it (REST backlog). */
+  status?: string | null;
 }
 
 export interface PageResponse<T> {
@@ -220,7 +249,8 @@ export type SuggestionPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface SuggestionResponse {
   id: string;
-  sessionId: string;
+  /** The session it came from; null when it was raised from the assistant chat. */
+  sessionId: string | null;
   projectId: string;
   type: SuggestionType;
   status: SuggestionStatus;
@@ -439,6 +469,7 @@ export type SessionEventType =
   | 'SUGGESTION_GENERATED'
   | 'SUGGESTION_ACCEPTED'
   | 'SUGGESTION_DISMISSED'
+  | 'SPEAKER_UPDATED'
   | 'PRESENCE_STATE';
 
 interface SessionRealtimeBase {
@@ -511,13 +542,71 @@ export interface SessionPresenceMessage extends SessionRealtimeBase {
   count: number;
 }
 
+/**
+ * The analyst named a diarized speaker or set their side (US40): every viewer relabels that speaker's
+ * segments. `displayName` null means the default "Hablante N".
+ */
+export interface SessionSpeakerUpdatedMessage extends SessionRealtimeBase {
+  type: 'SPEAKER_UPDATED';
+  speakerLabel: string;
+  displayName: string | null;
+  side: SpeakerSide | null;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
   | SessionStoryGeneratedMessage
   | SessionProcessingFailedMessage
   | SessionSuggestionMessage
-  | SessionPresenceMessage;
+  | SessionPresenceMessage
+  | SessionSpeakerUpdatedMessage;
+
+// ---- Speakers (US40, /projects/{projectId}/sessions/{sessionId}/speakers) ----
+
+/** Side of the meeting: the AI builds requirements from the CLIENT and treats the TEAM as context. */
+export type SpeakerSide = 'CLIENT' | 'TEAM';
+
+/** A diarized speaker of a session, numbered by first appearance. */
+export interface SessionSpeakerResponse {
+  /** Diarization label the speech-to-text provider gave the speaker (e.g. "0", "A"). */
+  label: string;
+  /** 1-based position by first appearance in the transcript. */
+  index: number;
+  /** Name the analyst gave; null when not named. */
+  displayName: string | null;
+  /** displayName, else "Hablante {index}" (Spanish default from the API). */
+  name: string;
+  side: SpeakerSide | null;
+  /** Final segments attributed to the speaker. */
+  segmentCount: number;
+}
+
+/** One stretch where two or more speakers talked at the same time. */
+export interface SpeakerOverlapRange {
+  startMs: number;
+  endMs: number;
+  speakerLabels: string[];
+}
+
+/** Where speakers talked over each other, so the attribution there may be wrong. */
+export interface SpeakerOverlapsResponse {
+  count: number;
+  totalMs: number;
+  ranges: SpeakerOverlapRange[];
+}
+
+export interface SessionSpeakersResponse {
+  sessionId: string;
+  speakers: SessionSpeakerResponse[];
+  overlaps: SpeakerOverlapsResponse;
+}
+
+/** PUT body: a null or blank name goes back to "Hablante N"; a null side unsets it. */
+export interface UpdateSessionSpeakerRequest {
+  displayName: string | null;
+  side: SpeakerSide | null;
+}
 
 // ---- Realtime (project-level lifecycle topic /topic/projects/{id}) ----
 
@@ -534,4 +623,25 @@ export interface ProjectSessionLifecycleMessage {
   title?: string | null;
   language?: string | null;
   startedAt?: string | null;
+}
+
+/** Who wrote an assistant chat message: the analyst, or ReqsAI answering. */
+export type AssistantMessageRole = 'ANALYST' | 'ASSISTANT';
+
+/**
+ * One message of a project's assistant chat (GET/POST /projects/{projectId}/assistant/messages).
+ * A reply carries the suggestions it raised, in their current review state.
+ */
+export interface AssistantMessageResponse {
+  id: string;
+  role: AssistantMessageRole;
+  content: string;
+  createdAt: string;
+  suggestions: SuggestionResponse[];
+}
+
+/** One round of the assistant chat: what the analyst typed and ReqsAI's reply. */
+export interface AssistantExchangeResponse {
+  question: AssistantMessageResponse;
+  answer: AssistantMessageResponse;
 }
