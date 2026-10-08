@@ -9,6 +9,7 @@ import { AuthStore } from '../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
 import { ProjectResponse } from '../../../features/workspace/data/workspace.models';
 import { Avatar } from '../avatar/avatar';
+import { DemoBadge } from '../demo-badge/demo-badge';
 import { BELOW_START } from '../popover/popover-positions';
 import { HlmIcon } from '../../ui';
 
@@ -21,7 +22,7 @@ import { HlmIcon } from '../../ui';
 @Component({
   selector: 'app-project-switcher',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [OverlayModule, FormsModule, Avatar, HlmIcon, TranslocoPipe],
+  imports: [OverlayModule, FormsModule, Avatar, DemoBadge, HlmIcon, TranslocoPipe],
   viewProviders: [provideIcons({ lucideChevronsUpDown, lucidePlus, lucideSearch })],
   template: `
     <button
@@ -90,6 +91,9 @@ import { HlmIcon } from '../../ui';
                 [size]="22"
               />
               <span class="min-w-0 flex-1 truncate">{{ project.name }}</span>
+              @if (project.demo) {
+                <app-demo-badge />
+              }
             </button>
           } @empty {
             <p class="px-2.5 py-6 text-center text-sm text-muted-foreground">

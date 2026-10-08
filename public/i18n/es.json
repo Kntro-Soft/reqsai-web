@@ -28,7 +28,8 @@
     "profileSaved": "Perfil actualizado.",
     "projectArchived": "Proyecto archivado.",
     "projectRestored": "Proyecto restaurado.",
-    "projectDeleted": "Proyecto eliminado."
+    "projectDeleted": "Proyecto eliminado.",
+    "demoRestored": "Datos de prueba restaurados"
   },
   "language": {
     "label": "Idioma",
@@ -233,6 +234,18 @@
   "overview": {
     "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
   },
+  "demo": {
+    "badge": "Demo",
+    "badgeTitle": "Proyecto de demostración con datos de prueba",
+    "bannerTitle": "Este es un proyecto de demostración",
+    "bannerBody": "Te lo creamos con datos de prueba —una sesión con su transcripción, historias de usuario, glosario y restricciones— para que explores ReqsAI sin empezar de cero. Modifícalo con libertad: puedes restaurar los datos de prueba cuando quieras.",
+    "restore": "Restaurar datos de prueba",
+    "restoreDesc": "Vuelve a cargar el contenido original del proyecto de demostración.",
+    "restoreHint": "Reemplaza las sesiones, historias, sugerencias, glosario y restricciones.",
+    "restoreTitle": "Restaurar datos de prueba",
+    "restoreBody": "Se eliminarán las sesiones, historias de usuario, sugerencias, mensajes del asistente, términos del glosario y restricciones de este proyecto, y se cargará de nuevo el contenido original de la demostración. Esta acción no se puede deshacer.",
+    "restoreConfirm": "Restaurar"
+  },
   "account": {
     "title": "Cuenta",
     "subtitle": "Gestiona tu perfil, contraseña y preferencias.",
@@ -330,6 +343,7 @@
   "createOrg": {
     "title": "Crea tu organización",
     "subtitle": "Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de descubrimiento.",
+    "demoHint": "Te crearemos un proyecto de demostración con datos de prueba para que explores ReqsAI sin empezar de cero.",
     "name": "Nombre de la organización",
     "language": "Idioma de reuniones",
     "advanced": "Opciones avanzadas",
@@ -1545,6 +1559,7 @@
     "PROJECT_NOT_FOUND": "Ese proyecto ya no existe.",
     "PROJECT_NAME_ALREADY_EXISTS": "Ya existe un proyecto con ese nombre.",
     "PROJECT_PLAN_LIMIT_EXCEEDED": "Has alcanzado el límite de proyectos de tu plan.",
+    "PROJECT_NOT_DEMO": "Solo el proyecto de demostración puede restaurar sus datos de prueba.",
     "PROJECT_CONSTRAINT_ALREADY_EXISTS": "Esa restricción ya existe en este proyecto.",
     "PROJECT_CONSTRAINT_NOT_FOUND": "Esa restricción ya no existe.",
     "PROJECT_DOCUMENT_NOT_FOUND": "Ese documento ya no existe.",

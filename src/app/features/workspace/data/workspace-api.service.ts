@@ -77,6 +77,14 @@ export class WorkspaceApiService {
     );
   }
 
+  /** Puts the demo project back to its original sample content (sessions, stories, glossary…). */
+  restoreDemoProject(orgId: string, projectId: string): Observable<ProjectResponse> {
+    return this.http.post<ProjectResponse>(
+      `/api/organizations/${orgId}/projects/${projectId}/demo/restore`,
+      {},
+    );
+  }
+
   deleteProject(orgId: string, projectId: string): Observable<void> {
     return this.http.delete<void>(`/api/organizations/${orgId}/projects/${projectId}`);
   }

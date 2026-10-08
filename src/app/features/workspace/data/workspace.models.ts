@@ -34,6 +34,8 @@ export interface ProjectResponse {
   avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  /** The organization's demo project: sample content, restorable, not counted against the plan. */
+  demo: boolean;
 }
 
 export interface CreateProjectRequest {

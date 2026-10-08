@@ -14,6 +14,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
+import { DemoBadge } from '../../../../shared/components/demo-badge/demo-badge';
 import { HlmButton, HlmIcon, HlmSkeleton } from '../../../../shared/ui';
 
 type ProjectView = 'cards' | 'table';
@@ -24,7 +25,16 @@ const VIEW_KEY = 'projects.view';
 @Component({
   selector: 'app-projects',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, Avatar, HlmButton, HlmIcon, HlmSkeleton, TranslocoPipe],
+  imports: [
+    RouterLink,
+    FormsModule,
+    Avatar,
+    DemoBadge,
+    HlmButton,
+    HlmIcon,
+    HlmSkeleton,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideSearch, lucidePlus, lucideLayoutGrid, lucideRows3 })],
   template: `
     <div class="flex flex-col gap-5">
@@ -173,7 +183,12 @@ const VIEW_KEY = 'projects.view';
                         [size]="36"
                       />
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate font-medium">{{ project.name }}</span>
+                        <span class="flex min-w-0 items-center gap-1.5">
+                          <span class="truncate font-medium">{{ project.name }}</span>
+                          @if (project.demo) {
+                            <app-demo-badge />
+                          }
+                        </span>
                         <span class="block truncate text-xs text-muted-foreground">
                           {{ project.domain || ('projects.noDomain' | transloco) }}
                         </span>
@@ -239,6 +254,9 @@ const VIEW_KEY = 'projects.view';
                             [size]="24"
                           />
                           <span class="truncate font-medium">{{ project.name }}</span>
+                          @if (project.demo) {
+                            <app-demo-badge />
+                          }
                         </span>
                       </td>
                       <td class="hidden px-4 py-2.5 text-muted-foreground sm:table-cell">

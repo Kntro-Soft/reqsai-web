@@ -31,7 +31,9 @@ test.describe('Workspace', () => {
     await page.getByRole('button', { name: 'Crear y continuar' }).click();
 
     await expect(page).toHaveURL(/\/projects/);
-    await expect(page.getByTestId('projects-empty')).toBeVisible();
+    // Every new organization starts with its demo project (US28).
+    await expect(page.getByTestId('project-card')).toHaveCount(1);
+    await expect(page.getByTestId('demo-badge')).toBeVisible();
 
     // Create the first project: only the name is required.
     await page.goto('/projects/new');
@@ -40,7 +42,7 @@ test.describe('Workspace', () => {
     await expect(page).toHaveURL(/\/projects\/[0-9a-f-]+/i);
 
     await page.goto('/projects');
-    await expect(page.getByTestId('project-card')).toHaveCount(1);
+    await expect(page.getByTestId('project-card')).toHaveCount(2);
     await expect(page.getByText('Mobile App')).toBeVisible();
   });
 
