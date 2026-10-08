@@ -14,7 +14,7 @@
         "@angular/router": "^22.0.0",
         "@jsverse/transloco": "^8.4.0",
         "@jsverse/transloco-locale": "^8.4.0",
-        "@ng-icons/core": "^34.0.0",
+        "@ng-icons/core": "^36.1.0",
         "@ng-icons/lucide": "^34.0.0",
         "@spartan-ng/brain": "^1.6.0",
         "@stomp/rx-stomp": "^2.4.0",
@@ -652,7 +652,7 @@
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@0.2.4", "", { "dependencies": { "@emnapi/core": "^1.1.0", "@emnapi/runtime": "^1.1.0", "@tybys/wasm-util": "^0.9.0" } }, "sha512-9zESzOO5aDByvhIAsOy9TbpZ0Ur2AJbUI7UT73kcUTS2mxAMHOBaa1st/jAymNoCtvrit99kkzT1FZuXVcgfIQ=="],
 
-    "@ng-icons/core": ["@ng-icons/core@34.0.0", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular-devkit/schematics": ">=21.0.0", "@angular/common": ">=21.0.0", "@angular/core": ">=21.0.0", "@schematics/angular": ">=21.0.0", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-SrL8dBApSKzXhihEGmiJ/tAj+wSvt6XmZJOAzUTVcgkuV0YuL1WCHVfAwXgQHVG5Te27JkjyXd2n76pNFMuekw=="],
+    "@ng-icons/core": ["@ng-icons/core@36.1.0", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular-devkit/schematics": ">=22.0.0", "@angular/common": ">=22.0.0", "@angular/core": ">=22.0.0", "@schematics/angular": ">=22.0.0", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-2o6M/K29lPN3wGq/nOxqVjzDV25HHIh6PXm2/ISwKa0eFbbDYwYkg7g9msjPS40OmQpqBgSVLIwinEifEOQNjg=="],
 
     "@ng-icons/lucide": ["@ng-icons/lucide@34.0.0", "", { "dependencies": { "tslib": "^2.3.0" } }, "sha512-cojXLo23MA4l8qqwLkKs/Ym66/eXSzpJ8ZvaQOTOK1sRSEjZiQBc4emyGJpqZLr12FO9xssLMfdnqa2tag+yWw=="],
 
