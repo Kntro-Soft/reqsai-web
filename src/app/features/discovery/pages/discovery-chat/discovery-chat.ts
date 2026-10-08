@@ -38,6 +38,7 @@ import {
   lucideSendHorizontal,
   lucideSparkles,
   lucideTriangleAlert,
+  lucideUpload,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
@@ -54,6 +55,7 @@ import { DecisionEntry, SpeakerDisplay } from '../../data/feed';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
   AcceptSuggestionRequest,
+  ProcessTranscriptResponse,
   SessionTranscriptSegmentMessage,
   SuggestionResponse,
 } from '../../data/discovery.models';
@@ -63,6 +65,7 @@ import { AudioSourcePicker } from '../../components/audio-source-picker/audio-so
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
+import { UploadRecording } from '../../components/upload-recording/upload-recording';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -94,6 +97,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     ActiveParticipants,
     DecisionQueue,
     SuggestionCard,
+    UploadRecording,
     SidePanel,
     Select,
     Modal,
@@ -122,6 +126,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideSendHorizontal,
       lucideSparkles,
       lucideTriangleAlert,
+      lucideUpload,
     }),
   ],
   providers: [AssistantChatStore],
@@ -175,6 +180,23 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 [emptyText]="'discovery.language.empty' | transloco"
                 data-testid="discovery-language"
               />
+            }
+            @if (canRecord() && !store.liveSession()) {
+              <!-- A past meeting's recording goes through the same pipeline (US41). -->
+              <button
+                type="button"
+                hlmBtn
+                variant="outline"
+                size="sm"
+                class="gap-0 px-2 sm:gap-2 sm:px-3"
+                (click)="uploadOpen.set(true)"
+                [attr.aria-label]="'discovery.upload.button' | transloco"
+                [title]="'discovery.upload.button' | transloco"
+                data-testid="upload-recording-open"
+              >
+                <hlm-icon name="lucideUpload" size="15px" />
+                <span class="hidden sm:inline">{{ 'discovery.upload.button' | transloco }}</span>
+              </button>
             }
             <a
               [routerLink]="['history']"
@@ -979,6 +1001,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         {{ 'discovery.leaveGuard.leave' | transloco }}
       </button>
     </app-modal>
+
+    <app-upload-recording
+      [(open)]="uploadOpen"
+      [projectId]="projectId()"
+      [language]="language()"
+      (processed)="onRecordingProcessed($event)"
+      (failed)="onRecordingFailed($event)"
+    />
   `,
 })
 export class DiscoveryChat implements OnInit {
@@ -1016,6 +1046,9 @@ export class DiscoveryChat implements OnInit {
    * age forward while the page stays open. Read by {@link timeLabel}.
    */
   protected readonly now = signal(Date.now());
+
+  /** The "upload a recording" dialog (US41). */
+  protected readonly uploadOpen = signal(false);
 
   /** Controls the "leave while recording" confirmation modal (in-app nav guard). */
   protected readonly leaveOpen = signal(false);
@@ -1331,6 +1364,24 @@ export class DiscoveryChat implements OnInit {
       return;
     }
     this.toast.error(messageForError(err, this.transloco));
+  }
+
+  protected onRecordingFailed(message: string): void {
+    this.toast.error(message);
+  }
+
+  /** A processed recording becomes the newest session of the feed, its stories in the backlog. */
+  protected onRecordingProcessed(result: ProcessTranscriptResponse): void {
+    this.store.addNewSession(result.session);
+    this.store.refreshProjectStories();
+    this.atBottom.set(true);
+    if (result.session.status === 'FAILED') {
+      this.toast.error(this.transloco.translate('discovery.upload.failed'));
+      return;
+    }
+    this.toast.success(
+      this.transloco.translate('discovery.upload.done', { count: result.stories.length }),
+    );
   }
 
   /** Sends the composer's text to ReqsAI; on failure the text is put back so nothing is lost. */

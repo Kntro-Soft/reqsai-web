@@ -1129,6 +1129,27 @@
       "accepted": "Aceptada",
       "dismissed": "Descartada"
     },
+    "upload": {
+      "button": "Subir grabación",
+      "title": "Subir grabación de una reunión",
+      "description": "Sube el audio de una reunión pasada. ReqsAI lo transcribe y genera las historias con el glosario y el contexto de este proyecto.",
+      "choose": "Elige un archivo de audio",
+      "hint": "MP3, WAV, M4A, OGG o WEBM, hasta 50 MB.",
+      "titleLabel": "Título de la sesión",
+      "submit": "Subir y procesar",
+      "done": "Grabación procesada: {{count}} historias nuevas en el backlog.",
+      "failed": "No pudimos generar historias de la grabación. Reintenta el procesamiento desde la sesión.",
+      "problem": {
+        "type": "Ese archivo no es de audio.",
+        "size": "El archivo supera los 50 MB.",
+        "empty": "El archivo está vacío."
+      },
+      "stage": {
+        "creating": "Creando la sesión",
+        "transcribing": "Transcribiendo el audio",
+        "generating": "Generando historias con la IA"
+      }
+    },
     "composer": {
       "record": "Iniciar grabación",
       "recordShort": "Grabar"
