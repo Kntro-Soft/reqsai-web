@@ -14,8 +14,8 @@
         "@angular/router": "^22.0.0",
         "@jsverse/transloco": "^8.4.0",
         "@jsverse/transloco-locale": "^8.4.0",
-        "@ng-icons/core": "^33.3.0",
-        "@ng-icons/lucide": "^33.3.0",
+        "@ng-icons/core": "^34.0.0",
+        "@ng-icons/lucide": "^34.0.0",
         "@spartan-ng/brain": "^0.0.1-alpha.713",
         "@stomp/rx-stomp": "^2.4.0",
         "rxjs": "~7.8.0",
@@ -33,7 +33,7 @@
         "@playwright/test": "1.61.1",
         "@spartan-ng/cli": "^1.0.4",
         "@tailwindcss/postcss": "^4.1.12",
-        "@types/node": "^25.9.3",
+        "@types/node": "^26.1.1",
         "@vitest/browser-playwright": "^4.1.8",
         "angular-eslint": "22.0.0",
         "eslint": "^10.3.0",
@@ -652,9 +652,9 @@
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@0.2.4", "", { "dependencies": { "@emnapi/core": "^1.1.0", "@emnapi/runtime": "^1.1.0", "@tybys/wasm-util": "^0.9.0" } }, "sha512-9zESzOO5aDByvhIAsOy9TbpZ0Ur2AJbUI7UT73kcUTS2mxAMHOBaa1st/jAymNoCtvrit99kkzT1FZuXVcgfIQ=="],
 
-    "@ng-icons/core": ["@ng-icons/core@33.3.0", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular-devkit/schematics": ">=21.0.0", "@angular/common": ">=21.0.0", "@angular/core": ">=21.0.0", "@schematics/angular": ">=21.0.0", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-rGfOR4bj07jhWEErabq9VX+PqoS0qiA/1FarLdX5qZ9h5MsbuNpwBKlSGe+W3+b0NSZ5tbqlqv83YMjUG2WAfg=="],
+    "@ng-icons/core": ["@ng-icons/core@34.0.0", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular-devkit/schematics": ">=21.0.0", "@angular/common": ">=21.0.0", "@angular/core": ">=21.0.0", "@schematics/angular": ">=21.0.0", "rxjs": "^6.5.3 || ^7.4.0" } }, "sha512-SrL8dBApSKzXhihEGmiJ/tAj+wSvt6XmZJOAzUTVcgkuV0YuL1WCHVfAwXgQHVG5Te27JkjyXd2n76pNFMuekw=="],
 
-    "@ng-icons/lucide": ["@ng-icons/lucide@33.3.0", "", { "dependencies": { "tslib": "^2.3.0" } }, "sha512-glSPyLcuD4UjzjsIVqZscimcNRayuybvS4t92UfdkTKS70t/hlly1qCgLCiTBVtFOsnWY8XkOuslgX9Fnjlzyw=="],
+    "@ng-icons/lucide": ["@ng-icons/lucide@34.0.0", "", { "dependencies": { "tslib": "^2.3.0" } }, "sha512-cojXLo23MA4l8qqwLkKs/Ym66/eXSzpJ8ZvaQOTOK1sRSEjZiQBc4emyGJpqZLr12FO9xssLMfdnqa2tag+yWw=="],
 
     "@nodelib/fs.scandir": ["@nodelib/fs.scandir@2.1.5", "", { "dependencies": { "@nodelib/fs.stat": "2.0.5", "run-parallel": "^1.1.9" } }, "sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g=="],
 
@@ -1000,7 +1000,7 @@
 
     "@types/json-schema": ["@types/json-schema@7.0.15", "", {}, "sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA=="],
 
-    "@types/node": ["@types/node@25.9.4", "", { "dependencies": { "undici-types": ">=7.24.0 <7.24.7" } }, "sha512-dszCsrKb5U7ZsVZBWiHFklTloVl0mSEnWH/iZXfZUlI4rzCUnsvGmgqfuVRHL54ugE7/wRuxEIXRa2iMZ+BG6g=="],
+    "@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
 
     "@types/parse-json": ["@types/parse-json@4.0.2", "", {}, "sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw=="],
 
@@ -2316,7 +2316,7 @@
 
     "undici": ["undici@7.28.0", "", {}, "sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA=="],
 
-    "undici-types": ["undici-types@7.24.6", "", {}, "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg=="],
+    "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
 
     "unicode-canonical-property-names-ecmascript": ["unicode-canonical-property-names-ecmascript@2.0.1", "", {}, "sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg=="],
 
