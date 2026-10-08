@@ -283,6 +283,15 @@ export const routes: Routes = [
                 (m) => m.ProjectConstraints,
               ),
           },
+          {
+            path: 'documents',
+            title: 'titles.documents',
+            canActivate: [requirePermission('DOCUMENT_READ')],
+            loadComponent: () =>
+              import('./features/discovery/pages/documents/documents').then(
+                (m) => m.ProjectDocuments,
+              ),
+          },
           // Members moved under Settings; keep the old path working.
           { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },
           {
