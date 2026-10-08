@@ -11,6 +11,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US46 — Choose when the AI analyzes — `feature/discovery-analyze-on-demand`)
+
+- **The live session bar has an "IA: automática / manual" switch.**
+  - In manual mode the AI stays quiet, and the status line says "Modo manual: la IA analiza cuando
+    pulses «Analizar ahora»".
+  - It uses `PATCH …/sessions/{id}/suggestion-mode`.
+- **New "Analizar ahora" button** (`POST …/sessions/{id}/analyze`). It analyzes the recent conversation
+  right away, and a toast says how many suggestions reached the review tray.
+- **Tests:**
+  - `session-bar.spec.ts` and `ai-activity.spec.ts`: the mode switch, the analyze button and the
+    manual status;
+  - `e2e/analyze-on-demand.spec.ts` (fake microphone, real STT and AI): in manual mode the whole meeting
+    is transcribed with no suggestion, until "Analizar ahora" raises one.
+
 ### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
 
 - **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no
