@@ -11,6 +11,25 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
+
+- **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no
+  session is live.
+- **The dialog takes an audio file and a session title.**
+  - Accepted formats: MP3, WAV, M4A, OGG, WEBM and others, up to 50 MB.
+  - The title comes from the file name until the analyst edits it.
+- **Uploading runs the same pipeline as a live session:**
+  - `POST /projects/{id}/sessions` creates the session in the capture's meeting language;
+  - `POST /sessions/{id}/upload` transcribes the audio;
+  - `POST /sessions/{id}/process` has the AI extract the stories with the project's glossary and context.
+- **Feedback:** each step shows its progress, and the new session joins the feed with its stories. A
+  toast says how many stories reached the backlog.
+- **Rejected before anything is sent:** a file that is not audio, an empty file, or one over 50 MB.
+- **Tests:**
+  - `recording-upload.spec.ts`: file checks and title derivation;
+  - `e2e/upload-recording.spec.ts`: a PDF is refused; then the Spanish meeting is uploaded and the
+    stories reach the backlog, with the real speech-to-text and AI.
+
 ### Added (Assistant chat on the capture page — `feature/discovery-assistant-chat`)
 
 - **The capture page's text box now talks to ReqsAI, with or without a live session.** It used to be a
