@@ -64,8 +64,6 @@
     "profile": "Perfil",
     "security": "Seguridad",
     "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API",
     "newRole": "Nuevo rol",
     "editRole": "Editar rol",
     "discovery": "Captura",
@@ -90,7 +88,6 @@
     "allProjects": "Todos los proyectos",
     "find": "Buscar…",
     "openMenu": "Abrir menú",
-    "soon": "Pronto",
     "account": "Cuenta",
     "general": "General",
     "billing": "Facturación",
@@ -99,13 +96,7 @@
     "danger": "Peligro",
     "profile": "Perfil",
     "security": "Seguridad",
-    "appearance": "Apariencia",
-    "notifications": "Notificaciones",
-    "tokens": "Tokens de API"
-  },
-  "comingSoon": {
-    "title": "Próximamente",
-    "subtitle": "Esta sección aún no está disponible. Está en la hoja de ruta — vuelve pronto."
+    "appearance": "Apariencia"
   },
   "authz": {
     "noAccess": "No tienes permisos suficientes.",
@@ -744,7 +735,9 @@
       "SESSION_RUN": "Ejecutar sesiones",
       "SESSION_DECIDE": "Decidir sobre sugerencias",
       "STORY_READ": "Ver historias",
-      "STORY_WRITE": "Editar historias"
+      "STORY_WRITE": "Editar historias",
+      "STORY_DELETE": "Eliminar historias",
+      "STORY_APPROVE": "Aprobar historias"
     },
     "groupDesc": {
       "project": "Cambia los ajustes y el ciclo de vida del proyecto",
@@ -781,7 +774,9 @@
       "SESSION_RUN": "Grabar, pausar y detener sesiones de discovery",
       "SESSION_DECIDE": "Aceptar o descartar sugerencias de la IA durante una sesión",
       "STORY_READ": "Ver el backlog de historias de usuario del proyecto",
-      "STORY_WRITE": "Crear y editar historias de usuario y sus criterios de aceptación"
+      "STORY_WRITE": "Crear y editar historias de usuario y sus criterios de aceptación",
+      "STORY_DELETE": "Eliminar historias de usuario del backlog",
+      "STORY_APPROVE": "Aprobar, rechazar o devolver a borrador las historias de usuario (rol del Product Owner)"
     },
     "newRole": "Nuevo rol",
     "filterPlaceholder": "Filtrar roles…",
@@ -900,6 +895,18 @@
       "REJECTED": "Rechazada: el equipo la descartó.",
       "MERGED": "Fusionada: se integró en otra historia.",
       "EXPORTED": "Exportada: enviada a un gestor externo (p. ej., Jira)."
+    },
+    "review": {
+      "action": {
+        "APPROVED": "Aprobar",
+        "REJECTED": "Rechazar",
+        "DRAFT": "Volver a borrador"
+      },
+      "done": {
+        "APPROVED": "Historia aprobada.",
+        "REJECTED": "Historia rechazada.",
+        "DRAFT": "La historia volvió a borrador."
+      }
     },
     "origin": {
       "ai": "IA",
@@ -1448,6 +1455,7 @@
     "SAME_PASSWORD_NOT_ALLOWED": "Tu nueva contraseña debe ser distinta de la actual.",
     "DUPLICATE_USER_STORY": "Esa historia de usuario ya existe.",
     "INVALID_SESSION_STATUS": "El estado de esta sesión no permite esa acción.",
+    "INVALID_STORY_STATUS": "El estado de esta historia no permite esa revisión.",
     "REQUIREMENT_GENERATION_FAILED": "No pudimos generar los requisitos. Inténtalo de nuevo.",
     "SESSION_NOT_FOUND": "Esa sesión ya no existe.",
     "USER_STORY_NOT_FOUND": "Esa historia de usuario ya no existe.",

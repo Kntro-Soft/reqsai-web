@@ -11,7 +11,6 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
-import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { WorkspaceApiService } from '../../data/workspace-api.service';
 import { NavIcon } from '../../../../shared/components/nav-icon/nav-icon';
 
@@ -52,7 +51,6 @@ import { NavIcon } from '../../../../shared/components/nav-icon/nav-icon';
 export class ProjectOverview {
   private readonly store = inject(AuthStore);
   private readonly permissions = inject(PermissionsStore);
-  private readonly flags = inject(FeatureFlags);
   private readonly api = inject(WorkspaceApiService);
 
   readonly projectId = input.required<string>();
@@ -61,14 +59,14 @@ export class ProjectOverview {
   /**
    * Quick-link cards, filtered to the sections the caller can actually open — a member
    * without a section's read permission shouldn't be offered a card that dead-ends in a
-   * "no access" toast. Owner/admin bypass; sections of a disabled feature never show.
+   * "no access" toast. Owner/admin bypass.
    * `settings` shows when any settings sub-page is reachable; the settings landing guard
    * then routes to the first accessible one.
    */
   protected readonly links = computed(() => {
     const can = (p: string) => this.permissions.isOrgOwnerOrAdmin() || this.permissions.has(p);
-    const canMembers = this.flags.isEnabled('members') && can('MEMBER_READ');
-    const canRoles = this.flags.isEnabled('customRoles') && can('ROLE_READ');
+    const canMembers = can('MEMBER_READ');
+    const canRoles = can('ROLE_READ');
     const canSettings = can('PROJECT_UPDATE') || canMembers || canRoles || can('PROJECT_DELETE');
     return [
       can('SESSION_READ') && 'sessions',

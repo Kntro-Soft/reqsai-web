@@ -6,7 +6,6 @@ import { provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { FeatureFlagMap, provideFeatureFlags } from '../../../core/features/feature-flags';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { WorkspaceStore } from '../../../features/workspace/data/workspace.store';
 import { CommandRegistry } from '../../search/command-registry';
@@ -18,11 +17,11 @@ const HITS: SearchHitResponse[] = [
   { type: 'MEMBER', id: 'm1', title: 'Alice', subtitle: null, projectId: null },
 ];
 
-describe('CommandPalette feature flags', () => {
+describe('CommandPalette', () => {
   let registry: CommandRegistry;
   let palette: CommandPalette;
 
-  function setup(flags: Partial<FeatureFlagMap>): void {
+  function setup(): void {
     TestBed.configureTestingModule({
       imports: [
         CommandPalette,
@@ -36,7 +35,6 @@ describe('CommandPalette feature flags', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        provideFeatureFlags(flags),
         // The palette only reads these; stubs keep the test free of their side effects.
         { provide: AuthService, useValue: { switchOrganization: () => of(null) } },
         { provide: ThemeService, useValue: { toggle: () => undefined } },
@@ -66,27 +64,15 @@ describe('CommandPalette feature flags', () => {
       .flush(hits);
   }
 
-  it('omits the Members quick action while the members feature is off', () => {
-    setup({ members: false });
+  it('offers the quick actions, Members included', () => {
+    setup();
     expect(ids()).toContain('action:new-project');
     expect(ids()).toContain('action:settings');
-    expect(ids()).not.toContain('action:members');
-  });
-
-  it('offers the Members quick action while the members feature is on', () => {
-    setup({ members: true });
     expect(ids()).toContain('action:members');
   });
 
-  it('drops backend member hits while the members feature is off', async () => {
-    setup({ members: false });
-    await searchBackend('al', HITS);
-    expect(ids()).toContain('project:p1');
-    expect(ids()).not.toContain('member:m1');
-  });
-
-  it('keeps backend member hits while the members feature is on', async () => {
-    setup({ members: true });
+  it('keeps every backend hit, member hits included', async () => {
+    setup();
     await searchBackend('al', HITS);
     expect(ids()).toContain('project:p1');
     expect(ids()).toContain('member:m1');

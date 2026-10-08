@@ -84,6 +84,14 @@ export type StorySortDirection = 'ASC' | 'DESC';
 /** The review statuses the backend filters stories by (list endpoint `status` param). */
 export type StoryStatus = 'DRAFT' | 'APPROVED' | 'REJECTED' | 'MERGED' | 'EXPORTED';
 
+/** The statuses a reviewer can set on a story; MERGED and EXPORTED come from their own flows. */
+export type StoryReviewStatus = Extract<StoryStatus, 'DRAFT' | 'APPROVED' | 'REJECTED'>;
+
+/** Request body to record a review decision (PATCH /projects/{projectId}/stories/{storyId}/status). */
+export interface ChangeStoryStatusRequest {
+  status: StoryReviewStatus;
+}
+
 /** Request body to manually create a user story (POST /projects/{projectId}/stories). */
 export interface CreateUserStoryRequest {
   title: string;

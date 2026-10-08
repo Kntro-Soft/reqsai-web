@@ -64,8 +64,6 @@
     "profile": "Profile",
     "security": "Security",
     "appearance": "Appearance",
-    "notifications": "Notifications",
-    "tokens": "API tokens",
     "newRole": "New role",
     "editRole": "Edit role",
     "discovery": "Discovery",
@@ -90,7 +88,6 @@
     "allProjects": "All Projects",
     "find": "Find…",
     "openMenu": "Open menu",
-    "soon": "Soon",
     "account": "Account",
     "general": "General",
     "billing": "Billing",
@@ -99,13 +96,7 @@
     "danger": "Danger",
     "profile": "Profile",
     "security": "Security",
-    "appearance": "Appearance",
-    "notifications": "Notifications",
-    "tokens": "API tokens"
-  },
-  "comingSoon": {
-    "title": "Coming soon",
-    "subtitle": "This section isn't available yet. It's on the roadmap — check back soon."
+    "appearance": "Appearance"
   },
   "authz": {
     "noAccess": "You don't have sufficient permissions.",
@@ -744,7 +735,9 @@
       "SESSION_RUN": "Run sessions",
       "SESSION_DECIDE": "Decide on suggestions",
       "STORY_READ": "View stories",
-      "STORY_WRITE": "Edit stories"
+      "STORY_WRITE": "Edit stories",
+      "STORY_DELETE": "Delete stories",
+      "STORY_APPROVE": "Approve stories"
     },
     "groupDesc": {
       "project": "Change the project's settings and lifecycle",
@@ -781,7 +774,9 @@
       "SESSION_RUN": "Record, pause and stop discovery sessions",
       "SESSION_DECIDE": "Accept or dismiss AI suggestions during a session",
       "STORY_READ": "View the project backlog of user stories",
-      "STORY_WRITE": "Create and edit user stories and their acceptance criteria"
+      "STORY_WRITE": "Create and edit user stories and their acceptance criteria",
+      "STORY_DELETE": "Delete user stories from the backlog",
+      "STORY_APPROVE": "Approve, reject or send user stories back to draft (the Product Owner's role)"
     },
     "newRole": "New role",
     "filterPlaceholder": "Filter roles…",
@@ -900,6 +895,18 @@
       "REJECTED": "Rejected: discarded by the team.",
       "MERGED": "Merged: folded into another story.",
       "EXPORTED": "Exported: pushed to an external tracker (e.g. Jira)."
+    },
+    "review": {
+      "action": {
+        "APPROVED": "Approve",
+        "REJECTED": "Reject",
+        "DRAFT": "Back to draft"
+      },
+      "done": {
+        "APPROVED": "Story approved.",
+        "REJECTED": "Story rejected.",
+        "DRAFT": "The story is back in draft."
+      }
     },
     "origin": {
       "ai": "AI",
@@ -1448,6 +1455,7 @@
     "SAME_PASSWORD_NOT_ALLOWED": "Your new password must be different from the current one.",
     "DUPLICATE_USER_STORY": "That user story already exists.",
     "INVALID_SESSION_STATUS": "This session's status doesn't allow that action.",
+    "INVALID_STORY_STATUS": "This story's status doesn't allow that review.",
     "REQUIREMENT_GENERATION_FAILED": "We couldn't generate requirements. Please try again.",
     "SESSION_NOT_FOUND": "That session no longer exists.",
     "USER_STORY_NOT_FOUND": "That user story no longer exists.",

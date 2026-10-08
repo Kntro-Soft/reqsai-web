@@ -13,9 +13,12 @@ import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowLeft,
   lucideArrowUpRight,
+  lucideCheck,
   lucidePlus,
+  lucideRotateCcw,
   lucideTrash2,
   lucideUpload,
+  lucideX,
 } from '@ng-icons/lucide';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -24,6 +27,7 @@ import { IntegrationsApiService } from '../../../workspace/data/integrations-api
 import {
   AcceptanceCriterionResponse,
   StoryPriority,
+  StoryReviewStatus,
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from '../../data/discovery.models';
@@ -33,10 +37,10 @@ import {
   problemCode,
 } from '../../data/duplicate-error';
 import { Modal } from '../../../../shared/components/modal/modal';
+import { HasPermission } from '../../../../shared/directives/has-permission';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
-import { FeatureFlags } from '../../../../core/features/feature-flags';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import {
   HlmButton,
@@ -54,12 +58,14 @@ import {
   isRowChanged,
   rowToRequest,
 } from './story-form.helpers';
+import { reviewTargets } from './story-review.helpers';
 import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
 
 /**
  * Story detail / edit page. The saved title leads, with the story's review status
  * (draft = awaiting review, approved = validated) and origin (AI from a session,
- * linked back to it, or manual) underneath. The core fields read top-down as the
+ * linked back to it, or manual) underneath. Members with STORY_APPROVE record the
+ * review decision from the header (approve, reject, back to draft). The core fields read top-down as the
  * story sentence in auto-growing fields and persist via PUT ("Guardar"), enabled
  * only once something changed. Criteria are Gherkin rows managed inline — each
  * saves individually (POST for a new row, PUT for an existing one), flags unsaved
@@ -72,6 +78,7 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
     ReactiveFormsModule,
     RouterLink,
     Modal,
+    HasPermission,
     Select,
     OriginBadge,
     StoryStatusBadge,
@@ -84,7 +91,16 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
     TranslocoPipe,
   ],
   viewProviders: [
-    provideIcons({ lucideArrowLeft, lucideArrowUpRight, lucidePlus, lucideTrash2, lucideUpload }),
+    provideIcons({
+      lucideArrowLeft,
+      lucideArrowUpRight,
+      lucideCheck,
+      lucidePlus,
+      lucideRotateCcw,
+      lucideTrash2,
+      lucideUpload,
+      lucideX,
+    }),
   ],
   template: `
     <div class="flex flex-col gap-6">
@@ -126,25 +142,43 @@ import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/sto
             }
           </div>
           @if (state() === 'ready') {
-            <div class="flex shrink-0 items-center gap-2">
-              @if (integrationsEnabled) {
-                <button
-                  hlmBtn
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  (click)="pushToJira()"
-                  [disabled]="pushing()"
-                  data-testid="story-push-jira"
-                >
-                  @if (pushing()) {
-                    <hlm-spinner class="h-4 w-4" />
-                  } @else {
-                    <hlm-icon name="lucideUpload" size="15px" />
-                  }
-                  {{ 'integrations.push.pushStory' | transloco }}
-                </button>
-              }
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+              <ng-container *appHasPermission="'STORY_APPROVE'">
+                @for (target of reviewOptions(); track target) {
+                  <button
+                    hlmBtn
+                    size="sm"
+                    [variant]="target === 'APPROVED' ? 'default' : 'outline'"
+                    type="button"
+                    (click)="changeStatus(target)"
+                    [disabled]="reviewing() !== null"
+                    [attr.data-testid]="'story-review-' + target.toLowerCase()"
+                  >
+                    @if (reviewing() === target) {
+                      <hlm-spinner class="h-4 w-4" />
+                    } @else {
+                      <hlm-icon [name]="reviewIcons[target]" size="15px" />
+                    }
+                    {{ 'stories.review.action.' + target | transloco }}
+                  </button>
+                }
+              </ng-container>
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="pushToJira()"
+                [disabled]="pushing()"
+                data-testid="story-push-jira"
+              >
+                @if (pushing()) {
+                  <hlm-spinner class="h-4 w-4" />
+                } @else {
+                  <hlm-icon name="lucideUpload" size="15px" />
+                }
+                {{ 'integrations.push.pushStory' | transloco }}
+              </button>
               <button
                 hlmBtn
                 size="sm"
@@ -448,14 +482,13 @@ export class StoryDetail implements OnInit {
   readonly projectId = input.required<string>();
   readonly storyId = input.required<string>();
 
-  /** "Push to Jira" belongs to the `integrations` feature. */
-  protected readonly integrationsEnabled = inject(FeatureFlags).isEnabled('integrations');
-
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
   protected readonly pushing = signal(false);
   protected readonly deleteOpen = signal(false);
   protected readonly deleting = signal(false);
+  /** The review decision being saved, or null. */
+  protected readonly reviewing = signal<StoryReviewStatus | null>(null);
   protected readonly formError = signal<string | null>(null);
   protected readonly criteria = signal<CriterionRow[]>([]);
   /** The loaded/last-saved story (drives the heading, status and origin). */
@@ -474,6 +507,13 @@ export class StoryDetail implements OnInit {
     { key: 'when', label: 'storyForm.criteriaWhen' },
     { key: 'then', label: 'storyForm.criteriaThen' },
   ] as const;
+  /** Review decisions offered for the current status (none once merged or exported). */
+  protected readonly reviewOptions = computed(() => reviewTargets(this.story()?.status));
+  protected readonly reviewIcons: Record<StoryReviewStatus, string> = {
+    APPROVED: 'lucideCheck',
+    REJECTED: 'lucideX',
+    DRAFT: 'lucideRotateCcw',
+  };
   /** Index of the criterion row currently saving/deleting, or null. */
   protected readonly rowBusy = signal<number | null>(null);
 
@@ -586,6 +626,28 @@ export class StoryDetail implements OnInit {
         const message = this.errorMessage(err);
         this.formError.set(message);
         this.toast.error(message);
+      },
+    });
+  }
+
+  /**
+   * Records the review decision. Only the status changes, so unsaved edits in the form are kept;
+   * a failure (403, 422 INVALID_STORY_STATUS) surfaces the localized error via a toast.
+   */
+  protected changeStatus(target: StoryReviewStatus): void {
+    if (this.reviewing() !== null) return;
+    this.reviewing.set(target);
+    this.api.changeStoryStatus(this.projectId(), this.storyId(), target).subscribe({
+      next: (updated) => {
+        this.reviewing.set(null);
+        this.story.update((current) =>
+          current ? { ...current, status: updated.status } : updated,
+        );
+        this.toast.success(this.transloco.translate('stories.review.done.' + target));
+      },
+      error: (err: unknown) => {
+        this.reviewing.set(null);
+        this.toast.error(messageForError(err, this.transloco));
       },
     });
   }

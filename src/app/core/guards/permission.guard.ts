@@ -12,7 +12,6 @@ import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
 import { AuthStore } from '../auth/auth.store';
 import { PermissionsStore } from '../authz/permissions.store';
-import { FeatureFlags } from '../features/feature-flags';
 import { OrgRole } from '../authz/permissions.models';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -23,7 +22,6 @@ import { ToastService } from '../../shared/toast/toast.service';
  */
 interface GuardDeps {
   auth: AuthStore;
-  flags: FeatureFlags;
   permissions: PermissionsStore;
   router: Router;
   toast: ToastService;
@@ -33,7 +31,6 @@ interface GuardDeps {
 function resolveDeps(): GuardDeps {
   return {
     auth: inject(AuthStore),
-    flags: inject(FeatureFlags),
     permissions: inject(PermissionsStore),
     router: inject(Router),
     toast: inject(ToastService),
@@ -166,8 +163,7 @@ export function requireOrgRole(role: OrgRole): CanActivateFn {
  * Landing redirect for the project Settings index. The fixed `general` default is
  * gated by `PROJECT_UPDATE`, so a member who can only reach (say) Members would be
  * bounced with a "no access" toast just for entering Settings. Instead, redirect to the
- * FIRST settings sub-page the caller can actually access — skipping the pages of a
- * disabled feature — and fall back to the project overview when none apply. No toast:
+ * FIRST settings sub-page the caller can actually access, and fall back to the project overview when none apply. No toast:
  * this is a silent landing choice, not a denial.
  */
 export const projectSettingsLanding: CanActivateFn = async (route: ActivatedRouteSnapshot) => {
@@ -178,8 +174,8 @@ export const projectSettingsLanding: CanActivateFn = async (route: ActivatedRout
   const can = (p: string) => deps.permissions.isOrgOwnerOrAdmin() || deps.permissions.has(p);
   const target =
     (can('PROJECT_UPDATE') && 'general') ||
-    (deps.flags.isEnabled('members') && can('MEMBER_READ') && 'members') ||
-    (deps.flags.isEnabled('customRoles') && can('ROLE_READ') && 'roles') ||
+    (can('MEMBER_READ') && 'members') ||
+    (can('ROLE_READ') && 'roles') ||
     (can('PROJECT_DELETE') && 'danger') ||
     null;
   return projectId && target

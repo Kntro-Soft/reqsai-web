@@ -1,5 +1,4 @@
 import { OrgRole } from '../../core/authz/permissions.models';
-import { FeatureKey } from '../../core/features/feature-flags';
 import {
   ACCOUNT_NAV,
   NavAccess,
@@ -9,114 +8,69 @@ import {
   visibleNavSegs,
 } from './shell-nav';
 
-/** A caller with `role`, the given project permissions and the given features switched on. */
-function access(
-  role: OrgRole,
-  features: readonly FeatureKey[] = [],
-  permissions: readonly string[] = [],
-): NavAccess {
+/** A caller with `role` and the given project permissions. */
+function access(role: OrgRole, permissions: readonly string[] = []): NavAccess {
   const ownerOrAdmin = role === 'OWNER' || role === 'ADMIN';
   return {
     isOrgOwner: () => role === 'OWNER',
     isOrgOwnerOrAdmin: () => ownerOrAdmin,
     has: (p) => ownerOrAdmin || permissions.includes(p),
-    isEnabled: (f) => features.includes(f),
   };
 }
-
-const ALL_FEATURES: readonly FeatureKey[] = [
-  'billing',
-  'usage',
-  'integrations',
-  'members',
-  'customRoles',
-  'notifications',
-  'tokens',
-];
 
 const segs = (list: NavSeg[]) => list.map((s) => s.seg);
 
 describe('visibleNavSegs', () => {
-  it('hides an item whose feature is off, even for the owner', () => {
-    const items: NavSeg[] = [{ seg: 'general' }, { seg: 'billing', feature: 'billing' }];
-    expect(segs(visibleNavSegs(items, access('OWNER')))).toEqual(['general']);
+  it('applies the role gate', () => {
+    const items: NavSeg[] = [{ seg: 'general' }, { seg: 'billing', role: 'OWNER' }];
+    expect(segs(visibleNavSegs(items, access('ADMIN')))).toEqual(['general']);
+    expect(segs(visibleNavSegs(items, access('OWNER')))).toEqual(['general', 'billing']);
   });
 
-  it('shows an item whose feature is on', () => {
-    const items: NavSeg[] = [{ seg: 'general' }, { seg: 'billing', feature: 'billing' }];
-    expect(segs(visibleNavSegs(items, access('OWNER', ['billing'])))).toEqual([
+  it('applies the permission gate', () => {
+    const items: NavSeg[] = [{ seg: 'members', permission: 'MEMBER_READ' }];
+    expect(visibleNavSegs(items, access('MEMBER'))).toEqual([]);
+    expect(segs(visibleNavSegs(items, access('MEMBER', ['MEMBER_READ'])))).toEqual(['members']);
+  });
+
+  it('shows the owner the full org settings nav', () => {
+    expect(segs(visibleNavSegs(ORG_SETTINGS_NAV, access('OWNER')))).toEqual([
       'general',
-      'billing',
-    ]);
-  });
-
-  it('still applies the role gate when the feature is on', () => {
-    const items: NavSeg[] = [{ seg: 'billing', role: 'OWNER', feature: 'billing' }];
-    expect(visibleNavSegs(items, access('ADMIN', ['billing']))).toEqual([]);
-  });
-
-  it('still applies the permission gate when the feature is on', () => {
-    const items: NavSeg[] = [{ seg: 'members', permission: 'MEMBER_READ', feature: 'members' }];
-    expect(visibleNavSegs(items, access('MEMBER', ['members']))).toEqual([]);
-    expect(segs(visibleNavSegs(items, access('MEMBER', ['members'], ['MEMBER_READ'])))).toEqual([
       'members',
+      'billing',
+      'integrations',
+      'usage',
     ]);
   });
 
-  describe('with the MVP flags (everything off)', () => {
-    it('leaves only General in the org settings nav', () => {
-      expect(segs(visibleNavSegs(ORG_SETTINGS_NAV, access('OWNER')))).toEqual(['general']);
-    });
-
-    it('leaves an admin no org settings page at all', () => {
-      expect(visibleNavSegs(ORG_SETTINGS_NAV, access('ADMIN'))).toEqual([]);
-    });
-
-    it('leaves General and Danger in the project settings nav', () => {
-      expect(segs(visibleNavSegs(PROJECT_SETTINGS_NAV, access('OWNER')))).toEqual([
-        'general',
-        'danger',
-      ]);
-    });
-
-    it('drops the "soon" notifications and tokens entries from the account nav', () => {
-      expect(segs(visibleNavSegs(ACCOUNT_NAV, access('MEMBER')))).toEqual([
-        'profile',
-        'security',
-        'appearance',
-      ]);
-    });
+  it('shows an admin the members and integrations settings only', () => {
+    expect(segs(visibleNavSegs(ORG_SETTINGS_NAV, access('ADMIN')))).toEqual([
+      'members',
+      'integrations',
+    ]);
   });
 
-  describe('with every flag on', () => {
-    it('restores the full org settings nav', () => {
-      expect(segs(visibleNavSegs(ORG_SETTINGS_NAV, access('OWNER', ALL_FEATURES)))).toEqual([
-        'general',
-        'members',
-        'billing',
-        'integrations',
-        'usage',
-      ]);
-    });
+  it('shows the owner the full project settings nav', () => {
+    expect(segs(visibleNavSegs(PROJECT_SETTINGS_NAV, access('OWNER')))).toEqual([
+      'general',
+      'roles',
+      'members',
+      'integrations',
+      'danger',
+    ]);
+  });
 
-    it('restores the full project settings nav', () => {
-      expect(segs(visibleNavSegs(PROJECT_SETTINGS_NAV, access('OWNER', ALL_FEATURES)))).toEqual([
-        'general',
-        'roles',
-        'members',
-        'integrations',
-        'danger',
-      ]);
-    });
+  it('shows a member only the project settings their permissions allow', () => {
+    expect(
+      segs(visibleNavSegs(PROJECT_SETTINGS_NAV, access('MEMBER', ['MEMBER_READ', 'ROLE_READ']))),
+    ).toEqual(['roles', 'members']);
+  });
 
-    it('restores the account placeholders', () => {
-      expect(segs(visibleNavSegs(ACCOUNT_NAV, access('MEMBER', ALL_FEATURES)))).toEqual([
-        'profile',
-        'security',
-        'appearance',
-        'notifications',
-        'tokens',
-      ]);
-    });
+  it('lists the account pages', () => {
+    expect(segs(visibleNavSegs(ACCOUNT_NAV, access('MEMBER')))).toEqual([
+      'profile',
+      'security',
+      'appearance',
+    ]);
   });
 });
