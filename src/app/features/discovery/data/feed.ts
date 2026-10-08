@@ -347,35 +347,6 @@ function buildChronologicalItems(
     .map((entry) => entry.item);
 }
 
-// ---- Speaker display (diarization) ----
-
-/** A speaker's stable display assignment: a 1-based number and a feed side. */
-export interface SpeakerDisplay {
-  /** 1-based index in first-seen order (drives the "Speaker N" label). */
-  index: number;
-  /** Which side of the feed this speaker's bubbles sit on. */
-  side: 'left' | 'right';
-}
-
-/**
- * Assigns each distinct non-empty `speakerLabel` a stable display: numbered in
- * first-seen order, alternating side (1st→left, 2nd→right, 3rd→left, …). Returns
- * an empty map when no segment carries a usable label (diarization off), so the
- * feed keeps its single-column left layout rather than faking alternation.
- */
-export function assignSpeakerSides(
-  segments: readonly { speakerLabel: string | null }[],
-): Map<string, SpeakerDisplay> {
-  const map = new Map<string, SpeakerDisplay>();
-  for (const segment of segments) {
-    const label = segment.speakerLabel?.trim();
-    if (!label || map.has(label)) continue;
-    const index = map.size + 1;
-    map.set(label, { index, side: index % 2 === 1 ? 'left' : 'right' });
-  }
-  return map;
-}
-
 // ---- Priority ordering (side-panel sort) ----
 
 /** Sort weight for a story priority — higher is more urgent, unknown values sink. */
