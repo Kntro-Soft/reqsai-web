@@ -29,6 +29,7 @@ class FakeRecordingService {
   readonly status = signal<SessionStatus | null>('RECORDING');
   readonly busy = signal(false);
   readonly elapsedMs = signal(0);
+  readonly analyzing = signal(false);
 }
 
 class FakeAudioRecorderService {
@@ -117,6 +118,42 @@ describe('SessionBar', () => {
 
     expect(el.querySelector('[data-testid="session-bar-resume"]')).not.toBeNull();
     expect(el.querySelector('[data-testid="session-bar-pause"]')).toBeNull();
+  });
+
+  describe('when the AI analyzes (US46)', () => {
+    it('shows the automatic mode by default and asks the page to toggle it', () => {
+      const { fixture, el } = render();
+      const toggled = vi.fn();
+      fixture.componentInstance.toggleMode.subscribe(toggled);
+      const mode = el.querySelector<HTMLButtonElement>('[data-testid="session-bar-ai-mode"]')!;
+
+      expect(mode.getAttribute('data-mode')).toBe('AUTO');
+      mode.click();
+      expect(toggled).toHaveBeenCalledOnce();
+    });
+
+    it('reflects the manual mode of the live session', () => {
+      const { fixture, el } = render();
+      recording.session.set({ ...session('RECORDING'), suggestionMode: 'MANUAL' });
+      fixture.detectChanges();
+
+      expect(
+        el.querySelector('[data-testid="session-bar-ai-mode"]')!.getAttribute('data-mode'),
+      ).toBe('MANUAL');
+    });
+
+    it('asks for an analysis now, and disables the button while one runs', () => {
+      const { fixture, el } = render();
+      const analyze = vi.fn();
+      fixture.componentInstance.analyzeNow.subscribe(analyze);
+      const button = el.querySelector<HTMLButtonElement>('[data-testid="session-bar-analyze"]')!;
+
+      button.click();
+      expect(analyze).toHaveBeenCalledOnce();
+      recording.analyzing.set(true);
+      fixture.detectChanges();
+      expect(button.disabled).toBe(true);
+    });
   });
 
   describe('virtual meeting source', () => {

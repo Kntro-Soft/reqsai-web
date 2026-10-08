@@ -7,6 +7,7 @@ import {
   lucidePause,
   lucidePlay,
   lucideScreenShare,
+  lucideSparkles,
   lucideSquare,
 } from '@ng-icons/lucide';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
@@ -39,6 +40,7 @@ export function formatElapsed(ms: number): string {
   viewProviders: [
     provideIcons({
       lucideCircle,
+      lucideSparkles,
       lucideMonitorSpeaker,
       lucidePause,
       lucidePlay,
@@ -172,6 +174,36 @@ export function formatElapsed(ms: number): string {
             <span class="hidden sm:inline">{{ 'discovery.bar.resume' | transloco }}</span>
           </button>
         }
+        <!-- When the AI analyzes (US46): on its own, or only when asked. -->
+        <button
+          hlmBtn
+          size="sm"
+          variant="ghost"
+          type="button"
+          class="hidden px-2 text-xs sm:inline-flex"
+          (click)="toggleMode.emit()"
+          [attr.aria-pressed]="manual()"
+          [title]="'discovery.bar.modeHint' | transloco"
+          data-testid="session-bar-ai-mode"
+          [attr.data-mode]="manual() ? 'MANUAL' : 'AUTO'"
+        >
+          {{ (manual() ? 'discovery.bar.modeManual' : 'discovery.bar.modeAuto') | transloco }}
+        </button>
+        <button
+          hlmBtn
+          size="sm"
+          variant="outline"
+          type="button"
+          class="gap-0 px-2 sm:gap-2 sm:px-3"
+          [disabled]="recording.analyzing()"
+          (click)="analyzeNow.emit()"
+          [attr.aria-label]="'discovery.bar.analyze' | transloco"
+          [title]="'discovery.bar.analyze' | transloco"
+          data-testid="session-bar-analyze"
+        >
+          <hlm-icon name="lucideSparkles" size="14px" class="text-ai" />
+          <span class="hidden sm:inline">{{ 'discovery.bar.analyze' | transloco }}</span>
+        </button>
         <button
           hlmBtn
           size="sm"
@@ -198,6 +230,10 @@ export class SessionBar {
   readonly pauseSession = output<void>();
   readonly resumeSession = output<void>();
   readonly stopSession = output<void>();
+  readonly toggleMode = output<void>();
+  readonly analyzeNow = output<void>();
+
+  protected readonly manual = computed(() => this.recording.session()?.suggestionMode === 'MANUAL');
 
   protected readonly elapsed = computed(() => formatElapsed(this.recording.elapsedMs()));
 

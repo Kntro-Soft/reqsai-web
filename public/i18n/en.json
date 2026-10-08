@@ -9,7 +9,8 @@
     "back": "Back",
     "remove": "Remove",
     "optional": "Optional",
-    "required": "Required"
+    "required": "Required",
+    "close": "Close"
   },
   "toast": {
     "dismiss": "Dismiss",
@@ -70,7 +71,8 @@
     "history": "Session history",
     "glossary": "Glossary",
     "constraints": "Constraints",
-    "documents": "Client documents"
+    "documents": "Client documents",
+    "share": "Shared stories"
   },
   "nav": {
     "projects": "Projects",
@@ -1241,7 +1243,15 @@
       "meetingAudio": "Recording microphone + meeting audio",
       "meetingAudioLost": "Meeting audio is not being captured. Share the meeting tab again.",
       "reshare": "Share again",
-      "meetingAudioShort": "Meeting audio"
+      "meetingAudioShort": "Meeting audio",
+      "modeAuto": "AI: automatic",
+      "modeManual": "AI: manual",
+      "modeHint": "Choose when the AI analyzes: automatic (on its own) or manual (only on “Analyze now”)",
+      "modeAutoToast": "The AI analyzes the conversation on its own again.",
+      "modeManualToast": "Manual mode: the AI only analyzes when you press “Analyze now”.",
+      "analyze": "Analyze now",
+      "analyzed": "The AI analyzed the conversation: {{count}} new suggestions to review.",
+      "analyzedNothing": "The AI analyzed the conversation: no new suggestions."
     },
     "rec": {
       "micDenied": "Microphone permission denied. Enable it in your browser settings.",
@@ -1396,7 +1406,9 @@
       "processing": "Processing the session",
       "processingHint": "The AI is generating the final stories. This can take a few minutes.",
       "failed": "The session could not be processed",
-      "failedHint": "Check the session history or try again later."
+      "failedHint": "Check the session history or try again later.",
+      "manual": "Manual mode",
+      "manualHint": "The AI stays quiet: it analyzes when you press “Analyze now”."
     }
   },
   "integrations": {
@@ -1610,6 +1622,62 @@
       "503": "The service is temporarily unavailable. Please try again shortly."
     },
     "network": "You appear to be offline. Check your connection and try again.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "SHARE_LINK_UNAVAILABLE": "That link is no longer available."
+  },
+  "share": {
+    "action": "Share with client",
+    "title": "Share stories with the client",
+    "description": "Create a link so your client can read the stories without an account. They can approve them or leave comments; your team still decides each story's status.",
+    "validFor": "Valid for",
+    "days": "{{count}} days",
+    "create": "Create link",
+    "createdHint": "Copy the link now: for security it is not shown again.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "existing": "Created links",
+    "none": "You have not shared this project yet.",
+    "createdAt": "Created",
+    "expires": "Expires",
+    "revokedAt": "Revoked",
+    "expiredAt": "Expired",
+    "state": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    },
+    "revoke": "Revoke",
+    "feedback": {
+      "title": "Client feedback",
+      "hint": "What the client said through the shared link. It does not change the story's status.",
+      "empty": "The client has not approved or commented on this story yet. Share it from the backlog.",
+      "approved": "approved",
+      "commented": "commented"
+    },
+    "public": {
+      "eyebrow": "Story review",
+      "intro": "Your team shared these user stories for you to review. Approve the ones that are right or leave a comment on those that need changes.",
+      "until": "This link is available until",
+      "yourName": "Your name",
+      "namePlaceholder": "e.g. María Quispe",
+      "nameHint": "Shown next to your approvals and comments.",
+      "nameRequired": "Type your name before approving or commenting.",
+      "empty": "There are no stories to review yet.",
+      "asA": "As a",
+      "iWant": "I want",
+      "soThat": "so that",
+      "criteria": "Acceptance criteria",
+      "given": "Given",
+      "when": "when",
+      "then": "then",
+      "comment": "Comment",
+      "commentPlaceholder": "What would you change or what is missing?",
+      "send": "Send",
+      "approve": "Approve",
+      "approvedByYou": "You approved this story",
+      "unavailableTitle": "This link is no longer available",
+      "unavailableBody": "It may have expired or been revoked by the team. Ask whoever shared it for a new one.",
+      "footer": "Shared with ReqsAI"
+    }
   }
 }

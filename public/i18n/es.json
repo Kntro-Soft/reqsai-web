@@ -9,7 +9,8 @@
     "back": "Volver",
     "remove": "Quitar",
     "optional": "Opcional",
-    "required": "Obligatorio"
+    "required": "Obligatorio",
+    "close": "Cerrar"
   },
   "toast": {
     "dismiss": "Descartar",
@@ -70,7 +71,8 @@
     "history": "Historial de sesiones",
     "glossary": "Glosario",
     "constraints": "Restricciones",
-    "documents": "Documentos del cliente"
+    "documents": "Documentos del cliente",
+    "share": "Historias compartidas"
   },
   "nav": {
     "projects": "Proyectos",
@@ -1241,7 +1243,15 @@
       "meetingAudio": "Grabando micrófono + audio de la reunión",
       "meetingAudioLost": "No se está capturando el audio de la reunión. Vuelve a compartir la pestaña de la reunión.",
       "reshare": "Compartir de nuevo",
-      "meetingAudioShort": "Audio de la reunión"
+      "meetingAudioShort": "Audio de la reunión",
+      "modeAuto": "IA: automática",
+      "modeManual": "IA: manual",
+      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
+      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
+      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
+      "analyze": "Analizar ahora",
+      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
+      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas."
     },
     "rec": {
       "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",
@@ -1396,7 +1406,9 @@
       "processing": "Procesando la sesión",
       "processingHint": "La IA está generando las historias finales. Puede tardar unos minutos.",
       "failed": "No se pudo procesar la sesión",
-      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde."
+      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde.",
+      "manual": "Modo manual",
+      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora»."
     }
   },
   "integrations": {
@@ -1610,6 +1622,62 @@
       "503": "El servicio no está disponible temporalmente. Inténtalo de nuevo en breve."
     },
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
-    "generic": "Algo salió mal. Inténtalo de nuevo."
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
+  },
+  "share": {
+    "action": "Compartir con el cliente",
+    "title": "Compartir historias con el cliente",
+    "description": "Crea un enlace para que tu cliente lea las historias sin crear una cuenta. Podrá aprobarlas o dejar comentarios; tu equipo sigue decidiendo el estado de cada historia.",
+    "validFor": "Válido por",
+    "days": "{{count}} días",
+    "create": "Crear enlace",
+    "createdHint": "Copia el enlace ahora: por seguridad no se vuelve a mostrar.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "existing": "Enlaces creados",
+    "none": "Aún no compartiste este proyecto.",
+    "createdAt": "Creado el",
+    "expires": "Vence el",
+    "revokedAt": "Revocado el",
+    "expiredAt": "Venció el",
+    "state": {
+      "active": "Activo",
+      "revoked": "Revocado",
+      "expired": "Vencido"
+    },
+    "revoke": "Revocar",
+    "feedback": {
+      "title": "Comentarios del cliente",
+      "hint": "Lo que el cliente dijo desde el enlace compartido. No cambia el estado de la historia.",
+      "empty": "El cliente aún no aprobó ni comentó esta historia. Compártela desde el backlog.",
+      "approved": "aprobó",
+      "commented": "comentó"
+    },
+    "public": {
+      "eyebrow": "Revisión de historias",
+      "intro": "Tu equipo te comparte estas historias de usuario para que las revises. Aprueba las que estén bien o deja un comentario en las que haya que ajustar.",
+      "until": "Este enlace está disponible hasta el",
+      "yourName": "Tu nombre",
+      "namePlaceholder": "Ej.: María Quispe",
+      "nameHint": "Se mostrará junto a tus aprobaciones y comentarios.",
+      "nameRequired": "Escribe tu nombre antes de aprobar o comentar.",
+      "empty": "Aún no hay historias para revisar.",
+      "asA": "Como",
+      "iWant": "quiero",
+      "soThat": "para",
+      "criteria": "Criterios de aceptación",
+      "given": "Dado",
+      "when": "cuando",
+      "then": "entonces",
+      "comment": "Comentar",
+      "commentPlaceholder": "¿Qué cambiarías o qué falta?",
+      "send": "Enviar",
+      "approve": "Aprobar",
+      "approvedByYou": "Aprobaste esta historia",
+      "unavailableTitle": "Este enlace ya no está disponible",
+      "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
+      "footer": "Compartido con ReqsAI"
+    }
   }
 }

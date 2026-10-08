@@ -32,6 +32,17 @@ export const routes: Routes = [
       ),
   },
 
+  // Share link (US50): chrome-less and public, so a client without an account reviews the
+  // stories the team shared. The token in the URL is the credential.
+  {
+    path: 'share/:token',
+    title: 'titles.share',
+    loadComponent: () =>
+      import('./features/discovery/pages/shared-backlog/shared-backlog').then(
+        (m) => m.SharedBacklog,
+      ),
+  },
+
   {
     path: 'terms',
     title: 'titles.terms',
