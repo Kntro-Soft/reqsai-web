@@ -11,6 +11,22 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Fixed (Members got a "no access" toast on the backlog — `bugfix/integrations-forbidden-toast`)
+
+- **A member without Jira access saw "No tienes permisos suficientes." every time they opened the
+  backlog.**
+  - Since the flags were removed, the backlog always looks up the project's Jira mapping.
+  - That endpoint needs `INTEGRATION_READ`, which the member READ floor does not grant, so the
+    403 hit the global toast.
+  - The lookup now opts out of that toast, like the active-jobs lookup already did. The Jira buttons
+    simply stay disabled.
+- **The story detail no longer offers buttons the member cannot use.** "Enviar a Jira" now needs
+  `INTEGRATION_SYNC` and "Eliminar" needs `STORY_DELETE`, as in the backlog.
+- **Covered by tests:**
+  - `e2e/product.spec.ts`: the teammate with the "Product Owner" role gets the 403 on the lookup, no
+    toast, and neither button;
+  - unit tests: both eager lookups carry `SILENCE_FORBIDDEN_TOAST`.
+
 ### Fixed (Found by the full-product E2E — `feature/e2e-full-product`)
 
 - **The user menu's Upgrade button did nothing.** It was a placeholder from the MVP build. It now

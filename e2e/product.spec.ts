@@ -153,8 +153,23 @@ test.describe.serial('Full product', () => {
     const provenance = page.getByTestId('story-provenance');
     await expect(provenance).toContainText('Aprobada');
     await expect(page.getByTestId('story-review-approved')).toHaveCount(0);
+    // Without STORY_DELETE or INTEGRATION_SYNC, the detail offers neither delete nor push.
+    await expect(page.getByTestId('story-delete')).toHaveCount(0);
+    await expect(page.getByTestId('story-push-jira')).toHaveCount(0);
     await page.getByTestId('story-review-draft').click();
     await expect(provenance).toContainText('Borrador');
+
+    // The backlog looks up the project's Jira mapping, which a member without Jira access may
+    // not read: that 403 is expected and must not raise a "no access" toast.
+    const jiraLookup = page.waitForResponse((r) => r.url().endsWith('/target'));
+    await page.goto(`/projects/${owner.projectId}/stories`);
+    expect((await jiraLookup).status()).toBe(403);
+    await expect(
+      page.getByRole('main').getByText('Reservar mesa por Internet').first(),
+    ).toBeVisible();
+    // Toasts close on their own after 4 s, so count once instead of a retrying assertion.
+    await page.waitForTimeout(1000);
+    expect(await page.getByTestId('toast').count()).toBe(0);
   });
 
   test('billing upgrades the organization to Pro and usage reflects it', async ({ page }) => {

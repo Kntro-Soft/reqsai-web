@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SILENCE_FORBIDDEN_TOAST } from '../../../core/interceptors/error.interceptor';
 import { IntegrationsApiService, buildIssueTypesParams } from './integrations-api.service';
 import {
   defaultImportSelection,
@@ -159,5 +160,35 @@ describe('IntegrationsApiService.pushAllStories', () => {
     const req = http.expectOne(url);
     expect(req.request.body).toEqual({ storyIds: ['s1', 's2'] });
     req.flush({});
+  });
+});
+
+describe('IntegrationsApiService eager lookups', () => {
+  let api: IntegrationsApiService;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [IntegrationsApiService, provideHttpClient(), provideHttpClientTesting()],
+    });
+    api = TestBed.inject(IntegrationsApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  // The backlog runs these for every member, and a member without Jira access gets a 403.
+  it('keeps the project target lookup out of the global "no access" toast', () => {
+    api.getProjectTarget('proj-1').subscribe({ error: () => undefined });
+    const req = http.expectOne('/api/projects/proj-1/integration/jira/target');
+    expect(req.request.context.get(SILENCE_FORBIDDEN_TOAST)).toBe(true);
+    req.flush(null, { status: 403, statusText: 'Forbidden' });
+  });
+
+  it('keeps the active jobs lookup out of the global "no access" toast', () => {
+    api.getIntegrationJobs('proj-1', true).subscribe({ error: () => undefined });
+    const req = http.expectOne((r) => r.url === '/api/projects/proj-1/integration/jira/jobs');
+    expect(req.request.context.get(SILENCE_FORBIDDEN_TOAST)).toBe(true);
+    req.flush(null, { status: 403, statusText: 'Forbidden' });
   });
 });
