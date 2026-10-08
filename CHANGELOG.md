@@ -11,6 +11,31 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Fixed (Found by the full-product E2E — `feature/e2e-full-product`)
+
+- **The user menu's Upgrade button did nothing.** It was a placeholder from the MVP build. It now
+  opens Settings → Billing and only shows for the org owner, the only one who can change the plan.
+- **A user without an organization could not sign out.** Onboarding ("Crea tu organización") had no
+  sign-out control. Its header now has one while the user has no organization.
+
+### Added (End-to-end suite for the whole product — `feature/e2e-full-product`)
+
+- **New `e2e/product.spec.ts`** runs one owner and one invited teammate through the product:
+  - glossary and constraints;
+  - a manual story with criteria that is approved, rejected and sent back to draft, and survives a
+    reload;
+  - an email invitation accepted from the Mailpit link;
+  - a "Product Owner" role with `STORY_APPROVE` assigned to the teammate, who can then review;
+  - the Upgrade button, an upgrade to Pro and the usage page;
+  - Jira: both connect options, the project without a mapping, and the push refusal;
+  - the transfer-ownership card.
+- **`e2e/discovery.spec.ts` now records a real meeting.** Chromium plays `e2e/fixtures/meeting-es.wav`
+  as the microphone, and the test checks the live transcript and the AI suggestion. The accepted
+  suggestion becomes a draft story in the backlog.
+- **Updated the outdated auth and workspace specs** to the current UI: terms read to the end, project
+  creation by name only, and the split org switcher. The whole suite (19 tests) passes against the
+  local stack.
+
 ### Changed (Full product, no feature flags — `feature/remove-feature-flags`)
 
 - **The build now ships the whole product.** The MVP release hid every non-MVP area behind

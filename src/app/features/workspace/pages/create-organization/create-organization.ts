@@ -61,88 +61,89 @@ function detectMeetingLanguage(): string {
 
       <app-create-page-header
         [backHref]="authStore.organizationId() ? '/projects' : null"
+        [showSignOut]="!authStore.organizationId()"
         [logoSize]="28"
       />
 
       <main class="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <div class="relative z-1 w-full max-w-md">
-        <div class="mb-6 flex flex-col items-center gap-3 text-center">
-          <span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-            <hlm-icon name="lucideBuilding2" size="24px" />
-          </span>
-          <div>
-            <h1 class="text-2xl font-bold tracking-tight">{{ 'createOrg.title' | transloco }}</h1>
-            <p class="mt-1.5 text-sm text-muted-foreground">
-              {{ 'createOrg.subtitle' | transloco }}
-            </p>
+          <div class="mb-6 flex flex-col items-center gap-3 text-center">
+            <span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <hlm-icon name="lucideBuilding2" size="24px" />
+            </span>
+            <div>
+              <h1 class="text-2xl font-bold tracking-tight">{{ 'createOrg.title' | transloco }}</h1>
+              <p class="mt-1.5 text-sm text-muted-foreground">
+                {{ 'createOrg.subtitle' | transloco }}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div hlmCard>
-          <div hlmCardContent class="pt-6">
-            <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
-              <div class="flex flex-col gap-2">
-                <label hlmLabel for="name">{{ 'createOrg.name' | transloco }}</label>
-                <input
-                  hlmInput
-                  id="name"
-                  formControlName="name"
-                  placeholder="Acme Inc."
-                  autocomplete="organization"
-                />
-              </div>
-
-              <button
-                type="button"
-                (click)="showAdvanced.set(!showAdvanced())"
-                class="flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
-              >
-                <hlm-icon
-                  name="lucideChevronDown"
-                  size="15px"
-                  class="transition-transform"
-                  [class.rotate-180]="showAdvanced()"
-                />
-                {{ 'createOrg.advanced' | transloco }}
-              </button>
-
-              @if (showAdvanced()) {
+          <div hlmCard>
+            <div hlmCardContent class="pt-6">
+              <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
                 <div class="flex flex-col gap-2">
-                  <label hlmLabel for="meetingLanguage">
-                    {{ 'createOrg.language' | transloco }}
-                  </label>
+                  <label hlmLabel for="name">{{ 'createOrg.name' | transloco }}</label>
                   <input
                     hlmInput
-                    id="meetingLanguage"
-                    formControlName="meetingLanguage"
-                    placeholder="es-PE"
+                    id="name"
+                    formControlName="name"
+                    placeholder="Acme Inc."
+                    autocomplete="organization"
                   />
-                  <p class="text-xs text-muted-foreground">
-                    {{ 'createOrg.languageHint' | transloco }}
-                  </p>
                 </div>
-              }
 
-              @if (errorMessage()) {
-                <p class="text-sm text-destructive" data-testid="form-error">
-                  {{ errorMessage() }}
-                </p>
-              }
+                <button
+                  type="button"
+                  (click)="showAdvanced.set(!showAdvanced())"
+                  class="flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <hlm-icon
+                    name="lucideChevronDown"
+                    size="15px"
+                    class="transition-transform"
+                    [class.rotate-180]="showAdvanced()"
+                  />
+                  {{ 'createOrg.advanced' | transloco }}
+                </button>
 
-              <button
-                hlmBtn
-                type="submit"
-                [disabled]="form.invalid || loading()"
-                class="mt-2 w-full"
-              >
-                @if (loading()) {
-                  <hlm-spinner class="h-4 w-4" />
+                @if (showAdvanced()) {
+                  <div class="flex flex-col gap-2">
+                    <label hlmLabel for="meetingLanguage">
+                      {{ 'createOrg.language' | transloco }}
+                    </label>
+                    <input
+                      hlmInput
+                      id="meetingLanguage"
+                      formControlName="meetingLanguage"
+                      placeholder="es-PE"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                      {{ 'createOrg.languageHint' | transloco }}
+                    </p>
+                  </div>
                 }
-                {{ 'createOrg.submit' | transloco }}
-              </button>
-            </form>
+
+                @if (errorMessage()) {
+                  <p class="text-sm text-destructive" data-testid="form-error">
+                    {{ errorMessage() }}
+                  </p>
+                }
+
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="form.invalid || loading()"
+                  class="mt-2 w-full"
+                >
+                  @if (loading()) {
+                    <hlm-spinner class="h-4 w-4" />
+                  }
+                  {{ 'createOrg.submit' | transloco }}
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
         </div>
       </main>
     </div>
