@@ -41,7 +41,11 @@ Los tests e2e (`bunx playwright test`) corren contra el stack local:
 `e2e/product.spec.ts` recorre el producto completo: glosario, restricciones, historias y su
 aprobación, invitaciones, roles, facturación, uso y Jira. `e2e/discovery.spec.ts` graba una reunión con
 un micrófono falso (`e2e/fixtures/meeting-es.wav`) y usa los proveedores reales de voz a texto e IA
-que tenga configurados el API.
+que tenga configurados el API. `e2e/billing-stripe.spec.ts` paga Pro en Stripe Checkout (modo prueba,
+tarjeta 4242) y solo corre con `STRIPE_LOCAL_ENV=<archivo .env>` apuntando a la configuración con que
+arrancó el API local (`BILLING_PAYMENT_PROVIDER=stripe`, `STRIPE_API_KEY=sk_test_…`, secreto del webhook
+y price ids). Como Stripe no llega a `localhost`, el test reenvía el evento real firmado, igual que
+`stripe listen`.
 
 ## Environments
 
