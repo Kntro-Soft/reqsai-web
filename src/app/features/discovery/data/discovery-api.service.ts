@@ -7,12 +7,14 @@ import {
   AcceptanceCriterionResponse,
   BatchDeleteStoriesRequest,
   BatchDeleteStoriesResult,
+  ChangeStoryStatusRequest,
   CreateDiscoverySessionRequest,
   CreateUserStoryRequest,
   DiscoverySessionResponse,
   PageResponse,
   ProcessTranscriptResponse,
   StoryListFilters,
+  StoryReviewStatus,
   SuggestionResponse,
   SuggestionStatus,
   TranscriptResponse,
@@ -178,6 +180,22 @@ export class DiscoveryApiService {
     return this.http.put<UserStoryResponse>(
       `/api/projects/${projectId}/stories/${storyId}`,
       request,
+    );
+  }
+
+  /**
+   * Records the review decision on a story (PATCH /projects/{projectId}/stories/{storyId}/status):
+   * approve, reject or send it back to draft. Needs STORY_APPROVE; a merged or exported story
+   * answers 422 INVALID_STORY_STATUS.
+   */
+  changeStoryStatus(
+    projectId: string,
+    storyId: string,
+    status: StoryReviewStatus,
+  ): Observable<UserStoryResponse> {
+    return this.http.patch<UserStoryResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/status`,
+      { status } satisfies ChangeStoryStatusRequest,
     );
   }
 
