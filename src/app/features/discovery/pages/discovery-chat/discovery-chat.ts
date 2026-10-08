@@ -42,6 +42,7 @@ import {
   lucideUsers,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -50,7 +51,6 @@ import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { AssistantChatStore } from '../../data/assistant-chat.store';
 import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
-import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { DecisionEntry } from '../../data/feed';
 import { SessionSpeakersStore } from '../../data/session-speakers.store';
