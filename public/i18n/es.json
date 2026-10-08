@@ -1118,9 +1118,18 @@
       "viewing": "{{count}} viendo",
       "more": "{{count}} más"
     },
+    "chat": {
+      "placeholder": "Pregunta o pide una historia…",
+      "noPermission": "No tienes permiso para escribir a ReqsAI en este proyecto.",
+      "inputAria": "Mensaje para ReqsAI",
+      "send": "Enviar",
+      "separator": "Chat con ReqsAI",
+      "you": "Tú",
+      "thinking": "ReqsAI está pensando…",
+      "accepted": "Aceptada",
+      "dismissed": "Descartada"
+    },
     "composer": {
-      "placeholder": "Escribe a discovery…",
-      "comingSoon": "La entrada de texto llegará pronto.",
       "record": "Iniciar grabación",
       "recordShort": "Grabar"
     },

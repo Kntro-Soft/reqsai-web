@@ -35,6 +35,7 @@ import {
   lucidePause,
   lucideRotateCw,
   lucideScreenShare,
+  lucideSendHorizontal,
   lucideSparkles,
   lucideTriangleAlert,
 } from '@ng-icons/lucide';
@@ -45,6 +46,9 @@ import { messageForError } from '../../../../core/errors/error-message';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-source';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
+import { AssistantChatStore } from '../../data/assistant-chat.store';
+import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { DecisionEntry, SpeakerDisplay } from '../../data/feed';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
@@ -58,6 +62,7 @@ import { SessionBar } from '../../components/session-bar/session-bar';
 import { AudioSourcePicker } from '../../components/audio-source-picker/audio-source-picker';
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
+import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -88,6 +93,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     AudioSourcePicker,
     ActiveParticipants,
     DecisionQueue,
+    SuggestionCard,
     SidePanel,
     Select,
     Modal,
@@ -113,10 +119,12 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucidePause,
       lucideRotateCw,
       lucideScreenShare,
+      lucideSendHorizontal,
       lucideSparkles,
       lucideTriangleAlert,
     }),
   ],
+  providers: [AssistantChatStore],
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   template: `
     <div class="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-4">
@@ -295,7 +303,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                   </div>
                 }
 
-                @if (store.blocks().length === 0) {
+                @if (store.blocks().length === 0 && !chat.hasMessages()) {
                   <div class="flex flex-1 flex-col items-center justify-center gap-3 text-center">
                     <span
                       class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-primary"
@@ -590,6 +598,144 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                     }
                   </div>
                 }
+
+                <!-- Assistant chat: what the analyst typed and ReqsAI's replies, after the
+                     sessions. A reply that raised suggestions shows them as review cards; a
+                     decided one collapses to a decision row. -->
+                @if (chat.hasMessages()) {
+                  <div class="flex flex-col gap-3" data-testid="assistant-chat">
+                    <div class="pointer-events-none sticky top-0 z-10 flex justify-center py-1.5">
+                      <span
+                        class="pointer-events-auto rounded-full border border-ai-border bg-card/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+                        >{{ 'discovery.chat.separator' | transloco }}</span
+                      >
+                    </div>
+                    @for (message of chat.messages(); track message.id) {
+                      @if (message.role === 'ANALYST') {
+                        <div
+                          class="flex max-w-[85%] flex-col items-end self-end"
+                          data-testid="chat-question"
+                        >
+                          <span class="mb-1 px-1 text-[11px] text-muted-foreground">
+                            {{ 'discovery.chat.you' | transloco }} ·
+                            <time [attr.datetime]="message.createdAt">{{
+                              message.createdAt | date: 'HH:mm'
+                            }}</time>
+                          </span>
+                          <div
+                            class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground"
+                          >
+                            <p class="text-sm leading-relaxed whitespace-pre-line">
+                              {{ message.content }}
+                            </p>
+                          </div>
+                        </div>
+                      } @else {
+                        <div
+                          class="flex w-full max-w-[85%] flex-col gap-2"
+                          data-testid="chat-answer"
+                        >
+                          <span
+                            class="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
+                          >
+                            <hlm-icon name="lucideSparkles" size="12px" class="text-ai" />
+                            <span class="font-medium">ReqsAI</span> ·
+                            <time [attr.datetime]="message.createdAt">{{
+                              message.createdAt | date: 'HH:mm'
+                            }}</time>
+                          </span>
+                          <div
+                            class="rounded-2xl rounded-tl-md border border-ai-border bg-ai-soft px-3.5 py-2"
+                          >
+                            <p
+                              class="text-sm leading-relaxed whitespace-pre-line"
+                              data-testid="chat-answer-text"
+                            >
+                              {{ message.content }}
+                            </p>
+                          </div>
+                          @for (suggestion of message.suggestions; track suggestion.id) {
+                            @if (suggestion.status === 'PENDING') {
+                              <app-suggestion-card
+                                data-testid="chat-suggestion"
+                                [suggestion]="suggestion"
+                                [targetStory]="chatTarget(suggestion)"
+                                [canDecide]="canDecide()"
+                                [busy]="store.deciding().includes(suggestion.id)"
+                                (accept)="acceptFromChat(suggestion, $event)"
+                                (dismiss)="dismissFromChat(suggestion)"
+                                (openTarget)="focusStory($event)"
+                              />
+                            } @else {
+                              @let chatAccepted = suggestion.status === 'ACCEPTED';
+                              <div
+                                class="flex items-start gap-2.5 rounded-xl px-3 py-2 text-sm"
+                                [class]="decisionClass(chatAccepted ? 'ACCEPTED' : 'DISMISSED')"
+                                data-testid="chat-decision"
+                                [attr.data-outcome]="suggestion.status"
+                              >
+                                <hlm-icon
+                                  [name]="chatAccepted ? 'lucideCircleCheck' : 'lucideCircleX'"
+                                  size="16px"
+                                  class="mt-0.5 shrink-0"
+                                  [class.text-verified]="chatAccepted"
+                                  aria-hidden="true"
+                                />
+                                <p class="min-w-0 flex-1 leading-snug">
+                                  <span
+                                    class="text-xs font-semibold"
+                                    [class.text-verified]="chatAccepted"
+                                    >{{
+                                      (chatAccepted
+                                        ? 'discovery.chat.accepted'
+                                        : 'discovery.chat.dismissed'
+                                      ) | transloco
+                                    }}</span
+                                  >
+                                  <span class="block" [class.line-through]="!chatAccepted">{{
+                                    suggestion.draftTitle ?? suggestion.question
+                                  }}</span>
+                                </p>
+                                @if (suggestion.resolvedStoryId; as storyId) {
+                                  <button
+                                    type="button"
+                                    (click)="focusStory(storyId)"
+                                    class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
+                                    data-testid="chat-go-to-story"
+                                  >
+                                    <hlm-icon name="lucideArrowUpRight" size="12px" />
+                                    <span class="hidden sm:inline">{{
+                                      'discovery.goToStory' | transloco
+                                    }}</span>
+                                  </button>
+                                }
+                              </div>
+                            }
+                          }
+                        </div>
+                      }
+                    }
+                    @if (chat.pendingQuestion(); as pending) {
+                      <div class="flex max-w-[85%] flex-col items-end self-end opacity-80">
+                        <div
+                          class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground"
+                        >
+                          <p class="text-sm leading-relaxed whitespace-pre-line">{{ pending }}</p>
+                        </div>
+                      </div>
+                      <div
+                        class="flex max-w-[85%] items-center gap-2.5 self-start rounded-2xl border border-ai-border bg-ai-soft px-3.5 py-2.5 text-sm"
+                        role="status"
+                        data-testid="chat-thinking"
+                      >
+                        <span class="ai-dots flex shrink-0 items-center gap-1" aria-hidden="true">
+                          <span></span><span></span><span></span>
+                        </span>
+                        {{ 'discovery.chat.thinking' | transloco }}
+                      </div>
+                    }
+                  </div>
+                }
               }
             }
             @if (!atBottom()) {
@@ -616,19 +762,38 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
         <!-- Composer: the source of the next recording and the record action. -->
         <div class="mt-3 flex items-center gap-2">
-          <div
-            class="relative hidden min-w-0 flex-1 sm:block"
-            [title]="'discovery.composer.comingSoon' | transloco"
-          >
+          <!-- Text to ReqsAI, live session or not: a question about the project is answered,
+               a requirement comes back as suggestions to review. -->
+          <form class="relative min-w-0 flex-1" (submit)="sendChat($event)">
             <input
               type="text"
-              disabled
-              [placeholder]="'discovery.composer.placeholder' | transloco"
-              [attr.aria-label]="'discovery.composer.comingSoon' | transloco"
-              class="h-11 w-full cursor-not-allowed rounded-full border border-border bg-secondary/40 px-4 text-sm text-muted-foreground outline-none"
+              [value]="chatDraft()"
+              (input)="chatDraft.set($any($event.target).value)"
+              [disabled]="!canChat() || chat.sending()"
+              [attr.maxlength]="chatMax"
+              [placeholder]="
+                (canChat() ? 'discovery.chat.placeholder' : 'discovery.chat.noPermission')
+                  | transloco
+              "
+              [attr.aria-label]="'discovery.chat.inputAria' | transloco"
+              class="h-11 w-full rounded-full border border-input bg-background pr-12 pl-4 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="composer-input"
             />
-          </div>
+            <button
+              type="submit"
+              [disabled]="!canSendChat()"
+              [attr.aria-label]="'discovery.chat.send' | transloco"
+              [title]="'discovery.chat.send' | transloco"
+              class="absolute top-1.5 right-1.5 grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-30"
+              data-testid="composer-send"
+            >
+              @if (chat.sending()) {
+                <hlm-spinner class="h-4 w-4" />
+              } @else {
+                <hlm-icon name="lucideSendHorizontal" size="15px" />
+              }
+            </button>
+          </form>
           @if (canRecord()) {
             <!-- Locked once a session is live: the recorder owns the source then. -->
             <app-audio-source-picker
@@ -813,6 +978,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 })
 export class DiscoveryChat implements OnInit {
   protected readonly store = inject(DiscoveryChatStore);
+  protected readonly chat = inject(AssistantChatStore);
+  private readonly permissions = inject(PermissionsStore);
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
   private readonly auth = inject(AuthStore);
@@ -866,21 +1033,27 @@ export class DiscoveryChat implements OnInit {
   protected readonly projectCreatedAt = computed(
     () => this.workspace.projects().find((p) => p.id === this.projectId())?.createdAt ?? null,
   );
-  /** Total feed entries across sessions; changes when transcript/decisions arrive, to trigger auto-stick. */
-  protected readonly feedItemCount = computed(() =>
-    this.store.blocks().reduce((total, block) => total + block.items.length, 0),
+  /** Total feed entries across sessions and the chat; changes when content arrives, to trigger auto-stick. */
+  protected readonly feedItemCount = computed(
+    () =>
+      this.store.blocks().reduce((total, block) => total + block.items.length, 0) +
+      this.chat.messages().length +
+      (this.chat.sending() ? 1 : 0),
   );
 
-  /** Owner/admin gate reused from the workspace pages (fine-grained perms not client-side yet). */
-  protected readonly canManage = computed(() => {
-    const user = this.auth.user();
-    if (!user) return false;
-    const orgId = this.auth.organizationId();
-    const org = this.workspace.organizations().find((o) => o.id === orgId);
-    return org?.ownerId === user.id;
-  });
-  protected readonly canRecord = this.canManage;
-  protected readonly canDecide = this.canManage;
+  /** Recording follows the project permission (org owners and admins always pass). */
+  protected readonly canRecord = computed(() => this.permissions.has('SESSION_RUN'));
+  /** Accepting or dismissing AI suggestions. */
+  protected readonly canDecide = computed(() => this.permissions.has('SESSION_DECIDE'));
+  /** Writing to ReqsAI can raise suggestions, so it needs the same permission as running a session. */
+  protected readonly canChat = this.canRecord;
+
+  protected readonly chatMax = ASSISTANT_MESSAGE_MAX;
+  /** What the analyst is typing in the composer. */
+  protected readonly chatDraft = signal('');
+  protected readonly canSendChat = computed(
+    () => this.canChat() && !this.chat.sending() && messageToSend(this.chatDraft()) !== null,
+  );
 
   /**
    * Meeting language for the next session, editable until recording starts.
@@ -1011,6 +1184,7 @@ export class DiscoveryChat implements OnInit {
 
   ngOnInit(): void {
     this.store.init(this.projectId());
+    this.chat.load(this.projectId());
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
     if (focus) this.store.showSession(focus);
@@ -1118,6 +1292,63 @@ export class DiscoveryChat implements OnInit {
   private handleDecideError(err: HttpErrorResponse, suggestionId: string): void {
     if (err.status === 409) {
       this.store.removeQueued(suggestionId);
+      this.toast.info(this.transloco.translate('discovery.errors.alreadyResolved'));
+      return;
+    }
+    this.toast.error(messageForError(err, this.transloco));
+  }
+
+  /** Sends the composer's text to ReqsAI; on failure the text is put back so nothing is lost. */
+  protected sendChat(event?: Event): void {
+    event?.preventDefault();
+    const text = messageToSend(this.chatDraft());
+    if (!text || !this.canSendChat()) return;
+    this.chatDraft.set('');
+    this.atBottom.set(true);
+    this.chat.send(text).subscribe({
+      error: (err: HttpErrorResponse) => {
+        this.chatDraft.set(text);
+        this.toast.error(messageForError(err, this.transloco));
+      },
+    });
+  }
+
+  /** The backlog story an UPDATE_STORY / EDGE_CASE suggestion of the chat points at. */
+  protected chatTarget(suggestion: SuggestionResponse) {
+    return suggestion.targetStoryId ? this.store.findStory(suggestion.targetStoryId) : undefined;
+  }
+
+  protected acceptFromChat(suggestion: SuggestionResponse, body: AcceptSuggestionRequest): void {
+    this.store.decide(suggestion, 'ACCEPTED', body).subscribe({
+      next: (resolved) => {
+        this.chat.applyDecision(resolved);
+        this.toast.success(
+          this.transloco.translate(
+            suggestion.type === 'CLARIFYING_QUESTION'
+              ? 'discovery.decision.resolvedToast'
+              : 'discovery.decision.acceptedToast',
+          ),
+        );
+      },
+      error: (err: HttpErrorResponse) => this.handleChatDecideError(err, suggestion, 'ACCEPTED'),
+    });
+  }
+
+  protected dismissFromChat(suggestion: SuggestionResponse): void {
+    this.store.decide(suggestion, 'DISMISSED').subscribe({
+      next: (resolved) => this.chat.applyDecision(resolved),
+      error: (err: HttpErrorResponse) => this.handleChatDecideError(err, suggestion, 'DISMISSED'),
+    });
+  }
+
+  /** 409 = already resolved elsewhere: show it as decided; anything else is a toast. */
+  private handleChatDecideError(
+    err: HttpErrorResponse,
+    suggestion: SuggestionResponse,
+    outcome: 'ACCEPTED' | 'DISMISSED',
+  ): void {
+    if (err.status === 409) {
+      this.chat.applyDecision({ ...suggestion, status: outcome });
       this.toast.info(this.transloco.translate('discovery.errors.alreadyResolved'));
       return;
     }

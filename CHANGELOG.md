@@ -11,6 +11,29 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (Assistant chat on the capture page — `feature/discovery-assistant-chat`)
+
+- **The capture page's text box now talks to ReqsAI, with or without a live session.** It used to be a
+  disabled "La entrada de texto llegará pronto" placeholder.
+  - Enter sends the message.
+  - A question about the project ("¿cuántas historias hay?") is answered in the chat.
+  - A requirement ("quiero que el comensal pueda cancelar…") comes back as a suggestion card in the
+    same chat, with the usual accept / edit / dismiss.
+  - A decided suggestion collapses into a decision row with "Ir a la historia".
+- **The conversation is kept.** It loads with the page under a "Chat con ReqsAI" separator after the
+  sessions, and survives a reload.
+- **Feedback:** "ReqsAI está pensando…" shows while the reply is on its way, and a failed send puts the
+  text back in the box.
+- **Recording, deciding and chatting follow the project permissions** (`SESSION_RUN`,
+  `SESSION_DECIDE`; owners and admins always pass). Before, only the org owner could record or decide on
+  this page, even when the API allowed more.
+- **Suggestions with no session (from the chat) are decided through the project.** This also covers
+  ones listed among the pending suggestions of previous sessions.
+- **Tests:**
+  - `assistant-chat.spec.ts`: the chat helpers;
+  - `e2e/assistant-chat.spec.ts`: against the real AI, it answers a question from the backlog, then
+    turns a requirement into a suggestion that is accepted from the chat and is still there after a reload.
+
 ### Added (Stripe checkout E2E — `feature/e2e-stripe-billing`)
 
 - **New `e2e/billing-stripe.spec.ts` pays the Pro plan through real Stripe Checkout in test mode**, with
