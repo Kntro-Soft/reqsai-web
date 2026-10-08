@@ -4,6 +4,7 @@ import {
   NavAccess,
   NavSeg,
   ORG_SETTINGS_NAV,
+  PROJECT_ROOT_NAV,
   PROJECT_SETTINGS_NAV,
   visibleNavSegs,
 } from './shell-nav';
@@ -64,6 +65,14 @@ describe('visibleNavSegs', () => {
     expect(
       segs(visibleNavSegs(PROJECT_SETTINGS_NAV, access('MEMBER', ['MEMBER_READ', 'ROLE_READ']))),
     ).toEqual(['roles', 'members']);
+  });
+
+  it('shows the client documents page to callers who can read documents', () => {
+    expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('OWNER')))).toContain('documents');
+    expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER', ['DOCUMENT_READ'])))).toContain(
+      'documents',
+    );
+    expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER')))).not.toContain('documents');
   });
 
   it('lists the account pages', () => {
