@@ -469,6 +469,7 @@ export type SessionEventType =
   | 'SUGGESTION_GENERATED'
   | 'SUGGESTION_ACCEPTED'
   | 'SUGGESTION_DISMISSED'
+  | 'SPEAKER_UPDATED'
   | 'PRESENCE_STATE';
 
 interface SessionRealtimeBase {
@@ -541,13 +542,71 @@ export interface SessionPresenceMessage extends SessionRealtimeBase {
   count: number;
 }
 
+/**
+ * The analyst named a diarized speaker or set their side (US40): every viewer relabels that speaker's
+ * segments. `displayName` null means the default "Hablante N".
+ */
+export interface SessionSpeakerUpdatedMessage extends SessionRealtimeBase {
+  type: 'SPEAKER_UPDATED';
+  speakerLabel: string;
+  displayName: string | null;
+  side: SpeakerSide | null;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
   | SessionStoryGeneratedMessage
   | SessionProcessingFailedMessage
   | SessionSuggestionMessage
-  | SessionPresenceMessage;
+  | SessionPresenceMessage
+  | SessionSpeakerUpdatedMessage;
+
+// ---- Speakers (US40, /projects/{projectId}/sessions/{sessionId}/speakers) ----
+
+/** Side of the meeting: the AI builds requirements from the CLIENT and treats the TEAM as context. */
+export type SpeakerSide = 'CLIENT' | 'TEAM';
+
+/** A diarized speaker of a session, numbered by first appearance. */
+export interface SessionSpeakerResponse {
+  /** Diarization label the speech-to-text provider gave the speaker (e.g. "0", "A"). */
+  label: string;
+  /** 1-based position by first appearance in the transcript. */
+  index: number;
+  /** Name the analyst gave; null when not named. */
+  displayName: string | null;
+  /** displayName, else "Hablante {index}" (Spanish default from the API). */
+  name: string;
+  side: SpeakerSide | null;
+  /** Final segments attributed to the speaker. */
+  segmentCount: number;
+}
+
+/** One stretch where two or more speakers talked at the same time. */
+export interface SpeakerOverlapRange {
+  startMs: number;
+  endMs: number;
+  speakerLabels: string[];
+}
+
+/** Where speakers talked over each other, so the attribution there may be wrong. */
+export interface SpeakerOverlapsResponse {
+  count: number;
+  totalMs: number;
+  ranges: SpeakerOverlapRange[];
+}
+
+export interface SessionSpeakersResponse {
+  sessionId: string;
+  speakers: SessionSpeakerResponse[];
+  overlaps: SpeakerOverlapsResponse;
+}
+
+/** PUT body: a null or blank name goes back to "Hablante N"; a null side unsets it. */
+export interface UpdateSessionSpeakerRequest {
+  displayName: string | null;
+  side: SpeakerSide | null;
+}
 
 // ---- Realtime (project-level lifecycle topic /topic/projects/{id}) ----
 
