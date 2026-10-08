@@ -5,6 +5,7 @@ import {
   AcceptSuggestionRequest,
   AcceptanceCriterionRequest,
   AcceptanceCriterionResponse,
+  AnalyzeSessionResponse,
   AssistantExchangeResponse,
   AssistantMessageResponse,
   BatchDeleteStoriesRequest,
@@ -18,6 +19,7 @@ import {
   SessionSpeakerResponse,
   SessionSpeakersResponse,
   StoryListFilters,
+  SuggestionMode,
   StoryReviewStatus,
   SuggestionResponse,
   SuggestionStatus,
@@ -70,6 +72,26 @@ export class DiscoveryApiService {
     request: CreateDiscoverySessionRequest,
   ): Observable<DiscoverySessionResponse> {
     return this.http.post<DiscoverySessionResponse>(this.base(projectId), request);
+  }
+
+  /** Chooses when the assistant analyzes a session: on its own (AUTO) or only on demand (MANUAL). */
+  changeSuggestionMode(
+    projectId: string,
+    sessionId: string,
+    mode: SuggestionMode,
+  ): Observable<DiscoverySessionResponse> {
+    return this.http.patch<DiscoverySessionResponse>(
+      `${this.base(projectId)}/${sessionId}/suggestion-mode`,
+      { mode },
+    );
+  }
+
+  /** "Analizar ahora": analyzes the live session's recent conversation right away. */
+  analyzeSession(projectId: string, sessionId: string): Observable<AnalyzeSessionResponse> {
+    return this.http.post<AnalyzeSessionResponse>(
+      `${this.base(projectId)}/${sessionId}/analyze`,
+      {},
+    );
   }
 
   getSession(projectId: string, sessionId: string): Observable<DiscoverySessionResponse> {

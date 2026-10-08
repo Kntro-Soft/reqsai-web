@@ -39,6 +39,33 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   - `e2e/speaker-labels.spec.ts`: upload the Spanish meeting, name the first voice as the client, and
     check the bubbles, the API, and the session reopened from the history.
 
+### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
+
+- **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid
+  7, 14, 30 or 90 days. The URL is shown once with a copy button. Earlier links are listed as active,
+  revoked or expired, and active ones can be revoked.
+- **Public page `/share/:token`**, chrome-less like the invitation landing and needing no account.
+  - The client signs with a name (remembered on the device) and reads each story with its criteria.
+  - They approve a story or leave a comment, and see the feedback already left.
+  - Revoked or expired links show one dead-end.
+- **"Comentarios del cliente" in the story detail** lists the approvals and comments clients left. The
+  review status stays the team's decision.
+- `ShareApiService` and `share.models.ts`, `share-links.ts` helpers with specs, and `e2e/share-with-client.spec.ts`.
+
+### Added (US46 — Choose when the AI analyzes — `feature/discovery-analyze-on-demand`)
+
+- **The live session bar has an "IA: automática / manual" switch.**
+  - In manual mode the AI stays quiet, and the status line says "Modo manual: la IA analiza cuando
+    pulses «Analizar ahora»".
+  - It uses `PATCH …/sessions/{id}/suggestion-mode`.
+- **New "Analizar ahora" button** (`POST …/sessions/{id}/analyze`). It analyzes the recent conversation
+  right away, and a toast says how many suggestions reached the review tray.
+- **Tests:**
+  - `session-bar.spec.ts` and `ai-activity.spec.ts`: the mode switch, the analyze button and the
+    manual status;
+  - `e2e/analyze-on-demand.spec.ts` (fake microphone, real STT and AI): in manual mode the whole meeting
+    is transcribed with no suggestion, until "Analizar ahora" raises one.
+
 ### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
 
 - **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no

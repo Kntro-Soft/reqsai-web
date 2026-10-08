@@ -247,6 +247,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               (pauseSession)="pause()"
               (resumeSession)="resume()"
               (stopSession)="stop()"
+              (toggleMode)="toggleSuggestionMode()"
+              (analyzeNow)="analyzeNow()"
             />
           </div>
         } @else if (liveLanguageLabel(); as liveLabel) {
@@ -667,6 +669,9 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           }
                           @case ('paused') {
                             <hlm-icon name="lucidePause" size="15px" class="mt-0.5 shrink-0" />
+                          }
+                          @case ('manual') {
+                            <hlm-icon name="lucideSparkles" size="15px" class="mt-0.5 shrink-0" />
                           }
                           @case ('processing') {
                             <hlm-spinner class="mt-0.5 h-4 w-4 shrink-0" />
@@ -1410,6 +1415,36 @@ export class DiscoveryChat implements OnInit {
     this.toast.error(messageForError(err, this.transloco));
   }
 
+  /** Switches the live session between automatic and on-demand analysis (US46). */
+  protected toggleSuggestionMode(): void {
+    const next = this.recording.session()?.suggestionMode === 'MANUAL' ? 'AUTO' : 'MANUAL';
+    this.recording.setSuggestionMode(next)?.subscribe({
+      next: () =>
+        this.toast.info(
+          this.transloco.translate(
+            next === 'MANUAL' ? 'discovery.bar.modeManualToast' : 'discovery.bar.modeAutoToast',
+          ),
+        ),
+      error: (err: HttpErrorResponse) => this.toast.error(messageForError(err, this.transloco)),
+    });
+  }
+
+  /** "Analizar ahora": the suggestions reach the review tray through the realtime topic. */
+  protected analyzeNow(): void {
+    this.recording.analyzeNow()?.subscribe({
+      next: (result) =>
+        this.toast.info(
+          this.transloco.translate(
+            result.suggestionsCreated > 0
+              ? 'discovery.bar.analyzed'
+              : 'discovery.bar.analyzedNothing',
+            { count: result.suggestionsCreated },
+          ),
+        ),
+      error: (err: HttpErrorResponse) => this.toast.error(messageForError(err, this.transloco)),
+    });
+  }
+
   protected pause(): void {
     this.recording.pause()?.subscribe({
       error: (err) => this.toast.error(messageForError(err, this.transloco)),
@@ -1595,7 +1630,10 @@ export class DiscoveryChat implements OnInit {
    */
   protected activityFor(block: RenderBlock): AiActivity | null {
     const pending = this.store.queue().filter((s) => s.sessionId === block.session.id);
-    return aiActivityFor(block.session, pending, this.now());
+    // The recorder holds the freshest copy of the live session (e.g. its suggestion mode).
+    const live = this.recording.session();
+    const session = live?.id === block.session.id ? { ...block.session, ...live } : block.session;
+    return aiActivityFor(session, pending, this.now());
   }
 
   protected activityClass(state: AiActivity['state']): string {

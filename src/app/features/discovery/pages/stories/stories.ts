@@ -22,6 +22,7 @@ import {
   lucidePlus,
   lucideRotateCw,
   lucideSearch,
+  lucideShare2,
   lucideTrash2,
   lucideUpload,
 } from '@ng-icons/lucide';
@@ -57,6 +58,7 @@ import {
   StoryStatusBadge,
 } from '../../components/story-badges/story-badges';
 import { sortByPriority } from './story-sort';
+import { ShareLinks } from '../../components/share-links/share-links';
 import {
   allSelectedOnPage,
   someSelectedOnPage,
@@ -104,6 +106,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
     HlmInput,
     HlmSkeleton,
     HlmSpinner,
+    ShareLinks,
     TranslocoPipe,
   ],
   viewProviders: [
@@ -116,6 +119,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
       lucidePlus,
       lucideRotateCw,
       lucideSearch,
+      lucideShare2,
       lucideTrash2,
       lucideUpload,
     }),
@@ -130,7 +134,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
           <h1 class="text-2xl font-bold tracking-tight">{{ 'stories.title' | transloco }}</h1>
           <p class="mt-1 text-sm text-muted-foreground">{{ 'stories.subtitle' | transloco }}</p>
         </div>
-        <div class="flex shrink-0 items-center gap-2">
+        <div class="flex flex-wrap items-center justify-end gap-2">
           <button
             *appHasPermission="'INTEGRATION_SYNC'"
             hlmBtn
@@ -178,6 +182,18 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
               <hlm-icon name="lucideUpload" size="15px" />
             }
             {{ 'integrations.push.pushAll' | transloco }}
+          </button>
+          <button
+            *appHasPermission="'STORY_WRITE'"
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="shareOpen.set(true)"
+            data-testid="stories-share"
+          >
+            <hlm-icon name="lucideShare2" size="15px" />
+            {{ 'share.action' | transloco }}
           </button>
           <a
             *appHasPermission="'STORY_WRITE'"
@@ -659,6 +675,8 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
     </app-modal>
 
     <!-- Import from Jira: preview picker -->
+    <app-share-links [projectId]="projectId()" [(open)]="shareOpen" />
+
     <app-modal [(open)]="importOpen">
       <span modalTitle>{{ 'integrations.import.title' | transloco }}</span>
       <div class="flex flex-col gap-3">
@@ -776,6 +794,7 @@ export class ProjectStories implements OnInit, OnDestroy {
   // Import-from-Jira flow: preview loads the candidate issues into the picker modal,
   // where non-duplicates are selected by default; confirm POSTs the chosen keys.
   protected readonly importOpen = signal(false);
+  protected readonly shareOpen = signal(false);
   protected readonly importPreviewing = signal(false);
   protected readonly importing = signal(false);
   protected readonly importIssues = signal<JiraImportIssue[]>([]);
