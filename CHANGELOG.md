@@ -11,6 +11,19 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
+
+- **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid
+  7, 14, 30 or 90 days. The URL is shown once with a copy button. Earlier links are listed as active,
+  revoked or expired, and active ones can be revoked.
+- **Public page `/share/:token`**, chrome-less like the invitation landing and needing no account.
+  - The client signs with a name (remembered on the device) and reads each story with its criteria.
+  - They approve a story or leave a comment, and see the feedback already left.
+  - Revoked or expired links show one dead-end.
+- **"Comentarios del cliente" in the story detail** lists the approvals and comments clients left. The
+  review status stays the team's decision.
+- `ShareApiService` and `share.models.ts`, `share-links.ts` helpers with specs, and `e2e/share-with-client.spec.ts`.
+
 ### Added (US41 — Upload a meeting recording — `feature/discovery-upload-recording`)
 
 - **New "Subir grabación" button on the capture page.** It shows for members with `SESSION_RUN` while no
