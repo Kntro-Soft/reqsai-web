@@ -11,6 +11,23 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (Story approval — `feature/discovery-story-approval`)
+
+- **The story detail can now approve, reject or send a story back to draft.** Every story used to stay
+  in "Borrador" because nothing changed its status.
+  - The header shows the decisions that apply to the current status: a draft offers **Aprobar** and
+    **Rechazar**; an approved or rejected story offers the other decision and **Volver a borrador**.
+    Merged or exported stories offer none.
+  - Each button calls `PATCH /api/projects/{projectId}/stories/{storyId}/status`, updates the status
+    badge and hint in place, and keeps any unsaved edits in the form.
+  - The buttons only render for members with the new `STORY_APPROVE` permission (org owners and
+    admins always see them).
+- **The role editor lists `STORY_APPROVE` and the missing `STORY_DELETE`** under "Historias de
+  usuario", so a project role (e.g. the Product Owner's) can grant them.
+- **New error message** for `INVALID_STORY_STATUS` in Spanish and English.
+- The button logic lives in the pure helper `reviewTargets` (`story-review.helpers.ts`). It has unit
+  tests, as does the new `changeStoryStatus` API call.
+
 ### Fixed (Session history stats and duration — `bugfix/discovery-history-stats-contract`)
 
 - **The session history now shows its stats columns and the duration of live sessions.** The session
