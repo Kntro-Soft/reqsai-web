@@ -360,6 +360,37 @@ describe('DiscoveryChatStore', () => {
     expect(store.blocks()).toHaveLength(0);
   });
 
+  it('warns and ignores an unknown realtime message type instead of failing silently', () => {
+    flushInit([session()]);
+    http
+      .expectOne((r) => r.url === '/api/projects/proj-1/suggestions')
+      .flush(page<SuggestionResponse>([]));
+    // Settle the historical block with each endpoint's real shape: the session's segments and
+    // suggestions are plain arrays (a page here would break the pending-queue reduce), its
+    // stories a page, its transcript an object.
+    http
+      .match(() => true)
+      .forEach((r) => {
+        const url = r.request.url;
+        if (url.endsWith('/transcript')) r.flush({ sessionId: 'sess-1', transcript: '' });
+        else if (url.endsWith('/stories')) r.flush(page<never>([]));
+        else r.flush([]);
+      });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    store.applyRealtime({
+      sessionId: 's-1',
+      type: 'BRAND_NEW_EVENT',
+      occurredAt: new Date().toISOString(),
+    } as never);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[discovery] Unhandled realtime message type:',
+      'BRAND_NEW_EVENT',
+    );
+    warnSpy.mockRestore();
+  });
+
   describe('decide', () => {
     /** Boots one completed session whose queue holds a single pending suggestion. */
     function setupWithPending(): SuggestionResponse {
@@ -649,6 +680,39 @@ describe('DiscoveryChatStore', () => {
       expect(times).toEqual(['2026-07-04T12:05:00Z', '2026-07-04T12:05:30Z']);
       // The joined string fallback must NOT also render (no duplicated paragraphs).
       expect(items.some((i) => i.kind === 'paragraph')).toBe(false);
+    });
+
+    it('lists the recorded speakers and relabels them on SPEAKER_UPDATED (US40)', () => {
+      flushLiveBlock({ segments: recorded, transcript: null });
+      http.verify();
+
+      const before = store.blocks()[0];
+      expect(before.speakerList.map((s) => [s.label, s.index, s.displayName, s.side])).toEqual([
+        ['A', 1, null, 'left'],
+        ['B', 2, null, 'right'],
+      ]);
+      expect(before.speakersKey).toBe('RECORDING|A,B');
+      expect(before.overlaps).toBeNull();
+
+      realtime.watch('sessions/sess-1').next({
+        sessionId: 'sess-1',
+        type: 'SPEAKER_UPDATED',
+        occurredAt: '2026-07-04T12:07:00Z',
+        speakerLabel: 'A',
+        displayName: 'Ana',
+        side: 'TEAM',
+      });
+
+      const after = store.blocks()[0];
+      expect(after.speakers.get('A')).toMatchObject({
+        index: 1,
+        displayName: 'Ana',
+        role: 'TEAM',
+        side: 'right',
+      });
+      expect(after.speakers.get('B')?.displayName).toBeNull();
+      // Relabelling is local state: no request goes out.
+      http.verify();
     });
 
     it('falls back to the joined transcript string when /segments 404s (older backend)', () => {

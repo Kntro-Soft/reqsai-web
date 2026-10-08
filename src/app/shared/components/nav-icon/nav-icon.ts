@@ -4,6 +4,7 @@ import {
   lucideBookMarked,
   lucideChartLine,
   lucideCreditCard,
+  lucideFileText,
   lucideFolder,
   lucideLayoutDashboard,
   lucideList,
@@ -31,6 +32,7 @@ const NAV_ICONS: Record<string, string> = {
   stories: 'lucideList',
   glossary: 'lucideBookMarked',
   constraints: 'lucideRuler',
+  documents: 'lucideFileText',
   members: 'lucideUsers',
   settings: 'lucideSettings',
   // Settings sub-nav.
@@ -59,6 +61,7 @@ const NAV_ICONS: Record<string, string> = {
       lucideList,
       lucideBookMarked,
       lucideRuler,
+      lucideFileText,
       lucideUsers,
       lucideSettings,
       lucideShield,

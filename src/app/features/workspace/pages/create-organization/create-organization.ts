@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { switchMap } from 'rxjs';
 import { provideIcons } from '@ng-icons/core';
-import { lucideBuilding2, lucideChevronDown } from '@ng-icons/lucide';
+import { lucideBuilding2, lucideChevronDown, lucideSparkles } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
@@ -44,7 +44,7 @@ function detectMeetingLanguage(): string {
     AnimatedBackdrop,
     CreatePageHeader,
   ],
-  viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown })],
+  viewProviders: [provideIcons({ lucideBuilding2, lucideChevronDown, lucideSparkles })],
   template: `
     <div
       class="relative isolate flex min-h-dvh flex-col overflow-hidden bg-background text-foreground"
@@ -75,6 +75,13 @@ function detectMeetingLanguage(): string {
               <h1 class="text-2xl font-bold tracking-tight">{{ 'createOrg.title' | transloco }}</h1>
               <p class="mt-1.5 text-sm text-muted-foreground">
                 {{ 'createOrg.subtitle' | transloco }}
+              </p>
+              <p
+                class="mt-3 inline-flex items-start gap-1.5 text-left text-xs text-muted-foreground"
+                data-testid="create-org-demo-hint"
+              >
+                <hlm-icon name="lucideSparkles" size="14px" class="mt-px shrink-0 text-primary" />
+                <span>{{ 'createOrg.demoHint' | transloco }}</span>
               </p>
             </div>
           </div>

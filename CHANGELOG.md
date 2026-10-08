@@ -11,6 +11,90 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Fixed (Dependabot PRs failed on the lockfile — `bugfix/dependabot-bun-lockfile`)
+
+- **Dependabot now uses the `bun` ecosystem.** It updates `bun.lock` together with `package.json`. With
+  `npm` it touched only `package.json`, so CI's `bun install --frozen-lockfile` refused every PR.
+- **`@ng-icons/*` are grouped** so `core` and `lucide` move together.
+- **TypeScript minor and major bumps are ignored.** Angular 22 requires `>=6.0 <6.1`, so TypeScript
+  moves with Angular.
+- **Bumps applied here with the lockfile:** `@ng-icons/core` and `@ng-icons/lucide` 33 → 34, and
+  `@types/node` 25 → 26. These supersede Dependabot #37, #38 and #40.
+
+### Added (US28 — Demo project — `feature/workspace-demo-project`)
+
+- **Every new organization starts with a demo project** with sample data, "Demo · Restaurante La
+  Tradición — Reservas en línea", so the user explores ReqsAI without starting from scratch.
+  - The organization form says so: "Te crearemos un proyecto de demostración…".
+  - The projects list (cards and table), the project switcher and the overview mark it with a "Demo"
+    badge (`ProjectResponse.demo`).
+- **The overview explains the demo** in a banner and offers **"Restaurar datos de prueba"**. The danger
+  zone offers it too.
+  - Shown only on the demo project, to org owners/admins and members with `PROJECT_UPDATE`.
+  - A confirmation modal warns that sessions, stories, suggestions, assistant messages, glossary and
+    constraints are replaced.
+  - `POST /api/organizations/{orgId}/projects/{projectId}/demo/restore`; the project is refreshed in the
+    store and a toast confirms it. `PROJECT_NOT_DEMO` is translated.
+- **Tests:**
+  - `demo-restore.spec.ts`, `demo-badge.spec.ts`;
+  - `e2e/demo-project.spec.ts`: register, create an organization, see the demo with its badge and six
+    stories, delete one, restore the sample data and see it back;
+  - `e2e/workspace.spec.ts` now expects the demo project after onboarding.
+- **New "Documentos" page in the project sidebar** (`/projects/:id/documents`, needs `DOCUMENT_READ`).
+  The analyst uploads the client's documents and ReqsAI turns them into project context.
+- **Upload.** A drop zone takes a PDF (`.pdf`) or Word (`.docx`) file of up to 50 MB (`DOCUMENT_CREATE`).
+  - Executables, other formats, empty files and files over 50 MB are refused before anything is sent.
+    The API checks the content again and its errors are translated.
+  - A progress bar shows the upload, then "Extrayendo el texto y clasificándolo con IA…".
+- **Review.** The AI proposes a context summary, glossary terms (term + definition), constraints and a
+  document type.
+  - New terms and constraints come preselected. The ones the project already has show "Ya existe" and
+    cannot be selected. Selection is turned off without `GLOSSARY_TERM_WRITE` / `CONSTRAINT_WRITE`.
+  - The name, the type and the summary can be edited.
+  - "Aplicar" adds the selected items and keeps the document. "Descartar" deletes the analysis.
+  - A notice explains when the AI could not classify the document, or when the text was cut at
+    200,000 characters.
+- **Saved documents** are listed with their type, file, size, date and summary, and can be deleted
+  (`DOCUMENT_DELETE`). Their summaries feed the AI in capture and in the assistant.
+- A document found in the command palette now opens the project's documents page.
+- **i18n:** `clientDocuments.*`, `nav.documents`, `titles.documents`, and the errors
+  `DOCUMENT_TYPE_NOT_ALLOWED`, `DOCUMENT_TOO_LARGE`, `DOCUMENT_EMPTY`, `DOCUMENT_UNREADABLE`,
+  `PROJECT_DOCUMENT_NOT_PENDING` and `PAYLOAD_TOO_LARGE`, in Spanish and English.
+- **Tests:**
+  - `client-documents.spec.ts`: file checks, review selection and the apply request;
+  - `documents.spec.ts`: the page refuses an executable, then uploads, reviews, applies and discards;
+  - `e2e/client-documents.spec.ts`: a terms-of-reference PDF (`e2e/fixtures/terminos-de-referencia.pdf`)
+    is classified by the real AI, reviewed and applied, and its term and constraint reach the glossary
+    and constraints pages. An executable disguised as a PDF is refused by the API.
+
+### Added (US40 — Identify the speakers of a meeting — `feature/discovery-speaker-labels`)
+
+- **Transcript bubbles name their speaker.** Each diarized voice shows as "Hablante 1", "Hablante 2"…
+  (was "Participante N"), numbered by first appearance in the session, with its own color.
+- **Each session lists its speakers under its separator.** One chip per voice shows its color, name and
+  side, followed by "Editar hablantes".
+  - The dialog edits each speaker's real name and a Cliente / Equipo toggle, and saves one speaker at
+    a time.
+  - The new name and side apply to every segment of that speaker, past and future.
+  - The client tag stands out on the bubbles. Client bubbles sit on the left and team bubbles on the
+    right; unclassified voices alternate as before.
+  - Members without `SESSION_RUN` see the speakers read-only ("Ver hablantes").
+- **Works wherever a session shows:** live capture, an uploaded recording, and a session opened from the
+  history. Renames by someone else arrive live (`SPEAKER_UPDATED`).
+- **Overlapping voices are flagged.** When the API reports stretches where speakers talked at once, the
+  session shows "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+- **API:** `GET /projects/{projectId}/sessions/{sessionId}/speakers` loads the names, sides and overlaps
+  when a session's segments carry speakers. It loads again when a new voice appears or the session
+  changes status. `PUT …/speakers/{label}` saves a speaker.
+- **New error message:** `SPEAKER_NOT_FOUND`.
+- **Tests:**
+  - `speakers.spec.ts`: default names, colors, feed side, merging with the feed's labels, load key and
+    overlap notice;
+  - `session-speakers.store.spec.ts`: loading, renaming and live updates;
+  - `discovery-chat.store.spec.ts`: speakers of a block and `SPEAKER_UPDATED`;
+  - `e2e/speaker-labels.spec.ts`: upload the Spanish meeting, name the first voice as the client, and
+    check the bubbles, the API, and the session reopened from the history.
+
 ### Added (US50 — Share stories with the client — `feature/discovery-share-with-client`)
 
 - **"Compartir con el cliente" in the backlog** (`STORY_WRITE`) opens a dialog to create a link valid

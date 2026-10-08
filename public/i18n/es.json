@@ -28,7 +28,8 @@
     "profileSaved": "Perfil actualizado.",
     "projectArchived": "Proyecto archivado.",
     "projectRestored": "Proyecto restaurado.",
-    "projectDeleted": "Proyecto eliminado."
+    "projectDeleted": "Proyecto eliminado.",
+    "demoRestored": "Datos de prueba restaurados"
   },
   "language": {
     "label": "Idioma",
@@ -71,6 +72,7 @@
     "history": "Historial de sesiones",
     "glossary": "Glosario",
     "constraints": "Restricciones",
+    "documents": "Documentos del cliente",
     "share": "Historias compartidas"
   },
   "nav": {
@@ -79,6 +81,7 @@
     "stories": "Historias",
     "glossary": "Glosario",
     "constraints": "Restricciones",
+    "documents": "Documentos",
     "members": "Miembros",
     "roles": "Roles",
     "settings": "Ajustes",
@@ -231,6 +234,18 @@
   "overview": {
     "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
   },
+  "demo": {
+    "badge": "Demo",
+    "badgeTitle": "Proyecto de demostración con datos de prueba",
+    "bannerTitle": "Este es un proyecto de demostración",
+    "bannerBody": "Te lo creamos con datos de prueba —una sesión con su transcripción, historias de usuario, glosario y restricciones— para que explores ReqsAI sin empezar de cero. Modifícalo con libertad: puedes restaurar los datos de prueba cuando quieras.",
+    "restore": "Restaurar datos de prueba",
+    "restoreDesc": "Vuelve a cargar el contenido original del proyecto de demostración.",
+    "restoreHint": "Reemplaza las sesiones, historias, sugerencias, glosario y restricciones.",
+    "restoreTitle": "Restaurar datos de prueba",
+    "restoreBody": "Se eliminarán las sesiones, historias de usuario, sugerencias, mensajes del asistente, términos del glosario y restricciones de este proyecto, y se cargará de nuevo el contenido original de la demostración. Esta acción no se puede deshacer.",
+    "restoreConfirm": "Restaurar"
+  },
   "account": {
     "title": "Cuenta",
     "subtitle": "Gestiona tu perfil, contraseña y preferencias.",
@@ -328,6 +343,7 @@
   "createOrg": {
     "title": "Crea tu organización",
     "subtitle": "Tu organización es tu espacio de trabajo: dentro creas proyectos y sesiones de descubrimiento.",
+    "demoHint": "Te crearemos un proyecto de demostración con datos de prueba para que explores ReqsAI sin empezar de cero.",
     "name": "Nombre de la organización",
     "language": "Idioma de reuniones",
     "advanced": "Opciones avanzadas",
@@ -1032,6 +1048,66 @@
     "deleteAfter": "",
     "menuAria": "Acciones de la restricción"
   },
+  "clientDocuments": {
+    "title": "Documentos del cliente",
+    "subtitle": "Sube documentos del cliente (PDF o Word) y ReqsAI extraerá su glosario, sus restricciones y el contexto del proyecto que usará la IA.",
+    "upload": {
+      "title": "Subir un documento",
+      "description": "PDF o Word (.docx), hasta 50 MB. ReqsAI extrae el texto y la IA lo clasifica; tú revisas el resultado antes de guardarlo.",
+      "choose": "Arrastra un archivo aquí o haz clic para elegirlo",
+      "hint": "PDF o Word (.docx) · máx. 50 MB",
+      "analyze": "Analizar documento",
+      "uploading": "Subiendo… {{percent}} %",
+      "uploadingUnknown": "Subiendo…",
+      "analyzing": "Extrayendo el texto y clasificándolo con IA…",
+      "problem": {
+        "type": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+        "size": "El archivo supera el máximo de 50 MB.",
+        "empty": "El archivo está vacío."
+      }
+    },
+    "review": {
+      "title": "Revisa lo que encontró la IA",
+      "file": "{{name}} · {{size}} · {{chars}} caracteres de texto",
+      "unclassified": "La IA no pudo clasificar este documento. Puedes guardarlo igualmente como contexto y añadir términos o restricciones a mano.",
+      "truncated": "El documento es muy largo: se guardaron sus primeros 200 000 caracteres y la IA analizó el inicio.",
+      "name": "Nombre del documento",
+      "type": "Tipo de documento",
+      "context": "Contexto del proyecto",
+      "contextHint": "Resumen que la IA usará como contexto del proyecto en la captura y el asistente. Puedes editarlo.",
+      "glossary": "Términos del glosario",
+      "constraints": "Restricciones",
+      "selectedOf": "{{selected}} de {{total}} seleccionados",
+      "selectAll": "Seleccionar todo",
+      "clearAll": "Quitar selección",
+      "exists": "Ya existe",
+      "noGlossary": "La IA no encontró términos de glosario en este documento.",
+      "noConstraints": "La IA no encontró restricciones en este documento.",
+      "noTermPermission": "No tienes permiso para añadir términos al glosario.",
+      "noConstraintPermission": "No tienes permiso para añadir restricciones.",
+      "discard": "Descartar",
+      "apply": "Aplicar ({{terms}} términos, {{constraints}} restricciones)",
+      "applied": "Documento guardado: {{terms}} términos y {{constraints}} restricciones añadidos.",
+      "discarded": "Análisis descartado."
+    },
+    "list": {
+      "title": "Documentos guardados",
+      "empty": "Aún no hay documentos. Los que apliques aparecerán aquí y la IA los usará como contexto del proyecto.",
+      "loadError": "No se pudieron cargar los documentos.",
+      "noSummary": "Sin resumen de contexto.",
+      "delete": "Eliminar documento",
+      "deleteTitle": "Eliminar documento",
+      "deleteBody": "Se eliminará «{{name}}» y la IA dejará de usarlo como contexto. Los términos y restricciones que añadiste se conservan.",
+      "deleted": "Documento eliminado."
+    },
+    "types": {
+      "BUSINESS_RULES": "Reglas de negocio",
+      "TECHNICAL_SPEC": "Especificación técnica",
+      "MEETING_NOTES": "Acta o notas de reunión",
+      "GLOSSARY_SOURCE": "Fuente de glosario",
+      "REFERENCE": "Referencia"
+    }
+  },
   "projectRoleForm": {
     "back": "Volver a roles",
     "createTitle": "Crear rol",
@@ -1090,7 +1166,25 @@
     "sessionStories": "{{count}} historias",
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Generada por la IA",
-    "speaker": "Participante {{n}}",
+    "speaker": "Hablante {{n}}",
+    "speakers": {
+      "title": "Hablantes de la sesión",
+      "description": "Pon a cada voz su nombre real y marca si es del cliente o del equipo. Se aplica a todas sus intervenciones, y la IA prioriza lo que pide el cliente: lo que dice el equipo es contexto.",
+      "edit": "Editar hablantes",
+      "view": "Ver hablantes",
+      "close": "Cerrar",
+      "empty": "Esta sesión no distingue hablantes.",
+      "nameLabel": "Nombre de {{name}}",
+      "sideLabel": "Lado de la reunión",
+      "side": {
+        "CLIENT": "Cliente",
+        "TEAM": "Equipo"
+      },
+      "segments": "{{count}} intervenciones",
+      "save": "Guardar",
+      "saved": "Hablante actualizado: {{name}}.",
+      "overlapWarning": "Hay tramos con voces superpuestas; la atribución puede no ser exacta."
+    },
     "goToStory": "Ir a la historia",
     "time": {
       "justNow": "hace un momento",
@@ -1173,14 +1267,6 @@
       "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
     },
     "bar": {
-      "modeAuto": "IA: automática",
-      "modeManual": "IA: manual",
-      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
-      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
-      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
-      "analyze": "Analizar ahora",
-      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
-      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas.",
       "recording": "Grabando",
       "paused": "En pausa",
       "pause": "Pausar",
@@ -1189,7 +1275,15 @@
       "meetingAudio": "Grabando micrófono + audio de la reunión",
       "meetingAudioLost": "No se está capturando el audio de la reunión. Vuelve a compartir la pestaña de la reunión.",
       "reshare": "Compartir de nuevo",
-      "meetingAudioShort": "Audio de la reunión"
+      "meetingAudioShort": "Audio de la reunión",
+      "modeAuto": "IA: automática",
+      "modeManual": "IA: manual",
+      "modeHint": "Cambia cuándo analiza la IA: automática (sola) o manual (solo con «Analizar ahora»)",
+      "modeAutoToast": "La IA vuelve a analizar la conversación por su cuenta.",
+      "modeManualToast": "Modo manual: la IA solo analizará cuando pulses «Analizar ahora».",
+      "analyze": "Analizar ahora",
+      "analyzed": "La IA analizó la conversación: {{count}} sugerencias nuevas por revisar.",
+      "analyzedNothing": "La IA analizó la conversación: no hay sugerencias nuevas."
     },
     "rec": {
       "micDenied": "Permiso de micrófono denegado. Habilítalo en los ajustes de tu navegador.",
@@ -1336,8 +1430,6 @@
     "retry": "Reintentar",
     "pendingReview": "Pendiente de revisión",
     "ai": {
-      "manual": "Modo manual",
-      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora».",
       "listening": "La IA está escuchando la conversación",
       "listeningHint": "Propone historias, casos límite y preguntas a medida que avanza la reunión; aparecerán arriba para tu revisión.",
       "lastSuggestion": "Última sugerencia {{time}} · revísala en la bandeja de arriba.",
@@ -1346,7 +1438,9 @@
       "processing": "Procesando la sesión",
       "processingHint": "La IA está generando las historias finales. Puede tardar unos minutos.",
       "failed": "No se pudo procesar la sesión",
-      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde."
+      "failedHint": "Revisa el historial de sesiones o vuelve a intentarlo más tarde.",
+      "manual": "Modo manual",
+      "manualHint": "La IA no interrumpe: analiza cuando pulses «Analizar ahora»."
     }
   },
   "integrations": {
@@ -1465,11 +1559,17 @@
     "PROJECT_NOT_FOUND": "Ese proyecto ya no existe.",
     "PROJECT_NAME_ALREADY_EXISTS": "Ya existe un proyecto con ese nombre.",
     "PROJECT_PLAN_LIMIT_EXCEEDED": "Has alcanzado el límite de proyectos de tu plan.",
+    "PROJECT_NOT_DEMO": "Solo el proyecto de demostración puede restaurar sus datos de prueba.",
     "PROJECT_CONSTRAINT_ALREADY_EXISTS": "Esa restricción ya existe en este proyecto.",
     "PROJECT_CONSTRAINT_NOT_FOUND": "Esa restricción ya no existe.",
     "PROJECT_DOCUMENT_NOT_FOUND": "Ese documento ya no existe.",
     "PROJECT_DOCUMENT_ALREADY_EXISTS": "Ya existe un documento con ese nombre.",
     "PROJECT_DOCUMENT_PLAN_LIMIT_EXCEEDED": "Has alcanzado el límite de documentos de tu plan.",
+    "PROJECT_DOCUMENT_NOT_PENDING": "Este documento ya se aplicó o se descartó.",
+    "DOCUMENT_TYPE_NOT_ALLOWED": "Solo se aceptan documentos PDF (.pdf) o Word (.docx). Los ejecutables y otros formatos no están permitidos.",
+    "DOCUMENT_TOO_LARGE": "El documento supera el máximo de 50 MB.",
+    "DOCUMENT_EMPTY": "No se encontró texto en el documento. Si es un escaneo, súbelo como PDF con texto seleccionable.",
+    "DOCUMENT_UNREADABLE": "No se pudo leer el documento: puede estar dañado o protegido con contraseña.",
     "INSUFFICIENT_PERMISSIONS": "No tienes permiso para hacer eso.",
     "MEMBER_NOT_FOUND": "Ese miembro ya no existe.",
     "MEMBER_ALREADY_EXISTS": "Esa persona ya es miembro o ya fue invitada.",
@@ -1489,6 +1589,7 @@
     "INVALID_FIELD": "Uno de los campos no es válido. Revísalo e inténtalo de nuevo.",
     "INVALID_VALUE": "Uno de los valores no es válido. Revísalo e inténtalo de nuevo.",
     "UNPROCESSABLE_REQUEST": "No pudimos procesar esa solicitud. Revísala e inténtalo de nuevo.",
+    "PAYLOAD_TOO_LARGE": "El archivo supera el tamaño máximo permitido (50 MB).",
     "PERMISSION_DENIED": "No tienes permiso para hacer eso.",
     "TENANT_ACCESS_DENIED": "No tienes acceso a este espacio de trabajo.",
     "ORGANIZATION_NOT_OWNED": "No eres propietario de esa organización.",
@@ -1555,6 +1656,7 @@
     },
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
     "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "SPEAKER_NOT_FOUND": "Ese hablante no participó en esta sesión.",
     "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
   },
   "share": {

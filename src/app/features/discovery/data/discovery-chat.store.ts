@@ -26,8 +26,10 @@ import {
   SessionRealtimeMessage,
   SessionStatus,
   SessionStoryGeneratedMessage,
+  SessionSpeakerUpdatedMessage,
   SessionSuggestionMessage,
   SessionTranscriptSegmentMessage,
+  SpeakerOverlapsResponse,
   SuggestionResponse,
   UserStoryResponse,
   suggestionCriteria,
@@ -35,10 +37,8 @@ import {
 import {
   FeedItem,
   SessionBlock,
-  SpeakerDisplay,
   addToQueue,
   anchorSequenceForSuggestion,
-  assignSpeakerSides,
   buildSessionItems,
   clampQueueIndex,
   historicalSegmentToMessage,
@@ -50,6 +50,8 @@ import {
   toDecisionEntry,
   upsertSegment,
 } from './feed';
+import { SessionSpeakersStore } from './session-speakers.store';
+import { SpeakerView, buildSpeakerViews, speakerMap, speakersLoadKey } from './speakers';
 
 /** Sessions fetched per page while scrolling back through history. */
 const PAGE_SIZE = 10;
@@ -114,11 +116,21 @@ export interface RenderBlock {
   items: FeedItem[];
   loaded: boolean;
   /**
-   * Distinct speaker labels of this block's segments, each mapped to a stable
-   * numbered/side display (diarization). Empty when no segment carried a label,
-   * so the feed keeps its single-column left layout for unlabeled transcripts.
+   * The session's diarized speakers keyed by label (US40): number by first
+   * appearance, the analyst's name and client/team side, and the feed side of
+   * their bubbles. Empty when no segment carried a label, so the feed keeps its
+   * single-column left layout for unlabeled transcripts.
    */
-  speakers: Map<string, SpeakerDisplay>;
+  speakers: Map<string, SpeakerView>;
+  /** The same speakers in order of first appearance (the block's speakers strip). */
+  speakerList: SpeakerView[];
+  /** Where speakers talked over each other; null until loaded. */
+  overlaps: SpeakerOverlapsResponse | null;
+  /**
+   * When the speakers must be (re)loaded: changes with the status and the
+   * labels of the loaded segments; null without diarization.
+   */
+  speakersKey: string | null;
 }
 
 /**
@@ -131,6 +143,7 @@ export class DiscoveryChatStore {
   private readonly api = inject(DiscoveryApiService);
   private readonly realtime = inject(RealtimeService);
   private readonly recording = inject(SessionRecordingService);
+  private readonly speakersStore = inject(SessionSpeakersStore);
 
   private projectId: string | null = null;
   /** All sessions fetched so far, newest first (mirror of the paginated list). */
@@ -217,14 +230,22 @@ export class DiscoveryChatStore {
   );
 
   /** Render-ready blocks, oldest first, feed items assembled per session. */
-  readonly blocks = computed<RenderBlock[]>(() =>
-    this._blocks().map((block) => ({
-      session: block.session,
-      items: buildSessionItems(block),
-      loaded: block.loaded,
-      speakers: assignSpeakerSides(block.segments),
-    })),
-  );
+  readonly blocks = computed<RenderBlock[]>(() => {
+    const speakers = this.speakersStore.bySession();
+    return this._blocks().map((block) => {
+      const known = speakers[block.session.id];
+      const speakerList = buildSpeakerViews(known?.speakers ?? null, block.segments);
+      return {
+        session: block.session,
+        items: buildSessionItems(block),
+        loaded: block.loaded,
+        speakers: speakerMap(speakerList),
+        speakerList,
+        overlaps: known?.overlaps ?? null,
+        speakersKey: speakersLoadKey(block.session.status, block.segments),
+      };
+    });
+  });
 
   /** The suggestion currently shown by the decision-queue carousel. */
   readonly currentSuggestion = computed<SuggestionResponse | null>(() => {
@@ -293,6 +314,7 @@ export class DiscoveryChatStore {
     this._liveSessionId.set(null);
     this._deciding.set([]);
     this._presenceBySession.set({});
+    this.speakersStore.reset();
   }
 
   /**
@@ -788,6 +810,11 @@ export class DiscoveryChatStore {
       return;
     }
 
+    if (message.type === 'SPEAKER_UPDATED') {
+      this.speakersStore.applyRealtime(message as SessionSpeakerUpdatedMessage);
+      return;
+    }
+
     if (message.type === 'TRANSCRIPT_SEGMENT') {
       const segment = message as SessionTranscriptSegmentMessage;
       this.updateBlock(sessionId, (b) => ({ ...b, segments: upsertSegment(b.segments, segment) }));
@@ -846,31 +873,39 @@ export class DiscoveryChatStore {
       return;
     }
 
+    // Creation is announced on the project topic; a session block has nothing to update.
+    if (message.type === 'SESSION_CREATED') return;
+
     const status = STATUS_BY_EVENT[message.type];
-    if (status) {
-      const error =
-        message.type === 'FAILED' ? (message as SessionProcessingFailedMessage).reason : null;
-      this.updateBlock(sessionId, (b) => ({
-        ...b,
-        session: {
-          ...b.session,
-          status,
-          processingError: error ?? b.session.processingError,
-        },
-      }));
-      this.recording.syncStatus(sessionId, status);
-      // Keep the project-level live flag in sync even when the lifecycle
-      // reaches us only through the per-session topic.
-      if (status === 'RECORDING' || status === 'PAUSED') {
-        this._liveSessionId.set(sessionId);
-      } else if (this._liveSessionId() === sessionId) {
-        this._liveSessionId.set(null);
-      }
-      // A block created while the session was live never fetched its persisted
-      // timeline. Once the session settles, reload it as a historical block so
-      // segments and resolved decisions survive exactly like after a reload.
-      if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
+    if (!status) {
+      // A type this build doesn't know (backend shipped a new event first). Log it so a
+      // schema drift is visible in the console instead of a silently dead feature.
+      console.warn('[discovery] Unhandled realtime message type:', message.type);
+      return;
     }
+
+    const error =
+      message.type === 'FAILED' ? (message as SessionProcessingFailedMessage).reason : null;
+    this.updateBlock(sessionId, (b) => ({
+      ...b,
+      session: {
+        ...b.session,
+        status,
+        processingError: error ?? b.session.processingError,
+      },
+    }));
+    this.recording.syncStatus(sessionId, status);
+    // Keep the project-level live flag in sync even when the lifecycle
+    // reaches us only through the per-session topic.
+    if (status === 'RECORDING' || status === 'PAUSED') {
+      this._liveSessionId.set(sessionId);
+    } else if (this._liveSessionId() === sessionId) {
+      this._liveSessionId.set(null);
+    }
+    // A block created while the session was live never fetched its persisted
+    // timeline. Once the session settles, reload it as a historical block so
+    // segments and resolved decisions survive exactly like after a reload.
+    if (HISTORICAL_STATUSES.includes(status)) this.upgradeToHistorical(sessionId);
   }
 
   /**
