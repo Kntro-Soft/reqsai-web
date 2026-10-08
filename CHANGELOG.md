@@ -11,6 +11,16 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (Stripe checkout E2E — `feature/e2e-stripe-billing`)
+
+- **New `e2e/billing-stripe.spec.ts` pays the Pro plan through real Stripe Checkout in test mode**, with
+  the test card 4242:
+  - it returns to `/billing/success`;
+  - it relays the real `checkout.session.completed` event, signed like `stripe listen`;
+  - it checks that the plan becomes Pro;
+  - it cancels the plan, which also cancels the Stripe subscription.
+- **Opt-in:** it only runs when `STRIPE_LOCAL_ENV` points at the local API's Stripe settings.
+
 ### Fixed (Members got a "no access" toast on the backlog — `bugfix/integrations-forbidden-toast`)
 
 - **A member without Jira access saw "No tienes permisos suficientes." every time they opened the
