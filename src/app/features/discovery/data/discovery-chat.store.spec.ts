@@ -128,6 +128,21 @@ describe('DiscoveryChatStore', () => {
     http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
   }
 
+  it('puts a story edited or reviewed from the side panel back in place', () => {
+    store.init('proj-1');
+    http.expectOne((r) => r.url === '/api/projects/proj-1/sessions').flush(page([]));
+    http
+      .expectOne('/api/projects/proj-1/stories')
+      .flush(page([story(), story({ id: 'story-2', title: 'Import payments' })]));
+
+    store.applyStoryUpdate(story({ status: 'APPROVED', title: 'Export invoices to CSV' }));
+
+    const stories = store.projectStories();
+    expect(stories.map((s) => s.id)).toEqual(['story-1', 'story-2']);
+    expect(stories[0].status).toBe('APPROVED');
+    expect(stories[0].title).toBe('Export invoices to CSV');
+  });
+
   it('renders resolved decisions in the historical block after reload', () => {
     flushInit([session()]);
 

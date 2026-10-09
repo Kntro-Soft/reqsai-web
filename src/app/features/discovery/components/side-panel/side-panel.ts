@@ -23,7 +23,7 @@ import {
   ProjectContextApiService,
 } from '../../data/project-context-api.service';
 import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
-import { GherkinSteps } from '../gherkin-steps/gherkin-steps';
+import { PanelStoryEditor } from '../panel-story-editor/panel-story-editor';
 import { PriorityBadge, StoryStatusBadge } from '../story-badges/story-badges';
 
 export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
@@ -47,7 +47,7 @@ const QUICK_VIEW_SIZE = 100;
 @Component({
   selector: 'app-side-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmIcon, HlmSpinner, GherkinSteps, PriorityBadge, StoryStatusBadge, TranslocoPipe],
+  imports: [HlmIcon, HlmSpinner, PanelStoryEditor, PriorityBadge, StoryStatusBadge, TranslocoPipe],
   viewProviders: [provideIcons({ lucideChevronDown, lucideSearch, lucideX })],
   host: { class: 'block h-full min-h-0' },
   template: `
@@ -208,33 +208,10 @@ const QUICK_VIEW_SIZE = 100;
                     </span>
                   </button>
 
-                  <!-- Expanded body: role/action/benefit + acceptance criteria -->
+                  <!-- Expanded body: the story, its review decision and inline edit -->
                   @if (isExpanded(story.id)) {
-                    <div
-                      class="border-t border-border/60 px-3 pb-3 pt-2.5"
-                      data-testid="panel-story-body"
-                    >
-                      <p class="text-xs leading-relaxed text-muted-foreground">
-                        {{ 'discovery.story.as' | transloco }}
-                        <span class="text-foreground">{{ story.role }}</span
-                        >{{ 'discovery.story.want' | transloco }}
-                        <span class="text-foreground">{{ story.action }}</span
-                        >{{ 'discovery.story.soThat' | transloco }}
-                        <span class="text-foreground">{{ story.benefit }}</span
-                        >.
-                      </p>
-                      @if (story.acceptanceCriteria.length > 0) {
-                        <p class="mb-1.5 mt-3 text-xs font-medium text-muted-foreground">
-                          {{ 'discovery.suggestion.criteria' | transloco }}
-                        </p>
-                        <ul class="flex flex-col gap-1.5" data-testid="panel-story-criteria">
-                          @for (c of story.acceptanceCriteria; track $index) {
-                            <li class="rounded-lg bg-muted/60 px-2.5 py-2">
-                              <app-gherkin-steps [criterion]="c" size="sm" />
-                            </li>
-                          }
-                        </ul>
-                      }
+                    <div class="border-t border-border/60 px-3 pb-3 pt-2.5">
+                      <app-panel-story-editor [projectId]="projectId()" [story]="story" />
                     </div>
                   }
                 </div>
