@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Deploys the GHCR image of one app commit through Kntro-Soft/reqsai-infra (deploy-mvp.yml, image_source=registry)
-# and waits for that run. Fails unless the run's deploy job succeeded, so a skipped or cancelled deploy never
-# counts as deployed.
+# Ships one release image, by digest, to the MVP host through Kntro-Soft/reqsai-infra (deploy-mvp.yml with
+# image_source=registry) and waits for that run. Fails unless the run's deploy job succeeded, so a skipped or
+# cancelled deploy never counts as deployed.
 #
-# Usage: GH_TOKEN=<INFRA_DEPLOY_TOKEN> deploy-via-infra.sh <api|web> <commit-sha> <request-id>
+# The calling job runs in this repository's produccion environment; upstream_sha is its commit, so reqsai-infra
+# sees that deployment in_progress (already approved) and does not ask for a second approval.
+#
+# Usage: GH_TOKEN=<INFRA_DEPLOY_TOKEN> deploy-via-infra.sh <api|web> <sha256:digest> <upstream-sha> <request-id>
 set -euo pipefail
 
-app="${1:?usage: deploy-via-infra.sh <api|web> <sha> <request-id>}"
-sha="${2:?commit sha}"
-request_id="${3:?request id}"
+app="${1:?usage: deploy-via-infra.sh <api|web> <digest> <upstream-sha> <request-id>}"
+digest="${2:?image digest}"
+upstream="${3:?upstream commit sha}"
+request_id="${4:?request id}"
 repo=Kntro-Soft/reqsai-infra
 workflow=deploy-mvp.yml
 wait_minutes="${WAIT_MINUTES:-80}"
@@ -19,8 +23,12 @@ case "$app" in
   web) other=api ;;
   *) echo "::error::Unknown app: $app" >&2; exit 1 ;;
 esac
-if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
-  echo "::error::Expected a full commit SHA, got: $sha" >&2
+if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  echo "::error::Expected an image digest sha256:<64 hex>, got: $digest" >&2
+  exit 1
+fi
+if [[ ! "$upstream" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "::error::Expected a full commit SHA, got: $upstream" >&2
   exit 1
 fi
 if [[ -z "${GH_TOKEN:-}" ]]; then
@@ -32,8 +40,9 @@ since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 response=$(gh api --method POST "repos/$repo/actions/workflows/$workflow/dispatches" \
   -f ref=main \
   -f "inputs[image_source]=registry" \
-  -f "inputs[${app}_ref]=$sha" \
+  -f "inputs[${app}_ref]=$digest" \
   -f "inputs[${other}_ref]=keep" \
+  -f "inputs[upstream_sha]=$upstream" \
   -f "inputs[request_id]=$request_id")
 run_id=$(printf '%s' "$response" | jq -r '.workflow_run_id // empty' 2>/dev/null || true)
 
@@ -53,7 +62,7 @@ fi
 
 run_url="https://github.com/$repo/actions/runs/$run_id"
 echo "run_url=$run_url" >> "${GITHUB_OUTPUT:-/dev/null}"
-echo "Deploying reqsai-$app \`${sha:0:12}\` through [$repo run $run_id]($run_url)" >> "$summary"
+echo "Deploying reqsai-$app \`$digest\` through [$repo run $run_id]($run_url)" >> "$summary"
 
 deadline=$(( $(date +%s) + wait_minutes * 60 ))
 while :; do
@@ -71,7 +80,7 @@ deploy_job=$(gh run view "$run_id" --repo "$repo" --json jobs \
   --jq '[.jobs[] | select(.name | startswith("Deploy to the MVP host"))][0].conclusion // "missing"')
 echo "Run conclusion: \`$conclusion\`, deploy job: \`$deploy_job\`" >> "$summary"
 if [[ "$conclusion" != success || "$deploy_job" != success ]]; then
-  echo "::error::reqsai-$app ${sha:0:12} was not deployed: $run_url (run $conclusion, deploy job $deploy_job)" >&2
+  echo "::error::reqsai-$app $digest was not deployed: $run_url (run $conclusion, deploy job $deploy_job)" >&2
   exit 1
 fi
-echo "reqsai-$app \`${sha:0:12}\` is live." >> "$summary"
+echo "reqsai-$app \`$digest\` is live." >> "$summary"

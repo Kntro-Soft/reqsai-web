@@ -1,22 +1,216 @@
 name: Release
 
+# Gitflow release flow, model C + tag at the end. A push to release/X.Y.Z or hotfix/X.Y.Z:
+#   CI → linux/arm64 image built ONCE and pushed to GHCR as X.Y.Z-rc.N (+ sha-<commit>), recorded with its digest
+#   and the tree hash in the pre-release vX.Y.Z-rc.N → automatic verification of that digest (no second EC2: the
+#   nginx image runs on the runner; shell, SPA fallback, bundles, translations) → the pull request
+#   release/X.Y.Z → main. Merging it runs produccion.yml, which deploys this same digest and only then tags vX.Y.Z.
+# Switch (organization variable, 'true' = on): ENABLE_REQSAI_WEB_IMAGE (candidate image). Verification is not
+# switchable.
+
 on:
   push:
-    branches: ['release/**']
+    branches: ['release/**', 'hotfix/**']
 
 concurrency:
-  group: delivery-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
+env:
+  IMAGE: ghcr.io/kntro-soft/reqsai-web
+  VERSION_FILE: package.json
+
 jobs:
-  delivery:
-    name: Deliver
-    uses: ./.github/workflows/delivery.yml
+  prepare:
+    name: Version and candidate number
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+      candidate: ${{ steps.candidate.outputs.candidate }}
+      tag: ${{ steps.candidate.outputs.tag }}
+      tree: ${{ steps.candidate.outputs.tree }}
+      image_enabled: ${{ steps.switch.outputs.image_enabled }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check the version and number the candidate
+        id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          version=$(.github/scripts/candidate.sh branch "$BRANCH" "$VERSION_FILE")
+          read -r rc reused < <(.github/scripts/candidate.sh next "$version" "$GITHUB_SHA")
+          tree=$(git rev-parse 'HEAD^{tree}')
+          {
+            echo "version=$version"
+            echo "candidate=$version-rc.$rc"
+            echo "tag=v$version-rc.$rc"
+            echo "tree=$tree"
+          } >> "$GITHUB_OUTPUT"
+          echo "### reqsai-web $version-rc.$rc from \`$BRANCH\` at \`${GITHUB_SHA:0:12}\` (tree \`${tree:0:12}\`, reused: $reused)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Read the image switch
+        id: switch
+        env:
+          SWITCH: ${{ vars.ENABLE_REQSAI_WEB_IMAGE }}
+        run: |
+          if [ "$SWITCH" = true ]; then
+            echo "image_enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_enabled=false" >> "$GITHUB_OUTPUT"
+            msg="ENABLE_REQSAI_WEB_IMAGE is not 'true': CI runs, but no candidate is built, so this version cannot reach production (Kntro-Soft → Settings → Secrets and variables → Actions → Variables)."
+            echo "::notice title=No release candidate::$msg"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
     secrets: inherit
     permissions:
       contents: read
+
+  image:
+    name: Build the candidate once
+    needs: [prepare, ci]
+    if: needs.prepare.outputs.image_enabled == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    permissions:
+      contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build and push linux/arm64 (or reuse the image of this candidate)
+        id: image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          ref="$IMAGE:$CANDIDATE"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          if docker buildx imagetools inspect "$ref" --format '{{ json .Image }}' 2>/dev/null \
+            | jq -e --arg sha "$GITHUB_SHA" '.config.Labels["org.opencontainers.image.revision"] == $sha' >/dev/null; then
+            echo "Reusing \`$ref\`: this candidate was already built from this commit." >> "$GITHUB_STEP_SUMMARY"
+          else
+            # The image carries the final version X.Y.Z; "rc" only lives in the tag. The build number is the run.
+            docker buildx build --platform linux/arm64 --push --provenance=false \
+              --label "org.opencontainers.image.source=$SOURCE_URL" \
+              --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+              --label "org.opencontainers.image.version=$VERSION" \
+              --label "tech.reqsai.build=$GITHUB_RUN_NUMBER" \
+              --tag "$ref" --tag "$IMAGE:sha-${GITHUB_SHA:0:12}" .
+          fi
+          digest=$(docker buildx imagetools inspect "$ref" --format '{{ json .Manifest }}' | jq -r .digest)
+          docker logout ghcr.io
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Image: \`$ref\` = \`$IMAGE@$digest\`" >> "$GITHUB_STEP_SUMMARY"
+
+  candidate:
+    name: Record the candidate
+    needs: [prepare, image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Store the candidate as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          CANDIDATE: ${{ needs.prepare.outputs.candidate }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          TREE: ${{ needs.prepare.outputs.tree }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg repository "$GITHUB_REPOSITORY" --arg version "$VERSION" --arg candidate "$CANDIDATE" \
+            --arg tag "$TAG" --arg commit "$GITHUB_SHA" --arg tree "$TREE" --arg branch "$BRANCH" \
+            --arg build "$GITHUB_RUN_NUMBER" --arg run_url "$RUN_URL" --arg image "$IMAGE" --arg digest "$DIGEST" \
+            '{repository: $repository, version: $version, candidate: $candidate, tag: $tag, commit: $commit,
+              tree: $tree, branch: $branch, build: $build, run_url: $run_url, image: $image, digest: $digest,
+              stage: "pending", assets: {}}' > "$RUNNER_TEMP/candidate.json"
+          url=$(.github/scripts/candidate.sh create "$RUNNER_TEMP/candidate.json")
+          echo "Candidate: [$TAG]($url) — \`$IMAGE@$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    name: Verify the candidate
+    needs: [prepare, image, candidate]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run the candidate image and smoke-test it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          docker pull --quiet "$IMAGE@$DIGEST"
+          docker logout ghcr.io
+          .github/scripts/verify-candidate.sh "$IMAGE@$DIGEST"
+
+  ready:
+    name: Release candidate ready
+    needs: [prepare, image, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
       pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Mark the candidate as verified and open or update the release pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+          BRANCH: ${{ github.ref_name }}
+          STAGE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          json=$(.github/scripts/candidate.sh mark "$TAG" verified)
+          body="$RUNNER_TEMP/pr.md"
+          {
+            echo "## Release $VERSION"
+            echo
+            echo "Candidate **[$TAG]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG)**: commit \`$(jq -r .commit <<<"$json")\`, tree \`$(jq -r .tree <<<"$json")\`, build $(jq -r .build <<<"$json")."
+            echo
+            echo "- Image: \`$IMAGE@$DIGEST\` (tag \`$(jq -r .candidate <<<"$json")\`, linux/arm64, version label \`$VERSION\`)"
+            echo "- Verified automatically: $STAGE_URL (nginx with 64 MB like the MVP host: app shell, SPA fallback, hashed bundles, translations)"
+            echo
+            echo "Merging into \`main\` runs **Produccion** (\`produccion.yml\`): it finds this candidate by tree hash, waits for approval in \`produccion\`, ships this same digest to the MVP host through \`reqsai-infra\`, then tags \`v$VERSION\` and opens the back-merge into \`develop\`."
+            echo "A new push to \`$BRANCH\` builds the next candidate and updates this description."
+          } > "$body"
+          url=$(.github/scripts/candidate.sh pr "$BRANCH" main "release: $VERSION" "$body")
+          echo "Release pull request: $url" >> "$GITHUB_STEP_SUMMARY"

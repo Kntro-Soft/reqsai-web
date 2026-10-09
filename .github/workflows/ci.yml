@@ -1,14 +1,16 @@
 name: CI
 
+# Pull requests, and pushes to the Gitflow branches: a release pull request opened by a workflow (GITHUB_TOKEN)
+# starts no pull_request run, so the required checks of its head commit come from the push to release/** or
+# hotfix/**. release.yml reuses it (workflow_call) so a candidate is only built from a commit that passed CI.
 on:
   pull_request:
   push:
-    branches: [ develop, main ]
-  # Reused by delivery.yml so a release image is only built from a commit that passed CI.
+    branches: [ develop, main, 'release/**', 'hotfix/**' ]
   workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
