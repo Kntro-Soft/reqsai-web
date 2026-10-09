@@ -1,28 +1,51 @@
 name: Deploy
 
+# Redeploy or roll back a released version: run this workflow on a release tag (Use workflow from → Tags → vX.Y.Z).
+# It deploys the image ghcr.io/kntro-soft/reqsai-web:<tag commit> that the release pipeline already built and
+# tested; nothing is rebuilt. Releases themselves deploy from release.yml / hotfix.yml, not from pushes to main.
+
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Trigger the MVP deploy
-    if: github.ref == 'refs/heads/main'
+  switch:
+    name: Deploy switch
+    if: vars.ENABLE_REQSAI_WEB_DEPLOY != 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
     steps:
-      - name: Dispatch deploy-mvp in reqsai-infra
+      - name: Explain why nothing is deployed
+        run: |
+          echo "::notice title=Deploy skipped::ENABLE_REQSAI_WEB_DEPLOY is not 'true'."
+          echo "Deploy skipped: organization variable \`ENABLE_REQSAI_WEB_DEPLOY\` is not \`true\` (Kntro-Soft → Settings → Secrets and variables → Actions → Variables)." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to produccion
+    if: vars.ENABLE_REQSAI_WEB_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: produccion
+      url: ${{ vars.APP_URL }}
+    concurrency:
+      group: produccion-reqsai-web
+      cancel-in-progress: false
+    steps:
+      - name: Require a release tag
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: |
+          echo "::error::Run this workflow on a release tag vX.Y.Z (got $GITHUB_REF); releases deploy from release/* and hotfix/* branches."
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Deploy the image of this tag through reqsai-infra and wait for it
         env:
           GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
-          SHA: ${{ github.sha }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::notice title=Deploy not triggered::INFRA_DEPLOY_TOKEN is not set. Add a fine-grained PAT with Actions read and write on Kntro-Soft/reqsai-infra to deploy main automatically."
-            exit 0
-          fi
-          gh workflow run deploy-mvp.yml --repo Kntro-Soft/reqsai-infra --ref main -f web_ref="$SHA" -f api_ref=keep
-          echo "Requested the deploy of reqsai-web $SHA: https://github.com/Kntro-Soft/reqsai-infra/actions/workflows/deploy-mvp.yml" >> "$GITHUB_STEP_SUMMARY"
+          REQUEST_ID: reqsai-web ${{ github.ref_name }} ${{ github.run_id }}-${{ github.run_attempt }}
+        run: .github/scripts/deploy-via-infra.sh web "$GITHUB_SHA" "$REQUEST_ID"

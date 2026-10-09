@@ -1,0 +1,181 @@
+name: Delivery
+
+# Reusable pipeline behind release.yml (release/X.Y.Z) and hotfix.yml (hotfix/X.Y.Z):
+#   CI → image built ONCE and pushed as ghcr.io/kntro-soft/reqsai-web:<sha>
+#      → approval in the produccion environment → reqsai-infra deploys that same image
+#      → the release pull request to main is marked as deployed (tag-release.yml tags it after the merge).
+# Switches (organization variables, 'true' = on): ENABLE_REQSAI_WEB_IMAGE, ENABLE_REQSAI_WEB_DEPLOY.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  APP: web
+  IMAGE: ghcr.io/kntro-soft/reqsai-web
+
+jobs:
+  prepare:
+    name: Version and switches
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image_enabled: ${{ steps.switches.outputs.image_enabled }}
+      deploy_enabled: ${{ steps.switches.outputs.deploy_enabled }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Resolve the version
+        id: version
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          version=$(.github/scripts/release-version.sh "$BRANCH")
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "::error::v$version is already released; bump the version in the branch name"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "### reqsai-web v$version from \`$BRANCH\` at \`${GITHUB_SHA:0:12}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Read the deploy switches
+        id: switches
+        env:
+          IMAGE_SWITCH: ${{ vars.ENABLE_REQSAI_WEB_IMAGE }}
+          DEPLOY_SWITCH: ${{ vars.ENABLE_REQSAI_WEB_DEPLOY }}
+        run: |
+          image=false deploy=false
+          [ "$IMAGE_SWITCH" = true ] && image=true
+          [ "$DEPLOY_SWITCH" = true ] && deploy=true
+          {
+            echo "image_enabled=$image"
+            echo "deploy_enabled=$deploy"
+          } >> "$GITHUB_OUTPUT"
+          panel="Kntro-Soft → Settings → Secrets and variables → Actions → Variables"
+          if [ "$image" != true ]; then
+            echo "::notice title=Image skipped::ENABLE_REQSAI_WEB_IMAGE is not 'true': no image is published and nothing is deployed."
+            echo "- Image and deploy skipped: organization variable \`ENABLE_REQSAI_WEB_IMAGE\` is not \`true\` ($panel)." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$deploy" != true ]; then
+            echo "::notice title=Deploy skipped::ENABLE_REQSAI_WEB_DEPLOY is not 'true': the image is published but not deployed."
+            echo "- Deploy skipped: organization variable \`ENABLE_REQSAI_WEB_DEPLOY\` is not \`true\` ($panel)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+    permissions:
+      contents: read
+
+  image:
+    name: Build the image once
+    needs: [prepare, ci]
+    if: needs.prepare.outputs.image_enabled == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build and push linux/arm64 (or reuse the image of this commit)
+        id: image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          ref="$IMAGE:$GITHUB_SHA"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          if docker buildx imagetools inspect "$ref" >/dev/null 2>&1; then
+            echo "Reusing $ref: this commit was already built." >> "$GITHUB_STEP_SUMMARY"
+          else
+            docker buildx build --platform linux/arm64 --push \
+              --label "org.opencontainers.image.source=$SOURCE_URL" \
+              --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+              --label "org.opencontainers.image.version=$VERSION" \
+              --tag "$ref" .
+          fi
+          digest=$(docker buildx imagetools inspect "$ref" | awk '/^Digest:/ { print $2; exit }')
+          docker logout ghcr.io
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Image: \`$ref\` (\`$digest\`)" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to produccion
+    needs: [prepare, image]
+    if: needs.prepare.outputs.deploy_enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: produccion
+      url: ${{ vars.APP_URL }}
+    concurrency:
+      group: produccion-reqsai-web
+      cancel-in-progress: false
+    outputs:
+      run_url: ${{ steps.deploy.outputs.run_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Deploy this image through reqsai-infra and wait for it
+        id: deploy
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          REQUEST_ID: reqsai-web ${{ github.ref_name }} ${{ github.run_id }}-${{ github.run_attempt }}
+        run: .github/scripts/deploy-via-infra.sh "$APP" "$GITHUB_SHA" "$REQUEST_ID"
+
+  release-pr:
+    name: Mark the release pull request as deployed
+    needs: [prepare, image, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Comment on the pull request to main, or explain how to open it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+          RUN_URL: ${{ needs.deploy.outputs.run_url }}
+        run: |
+          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --base main --state open \
+            --json number,isDraft --jq '.[0] // empty')
+          if [ -z "$pr" ]; then
+            url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/main...$BRANCH?expand=1"
+            echo "::notice title=Open the release pull request::$url"
+            echo "No open pull request from \`$BRANCH\` to \`main\`: [open it]($url) (title \`release: v$VERSION\`)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          number=$(jq -r .number <<<"$pr")
+          body="$RUNNER_TEMP/comment.md"
+          cat > "$body" <<MD
+          Deployed to **produccion**: \`$GITHUB_SHA\` (\`$DIGEST\`)
+
+          - Image: \`$IMAGE:$GITHUB_SHA\`
+          - Deploy run: $RUN_URL
+          - Pipeline: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          Merging this pull request tags \`v$VERSION\` on this commit.
+          MD
+          gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body-file "$body"
+          if [ "$(jq -r .isDraft <<<"$pr")" = true ]; then
+            gh pr ready "$number" --repo "$GITHUB_REPOSITORY" || echo "::warning::Could not mark #$number as ready for review"
+          fi
+          echo "Release pull request: #$number" >> "$GITHUB_STEP_SUMMARY"

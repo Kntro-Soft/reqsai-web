@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [ develop, main ]
+  # Reused by delivery.yml so a release image is only built from a commit that passed CI.
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}
