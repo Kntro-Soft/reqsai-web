@@ -108,17 +108,17 @@ We follow **Gitflow**, and every branch starts from an issue on the
 
 | Branch                         | From      | Merges into         | Purpose                                                  |
 |--------------------------------|-----------|---------------------|----------------------------------------------------------|
-| `main`                         | —         | —                   | What runs in `produccion`. Every merge is a tagged release. |
+| `main`                         | —         | —                   | What runs in `produccion`. Every merge deploys an approved candidate, then is tagged. |
 | `develop`                      | `main`    | —                   | Integration branch. All features merge here first.       |
 | `feature/<issue>-<slug>`       | `develop` | `develop`           | User story or task (`feature/123-discovery-export`).     |
 | `bugfix/<issue>-<slug>`        | `develop` | `develop`           | Bug found before release (`bugfix/130-tenant-leak`).     |
-| `release/X.Y.Z`                | `develop` | `main`, `develop`   | Stabilization of version X.Y.Z; it is what gets deployed. |
+| `release/X.Y.Z`                | `develop` | `main`, `develop`   | Stabilization of X.Y.Z: candidates `X.Y.Z-rc.N` are built and verified here. |
 | `hotfix/X.Y.Z`                 | `main`    | `main`, `develop`   | Urgent fix of production (patch version).                |
 
 `main` and `develop` are protected by rulesets: pull request with 1 approval (stale approvals are dismissed),
-the CI checks must pass, no force-push or deletion, merge commits only. Pull requests into `main` also need a
-successful deployment of their head commit to the `produccion` environment. Organization admins can bypass the
-rules only through a pull request.
+the CI checks must pass, no force-push or deletion, merge commits only. CI also runs on pushes to `release/**`
+and `hotfix/**`, because the release pull request is opened by a workflow and starts no `pull_request` run.
+Organization admins can bypass the rules only through a pull request.
 
 ## Commit Convention
 
@@ -185,85 +185,107 @@ docs(adr): record state management decision
 
 ## Releases and Deployment
 
+Releases follow **Gitflow with release candidates, model C + tag at the end** (organization guide:
+[Kntro-Soft/.github CONTRIBUTING](https://github.com/Kntro-Soft/.github/blob/main/.github/CONTRIBUTING.md#releases-and-deployment)):
+the image is built **once** on the release branch, verified there, and that same digest reaches production after
+the merge into `main`. `vX.Y.Z` is tagged only when production succeeded.
+
+```mermaid
+flowchart TD
+    dev["develop"] -->|"cut release/X.Y.Z<br/>(hotfix/X.Y.Z from main)"| push["push to release/X.Y.Z"]
+    subgraph rel["release.yml"]
+        push --> ci["CI (ci.yml)"]
+        ci --> image["image · build ONCE (linux/arm64)<br/>ghcr.io/kntro-soft/reqsai-web:X.Y.Z-rc.N"]
+        image --> cand["candidate · pre-release vX.Y.Z-rc.N<br/>candidate.json: commit, tree, digest, build"]
+        cand --> verify["verify · automatic, no approval<br/>same digest on the runner"]
+        verify --> ready["Release candidate ready<br/>PR release: X.Y.Z → main"]
+    end
+    ready -->|"bug: fix on the release branch → rc.N+1"| push
+    ready -->|"merge"| main["push to main"]
+    subgraph prod["produccion.yml"]
+        main --> find["prepare · candidate with the same tree hash"]
+        find --> deploy["deploy · environment produccion (approval)<br/>reqsai-infra ships the digest"]
+        deploy --> release["release · digest tagged X.Y.Z + latest<br/>tag vX.Y.Z + GitHub Release<br/>PR main → develop"]
+    end
+```
+
 ### Traceability
 
 ```
 Issue #123 ──► feature/123-slug ──► commits "Refs #123" ──► PR "Closes #123" → develop
-          ──► release/X.Y.Z ──► image ghcr.io/kntro-soft/reqsai-web:<sha> ──► deployment "produccion"
-          ──► PR release/X.Y.Z → main ──► tag + GitHub Release vX.Y.Z (on the deployed <sha>)
+          ──► release/X.Y.Z ──► candidate vX.Y.Z-rc.N (image digest, tree hash) ──► verification
+          ──► PR "release: X.Y.Z" → main ──► produccion (same digest) ──► tag + GitHub Release vX.Y.Z
 ```
 
-Every hop is a link on GitHub: the issue lists its PRs, the release notes list the PRs, the tag points to the
-deployed commit, the image carries that commit in its `org.opencontainers.image.revision` label, and the
-`produccion` environment lists each deployment with its commit.
+Every hop is a link on GitHub: the issue lists its PRs, the release notes list the PRs, each candidate is a
+pre-release whose `candidate.json` records commit, tree hash, image digest, build number and the stage it passed,
+the image carries `org.opencontainers.image.revision` and `org.opencontainers.image.version`, the final release
+points to the `main` commit that reached production, and the `produccion` environment lists each deployment.
 
 ### Cutting a release
 
-1. Branch `release/X.Y.Z` from `develop`, move `[Unreleased]` in `CHANGELOG.md` to `[X.Y.Z]`, push, and open the
-   pull request `release/X.Y.Z → main` (it gets the normal PR checks).
-2. Every push to the branch runs **Release** (`release.yml` → `delivery.yml`):
+1. Branch `release/X.Y.Z` from `develop`. Its first commit is `chore(release): X.Y.Z`: set `"version": "X.Y.Z"` in `package.json` and
+   move `[Unreleased]` in `CHANGELOG.md` to `[X.Y.Z] - date`. The pipeline refuses a branch whose version file
+   does not match, and a version that is already tagged.
+2. Every push to the branch runs **Release** (`release.yml`):
 
 | Job | What it does |
 |-----|--------------|
-| `prepare` | Reads the version from the branch name, refuses an existing tag, reads the deploy switches. |
+| `prepare` | Checks the branch and the version file, numbers the candidate `X.Y.Z-rc.N` (reuses N if this commit already has one), records the tree hash, reads `ENABLE_REQSAI_WEB_IMAGE`. |
 | `ci` | Runs `ci.yml` (the same checks as a PR). |
-| `image` | Builds the `linux/arm64` image **once** and pushes `ghcr.io/kntro-soft/reqsai-web:<commit sha>`; if that commit already has an image, it is reused. |
-| `deploy` | Environment **`produccion`: waits for approval** by `jhosepmyr`. Then asks `reqsai-infra` (`deploy-mvp.yml`, `image_source=registry`) to deploy that exact image and waits for it; fails if the infra deploy job did not succeed. |
-| `release-pr` | Comments the deployed commit, image digest and infra run on the release PR and marks it ready for review (or prints the link to open it). |
+| `image` | Builds `linux/arm64` **once** and pushes `ghcr.io/kntro-soft/reqsai-web:X.Y.Z-rc.N` and `:sha-<commit>` (labels: revision, version `X.Y.Z`, build number). |
+| `candidate` | Creates the pre-release `vX.Y.Z-rc.N` on the commit with `candidate.json` (digest, tree hash, build). |
+| `verify` | Automatic, no environment, not switchable: runs the nginx image with 64 MB like the MVP host and checks `/health`, the app shell (no-cache, security headers), the SPA fallback, every hashed bundle and both translation files (`.github/scripts/verify-candidate.sh`). There is no second EC2 for a staging environment. |
+| `ready` | Marks the candidate `verified` and opens or updates the PR `release: X.Y.Z` (`release/X.Y.Z → main`) with the candidate, digest and verification run. |
 
-3. Approve the deployment: **Actions → the Release run → Review deployments → produccion → Approve**.
-   This is the only approval of the deploy: `reqsai-infra` checks it through the Deployments API and does not ask
-   again.
-4. Review and merge the release PR (merge commit). **Tag release** (`tag-release.yml`) checks that the PR head
-   was deployed to `produccion`, creates `vX.Y.Z` on that commit with a GitHub Release, and prints the link to
-   back-merge `release/X.Y.Z → develop`. Move the issues to Done.
+3. A bug found on the release branch is fixed there (`bugfix/<issue>-<slug>` from the release branch, or a direct
+   commit): the next push builds `rc.N+1` and updates the PR. The version stays `X.Y.Z`.
+4. Review and merge the release PR (merge commit). **Produccion** (`produccion.yml`) runs on `main`:
 
-A hotfix is the same with `hotfix/X.Y.Z` cut from `main` (**Hotfix**, `hotfix.yml`). A branch named
-`hotfix/<slug>` gets the latest tag with the patch bumped.
+| Job | What it does |
+|-----|--------------|
+| `prepare` | Finds the newest verified candidate whose tree hash equals the `main` commit's tree. If none matches, it fails: *main differs from the tested candidate; push the change to the release branch to build a new rc*. |
+| `deploy` | Environment **`produccion`: waits for approval** by `jhosepmyr`. Asks `reqsai-infra` (`deploy-mvp.yml`, `image_source=registry`) to ship that digest and waits; `reqsai-infra` dumps the database before changing the stack and does not ask for a second approval. Switch `ENABLE_REQSAI_WEB_DEPLOY`. |
+| `release` | Only if `deploy` succeeded: tags the digest `X.Y.Z` and `latest` in GHCR (no rebuild), creates `vX.Y.Z` + GitHub Release on the `main` commit (notes = CHANGELOG section + candidate), and opens `chore: merge release X.Y.Z back into develop`. |
 
-### Redeploy or roll back
+If `deploy` fails nothing is tagged; *Re-run failed jobs* reuses the same candidate. Move the issues to Done
+when `vX.Y.Z` exists.
 
-Run **Deploy** (`deploy.yml`) on a release tag: *Actions → Deploy → Run workflow → Use workflow from → Tags →
-vX.Y.Z*. It deploys the image already built for that tag, behind the same `produccion` approval; nothing is
-rebuilt. Pushes to `main` no longer deploy. Versions released before this pipeline have no image in GHCR; deploy
-them from `reqsai-infra` (`deploy-mvp.yml` with `image_source=build`).
+A hotfix is the same pipeline with `hotfix/X.Y.Z` cut from `main` (patch version).
+
+### Rollback
+
+**Rollback** (`rollback.yml`, *Actions → Rollback → Run workflow* from `main`, input `version`) ships the digest
+recorded in the final release `vX.Y.Z` again, behind the `produccion` approval, and points `latest` at it.
+Nothing is rebuilt. Versions released before this pipeline have no digest; deploy them from `reqsai-infra`
+(`deploy-mvp.yml` with `image_source=build`).
+
+The web app holds no data: rolling it back never needs a database restore, but check that the older version
+works with the API in production.
 
 ### Deploy switches
 
-Each deploy channel has an on/off switch: an **organization** variable in *Kntro-Soft → Settings → Secrets and
-variables → Actions → Variables*. Only the value `true` turns it on; when it is off the job is skipped and the
-run summary says which variable stopped it.
+Organization variables in *Kntro-Soft → Settings → Secrets and variables → Actions → Variables*; only `true`
+turns a channel on, and the run summary says which variable stopped a job. Verification is never switchable.
 
 | Variable | Controls |
 |----------|----------|
-| `ENABLE_REQSAI_WEB_IMAGE` | Job `image` (publishing to GHCR). Off also means no deploy. |
-| `ENABLE_REQSAI_WEB_DEPLOY` | Job `deploy` of `delivery.yml` and `deploy.yml`. |
+| `ENABLE_REQSAI_WEB_IMAGE` | Job `image` of `release.yml` (off: CI only, no candidate, so no release). |
+| `ENABLE_REQSAI_WEB_DEPLOY` | Job `deploy` of `produccion.yml` and `rollback.yml` (off: no deploy and no tag). |
 | `ENABLE_REQSAI_INFRA_DEPLOY` | Every deploy to the MVP host, in `reqsai-infra`. If it is off the infra run skips the deploy and the `deploy` job here fails. |
 
 ### One-time set-up
 
-- `INFRA_DEPLOY_TOKEN`: fine-grained PAT with *Actions: read and write* on `Kntro-Soft/reqsai-infra` only.
-  Prefer storing it as a secret of the `produccion` environment, so only an approved job can use it.
-- GHCR: if the package `reqsai-web` already existed, grant this repository **Write** in *Package settings →
-  Manage Actions access*; grant `reqsai-infra` **Read** (or make the package public).
-- Staging: there is none (single EC2 host). See section 14.7 of the `reqsai-infra` deploy guide for the cost of
-  adding one.
-
-## Dependency Security
-
-The CI pipeline includes a weekly dependency audit powered by `bun audit` (built into Bun 1.2+):
-
-```bash
-bun audit --audit-level=critical
-```
-
-- **Critical CVEs** → exit non-zero, fail the build.
-- **High/Moderate/Low** → printed in output, not blocking.
-
-If a critical CVE has no fix available yet, open an issue tracking it and unblock CI by
-temporarily raising the level to `high` in the workflow — never silence it without a ticket.
-
-Run the audit locally before opening a PR if you changed any dependency in `package.json`.
+- Environment `produccion`: required reviewer `jhosepmyr`, deployment branches **`main` only**.
+- `INFRA_DEPLOY_TOKEN`: fine-grained PAT with *Actions: read and write* on `Kntro-Soft/reqsai-infra` only. Prefer
+  storing it as a secret of the `produccion` environment, so only an approved job can use it.
+- *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* (organization and
+  repository), so the workflows can open the release and back-merge PRs. While it is off, the run prints the
+  compare link and the title to open them by hand.
+- GHCR: the first `release.yml` run creates the package `reqsai-web` linked to this repository. Grant
+  `reqsai-infra` **Read** in *Package settings → Manage Actions access* (or make the package public).
+- The `main` ruleset must not require a `produccion` deployment of the PR head any more (production runs after
+  the merge); require the check `Release candidate ready` instead.
 
 ## Updating the CHANGELOG
 

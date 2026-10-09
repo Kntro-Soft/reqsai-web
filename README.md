@@ -135,12 +135,13 @@ docker compose --profile app up -d     # http://localhost:4200
 
 - **CI** (`.github/workflows/ci.yml`): lint + tests + build en cada PR/push.
 - **CodeQL** (`.github/workflows/codeql.yml`): análisis estático de seguridad.
-- **Release / Hotfix** (`.github/workflows/release.yml`, `hotfix.yml` → `delivery.yml`): en `release/X.Y.Z` o
-  `hotfix/X.Y.Z`, CI → imagen `linux/arm64` construida una sola vez (`ghcr.io/kntro-soft/reqsai-web:<sha>`) →
-  aprobación en el environment `produccion` → despliegue de esa imagen vía `reqsai-infra`.
-- **Tag release** (`.github/workflows/tag-release.yml`): al fusionar la release en `main`, tag `vX.Y.Z` sobre el
-  commit desplegado.
-- **Deploy** (`.github/workflows/deploy.yml`): redespliegue o rollback manual desde un tag `vX.Y.Z`.
+- **Release** (`.github/workflows/release.yml`): en `release/X.Y.Z` o `hotfix/X.Y.Z`, CI → imagen `linux/arm64`
+  construida una sola vez como candidata `ghcr.io/kntro-soft/reqsai-web:X.Y.Z-rc.N` (pre-release `vX.Y.Z-rc.N` con
+  digest y hash del árbol) → verificación automática de ese digest (nginx con 64 MB: shell, fallback SPA, bundles y traducciones) → PR `release: X.Y.Z` a `main`.
+- **Produccion** (`.github/workflows/produccion.yml`): al fusionar en `main`, busca la candidata con el mismo árbol,
+  pide aprobación en el environment `produccion`, despliega ese mismo digest vía `reqsai-infra` y recién entonces
+  crea el tag `vX.Y.Z`, el GitHub Release y el PR de vuelta a `develop`.
+- **Rollback** (`.github/workflows/rollback.yml`): vuelve a desplegar el digest de un release `vX.Y.Z` anterior.
 - **Audit** (`.github/workflows/audit.yml`): escaneo CVE de dependencias npm (semanal).
 
 Detalle en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).

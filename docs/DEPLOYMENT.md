@@ -85,11 +85,17 @@ The MVP does not use S3 + CloudFront: the nginx image runs on the single EC2 hos
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `release.yml` / `hotfix.yml` → `delivery.yml` | Push to `release/**` / `hotfix/**` | CI → `linux/arm64` image built once as `ghcr.io/kntro-soft/reqsai-web:<commit sha>` → approval in the `produccion` environment → `reqsai-infra` deploys that same image (OIDC + SSM) |
-| `tag-release.yml` | Release/hotfix PR merged into `main` | Tag `vX.Y.Z` + GitHub Release on the deployed commit |
-| `deploy.yml` | Manual, on a release tag | Redeploy or roll back an already built image |
+| [`ci.yml`](../.github/workflows/ci.yml) | PR, push to `develop`/`main`/`release/**`/`hotfix/**`, called by `release.yml` | Build, test, lint |
+| [`codeql.yml`](../.github/workflows/codeql.yml) | PR, push (same branches), weekly | Static security analysis (CodeQL, JavaScript / TypeScript) |
+| [`release.yml`](../.github/workflows/release.yml) | Push to `release/**` / `hotfix/**` | CI → image built once as candidate `X.Y.Z-rc.N` (pre-release with digest and tree hash) → automatic verification → PR `release: X.Y.Z` to `main` |
+| [`produccion.yml`](../.github/workflows/produccion.yml) | Push to `main` | Candidate with the same tree → approval in `produccion` → same digest deployed through `reqsai-infra` → `X.Y.Z`/`latest` labels, tag `vX.Y.Z`, back-merge PR |
+| [`rollback.yml`](../.github/workflows/rollback.yml) | Manual (`version`) | Ship the digest of an earlier final release again |
 
-Organization variables switch each step on (`ENABLE_REQSAI_WEB_IMAGE`, `ENABLE_REQSAI_WEB_DEPLOY`,
+The MVP runs on a single EC2 host managed by
+[`reqsai-infra`](https://github.com/Kntro-Soft/reqsai-infra) (Docker Compose + Caddy). There is no second host for
+a staging environment, so each candidate is verified on the runner with the same digest that later goes to
+production; `reqsai-infra` reaches the host with GitHub OIDC + SSM and backs up the database before each deploy.
+Each step is switched on by an organization variable (`ENABLE_REQSAI_WEB_IMAGE`, `ENABLE_REQSAI_WEB_DEPLOY`,
 `ENABLE_REQSAI_INFRA_DEPLOY`). The release process, approvals and switches are in
 [CONTRIBUTING.md](../.github/CONTRIBUTING.md#releases-and-deployment). The S3 + CloudFront steps above
 describe the `envs/production` target, which no workflow deploys today.

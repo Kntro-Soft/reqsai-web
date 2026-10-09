@@ -13,10 +13,14 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 
 ### Changed (Release pipeline — `feature/79-release-pipeline`, #79)
 
-- **Releases deploy from `release/X.Y.Z` and `hotfix/X.Y.Z`, not from pushes to `main`.** `delivery.yml` runs
-  CI, builds the `linux/arm64` image once as `ghcr.io/kntro-soft/reqsai-web:<sha>`, waits for approval in the
-  `produccion` environment and deploys that image through `reqsai-infra`. Merging the release PR tags `vX.Y.Z`
-  on the deployed commit (`tag-release.yml`); `deploy.yml` redeploys a release tag.
+- **Gitflow release candidates, model C + tag at the end.** `release.yml` (on `release/X.Y.Z` and
+  `hotfix/X.Y.Z`) runs CI, builds the `linux/arm64` image once as `ghcr.io/kntro-soft/reqsai-web:X.Y.Z-rc.N`,
+  records it as the pre-release `vX.Y.Z-rc.N` (digest, tree hash, build number), verifies that digest
+  automatically and opens the PR `release: X.Y.Z`. `produccion.yml` (on `main`) finds the candidate by tree hash,
+  waits for approval in `produccion`, deploys the same digest through `reqsai-infra`, labels it `X.Y.Z`/`latest`
+  and only then tags `vX.Y.Z` and opens the back-merge PR. `rollback.yml` ships an earlier release again.
+- Pushes to `main` no longer deploy by themselves (`deploy.yml` removed); CI and CodeQL also run on pushes to
+  `release/**` and `hotfix/**`.
 - Deploy switches `ENABLE_REQSAI_WEB_IMAGE` and `ENABLE_REQSAI_WEB_DEPLOY` (organization variables).
 - Issue forms for User Story and Task, acceptance criteria on bugs, and `Closes #` in the PR template.
 
