@@ -40,6 +40,7 @@ import {
   lucideTriangleAlert,
   lucideUpload,
   lucideUsers,
+  lucideX,
 } from '@ng-icons/lucide';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
@@ -81,7 +82,11 @@ import { Select, SelectOption } from '../../../../shared/components/select/selec
 import { Modal } from '../../../../shared/components/modal/modal';
 import { DISCOVERY_LANGUAGES } from '../../data/discovery-languages';
 import { languageStorageKey, resolveInitialLanguage } from '../../data/language-preference';
-import { audioSourceStorageKey, resolveAudioSource } from '../../data/audio-source-preference';
+import {
+  audioSourceStorageKey,
+  meetingTipsStorageKey,
+  resolveAudioSource,
+} from '../../data/audio-source-preference';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
 /**
@@ -139,6 +144,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideTriangleAlert,
       lucideUpload,
       lucideUsers,
+      lucideX,
     }),
   ],
   providers: [AssistantChatStore],
@@ -982,28 +988,41 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             </p>
           } @else {
             <!-- Virtual meeting: the two things to get right, before the browser's share
-                 dialog covers the page. Calm and neutral — guidance, not a warning. -->
-            <ul
-              class="mt-2 flex flex-col gap-1.5 rounded-xl border border-border bg-card/70 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground"
+                 dialog covers the page. Calm and neutral — guidance, not a warning. Once read
+                 it can be hidden for good (remembered per user). -->
+            <div
+              class="relative mt-2 rounded-xl border border-border bg-card/70 py-2.5 pl-3 pr-9 text-xs leading-relaxed text-muted-foreground"
               data-testid="audio-source-hint"
             >
-              <li class="flex items-start gap-2">
-                <hlm-icon
-                  name="lucideScreenShare"
-                  size="14px"
-                  class="mt-px shrink-0 text-foreground"
-                />
-                <span>{{ 'discovery.source.hintShare' | transloco }}</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <hlm-icon
-                  name="lucideHeadphones"
-                  size="14px"
-                  class="mt-px shrink-0 text-foreground"
-                />
-                <span>{{ 'discovery.source.hintHeadphones' | transloco }}</span>
-              </li>
-            </ul>
+              <ul class="flex flex-col gap-1.5">
+                <li class="flex items-start gap-2">
+                  <hlm-icon
+                    name="lucideScreenShare"
+                    size="14px"
+                    class="mt-px shrink-0 text-foreground"
+                  />
+                  <span>{{ 'discovery.source.hintShare' | transloco }}</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <hlm-icon
+                    name="lucideHeadphones"
+                    size="14px"
+                    class="mt-px shrink-0 text-foreground"
+                  />
+                  <span>{{ 'discovery.source.hintHeadphones' | transloco }}</span>
+                </li>
+              </ul>
+              <button
+                type="button"
+                (click)="hideMeetingTips()"
+                class="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                [attr.aria-label]="'discovery.source.hintDismiss' | transloco"
+                [title]="'discovery.source.hintDismiss' | transloco"
+                data-testid="audio-source-hint-dismiss"
+              >
+                <hlm-icon name="lucideX" size="14px" />
+              </button>
+            </div>
           }
         }
       </div>
@@ -1278,8 +1297,10 @@ export class DiscoveryChat implements OnInit {
   protected readonly sourceHint = computed<'unsupported' | 'meeting' | null>(() => {
     if (!this.canRecord() || this.recording.isActive()) return null;
     if (this.meetingUnavailableHint()) return 'unsupported';
-    return this.audioSource() === 'meeting' ? 'meeting' : null;
+    return this.audioSource() === 'meeting' && !this.meetingTipsHidden() ? 'meeting' : null;
   });
+  /** The analyst hid the virtual-meeting tips (remembered per user in localStorage). */
+  protected readonly meetingTipsHidden = signal(this.storedMeetingTipsHidden());
 
   /** Uppercased primary subtag of the editable language, for the select's mobile trigger. */
   protected readonly languageAbbrevValue = computed(() => this.languageAbbrev(this.language()));
@@ -1742,6 +1763,28 @@ export class DiscoveryChat implements OnInit {
       localStorage.setItem(audioSourceStorageKey(userId), source);
     } catch {
       // Storage can be unavailable (private mode / quota); the in-memory value still applies.
+    }
+  }
+
+  /** Hides the virtual-meeting tips for good on this browser. */
+  protected hideMeetingTips(): void {
+    this.meetingTipsHidden.set(true);
+    const userId = this.auth.user()?.id;
+    if (!userId) return;
+    try {
+      localStorage.setItem(meetingTipsStorageKey(userId), '1');
+    } catch {
+      // Storage can be unavailable (private mode / quota); the tips stay hidden for this visit.
+    }
+  }
+
+  private storedMeetingTipsHidden(): boolean {
+    const userId = this.auth.user()?.id;
+    if (!userId) return false;
+    try {
+      return localStorage.getItem(meetingTipsStorageKey(userId)) === '1';
+    } catch {
+      return false;
     }
   }
 

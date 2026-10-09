@@ -500,6 +500,19 @@ export class DiscoveryChatStore {
   /** The project backlog (feeds the side panel's Stories tab). */
   readonly projectStories = this._projectStories.asReadonly();
 
+  /**
+   * Puts a story the analyst just edited or reviewed (side panel) back into the backlog in place,
+   * so its card and status badge update without reloading the whole backlog.
+   */
+  applyStoryUpdate(story: UserStoryResponse): void {
+    const next = toDisplayStory(story);
+    this._projectStories.update((stories) =>
+      stories.some((s) => s.id === next.id)
+        ? stories.map((s) => (s.id === next.id ? next : s))
+        : [next, ...stories],
+    );
+  }
+
   refreshProjectStories(): void {
     const projectId = this.projectId;
     if (!projectId) return;

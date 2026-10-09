@@ -1264,7 +1264,8 @@
       "micShort": "In person",
       "meetingShort": "Virtual meeting",
       "hintShare": "When you press Record, pick the meeting tab and turn on “Share tab audio”.",
-      "hintHeadphones": "Wear headphones so your microphone doesn't pick up the meeting again and duplicate the transcript."
+      "hintHeadphones": "Wear headphones so your microphone doesn't pick up the meeting again and duplicate the transcript.",
+      "hintDismiss": "Hide these tips"
     },
     "bar": {
       "recording": "Recording",
@@ -1389,7 +1390,9 @@
       "infoDescription": "Description",
       "infoDomain": "Domain",
       "infoArchitecture": "Architecture",
-      "infoStack": "Stack"
+      "infoStack": "Stack",
+      "edit": "Edit",
+      "openStory": "Open story"
     },
     "status": {
       "DRAFT": "Draft",
