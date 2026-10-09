@@ -23,3 +23,13 @@ export function resolveAudioSource(
 ): AudioSource {
   return stored === 'meeting' && meetingSupported ? 'meeting' : 'mic';
 }
+
+const MEETING_TIPS_PREFIX = 'reqsai.discovery.meetingTipsHidden.';
+
+/**
+ * The localStorage key recording that one user hid the virtual-meeting tips (share the tab's
+ * audio, wear headphones). Once read, the tips are noise before every recording.
+ */
+export function meetingTipsStorageKey(userId: string): string {
+  return `${MEETING_TIPS_PREFIX}${userId}`;
+}

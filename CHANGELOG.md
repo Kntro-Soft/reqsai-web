@@ -11,6 +11,26 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Changed (Capture page: act on stories without leaving the meeting — `feature/discovery-capture-ux`)
+
+- **Review and edit a story from the session's side panel.** Expanding a story shows:
+  - Aprobar / Rechazar / Volver a borrador (`STORY_APPROVE`);
+  - Editar (`STORY_WRITE`), which turns the card into an inline form (title, como/quiero/para,
+    priority, points) with Guardar and Cancelar (Escape also cancels);
+  - a link to the story page for the criteria.
+  The card and its status badge update in place (`DiscoveryChatStore.applyStoryUpdate`); a draft no
+  longer needs a trip to the backlog page. In the narrow desktop panel, Editar shows only its icon
+  (a container query).
+- **The virtual-meeting tips can be hidden.** "Compartir audio de la pestaña" and "Usa audífonos" get
+  an X, and hiding them is remembered per user in localStorage
+  (`reqsai.discovery.meetingTipsHidden.<userId>`).
+
+### Fixed
+
+- **A stopped live session no longer shows "Procesando la sesión" forever.** `STOPPED` is where a
+  live session ends; nothing processes it afterwards (only an uploaded recording goes through
+  `PROCESSING`), so the AI status line now shows nothing for it.
+
 ### Fixed (Dependabot PRs failed on the lockfile — `bugfix/dependabot-bun-lockfile`)
 
 - **Dependabot now uses the `bun` ecosystem.** It updates `bun.lock` together with `package.json`. With

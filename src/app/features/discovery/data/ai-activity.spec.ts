@@ -60,9 +60,12 @@ describe('aiActivityFor', () => {
     ).toBe('paused');
   });
 
-  it('is processing between Stop and the final stories (STOPPED and PROCESSING)', () => {
-    expect(aiActivityFor(session('STOPPED'), [], NOW)?.state).toBe('processing');
+  it('is processing only while an uploaded recording is processed (PROCESSING)', () => {
     expect(aiActivityFor(session('PROCESSING'), [], NOW)?.state).toBe('processing');
+  });
+
+  it('shows nothing once a live session is stopped: nothing processes it afterwards', () => {
+    expect(aiActivityFor(session('STOPPED'), [], NOW)).toBeNull();
   });
 
   it('surfaces the backend reason when processing failed', () => {

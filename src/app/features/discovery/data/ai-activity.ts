@@ -14,13 +14,17 @@ export interface AiActivity {
 
 /**
  * Maps a session's lifecycle to the AI status line of its feed block, or null once
- * the session has settled (COMPLETED) or never started (DRAFT):
+ * the session has ended (STOPPED, COMPLETED) or never started (DRAFT):
  *
  * - RECORDING → listening (real-time suggestions are being produced), plus how long
  *   ago the newest pending suggestion arrived, when there is one;
  * - PAUSED → paused (no audio, so no analysis until resumed);
- * - STOPPED / PROCESSING → processing (the final stories are being generated);
+ * - PROCESSING → processing (an uploaded recording's stories are being generated);
  * - FAILED → failed, carrying the backend's reason when it sent one.
+ *
+ * STOPPED is where a live session ends: its suggestions were raised while recording
+ * and nothing processes it afterwards, so it shows no "processing" line (it used to,
+ * forever, on every stopped meeting).
  */
 export function aiActivityFor(
   session: Pick<DiscoverySessionResponse, 'status' | 'processingError' | 'suggestionMode'>,
@@ -37,7 +41,6 @@ export function aiActivityFor(
       };
     case 'PAUSED':
       return { state: 'paused', detail: null, last: null };
-    case 'STOPPED':
     case 'PROCESSING':
       return { state: 'processing', detail: null, last: null };
     case 'FAILED':

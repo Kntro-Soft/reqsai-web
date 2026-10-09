@@ -1264,7 +1264,8 @@
       "micShort": "Presencial",
       "meetingShort": "Reunión virtual",
       "hintShare": "Al pulsar Grabar, elige la pestaña de la reunión y activa «Compartir audio de la pestaña».",
-      "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica."
+      "hintHeadphones": "Usa audífonos: así tu micrófono no vuelve a captar la reunión y la transcripción no se duplica.",
+      "hintDismiss": "Ocultar estos consejos"
     },
     "bar": {
       "recording": "Grabando",
@@ -1389,7 +1390,9 @@
       "infoDescription": "Descripción",
       "infoDomain": "Dominio",
       "infoArchitecture": "Arquitectura",
-      "infoStack": "Tecnologías"
+      "infoStack": "Tecnologías",
+      "edit": "Editar",
+      "openStory": "Abrir historia"
     },
     "status": {
       "DRAFT": "Borrador",
