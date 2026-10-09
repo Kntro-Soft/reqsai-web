@@ -2,6 +2,8 @@ name: Bug report
 description: Report a defect in the frontend
 title: "fix: <short description>"
 labels: ["bug"]
+type: Bug
+projects: ["Kntro-Soft/3"]
 body:
   - type: textarea
     id: description
@@ -40,6 +42,18 @@ body:
     id: expected
     attributes:
       label: Expected vs actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How we verify the fix. Work on it in `bugfix/<issue-number>-<slug>` and close it with `Closes #<issue-number>`.
+      value: |
+        Scenario: <name>
+          Given <context that triggered the bug>
+          When <action>
+          Then <expected behavior>
     validations:
       required: true
   - type: textarea

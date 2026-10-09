@@ -1,0 +1,76 @@
+name: User Story
+description: A capability a user needs, with acceptance criteria
+title: "US: <short description>"
+labels: ["user-story"]
+# Add `type: User Story` once that issue type exists in the organization (Settings → Issue types).
+projects: ["Kntro-Soft/3"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Work on it in a branch named `feature/<issue-number>-<slug>` and close it from the pull request with `Closes #<issue-number>`.
+  - type: input
+    id: role
+    attributes:
+      label: As a
+      placeholder: analyst, organization admin, client stakeholder...
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: I want
+      description: What the user wants to do.
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: So that
+      description: The value it brings.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: One scenario per criterion. The story is done when all of them pass.
+      value: |
+        Scenario: <name>
+          Given <context>
+          When <action>
+          Then <observable result>
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature module / area
+      options:
+        - iam
+        - billing
+        - workspace
+        - discovery
+        - core
+        - shared / ui
+        - layout
+        - build / ci
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Proposed priority; the team confirms it on the ReqsAI project board.
+      options:
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes, designs or dependencies
+    validations:
+      required: false

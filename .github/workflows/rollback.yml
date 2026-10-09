@@ -1,0 +1,105 @@
+name: Rollback
+
+# Ships the image of an earlier final release vX.Y.Z (its digest, recorded in the release's candidate.json) to the
+# MVP host again, behind the produccion approval, and points latest at it. Nothing is rebuilt. Run it from main.
+#
+# The web app holds no data: rolling it back never needs a database restore. Check that the older web version
+# still works with the reqsai-api in production (reqsai-infra deploy guide, section 14.4). Then fix forward with
+# hotfix/X.Y.Z.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Released version to put back in production, X.Y.Z (a final GitHub Release vX.Y.Z)
+        type: string
+        required: true
+
+concurrency:
+  group: produccion-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  APP: web
+  IMAGE: ghcr.io/kntro-soft/reqsai-web
+
+jobs:
+  switch:
+    name: Deploy switch
+    if: vars.ENABLE_REQSAI_WEB_DEPLOY != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Explain why nothing is rolled back
+        run: |
+          echo "::warning title=Rollback skipped::ENABLE_REQSAI_WEB_DEPLOY is not 'true'."
+          echo "Rollback skipped: organization variable \`ENABLE_REQSAI_WEB_DEPLOY\` is not \`true\` (Kntro-Soft → Settings → Secrets and variables → Actions → Variables)." >> "$GITHUB_STEP_SUMMARY"
+
+  rollback:
+    name: Roll back produccion
+    if: vars.ENABLE_REQSAI_WEB_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: produccion
+      url: ${{ vars.APP_URL }}
+    concurrency:
+      group: produccion-reqsai-web
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Read the digest of the release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be X.Y.Z, got: $VERSION"
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::Run the rollback from main (Use workflow from → main)."
+            exit 1
+          fi
+          prerelease=$(gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" --json isPrerelease --jq .isPrerelease) \
+            || { echo "::error::There is no GitHub Release v$VERSION"; exit 1; }
+          if [ "$prerelease" != false ]; then
+            echo "::error::v$VERSION is a pre-release; roll back to a version that reached production"
+            exit 1
+          fi
+          digest=$(gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --pattern candidate.json --output - | jq -r '.digest // empty') \
+            || true
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::v$VERSION has no candidate.json with an image digest (released before this pipeline); deploy it from reqsai-infra with image_source=build"
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "### Rollback of reqsai-web to v$VERSION (\`$IMAGE@$digest\`)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Ship that digest through reqsai-infra and wait for it
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+          REQUEST_ID: reqsai-web rollback v${{ inputs.version }} ${{ github.run_id }}-${{ github.run_attempt }}
+        run: .github/scripts/deploy-via-infra.sh "$APP" "$DIGEST" "$GITHUB_SHA" "$REQUEST_ID"
+
+      - name: Point latest at the rolled-back digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          docker buildx imagetools create --tag "$IMAGE:latest" "$IMAGE@$DIGEST"
+          docker logout ghcr.io
+          echo "\`$IMAGE:latest\` → \`$DIGEST\`." >> "$GITHUB_STEP_SUMMARY"
