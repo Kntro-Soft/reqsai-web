@@ -10,6 +10,7 @@ import {
 } from './helpers/workspace';
 
 const PASSWORD = 'Passw0rd!23';
+const FAKE_GITHUB = process.env['FAKE_GITHUB_URL'] ?? 'http://127.0.0.1:4545';
 
 /**
  * The code-aware copilot against the local stack: the API's GitHub base URL points at the fixture
@@ -17,7 +18,18 @@ const PASSWORD = 'Passw0rd!23';
  * and the real AI configured in the local API. The analyst connects the repository, waits for the
  * index, finds the rule in the module map, then asks for a 24-hour cancellation in the assistant
  * chat and gets a suggestion flagged as contradicting the code.
+ *
+ * Needs the fixture GitHub running (`python3 e2e/fixtures/fake-github/fake_github.py 4545`) and the
+ * API started with `CODEBASE_GITHUB_API_URL=http://127.0.0.1:4545`; skipped when the fixture is down.
  */
+async function fakeGitHubUp(request: APIRequestContext): Promise<boolean> {
+  try {
+    return (await request.get(`${FAKE_GITHUB}/repos/acme/reservas`)).ok();
+  } catch {
+    return false;
+  }
+}
+
 async function seed(request: APIRequestContext) {
   const email = uniqueEmail('code');
   await registerReady(request, email, PASSWORD);
@@ -52,6 +64,10 @@ test.describe('Code-aware copilot', () => {
     request,
   }) => {
     test.setTimeout(300_000);
+    test.skip(
+      !(await fakeGitHubUp(request)),
+      'Start the fixture GitHub to run the code copilot E2E',
+    );
     const { email, projectId } = await seed(request);
     await uiLogin(page, email);
 
@@ -72,7 +88,9 @@ test.describe('Code-aware copilot', () => {
       page.getByTestId('code-profile-chip').filter({ hasText: 'TypeScript' }).first(),
     ).toBeVisible();
 
-    // The module map has the bookings module, and opening it shows the 2-hour cancellation rule.
+    // Searching the module map for the rule finds the bookings module, and opening it shows the
+    // 2-hour cancellation rule.
+    await page.getByTestId('code-modules-filter').fill('2 horas');
     const bookings = page
       .getByTestId('code-module')
       .filter({ has: page.getByTestId('code-module-name').filter({ hasText: /reserva/i }) })
