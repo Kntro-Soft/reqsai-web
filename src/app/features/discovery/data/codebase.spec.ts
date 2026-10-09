@@ -8,6 +8,7 @@ import {
   isAddition,
   isIndexing,
   isProfileEmpty,
+  labelReferences,
   mergeProfile,
   modulesLoadKey,
   parseRepositoryInput,
@@ -291,5 +292,24 @@ describe('pluralKey', () => {
     expect(pluralKey('code.repo.files', 1)).toBe('code.repo.files.one');
     expect(pluralKey('code.repo.files', 0)).toBe('code.repo.files.other');
     expect(pluralKey('code.repo.files', 12)).toBe('code.repo.files.other');
+  });
+});
+
+describe('labelReferences', () => {
+  const ref = (name: string, path: string) => ({
+    repository: 'acme/reservas',
+    path,
+    name,
+    url: null,
+  });
+
+  it('keeps unique names and adds the folder, or the repository for its root, to repeated ones', () => {
+    const labels = labelReferences([
+      ref('Reservas', ''),
+      ref('Pagos', 'src/payments'),
+      ref('reservas', 'src/reservations'),
+    ]).map((r) => r.label);
+
+    expect(labels).toEqual(['Reservas · acme/reservas', 'Pagos', 'reservas · src/reservations']);
   });
 });

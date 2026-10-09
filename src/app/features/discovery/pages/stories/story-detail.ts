@@ -27,6 +27,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
 import { CodeReference } from '../../data/codebase.models';
+import { labelReferences } from '../../data/codebase';
 import {
   AcceptanceCriterionResponse,
   StoryPriority,
@@ -224,7 +225,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
       } @else {
         <!-- Origin: what the client said that became this story, and the code it touches. -->
         @if (story(); as st) {
-          @let codeRefs = st.codeReferences ?? [];
+          @let codeRefs = labelReferences(st.codeReferences ?? []);
           @if (st.origin || codeRefs.length > 0) {
             <section
               class="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5"
@@ -284,7 +285,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
                               class="shrink-0"
                               aria-hidden="true"
                             />
-                            <span class="truncate">{{ ref.name }}</span>
+                            <span class="truncate">{{ ref.label }}</span>
                             <hlm-icon
                               name="lucideArrowUpRight"
                               size="12px"
@@ -304,7 +305,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
                               class="shrink-0"
                               aria-hidden="true"
                             />
-                            <span class="truncate">{{ ref.name }}</span>
+                            <span class="truncate">{{ ref.label }}</span>
                           </span>
                         }
                       </li>
@@ -666,6 +667,9 @@ export class StoryDetail implements OnInit {
     this.form.controls.priority.setValue(value as StoryPriority);
     this.form.controls.priority.markAsDirty();
   }
+
+  /** Chip labels that tell apart modules with the same name. */
+  protected readonly labelReferences = labelReferences;
 
   /** A module's place in the code: `owner/name/path` (the repository alone for its root). */
   protected referenceTitle(ref: CodeReference): string {

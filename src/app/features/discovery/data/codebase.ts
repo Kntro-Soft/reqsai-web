@@ -1,6 +1,7 @@
 import {
   CodeModuleResponse,
   CodeProfile,
+  CodeReference,
   CodeRepositoryResponse,
   CodeRepositoryStatus,
 } from './codebase.models';
@@ -120,6 +121,29 @@ export function shortSha(sha: string | null | undefined): string | null {
 /** Case- and accent-insensitive form used to compare technology names and filter modules. */
 export function normalizeTerm(value: string): string {
   return value.normalize('NFD').replace(/\p{M}/gu, '').trim().toLowerCase();
+}
+
+/** A code reference as its chip shows it. */
+export interface LabelledReference extends CodeReference {
+  /** The module's name, followed by where it lives when another reference has the same name. */
+  label: string;
+}
+
+/**
+ * Labels for a list of code references: the module's name, and for names that repeat (several
+ * folders summarized as "Reservas") the folder too, or the repository for its root, so the chips
+ * can be told apart.
+ */
+export function labelReferences(refs: readonly CodeReference[]): LabelledReference[] {
+  const counts = new Map<string, number>();
+  for (const ref of refs) {
+    const key = normalizeTerm(ref.name ?? '');
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return refs.map((ref) => {
+    const repeated = (counts.get(normalizeTerm(ref.name ?? '')) ?? 0) > 1;
+    return { ...ref, label: repeated ? `${ref.name} · ${ref.path || ref.repository}` : ref.name };
+  });
 }
 
 /** Appends the values not already present (compared normalized), keeping the first spelling. */

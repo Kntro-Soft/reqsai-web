@@ -35,6 +35,7 @@ import {
   suggestionCriteria,
 } from '../../data/discovery.models';
 import { CodeReference, SuggestionCodeInsight } from '../../data/codebase.models';
+import { LabelledReference, labelReferences } from '../../data/codebase';
 import { EvidenceSegment, evidenceSpeakerLabel } from '../../data/evidence';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { translateFn } from '../../../../core/i18n/translate-fn';
@@ -197,7 +198,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
                           class="shrink-0"
                           aria-hidden="true"
                         />
-                        <span class="truncate">{{ ref.name }}</span>
+                        <span class="truncate">{{ ref.label }}</span>
                         <hlm-icon
                           name="lucideArrowUpRight"
                           size="12px"
@@ -217,7 +218,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
                           class="shrink-0"
                           aria-hidden="true"
                         />
-                        <span class="truncate">{{ ref.name }}</span>
+                        <span class="truncate">{{ ref.label }}</span>
                       </span>
                     }
                   </li>
@@ -686,12 +687,17 @@ export class SuggestionCard {
   private readonly translate = translateFn(this.transloco);
 
   /** The code insight worth a banner: only a real finding (the code was checked with none = no banner). */
-  protected readonly codeInsight = computed<SuggestionCodeInsight | null>(() => {
+  protected readonly codeInsight = computed<
+    (SuggestionCodeInsight & { references: LabelledReference[] }) | null
+  >(() => {
     const code = this.suggestion().code;
     if (!code || (code.finding !== 'ALREADY_EXISTS' && code.finding !== 'CONFLICTS_WITH_CODE')) {
       return null;
     }
-    return { ...code, references: Array.isArray(code.references) ? code.references : [] };
+    return {
+      ...code,
+      references: labelReferences(Array.isArray(code.references) ? code.references : []),
+    };
   });
 
   /** The transcript evidence, shown only for a suggestion raised in a session. */
