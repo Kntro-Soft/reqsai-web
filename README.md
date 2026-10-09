@@ -135,7 +135,12 @@ docker compose --profile app up -d     # http://localhost:4200
 
 - **CI** (`.github/workflows/ci.yml`): lint + tests + build en cada PR/push.
 - **CodeQL** (`.github/workflows/codeql.yml`): análisis estático de seguridad.
-- **Deploy** (`.github/workflows/deploy.yml`): S3 sync + CloudFront invalidation en push a `main`.
+- **Release / Hotfix** (`.github/workflows/release.yml`, `hotfix.yml` → `delivery.yml`): en `release/X.Y.Z` o
+  `hotfix/X.Y.Z`, CI → imagen `linux/arm64` construida una sola vez (`ghcr.io/kntro-soft/reqsai-web:<sha>`) →
+  aprobación en el environment `produccion` → despliegue de esa imagen vía `reqsai-infra`.
+- **Tag release** (`.github/workflows/tag-release.yml`): al fusionar la release en `main`, tag `vX.Y.Z` sobre el
+  commit desplegado.
+- **Deploy** (`.github/workflows/deploy.yml`): redespliegue o rollback manual desde un tag `vX.Y.Z`.
 - **Audit** (`.github/workflows/audit.yml`): escaneo CVE de dependencias npm (semanal).
 
 Detalle en [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).

@@ -80,8 +80,19 @@ aws cloudfront create-invalidation \
 
 ### Automated deployment (CI/CD)
 
-The `deploy.yml` GitHub Actions workflow runs on every push to `main` and executes the steps
-above automatically using OIDC authentication (no long-lived AWS keys stored in GitHub secrets).
+The MVP does not use S3 + CloudFront: the nginx image runs on the single EC2 host managed by
+[`reqsai-infra`](https://github.com/Kntro-Soft/reqsai-infra), next to the API, behind Caddy.
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `release.yml` / `hotfix.yml` → `delivery.yml` | Push to `release/**` / `hotfix/**` | CI → `linux/arm64` image built once as `ghcr.io/kntro-soft/reqsai-web:<commit sha>` → approval in the `produccion` environment → `reqsai-infra` deploys that same image (OIDC + SSM) |
+| `tag-release.yml` | Release/hotfix PR merged into `main` | Tag `vX.Y.Z` + GitHub Release on the deployed commit |
+| `deploy.yml` | Manual, on a release tag | Redeploy or roll back an already built image |
+
+Organization variables switch each step on (`ENABLE_REQSAI_WEB_IMAGE`, `ENABLE_REQSAI_WEB_DEPLOY`,
+`ENABLE_REQSAI_INFRA_DEPLOY`). The release process, approvals and switches are in
+[CONTRIBUTING.md](../.github/CONTRIBUTING.md#releases-and-deployment). The S3 + CloudFront steps above
+describe the `envs/production` target, which no workflow deploys today.
 
 ### CloudFront configuration
 

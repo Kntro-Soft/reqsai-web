@@ -11,6 +11,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Changed (Release pipeline — `feature/79-release-pipeline`, #79)
+
+- **Releases deploy from `release/X.Y.Z` and `hotfix/X.Y.Z`, not from pushes to `main`.** `delivery.yml` runs
+  CI, builds the `linux/arm64` image once as `ghcr.io/kntro-soft/reqsai-web:<sha>`, waits for approval in the
+  `produccion` environment and deploys that image through `reqsai-infra`. Merging the release PR tags `vX.Y.Z`
+  on the deployed commit (`tag-release.yml`); `deploy.yml` redeploys a release tag.
+- Deploy switches `ENABLE_REQSAI_WEB_IMAGE` and `ENABLE_REQSAI_WEB_DEPLOY` (organization variables).
+- Issue forms for User Story and Task, acceptance criteria on bugs, and `Closes #` in the PR template.
+
 ### Changed (Capture page: act on stories without leaving the meeting — `feature/discovery-capture-ux`)
 
 - **Review and edit a story from the session's side panel.** Expanding a story shows:
