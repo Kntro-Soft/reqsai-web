@@ -73,7 +73,8 @@
     "glossary": "Glossary",
     "constraints": "Constraints",
     "documents": "Client documents",
-    "share": "Shared stories"
+    "share": "Shared stories",
+    "code": "Code"
   },
   "nav": {
     "projects": "Projects",
@@ -101,7 +102,8 @@
     "danger": "Danger",
     "profile": "Profile",
     "security": "Security",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "code": "Code"
   },
   "authz": {
     "noAccess": "You don't have sufficient permissions.",
@@ -979,7 +981,12 @@
     "unsaved": "Unsaved changes",
     "criteriaNew": "New · not saved",
     "criteriaHint": "Write each criterion as a Gherkin scenario: Given (context), When (action), Then (expected outcome).",
-    "required": "Fill in this field."
+    "required": "Fill in this field.",
+    "origin": {
+      "title": "Origin",
+      "viewInSession": "View in the session",
+      "code": "Related code"
+    }
   },
   "glossaryPage": {
     "title": "Glossary",
@@ -1106,6 +1113,111 @@
       "MEETING_NOTES": "Minutes or meeting notes",
       "GLOSSARY_SOURCE": "Glossary source",
       "REFERENCE": "Reference"
+    }
+  },
+  "code": {
+    "title": "Code",
+    "subtitle": "Connect the project's repositories: ReqsAI summarizes them into modules and, during the meeting, flags when what the client asks for already exists in the code or contradicts what is built.",
+    "connect": {
+      "open": "Connect repository",
+      "title": "Connect another repository",
+      "description": "Paste owner/name or the GitHub URL. Indexing runs in the background.",
+      "repository": "GitHub repository",
+      "repositoryPlaceholder": "acme/bookings or https://github.com/acme/bookings",
+      "invalid": "Enter owner/name (for example, acme/bookings) or the repository's github.com URL.",
+      "branch": "Branch",
+      "branchPlaceholder": "The default branch",
+      "token": "Access token",
+      "tokenPlaceholder": "Private repositories only",
+      "tokenHint": "Only for a private repository: a GitHub fine-grained token with read-only \"Contents\" access.",
+      "submit": "Connect",
+      "connected": "{{name}} connected. ReqsAI is indexing it.",
+      "limit": "Up to {{max}} repositories per project. Remove one to connect another."
+    },
+    "empty": {
+      "title": "Connect the project's code",
+      "body": "With the code connected, ReqsAI tells what the client asks for the first time apart from what is already built.",
+      "points": {
+        "map": "ReqsAI reads the repository and summarizes it into modules: what each one does, its capabilities and the business rules it implements.",
+        "meeting": "In the meeting, every suggestion says whether the request already exists or contradicts the code, with a link to the module.",
+        "access": "Public repositories need no token. A private one needs a read-only fine-grained token with \"Contents\" permission.",
+        "privacy": "The code is summarized for the AI; ReqsAI does not store the source code."
+      },
+      "noPermission": "Ask whoever manages the project to connect a repository."
+    },
+    "repo": {
+      "title": "Repositories",
+      "countOf": "{{count}} of {{max}}",
+      "newTab": "opens in a new tab",
+      "private": "Private",
+      "public": "Public",
+      "branch": "Indexed branch",
+      "status": {
+        "PENDING": "Indexing…",
+        "INDEXING": "Indexing…",
+        "READY": "Ready",
+        "FAILED": "Indexing failed"
+      },
+      "progress": "{{done}} of {{total}} modules",
+      "progressUnknown": "Reading the files…",
+      "progressAria": "Indexing {{name}}",
+      "indexedAt": "Indexed {{when}}",
+      "files": {
+        "one": "{{count}} file",
+        "other": "{{count}} files"
+      },
+      "modules": {
+        "one": "{{count}} module",
+        "other": "{{count}} modules"
+      },
+      "basicSummaries": "Basic summaries: no AI model was available. Reindex later to get full summaries.",
+      "failedFallback": "The repository could not be indexed.",
+      "retry": "Retry",
+      "reindex": "Reindex",
+      "reindexStarted": "Reindexing the repository…",
+      "remove": "Remove",
+      "removeTitle": "Remove repository",
+      "removeBody": "\"{{name}}\" and its module map will be removed: suggestions will no longer be checked against this code. You can connect it again at any time.",
+      "removed": "Repository removed.",
+      "loadError": "The repositories could not be loaded."
+    },
+    "profile": {
+      "title": "Detected technical profile",
+      "description": "The technology ReqsAI recognized in the connected code.",
+      "languages": "Languages",
+      "frameworks": "Frameworks",
+      "databases": "Databases",
+      "platforms": "Platforms",
+      "new": "not in the project profile",
+      "empty": "No technology was recognized in the code yet.",
+      "willAdd": "Will be added to the project profile: {{items}}.",
+      "upToDate": "The project profile already includes everything detected.",
+      "apply": "Apply to the project profile",
+      "applied": {
+        "one": "Project profile updated: {{count}} item added.",
+        "other": "Project profile updated: {{count}} items added."
+      }
+    },
+    "modules": {
+      "title": "Code map",
+      "description": "The modules the AI checks what is asked in the meeting against. Open one to see its implemented rules.",
+      "filter": "Filter modules",
+      "filterPlaceholder": "Search by name, path, capability or rule",
+      "repository": "Repository",
+      "all": "All",
+      "root": "Repository root",
+      "more": "+{{count}} more",
+      "rulesCount": {
+        "one": "{{count}} rule",
+        "other": "{{count}} rules"
+      },
+      "rules": "Implemented rules",
+      "endpoints": "Endpoints",
+      "entities": "Entities",
+      "viewOnGithub": "View on GitHub",
+      "empty": "This repository has no indexed modules.",
+      "noMatch": "No module matches \"{{query}}\".",
+      "loadError": "The modules could not be loaded."
     }
   },
   "projectRoleForm": {
@@ -1365,7 +1477,15 @@
       "roleField": "Role · As a…",
       "actionField": "Action · I want…",
       "benefitField": "Benefit · so that…",
-      "scenarioPlaceholder": "Optional"
+      "scenarioPlaceholder": "Optional",
+      "code": {
+        "exists": "Already exists in the code",
+        "conflicts": "Contradicts what is built",
+        "references": "Related code modules"
+      },
+      "evidence": {
+        "show": "Show in the transcript"
+      }
     },
     "panel": {
       "stories": "Stories",
@@ -1660,7 +1780,14 @@
     "network": "You appear to be offline. Check your connection and try again.",
     "generic": "Something went wrong. Please try again.",
     "SPEAKER_NOT_FOUND": "That speaker did not speak in this session.",
-    "SHARE_LINK_UNAVAILABLE": "That link is no longer available."
+    "SHARE_LINK_UNAVAILABLE": "That link is no longer available.",
+    "CODE_REPOSITORY_URL_INVALID": "That repository is not valid. Enter owner/name or the repository's GitHub URL.",
+    "CODE_REPOSITORY_NOT_FOUND": "We could not find that repository. Check the name; if it is private, add a token with read access.",
+    "CODE_REPOSITORY_ACCESS_DENIED": "GitHub rejected the token. Use a valid fine-grained token with read-only \"Contents\" access to that repository.",
+    "CODE_REPOSITORY_ALREADY_CONNECTED": "That repository is already connected to this project.",
+    "CODE_REPOSITORY_LIMIT_REACHED": "This project already has the maximum of 3 repositories. Remove one to connect another.",
+    "CODE_HOST_UNAVAILABLE": "GitHub is not responding or rate-limited us. Try again in a few minutes.",
+    "CODE_REPOSITORY_INDEXING": "That repository is already being indexed. Wait for it to finish."
   },
   "share": {
     "action": "Share with client",

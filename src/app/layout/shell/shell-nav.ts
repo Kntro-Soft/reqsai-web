@@ -36,6 +36,7 @@ export const PROJECT_ROOT_NAV: readonly NavSeg[] = [
   { seg: 'glossary', permission: 'GLOSSARY_READ' },
   { seg: 'constraints', permission: 'CONSTRAINT_READ' },
   { seg: 'documents', permission: 'DOCUMENT_READ' },
+  { seg: 'code', permission: 'INTEGRATION_READ' },
   { seg: 'settings' },
 ];
 export const PROJECT_SETTINGS_NAV: readonly NavSeg[] = [

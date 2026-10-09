@@ -3,6 +3,7 @@ import { provideIcons } from '@ng-icons/core';
 import {
   lucideBookMarked,
   lucideChartLine,
+  lucideCodeXml,
   lucideCreditCard,
   lucideFileText,
   lucideFolder,
@@ -33,6 +34,7 @@ const NAV_ICONS: Record<string, string> = {
   glossary: 'lucideBookMarked',
   constraints: 'lucideRuler',
   documents: 'lucideFileText',
+  code: 'lucideCodeXml',
   members: 'lucideUsers',
   settings: 'lucideSettings',
   // Settings sub-nav.
@@ -62,6 +64,7 @@ const NAV_ICONS: Record<string, string> = {
       lucideBookMarked,
       lucideRuler,
       lucideFileText,
+      lucideCodeXml,
       lucideUsers,
       lucideSettings,
       lucideShield,

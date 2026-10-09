@@ -8,16 +8,19 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
 import {
   lucideArrowUpRight,
   lucideCircleHelp,
+  lucideCodeXml,
   lucidePlus,
+  lucideQuote,
   lucideSparkles,
   lucideTrash2,
+  lucideTriangleAlert,
 } from '@ng-icons/lucide';
 import {
   AcceptSuggestionRequest,
@@ -31,6 +34,8 @@ import {
   emptyEditableCriterion,
   suggestionCriteria,
 } from '../../data/discovery.models';
+import { CodeReference, SuggestionCodeInsight } from '../../data/codebase.models';
+import { EvidenceSegment, evidenceSpeakerLabel } from '../../data/evidence';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
@@ -56,6 +61,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
   selector: 'app-suggestion-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     NgTemplateOutlet,
     FormsModule,
     Select,
@@ -71,9 +77,12 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
     provideIcons({
       lucideArrowUpRight,
       lucideCircleHelp,
+      lucideCodeXml,
       lucidePlus,
+      lucideQuote,
       lucideSparkles,
       lucideTrash2,
+      lucideTriangleAlert,
     }),
   ],
   host: { class: 'flex min-h-0 flex-col' },
@@ -128,6 +137,96 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
 
       <!-- Body (scrolls when long) -->
       <div class="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <!-- What the connected code says, before the proposal itself: it changes the decision.
+             A conflict reads amber (look closer), an existing capability stays neutral. -->
+        @if (codeInsight(); as insight) {
+          @let conflict = insight.finding === 'CONFLICTS_WITH_CODE';
+          <div
+            class="mb-3 rounded-xl border px-3 py-2.5"
+            [class]="
+              conflict ? 'border-pending-border bg-pending-soft' : 'border-border bg-muted/60'
+            "
+            role="note"
+            [attr.data-testid]="conflict ? 'suggestion-code-conflict' : 'suggestion-code-exists'"
+          >
+            <p
+              class="flex items-center gap-1.5 text-xs font-semibold"
+              [class.text-pending]="conflict"
+              [class.text-foreground]="!conflict"
+            >
+              <hlm-icon
+                [name]="conflict ? 'lucideTriangleAlert' : 'lucideCodeXml'"
+                size="14px"
+                class="shrink-0"
+                aria-hidden="true"
+              />
+              {{
+                (conflict
+                  ? 'discovery.suggestion.code.conflicts'
+                  : 'discovery.suggestion.code.exists'
+                ) | transloco
+              }}
+            </p>
+            @if (insight.note) {
+              <p
+                class="mt-1 text-sm leading-relaxed text-foreground"
+                data-testid="suggestion-code-note"
+              >
+                {{ insight.note }}
+              </p>
+            }
+            @if (insight.references.length > 0) {
+              <ul
+                class="mt-2 flex flex-wrap gap-1.5"
+                [attr.aria-label]="'discovery.suggestion.code.references' | transloco"
+              >
+                @for (ref of insight.references; track ref.repository + ':' + ref.path) {
+                  <li class="min-w-0 max-w-full">
+                    @if (ref.url) {
+                      <a
+                        [href]="ref.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        [title]="referenceTitle(ref)"
+                        class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                        data-testid="suggestion-code-ref"
+                      >
+                        <hlm-icon
+                          name="lucideCodeXml"
+                          size="12px"
+                          class="shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span class="truncate">{{ ref.name }}</span>
+                        <hlm-icon
+                          name="lucideArrowUpRight"
+                          size="12px"
+                          class="shrink-0 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                      </a>
+                    } @else {
+                      <span
+                        [title]="referenceTitle(ref)"
+                        class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium text-foreground"
+                        data-testid="suggestion-code-ref"
+                      >
+                        <hlm-icon
+                          name="lucideCodeXml"
+                          size="12px"
+                          class="shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span class="truncate">{{ ref.name }}</span>
+                      </span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+
         @switch (suggestion().type) {
           @case ('CLARIFYING_QUESTION') {
             <p class="text-[15px] font-medium leading-relaxed text-foreground">
@@ -230,6 +329,60 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
               }
             </ul>
           </div>
+        }
+
+        <!-- Evidence: the client's own words and who said them when. Opens that bubble in the
+             transcript when it is loaded; otherwise the quote stands on its own. -->
+        @if (evidence(); as ev) {
+          @if (evidenceSegment(); as seg) {
+            <button
+              type="button"
+              class="-mx-2 mt-3 flex w-[calc(100%+1rem)] cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs leading-relaxed transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              [title]="'discovery.suggestion.evidence.show' | transloco"
+              (click)="showEvidence.emit(seg)"
+              data-testid="suggestion-evidence"
+              [attr.data-evidence-segment]="seg.sessionId + ':' + seg.sequence"
+            >
+              <hlm-icon
+                name="lucideQuote"
+                size="13px"
+                class="mt-0.5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span class="min-w-0">
+                <q class="text-foreground" data-testid="suggestion-evidence-quote">{{
+                  ev.quote
+                }}</q>
+                <span class="text-muted-foreground">
+                  —
+                  @if (speakerLabel(seg); as who) {
+                    <span data-testid="suggestion-evidence-speaker">{{ who }}</span> ·
+                  }
+                  <time class="tabular-nums" [attr.datetime]="seg.occurredAt">{{
+                    seg.occurredAt | date: 'HH:mm'
+                  }}</time>
+                </span>
+                <span class="sr-only"
+                  >. {{ 'discovery.suggestion.evidence.show' | transloco }}</span
+                >
+              </span>
+            </button>
+          } @else {
+            <p
+              class="mt-3 flex items-start gap-2 text-xs leading-relaxed"
+              data-testid="suggestion-evidence"
+            >
+              <hlm-icon
+                name="lucideQuote"
+                size="13px"
+                class="mt-0.5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <q class="min-w-0 text-foreground" data-testid="suggestion-evidence-quote">{{
+                ev.quote
+              }}</q>
+            </p>
+          }
         }
 
         @if (suggestion().targetStoryId && suggestion().type !== 'NEW_STORY') {
@@ -510,10 +663,17 @@ export class SuggestionCard {
   readonly canDecide = input(true);
   /** True while this suggestion's accept/dismiss (incl. its retry) is in flight. */
   readonly busy = input(false);
+  /**
+   * The loaded transcript segment the evidence points at (speaker and time), or null when it is
+   * not in the feed — then the quote shows without a link.
+   */
+  readonly evidenceSegment = input<EvidenceSegment | null>(null);
   readonly accept = output<AcceptSuggestionRequest>();
   readonly dismiss = output<void>();
   /** Asks the page to reveal the target story in the side panel. */
   readonly openTarget = output<string>();
+  /** Asks the page to scroll the feed to the evidence's transcript bubble. */
+  readonly showEvidence = output<EvidenceSegment>();
 
   protected readonly editing = signal(false);
   protected readonly steps = [
@@ -522,7 +682,23 @@ export class SuggestionCard {
     { key: 'then', label: 'discovery.suggestion.criteriaThen' },
   ] as const;
 
-  private readonly translate = translateFn(inject(TranslocoService));
+  private readonly transloco = inject(TranslocoService);
+  private readonly translate = translateFn(this.transloco);
+
+  /** The code insight worth a banner: only a real finding (the code was checked with none = no banner). */
+  protected readonly codeInsight = computed<SuggestionCodeInsight | null>(() => {
+    const code = this.suggestion().code;
+    if (!code || (code.finding !== 'ALREADY_EXISTS' && code.finding !== 'CONFLICTS_WITH_CODE')) {
+      return null;
+    }
+    return { ...code, references: Array.isArray(code.references) ? code.references : [] };
+  });
+
+  /** The transcript evidence, shown only for a suggestion raised in a session. */
+  protected readonly evidence = computed(() => {
+    const { sessionId, evidence } = this.suggestion();
+    return sessionId && evidence?.quote?.trim() ? evidence : null;
+  });
 
   /** Options for the edit-mode priority select, highest first. */
   protected readonly priorityOptions = computed<SelectOption[]>(() => {
@@ -604,6 +780,22 @@ export class SuggestionCard {
 
   protected removeCriterion(index: number): void {
     this.model.update((m) => ({ ...m, criteria: m.criteria.filter((_, i) => i !== index) }));
+  }
+
+  /** Who said the evidence, named like the transcript bubbles ("Ana (Cliente)", "Hablante 2"). */
+  protected speakerLabel(segment: EvidenceSegment): string | null {
+    // Re-render on language change, and never translate before the language file is loaded.
+    if (!this.translate()) return null;
+    return evidenceSpeakerLabel(
+      segment.speaker,
+      (n) => this.transloco.translate('discovery.speaker', { n }),
+      (side) => this.transloco.translate('discovery.speakers.side.' + side),
+    );
+  }
+
+  /** The module's place in the code: `owner/name/path` (the repository alone for its root). */
+  protected referenceTitle(ref: CodeReference): string {
+    return ref.path ? `${ref.repository}/${ref.path}` : ref.repository;
   }
 
   /** A stable, unique id for a criterion field so its gutter label can point at it. */

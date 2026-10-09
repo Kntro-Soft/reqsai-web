@@ -75,6 +75,15 @@ describe('visibleNavSegs', () => {
     expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER')))).not.toContain('documents');
   });
 
+  it('shows the code page next to documents to callers who can read integrations', () => {
+    const owner = segs(visibleNavSegs(PROJECT_ROOT_NAV, access('OWNER')));
+    expect(owner.indexOf('code')).toBe(owner.indexOf('documents') + 1);
+    expect(
+      segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER', ['INTEGRATION_READ']))),
+    ).toContain('code');
+    expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER')))).not.toContain('code');
+  });
+
   it('lists the account pages', () => {
     expect(segs(visibleNavSegs(ACCOUNT_NAV, access('MEMBER')))).toEqual([
       'profile',

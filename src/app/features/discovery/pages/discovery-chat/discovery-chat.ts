@@ -54,6 +54,7 @@ import { AssistantChatStore } from '../../data/assistant-chat.store';
 import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { DecisionEntry } from '../../data/feed';
+import { EvidenceSegment, locateEvidence, segmentKey } from '../../data/evidence';
 import { SessionSpeakersStore } from '../../data/session-speakers.store';
 import {
   SpeakerColor,
@@ -465,12 +466,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           <!-- Transcript: neutral bubbles (speaker 1 filled, speaker 2 outlined),
                              so the conversation recedes behind AI and human decisions. -->
                           @let speaker = speakerFor(block, item.segment);
+                          @let segKey = segmentKeyOf(block.session.id, item.segment.sequence);
                           <div
                             class="flex max-w-[85%] flex-col"
                             [class.self-end]="speaker?.side === 'right'"
                             [class.items-end]="speaker?.side === 'right'"
                             data-testid="segment-bubble"
                             [attr.data-side]="speaker?.side ?? 'left'"
+                            [attr.data-segment]="segKey"
                           >
                             <span
                               class="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
@@ -511,6 +514,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                               class="rounded-2xl px-3.5 py-2 text-foreground"
                               [class]="segmentBubbleClass(speaker)"
                               [class.opacity-60]="!item.segment.isFinal"
+                              [class.segment-flash]="flashSegment() === segKey"
                             >
                               <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
                             </div>
@@ -782,9 +786,11 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                                 [targetStory]="chatTarget(suggestion)"
                                 [canDecide]="canDecide()"
                                 [busy]="store.deciding().includes(suggestion.id)"
+                                [evidenceSegment]="store.evidenceSegment(suggestion)"
                                 (accept)="acceptFromChat(suggestion, $event)"
                                 (dismiss)="dismissFromChat(suggestion)"
                                 (openTarget)="focusStory($event)"
+                                (showEvidence)="revealSegment($event)"
                               />
                             } @else {
                               @let chatAccepted = suggestion.status === 'ACCEPTED';
@@ -877,6 +883,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             (decideAccept)="accept($event.suggestion, $event.body)"
             (decideDismiss)="dismiss($event)"
             (openTarget)="focusStory($event)"
+            (showEvidence)="revealSegment($event)"
           />
         </div>
 
@@ -1066,6 +1073,26 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           animation-delay: 0.36s;
         }
       }
+      /* The transcript bubble a suggestion's evidence quotes, revealed from its card. */
+      .segment-flash {
+        outline: 2px solid var(--ai-border);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .segment-flash {
+          animation: segment-flash 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      }
+      @keyframes segment-flash {
+        0%,
+        35% {
+          background-color: var(--ai-soft);
+          outline-color: var(--ai);
+        }
+        100% {
+          outline-color: var(--ai-border);
+        }
+      }
       @keyframes ai-dot {
         0%,
         70%,
@@ -1182,6 +1209,12 @@ export class DiscoveryChat implements OnInit {
 
   /** The "upload a recording" dialog (US41). */
   protected readonly uploadOpen = signal(false);
+
+  /** The transcript bubble (`sessionId:sequence`) briefly highlighted after revealing evidence. */
+  protected readonly flashSegment = signal<string | null>(null);
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
+  /** A `?segment=` deep link (story origin) waiting for its session's transcript to load. */
+  private readonly pendingSegment = signal<{ sessionId: string; sequence: number } | null>(null);
 
   private readonly speakers = inject(SessionSpeakersStore);
   /** Session whose speakers dialog is open (US40), or null. */
@@ -1327,6 +1360,25 @@ export class DiscoveryChat implements OnInit {
         this.store.clearFocus();
       }, 60);
     });
+    // Story origin deep link (?session=…&segment=…): once that session's transcript is in the feed,
+    // reveal the quoted bubble; when the segment is not among the loaded ones, the session focus
+    // alone stands.
+    effect(() => {
+      const pending = this.pendingSegment();
+      if (!pending) return;
+      const blocks = this.store.blocks();
+      const block = blocks.find((b) => b.session.id === pending.sessionId);
+      if (!block?.loaded) return;
+      const segment = locateEvidence(blocks, {
+        sessionId: pending.sessionId,
+        evidence: { sequence: pending.sequence, quote: '' },
+      });
+      untracked(() => this.pendingSegment.set(null));
+      if (segment) setTimeout(() => this.revealSegment(segment, false), 150);
+    });
+    this.destroyRef.onDestroy(() => {
+      if (this.flashTimer) clearTimeout(this.flashTimer);
+    });
     // Speakers (US40): load each diarized session's names, sides and overlaps, again when a new
     // voice appears or the session changes status (the overlap report is final once it ends).
     effect(() => {
@@ -1379,7 +1431,39 @@ export class DiscoveryChat implements OnInit {
     this.chat.load(this.projectId());
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
-    if (focus) this.store.showSession(focus);
+    if (focus) {
+      this.store.showSession(focus);
+      const sequence = Number(this.route.snapshot.queryParamMap.get('segment'));
+      if (this.route.snapshot.queryParamMap.has('segment') && Number.isInteger(sequence)) {
+        this.pendingSegment.set({ sessionId: focus, sequence });
+      }
+    }
+  }
+
+  /** The DOM key of a transcript bubble, so a suggestion's evidence can point at it. */
+  protected segmentKeyOf(sessionId: string, sequence: number): string {
+    return segmentKey(sessionId, sequence);
+  }
+
+  /**
+   * Scrolls the feed to the transcript bubble a suggestion's evidence quotes and highlights it
+   * briefly. The review tray folds to its badge first (from a card), so it never covers the bubble.
+   */
+  protected revealSegment(segment: EvidenceSegment, foldTray = true): void {
+    const key = segmentKey(segment.sessionId, segment.sequence);
+    const bubble = this.feed()?.nativeElement.querySelector<HTMLElement>(
+      `[data-testid="segment-bubble"][data-segment="${CSS.escape(key)}"]`,
+    );
+    if (!bubble) return;
+    if (foldTray && this.store.queue().length > 0) this.queueCollapsed.set(true);
+    const reduce =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    bubble.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    // Re-set so a second click on the same quote replays the highlight.
+    this.flashSegment.set(null);
+    if (this.flashTimer) clearTimeout(this.flashTimer);
+    setTimeout(() => this.flashSegment.set(key));
+    this.flashTimer = setTimeout(() => this.flashSegment.set(null), 2200);
   }
 
   /**

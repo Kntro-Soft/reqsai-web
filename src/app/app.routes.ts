@@ -303,6 +303,14 @@ export const routes: Routes = [
                 (m) => m.ProjectDocuments,
               ),
           },
+          {
+            // Connected GitHub repositories and their module map (code-aware copilot).
+            path: 'code',
+            title: 'titles.code',
+            canActivate: [requirePermission('INTEGRATION_READ')],
+            loadComponent: () =>
+              import('./features/discovery/pages/code/code').then((m) => m.ProjectCode),
+          },
           // Members moved under Settings; keep the old path working.
           { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },
           {

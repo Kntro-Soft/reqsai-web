@@ -11,6 +11,60 @@ follows [Semantic Versioning](https://semver.org/).
 
 _Feature module implementation (iam, billing, workspace, discovery) in progress._
 
+### Added (Code-aware requirements copilot — `feature/code-aware-copilot`)
+
+- **New "Código" page in the project sidebar** (`/projects/:id/code`, needs `INTEGRATION_READ`), next to
+  "Documentos". The analyst connects the project's GitHub repositories and ReqsAI indexes each one into a
+  map of modules.
+  - The empty state explains what connecting does: the module map, the meeting warnings, that public
+    repositories need no token and private ones a read-only fine-grained token ("Contents"), and that
+    the code is summarized, never stored.
+  - **Connect** (`INTEGRATION_WRITE`): `owner/name` or a github.com URL (`.git` and `/tree/<branch>`
+    included), checked in the browser before anything is sent; optional branch and token
+    (`type=password`, `autocomplete=off`). The API errors (`CODE_REPOSITORY_*`, `CODE_HOST_UNAVAILABLE`)
+    show under the form. Up to 3 repositories per project.
+  - **One card per repository:** name linking to GitHub, public/private, branch and status. While
+    indexing, "Indexando…" with a progress bar (`modulesDone`/`moduleCount`, indeterminate while the
+    count is unknown); ready, "Listo" with when it was indexed, the short commit and the file and module
+    counts, plus a note when the summaries are basic (no AI model was available); failed, the error and
+    "Reintentar". "Reindexar" (`INTEGRATION_WRITE`) and "Quitar" with a confirmation
+    (`INTEGRATION_DELETE`).
+  - The list is polled every 3 s while a repository is indexing, and stops once none is (or the page is
+    left). A repository's modules load when it becomes ready.
+  - **Perfil técnico detectado:** languages, frameworks, databases and platforms found across the ready
+    repositories, with what the project's profile lacks marked as new, and each repository's overview.
+    "Aplicar al perfil del proyecto" (`PROJECT_UPDATE`) adds only the new items through the workspace
+    project update, keeping every other project field.
+  - **Mapa del código:** a filter (name, path, capability, rule, endpoint, entity) and a repository
+    picker when there are several; each module shows its name, path, summary and capabilities, and opens
+    to its implemented rules, endpoints, entities and a "Ver en GitHub" link.
+- **Suggestion cards say what the code says.** "Ya existe en el código" (neutral) or "Contradice lo
+  implementado" (amber) with the AI's note and chips linking to the modules involved, in the review tray
+  and in the assistant chat. The realtime suggestion events carry `evidence` and `code` too.
+- **Suggestion evidence.** A suggestion raised in a session quotes what was said, by whom (named like
+  the transcript: "Ana (Cliente)", "Hablante 2") and when. Clicking it folds the review tray, scrolls the
+  feed to that transcript bubble and highlights it; when the segment is not loaded, the quote shows
+  alone. Transcript bubbles carry `data-segment="{sessionId}:{sequence}"`.
+- **Story origin.** The story page shows an "Origen" section for an accepted story: the client's words,
+  "Ver en la sesión" (opens the capture page on that session and highlights the quoted segment through
+  `?session=…&segment=…`) and the related code modules.
+- **i18n:** `code.*`, `nav.code`, `titles.code`, `discovery.suggestion.code.*`,
+  `discovery.suggestion.evidence.*`, `storyForm.origin.*` and the errors `CODE_REPOSITORY_URL_INVALID`,
+  `CODE_REPOSITORY_NOT_FOUND`, `CODE_REPOSITORY_ACCESS_DENIED`, `CODE_REPOSITORY_ALREADY_CONNECTED`,
+  `CODE_REPOSITORY_LIMIT_REACHED`, `CODE_HOST_UNAVAILABLE` and `CODE_REPOSITORY_INDEXING`, in Spanish
+  and English.
+- **Tests:**
+  - `codebase.spec.ts`: repository references, indexing state, detected profile and additions, module
+    filter; `codebase-api.service.spec.ts`: the five endpoints; `evidence.spec.ts`: locating and naming
+    the quoted segment;
+  - `code.spec.ts`: validation before connecting, polling until ready (and on leaving), inline server
+    errors, retry, removal after confirming, applying the profile, the module map and permission gating;
+  - `suggestion-card.spec.ts`: the code banners and the evidence line; `discovery-chat.store.spec.ts`:
+    realtime suggestions keep `evidence` and `code`;
+  - `e2e/code-copilot.spec.ts` (local stack with the fixture GitHub and the real AI, run separately):
+    connects `acme/reservas`, waits for "Listo", checks the profile and the 2-hour rule, then a 24-hour
+    request in the assistant chat comes back flagged as contradicting the code.
+
 ### Changed (Capture page: act on stories without leaving the meeting — `feature/discovery-capture-ux`)
 
 - **Review and edit a story from the session's side panel.** Expanding a story shows:

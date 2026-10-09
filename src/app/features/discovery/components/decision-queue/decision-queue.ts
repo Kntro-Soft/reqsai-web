@@ -27,6 +27,7 @@ import {
   SuggestionResponse,
 } from '../../data/discovery.models';
 import { DiscoveryChatStore } from '../../data/discovery-chat.store';
+import { EvidenceSegment } from '../../data/evidence';
 import { dragOutcome, stackLayers } from '../../data/feed';
 import { SuggestionCard } from '../suggestion-card/suggestion-card';
 import { HlmIcon } from '../../../../shared/ui';
@@ -220,9 +221,11 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                     [targetStory]="targetStory(suggestion)"
                     [canDecide]="canDecide()"
                     [busy]="store.deciding().includes(suggestion.id)"
+                    [evidenceSegment]="store.evidenceSegment(suggestion)"
                     (accept)="decideAccept.emit({ suggestion, body: $event })"
                     (dismiss)="decideDismiss.emit(suggestion)"
                     (openTarget)="openTarget.emit($event)"
+                    (showEvidence)="showEvidence.emit($event)"
                   />
                 </div>
               }
@@ -318,6 +321,8 @@ export class DecisionQueue {
   }>();
   readonly decideDismiss = output<SuggestionResponse>();
   readonly openTarget = output<string>();
+  /** Asks the page to scroll the feed to the transcript bubble a suggestion's evidence quotes. */
+  readonly showEvidence = output<EvidenceSegment>();
 
   /** Minimized to the badge. Two-way bound so the page can fold it (e.g. focus moved under it). */
   readonly collapsed = model(false);

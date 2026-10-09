@@ -73,7 +73,8 @@
     "glossary": "Glosario",
     "constraints": "Restricciones",
     "documents": "Documentos del cliente",
-    "share": "Historias compartidas"
+    "share": "Historias compartidas",
+    "code": "Código"
   },
   "nav": {
     "projects": "Proyectos",
@@ -101,7 +102,8 @@
     "danger": "Peligro",
     "profile": "Perfil",
     "security": "Seguridad",
-    "appearance": "Apariencia"
+    "appearance": "Apariencia",
+    "code": "Código"
   },
   "authz": {
     "noAccess": "No tienes permisos suficientes.",
@@ -979,7 +981,12 @@
     "unsaved": "Cambios sin guardar",
     "criteriaNew": "Nuevo · sin guardar",
     "criteriaHint": "Escribe cada criterio como escenario Gherkin: Dado (contexto), Cuando (acción), Entonces (resultado esperado).",
-    "required": "Completa este campo."
+    "required": "Completa este campo.",
+    "origin": {
+      "title": "Origen",
+      "viewInSession": "Ver en la sesión",
+      "code": "Código relacionado"
+    }
   },
   "glossaryPage": {
     "title": "Glosario",
@@ -1106,6 +1113,111 @@
       "MEETING_NOTES": "Acta o notas de reunión",
       "GLOSSARY_SOURCE": "Fuente de glosario",
       "REFERENCE": "Referencia"
+    }
+  },
+  "code": {
+    "title": "Código",
+    "subtitle": "Conecta los repositorios del proyecto: ReqsAI los resume en módulos y, durante la reunión, avisa cuando lo que pide el cliente ya existe en el código o contradice lo implementado.",
+    "connect": {
+      "open": "Conectar repositorio",
+      "title": "Conectar otro repositorio",
+      "description": "Pega owner/nombre o la URL de GitHub. La indexación corre en segundo plano.",
+      "repository": "Repositorio de GitHub",
+      "repositoryPlaceholder": "acme/reservas o https://github.com/acme/reservas",
+      "invalid": "Escribe owner/nombre (por ejemplo, acme/reservas) o la URL del repositorio en github.com.",
+      "branch": "Rama",
+      "branchPlaceholder": "La rama por defecto",
+      "token": "Token de acceso",
+      "tokenPlaceholder": "Solo para repositorios privados",
+      "tokenHint": "Solo para un repositorio privado: un token fine-grained de GitHub con acceso de solo lectura a «Contents».",
+      "submit": "Conectar",
+      "connected": "{{name}} conectado. ReqsAI lo está indexando.",
+      "limit": "Máximo de {{max}} repositorios por proyecto. Quita uno para conectar otro."
+    },
+    "empty": {
+      "title": "Conecta el código del proyecto",
+      "body": "Con el código conectado, ReqsAI distingue lo que el cliente pide por primera vez de lo que ya está construido.",
+      "points": {
+        "map": "ReqsAI lee el repositorio y lo resume en módulos: qué hace cada uno, sus capacidades y las reglas de negocio que implementa.",
+        "meeting": "En la reunión, cada sugerencia avisa si lo pedido ya existe o contradice el código, con enlace al módulo.",
+        "access": "Los repositorios públicos no necesitan token. Uno privado necesita un token fine-grained de solo lectura con permiso «Contents».",
+        "privacy": "El código se resume para la IA; ReqsAI no guarda el código fuente."
+      },
+      "noPermission": "Pide a quien administra el proyecto que conecte un repositorio."
+    },
+    "repo": {
+      "title": "Repositorios",
+      "countOf": "{{count}} de {{max}}",
+      "newTab": "se abre en una pestaña nueva",
+      "private": "Privado",
+      "public": "Público",
+      "branch": "Rama indexada",
+      "status": {
+        "PENDING": "Indexando…",
+        "INDEXING": "Indexando…",
+        "READY": "Listo",
+        "FAILED": "Falló la indexación"
+      },
+      "progress": "{{done}} de {{total}} módulos",
+      "progressUnknown": "Leyendo los archivos…",
+      "progressAria": "Indexación de {{name}}",
+      "indexedAt": "Indexado {{when}}",
+      "files": {
+        "one": "{{count}} archivo",
+        "other": "{{count}} archivos"
+      },
+      "modules": {
+        "one": "{{count}} módulo",
+        "other": "{{count}} módulos"
+      },
+      "basicSummaries": "Resúmenes básicos: no había un modelo de IA disponible. Reindexa más tarde para obtener resúmenes completos.",
+      "failedFallback": "No se pudo indexar el repositorio.",
+      "retry": "Reintentar",
+      "reindex": "Reindexar",
+      "reindexStarted": "Reindexando el repositorio…",
+      "remove": "Quitar",
+      "removeTitle": "Quitar repositorio",
+      "removeBody": "Se quitará «{{name}}» y su mapa de módulos: las sugerencias dejarán de compararse con este código. Puedes volver a conectarlo cuando quieras.",
+      "removed": "Repositorio quitado.",
+      "loadError": "No se pudieron cargar los repositorios."
+    },
+    "profile": {
+      "title": "Perfil técnico detectado",
+      "description": "La tecnología que ReqsAI reconoció en el código conectado.",
+      "languages": "Lenguajes",
+      "frameworks": "Frameworks",
+      "databases": "Bases de datos",
+      "platforms": "Plataformas",
+      "new": "no está en el perfil del proyecto",
+      "empty": "Aún no se reconoció ninguna tecnología en el código.",
+      "willAdd": "Se añadirán al perfil del proyecto: {{items}}.",
+      "upToDate": "El perfil del proyecto ya incluye todo lo detectado.",
+      "apply": "Aplicar al perfil del proyecto",
+      "applied": {
+        "one": "Perfil del proyecto actualizado: {{count}} elemento añadido.",
+        "other": "Perfil del proyecto actualizado: {{count}} elementos añadidos."
+      }
+    },
+    "modules": {
+      "title": "Mapa del código",
+      "description": "Los módulos que la IA compara con lo que se pide en la reunión. Abre uno para ver sus reglas implementadas.",
+      "filter": "Filtrar módulos",
+      "filterPlaceholder": "Buscar por nombre, ruta, capacidad o regla",
+      "repository": "Repositorio",
+      "all": "Todos",
+      "root": "Raíz del repositorio",
+      "more": "+{{count}} más",
+      "rulesCount": {
+        "one": "{{count}} regla",
+        "other": "{{count}} reglas"
+      },
+      "rules": "Reglas implementadas",
+      "endpoints": "Endpoints",
+      "entities": "Entidades",
+      "viewOnGithub": "Ver en GitHub",
+      "empty": "Este repositorio no tiene módulos indexados.",
+      "noMatch": "Ningún módulo coincide con «{{query}}».",
+      "loadError": "No se pudieron cargar los módulos."
     }
   },
   "projectRoleForm": {
@@ -1365,7 +1477,15 @@
       "roleField": "Rol · Como…",
       "actionField": "Acción · quiero…",
       "benefitField": "Beneficio · para…",
-      "scenarioPlaceholder": "Opcional"
+      "scenarioPlaceholder": "Opcional",
+      "code": {
+        "exists": "Ya existe en el código",
+        "conflicts": "Contradice lo implementado",
+        "references": "Módulos del código relacionados"
+      },
+      "evidence": {
+        "show": "Ver en la transcripción"
+      }
     },
     "panel": {
       "stories": "Historias",
@@ -1660,7 +1780,14 @@
     "network": "Parece que no tienes conexión. Comprueba tu red e inténtalo de nuevo.",
     "generic": "Algo salió mal. Inténtalo de nuevo.",
     "SPEAKER_NOT_FOUND": "Ese hablante no participó en esta sesión.",
-    "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible."
+    "SHARE_LINK_UNAVAILABLE": "Ese enlace ya no está disponible.",
+    "CODE_REPOSITORY_URL_INVALID": "Ese repositorio no es válido. Escribe owner/nombre o la URL de GitHub del repositorio.",
+    "CODE_REPOSITORY_NOT_FOUND": "No encontramos ese repositorio. Revisa el nombre; si es privado, añade un token con acceso de lectura.",
+    "CODE_REPOSITORY_ACCESS_DENIED": "GitHub rechazó el token. Usa un token fine-grained vigente con acceso de solo lectura a «Contents» de ese repositorio.",
+    "CODE_REPOSITORY_ALREADY_CONNECTED": "Ese repositorio ya está conectado a este proyecto.",
+    "CODE_REPOSITORY_LIMIT_REACHED": "Este proyecto ya tiene el máximo de 3 repositorios. Quita uno para conectar otro.",
+    "CODE_HOST_UNAVAILABLE": "GitHub no responde o limitó las consultas. Inténtalo de nuevo en unos minutos.",
+    "CODE_REPOSITORY_INDEXING": "Ese repositorio ya se está indexando. Espera a que termine."
   },
   "share": {
     "action": "Compartir con el cliente",

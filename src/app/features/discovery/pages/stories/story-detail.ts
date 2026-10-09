@@ -14,7 +14,9 @@ import {
   lucideArrowLeft,
   lucideArrowUpRight,
   lucideCheck,
+  lucideCodeXml,
   lucidePlus,
+  lucideQuote,
   lucideRotateCcw,
   lucideTrash2,
   lucideUpload,
@@ -24,6 +26,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { IntegrationsApiService } from '../../../workspace/data/integrations-api.service';
+import { CodeReference } from '../../data/codebase.models';
 import {
   AcceptanceCriterionResponse,
   StoryPriority,
@@ -97,7 +100,9 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
       lucideArrowLeft,
       lucideArrowUpRight,
       lucideCheck,
+      lucideCodeXml,
       lucidePlus,
+      lucideQuote,
       lucideRotateCcw,
       lucideTrash2,
       lucideUpload,
@@ -217,6 +222,100 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
           </button>
         </div>
       } @else {
+        <!-- Origin: what the client said that became this story, and the code it touches. -->
+        @if (story(); as st) {
+          @let codeRefs = st.codeReferences ?? [];
+          @if (st.origin || codeRefs.length > 0) {
+            <section
+              class="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5"
+              data-testid="story-origin"
+            >
+              <h2 class="text-base font-semibold">{{ 'storyForm.origin.title' | transloco }}</h2>
+              @if (st.origin; as origin) {
+                <figure class="flex flex-col gap-2">
+                  <blockquote class="flex items-start gap-2.5 text-sm leading-relaxed">
+                    <hlm-icon
+                      name="lucideQuote"
+                      size="15px"
+                      class="mt-0.5 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <q class="min-w-0 text-foreground" data-testid="story-origin-quote">{{
+                      origin.quote
+                    }}</q>
+                  </blockquote>
+                  <figcaption class="pl-[1.6rem]">
+                    <a
+                      [routerLink]="['/projects', projectId(), 'sessions']"
+                      [queryParams]="{ session: origin.sessionId, segment: origin.sequence }"
+                      class="inline-flex items-center gap-1 rounded-md text-xs font-medium text-primary hover:underline"
+                      data-testid="story-origin-session"
+                    >
+                      {{ 'storyForm.origin.viewInSession' | transloco }}
+                      <hlm-icon name="lucideArrowUpRight" size="12px" aria-hidden="true" />
+                    </a>
+                  </figcaption>
+                </figure>
+              }
+              @if (codeRefs.length > 0) {
+                <div
+                  class="flex flex-col gap-1.5"
+                  [class.border-t]="!!st.origin"
+                  [class.pt-3]="!!st.origin"
+                >
+                  <h3 class="text-xs font-medium text-muted-foreground">
+                    {{ 'storyForm.origin.code' | transloco }}
+                  </h3>
+                  <ul class="flex flex-wrap gap-1.5">
+                    @for (ref of codeRefs; track ref.repository + ':' + ref.path) {
+                      <li class="min-w-0 max-w-full">
+                        @if (ref.url) {
+                          <a
+                            [href]="ref.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [title]="referenceTitle(ref)"
+                            class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                            data-testid="story-code-ref"
+                          >
+                            <hlm-icon
+                              name="lucideCodeXml"
+                              size="12px"
+                              class="shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span class="truncate">{{ ref.name }}</span>
+                            <hlm-icon
+                              name="lucideArrowUpRight"
+                              size="12px"
+                              class="shrink-0 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          </a>
+                        } @else {
+                          <span
+                            [title]="referenceTitle(ref)"
+                            class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-medium text-foreground"
+                            data-testid="story-code-ref"
+                          >
+                            <hlm-icon
+                              name="lucideCodeXml"
+                              size="12px"
+                              class="shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span class="truncate">{{ ref.name }}</span>
+                          </span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+          }
+        }
+
         <!-- Core fields: the story as its sentence, one full-width line per part. -->
         <form
           [formGroup]="form"
@@ -566,6 +665,11 @@ export class StoryDetail implements OnInit {
   protected setPriority(value: string): void {
     this.form.controls.priority.setValue(value as StoryPriority);
     this.form.controls.priority.markAsDirty();
+  }
+
+  /** A module's place in the code: `owner/name/path` (the repository alone for its root). */
+  protected referenceTitle(ref: CodeReference): string {
+    return ref.path ? `${ref.repository}/${ref.path}` : ref.repository;
   }
 
   /** Status key for the status hint (unknown values read as DRAFT, like the badge). */
