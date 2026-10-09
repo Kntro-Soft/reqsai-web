@@ -122,4 +122,51 @@ test.describe('Code-aware copilot', () => {
         .first(),
     ).toBeVisible();
   });
+  test('checks the reference, applies the detected profile, reindexes and disconnects', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(240_000);
+    test.skip(
+      !(await fakeGitHubUp(request)),
+      'Start the fixture GitHub to run the code copilot E2E',
+    );
+    const { email, projectId } = await seed(request);
+    await uiLogin(page, email);
+    await page.goto(`/projects/${projectId}/code`);
+
+    // The form rejects what is not a repository, and GitHub answers for one that does not exist.
+    const input = page.getByTestId('code-repo-input');
+    await input.fill('esto no es un repo');
+    await input.press('Tab');
+    await expect(page.getByTestId('code-connect-invalid')).toBeVisible();
+    await input.fill('acme/no-existe');
+    await page.getByTestId('code-connect-submit').click();
+    await expect(page.getByTestId('code-connect-error')).toBeVisible();
+
+    // A github.com URL works as well as owner/name.
+    await input.fill('https://github.com/acme/reservas');
+    await page.getByTestId('code-connect-submit').click();
+    const repo = page.getByTestId('code-repo').filter({ hasText: 'acme/reservas' });
+    await expect(repo).toHaveAttribute('data-status', 'READY', { timeout: 120_000 });
+
+    // The stack found in the code joins the project's technical profile.
+    const additions = page.getByTestId('code-profile-additions');
+    await expect(additions).toContainText('TypeScript');
+    await page.getByTestId('code-profile-apply').click();
+    await expect(additions).toContainText('ya incluye todo');
+    await expect(page.getByTestId('code-profile-apply')).toBeDisabled();
+
+    // Reindexing the same commit ends ready again with the same module map.
+    await expect(page.getByTestId('code-module').first()).toBeVisible();
+    const modules = await page.getByTestId('code-module').count();
+    await repo.getByTestId('code-repo-reindex').click();
+    await expect(repo).toHaveAttribute('data-status', 'READY', { timeout: 120_000 });
+    await expect(page.getByTestId('code-module')).toHaveCount(modules);
+
+    // Disconnecting removes the repository and its modules.
+    await repo.getByTestId('code-repo-remove').click();
+    await page.getByTestId('code-remove-confirm').click();
+    await expect(page.getByTestId('code-empty')).toBeVisible();
+  });
 });
