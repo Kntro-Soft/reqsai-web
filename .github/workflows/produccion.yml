@@ -96,9 +96,33 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check the release bot configuration
+        env:
+          APP_ID: ${{ vars.RELEASE_APP_ID }}
+          HAS_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != true ]; then
+            echo "::error title=Release bot not configured::The organization variable RELEASE_APP_ID and the organization secret RELEASE_APP_PRIVATE_KEY (GitHub App reqsai-release-bot) are required to ask reqsai-infra for the deploy."
+            exit 1
+          fi
+
+      # A token for reqsai-infra only, with Actions: write (workflow_dispatch of deploy-mvp.yml); it expires in one
+      # hour, so the run is watched with the workflow token (reqsai-infra is public).
+      - name: Mint the release bot token for reqsai-infra
+        id: bot
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          # The App ID; GitHub accepts it as the JWT issuer like the client ID.
+          client-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: Kntro-Soft
+          repositories: reqsai-infra
+          permission-actions: write
+
       - name: Ship the candidate digest through reqsai-infra and wait for it
         env:
-          GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          DISPATCH_TOKEN: ${{ steps.bot.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           DIGEST: ${{ needs.prepare.outputs.digest }}
           REQUEST_ID: reqsai-web ${{ needs.prepare.outputs.tag }} ${{ github.run_id }}-${{ github.run_attempt }}
         run: .github/scripts/deploy-via-infra.sh "$APP" "$DIGEST" "$GITHUB_SHA" "$REQUEST_ID"
@@ -110,9 +134,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write
-      packages: write
-      pull-requests: write
+      contents: write # tag vX.Y.Z and its GitHub Release
+      packages: write # X.Y.Z and latest in GHCR; the back-merge pull request is opened by reqsai-release-bot
     steps:
       - uses: actions/checkout@v7
         with:
@@ -140,16 +163,41 @@ jobs:
           url=$(.github/scripts/candidate.sh final "$RUNNER_TEMP/candidate.json" "$GITHUB_SHA")
           echo "Released: $url" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Open the back-merge pull request into develop
+      - name: Check the release bot configuration
         env:
-          GH_TOKEN: ${{ github.token }}
+          APP_ID: ${{ vars.RELEASE_APP_ID }}
+          HAS_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != true ]; then
+            echo "::error title=Release bot not configured::The organization variable RELEASE_APP_ID and the organization secret RELEASE_APP_PRIVATE_KEY (GitHub App reqsai-release-bot) are required to open the back-merge pull request. Nothing falls back to GITHUB_TOKEN: its pull requests start no workflows."
+            exit 1
+          fi
+
+      - name: Mint the release bot token
+        id: bot
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          # The App ID; GitHub accepts it as the JWT issuer like the client ID.
+          client-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write # auto-merge
+          permission-pull-requests: write
+          permission-workflows: write # auto-merge of a back-merge that changes .github/workflows
+
+      - name: Open the back-merge pull request into develop as reqsai-release-bot
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           body="$RUNNER_TEMP/back-merge.md"
           {
             echo "Gitflow back-merge of release $VERSION, now tagged [v$VERSION]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$VERSION) and deployed."
             echo
-            echo "Brings the fixes made on the release or hotfix branch (and its version bump) back into \`develop\`."
+            echo "Brings the fixes made on the release or hotfix branch (and its version bump) back into \`develop\`. Merge it with a merge commit, never a squash, so \`develop\` keeps \`main\`'s history."
           } > "$body"
           url=$(.github/scripts/candidate.sh pr main develop "chore: merge release $VERSION back into develop" "$body")
-          echo "Back-merge: ${url:-not needed}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$url" ]; then
+            echo "Back-merge: not needed" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "Back-merge: $url ($(.github/scripts/candidate.sh automerge "$url"))" >> "$GITHUB_STEP_SUMMARY"

@@ -86,9 +86,33 @@ jobs:
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
           echo "### Rollback of reqsai-web to v$VERSION (\`$IMAGE@$digest\`)" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Check the release bot configuration
+        env:
+          APP_ID: ${{ vars.RELEASE_APP_ID }}
+          HAS_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ -z "$APP_ID" ] || [ "$HAS_KEY" != true ]; then
+            echo "::error title=Release bot not configured::The organization variable RELEASE_APP_ID and the organization secret RELEASE_APP_PRIVATE_KEY (GitHub App reqsai-release-bot) are required to ask reqsai-infra for the deploy."
+            exit 1
+          fi
+
+      # A token for reqsai-infra only, with Actions: write (workflow_dispatch of deploy-mvp.yml); it expires in one
+      # hour, so the run is watched with the workflow token (reqsai-infra is public).
+      - name: Mint the release bot token for reqsai-infra
+        id: bot
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          # The App ID; GitHub accepts it as the JWT issuer like the client ID.
+          client-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: Kntro-Soft
+          repositories: reqsai-infra
+          permission-actions: write
+
       - name: Ship that digest through reqsai-infra and wait for it
         env:
-          GH_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          DISPATCH_TOKEN: ${{ steps.bot.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
           DIGEST: ${{ steps.release.outputs.digest }}
           REQUEST_ID: reqsai-web rollback v${{ inputs.version }} ${{ github.run_id }}-${{ github.run_attempt }}
         run: .github/scripts/deploy-via-infra.sh "$APP" "$DIGEST" "$GITHUB_SHA" "$REQUEST_ID"
