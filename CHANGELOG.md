@@ -16,14 +16,28 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
 - **New "Código" page in the project sidebar** (`/projects/:id/code`, needs `INTEGRATION_READ`), next to
   "Documentos". The analyst connects the project's GitHub repositories and ReqsAI indexes each one into a
   map of modules.
-  - The empty state explains what connecting does: the module map, the meeting warnings, that public
-    repositories need no token and private ones a read-only fine-grained token ("Contents"), and that
-    the code is summarized, never stored.
-  - **Connect** (`INTEGRATION_WRITE`): `owner/name` or a github.com URL (`.git` and `/tree/<branch>`
-    included), checked in the browser before anything is sent; optional branch and token
-    (`type=password`, `autocomplete=off`). The API errors (`CODE_REPOSITORY_*`, `CODE_HOST_UNAVAILABLE`)
-    show under the form. Up to 3 repositories per project.
-  - **One card per repository:** name linking to GitHub, public/private, branch and status. While
+  - The empty state explains what connecting does: the module map, the meeting warnings, that GitHub
+    shares private repositories read-only, and that the code is summarized, never stored.
+  - **Connect** (`INTEGRATION_WRITE`), in `CodeConnect`:
+    - With the organization's GitHub connected, a picker of the repositories the ReqsAI GitHub App
+      shares (filter, private/public, already connected ones marked), an optional branch and a link to
+      share more on GitHub.
+    - Without it, an org owner or admin gets "Conectar GitHub" right there (the install returns to this
+      page and opens the picker); other members are told to ask an admin.
+    - A public repository can always be typed (`owner/name` or a github.com URL, `.git` and
+      `/tree/<branch>` included), checked in the browser before anything is sent. No token is ever
+      asked for.
+    - The API errors (`CODE_REPOSITORY_*`, `CODE_HOST_*`) show under the form. Up to 3 repositories per
+      project.
+  - **GitHub in Settings → Integrations** (owners and admins), next to Jira: the connected GitHub
+    accounts (organization or personal, all or selected repositories, suspended), "Gestionar en GitHub",
+    "Desconectar" with a confirmation, and "Conectar GitHub" / "Conectar otra cuenta".
+  - **GitHub's redirect** lands on `/settings/integrations/github/callback` (chrome-less, like Jira's): it
+    posts the installation id, signed state and OAuth code for the API to verify, explains a request a
+    GitHub organization owner must approve, and returns to the page that started the install (only an
+    in-app path is accepted).
+  - **One card per repository:** name linking to GitHub, public/private, branch, "Se actualiza con cada
+    push" when it is read through the GitHub App, and status. While
     indexing, "Indexando…" with a progress bar (`modulesDone`/`moduleCount`, indeterminate while the
     count is unknown); ready, "Listo" with when it was indexed, the short commit and the file and module
     counts, plus a note when the summaries are basic (no AI model was available); failed, the error and
@@ -61,9 +75,18 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
     errors, retry, removal after confirming, applying the profile, the module map and permission gating;
   - `suggestion-card.spec.ts`: the code banners and the evidence line; `discovery-chat.store.spec.ts`:
     realtime suggestions keep `evidence` and `code`;
-  - `e2e/code-copilot.spec.ts` (local stack with the fixture GitHub and the real AI, run separately):
-    connects `acme/reservas`, waits for "Listo", checks the profile and the 2-hour rule, then a 24-hour
-    request in the assistant chat comes back flagged as contradicting the code.
+  - `code-connect.spec.ts`, `github-connection.spec.ts`, `github-install-callback.spec.ts`: the picker,
+    connecting GitHub, the organization card and the install redirect (safe return paths included);
+  - `e2e/code-copilot.spec.ts` (local stack with the fixture GitHub of `e2e/fixtures/fake-github` and the
+    real AI, skipped when the fixture is down):
+    - connects `acme/reservas`, waits for "Listo", checks the profile and the 2-hour rule, then a 24-hour
+      request in the assistant chat comes back flagged as contradicting the code;
+    - checks the connect form, applies the detected profile, reindexes and disconnects;
+    - connects GitHub through the App from the Code page, picks the private `acme/facturacion`, sees it
+      update after a push (signed webhook), and disconnects GitHub from Integrations.
+  - `e2e/code-copilot-capture.spec.ts`: a recorded meeting with the code connected; a live suggestion
+    quotes the client, the quote highlights its bubble, and the accepted story keeps it as its origin
+    with a link back to that moment.
 
 ### Changed (Release pipeline — `feature/79-release-pipeline`, #79)
 

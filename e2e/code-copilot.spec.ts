@@ -34,7 +34,7 @@ async function seed(request: APIRequestContext) {
   const email = uniqueEmail('code');
   await registerReady(request, email, PASSWORD);
   const token = await apiLogin(request, email, PASSWORD);
-  const orgId = await apiCreateOrganization(request, token, `Code ${Date.now()}`);
+  const orgId = await apiCreateOrganization(request, token, `Code ${email.split('@')[0]}`);
   await apiSetActiveOrganization(request, token, orgId);
   const active = await apiRefresh(request);
   const projectId = await apiCreateProject(request, active, orgId, 'Restaurante La Tradición');
@@ -168,5 +168,75 @@ test.describe('Code-aware copilot', () => {
     await repo.getByTestId('code-repo-remove').click();
     await page.getByTestId('code-remove-confirm').click();
     await expect(page.getByTestId('code-empty')).toBeVisible();
+  });
+
+  test('connects GitHub through the App, picks a private repository and updates it on every push', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(300_000);
+    test.skip(
+      !(await fakeGitHubUp(request)),
+      'Start the fixture GitHub to run the code copilot E2E',
+    );
+    const { email, projectId } = await seed(request);
+    await uiLogin(page, email);
+    await page.goto(`/projects/${projectId}/code`);
+
+    // Not connected yet: the owner connects GitHub from the Code page. GitHub (the fixture) installs
+    // the App and sends the browser back; ReqsAI verifies and links it, and returns to this page.
+    await page.getByTestId('code-github-connect').click();
+    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/code$`), { timeout: 30_000 });
+    const picker = page.getByTestId('code-github-picker');
+    await expect(picker).toBeVisible();
+
+    // The private billing repository is among what the App shares: pick it, no token asked.
+    await picker.getByTestId('code-github-repo').filter({ hasText: 'acme/facturacion' }).click();
+    await picker.getByTestId('code-github-submit').click();
+    const repo = page.getByTestId('code-repo').filter({ hasText: 'acme/facturacion' });
+    await expect(repo).toHaveAttribute('data-status', 'READY', { timeout: 120_000 });
+    await expect(repo.getByTestId('code-repo-visibility')).toContainText('Privado');
+    await expect(repo.getByTestId('code-repo-auto-update')).toBeVisible();
+    // Opening the panel again, the picker marks it as already connected.
+    await page.getByTestId('code-connect-open').click();
+    await expect(
+      picker.getByTestId('code-github-repo').filter({ hasText: 'acme/facturacion' }),
+    ).toContainText('Conectado');
+    await page.getByTestId('code-connect-cancel').click();
+
+    // A push on GitHub: the fixture sends the signed webhook and the index catches up on its own.
+    const pushed = await request.post(`${FAKE_GITHUB}/_fake/push/acme/facturacion`, {
+      data: {
+        files: {
+          'src/billing/discounts.ts':
+            '/** A waiter can apply a discount of at most 15% of the bill. */\n' +
+            'export const MAX_DISCOUNT_PERCENT = 15;\n',
+        },
+      },
+    });
+    expect(pushed.ok()).toBeTruthy();
+    const { sha } = (await pushed.json()) as { sha: string };
+    await expect
+      .poll(
+        async () => {
+          await page.reload();
+          await expect(repo).toBeVisible();
+          const status = await repo.getAttribute('data-status');
+          const shown = (await repo.getByTestId('code-repo-sha').textContent())?.trim();
+          return `${status}:${shown}`;
+        },
+        { timeout: 120_000, intervals: [2_000] },
+      )
+      .toBe(`READY:${sha.slice(0, 7)}`);
+
+    // Settings → Integrations lists the GitHub account; disconnecting it stops the updates.
+    await page.goto('/settings/integrations');
+    const account = page.getByTestId('github-installation').filter({ hasText: 'acme' });
+    await expect(account).toBeVisible();
+    await account.getByTestId('github-disconnect').click();
+    await page.getByTestId('github-disconnect-confirm').click();
+    await expect(page.getByTestId('github-installation')).toHaveCount(0);
+    await page.goto(`/projects/${projectId}/code`);
+    await expect(repo).toHaveAttribute('data-status', 'FAILED');
   });
 });

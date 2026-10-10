@@ -2,6 +2,7 @@ import {
   CodeModuleResponse,
   CodeProfile,
   CodeReference,
+  GitHubRepositoryResponse,
   CodeRepositoryResponse,
   CodeRepositoryStatus,
 } from './codebase.models';
@@ -313,4 +314,35 @@ export function modulesLoadKey(
 ): string | null {
   if (repo.status !== 'READY') return null;
   return `${repo.indexedAt ?? ''}|${repo.commitSha ?? ''}`;
+}
+
+/**
+ * The GitHub repositories whose name or description holds every word of `query` (case- and
+ * accent-insensitive); all of them for a blank query.
+ */
+export function filterGitHubRepositories(
+  repositories: readonly GitHubRepositoryResponse[],
+  query: string | null | undefined,
+): GitHubRepositoryResponse[] {
+  const words = normalizeTerm(query ?? '')
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+  if (words.length === 0) return [...repositories];
+  return repositories.filter((repo) => {
+    const haystack = normalizeTerm(`${repo.fullName} ${repo.description ?? ''}`);
+    return words.every((w) => haystack.includes(w));
+  });
+}
+
+/** Session key of the page to come back to after installing the GitHub App. */
+export const GITHUB_RETURN_KEY = 'reqsai.github.return';
+
+/**
+ * An in-app path to return to: it must start with a single `/` (no `//host`, no backslashes and
+ * no scheme), so a value planted in storage can never send the user to another site.
+ */
+export function safeReturnPath(value: string | null | undefined): string | null {
+  const path = value?.trim();
+  if (!path || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null;
+  return /^\/[^:]*$/.test(path.split('?')[0]) ? path : null;
 }

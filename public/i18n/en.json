@@ -1121,15 +1121,12 @@
     "connect": {
       "open": "Connect repository",
       "title": "Connect another repository",
-      "description": "Paste owner/name or the GitHub URL. Indexing runs in the background.",
+      "description": "Pick a GitHub repository or type a public one. Indexing runs in the background.",
       "repository": "GitHub repository",
       "repositoryPlaceholder": "acme/bookings or https://github.com/acme/bookings",
       "invalid": "Enter owner/name (for example, acme/bookings) or the repository's github.com URL.",
       "branch": "Branch",
       "branchPlaceholder": "The default branch",
-      "token": "Access token",
-      "tokenPlaceholder": "Private repositories only",
-      "tokenHint": "Only for a private repository: a GitHub fine-grained token with read-only \"Contents\" access.",
       "submit": "Connect",
       "connected": "{{name}} connected. ReqsAI is indexing it.",
       "limit": "Up to {{max}} repositories per project. Remove one to connect another."
@@ -1140,7 +1137,7 @@
       "points": {
         "map": "ReqsAI reads the repository and summarizes it into modules: what each one does, its capabilities and the business rules it implements.",
         "meeting": "In the meeting, every suggestion says whether the request already exists or contradicts the code, with a link to the module.",
-        "access": "Public repositories need no token. A private one needs a read-only fine-grained token with \"Contents\" permission.",
+        "access": "Connect GitHub to pick your repositories, private ones included, with read-only access. A public one can also be connected by name.",
         "privacy": "The code is summarized for the AI; ReqsAI does not store the source code."
       },
       "noPermission": "Ask whoever manages the project to connect a repository."
@@ -1218,6 +1215,25 @@
       "empty": "This repository has no indexed modules.",
       "noMatch": "No module matches \"{{query}}\".",
       "loadError": "The modules could not be loaded."
+    },
+    "github": {
+      "pickerTitle": "Your GitHub repositories",
+      "filter": "Filter repositories",
+      "connectedBadge": "Connected",
+      "noMatch": "No repository matches “{{query}}”.",
+      "none": "The ReqsAI app cannot access any repository yet.",
+      "missingHint": "Don't see your repository? Give ReqsAI access on GitHub.",
+      "submit": "Connect repository",
+      "loadError": "We couldn't load your GitHub repositories.",
+      "ctaTitle": "Connect GitHub",
+      "ctaBody": "Choose which repositories ReqsAI can read, private ones included and read-only. The code map updates itself on every push.",
+      "ctaButton": "Connect GitHub",
+      "ctaNoPermission": "Ask an organization admin to connect GitHub in Settings → Integrations.",
+      "redirecting": "Opening GitHub…",
+      "typedTitle": "Or connect a public repository by name",
+      "typedToggle": "Connect a public repository by name",
+      "publicOnly": "Without GitHub connected, only public repositories can be read.",
+      "autoUpdate": "Updates on every push"
     }
   },
   "projectRoleForm": {
@@ -1662,6 +1678,39 @@
       "completedPush": "Push to Jira finished: {{succeeded}} pushed, {{failed}} failed.",
       "failed": "The Jira job failed. Please try again.",
       "alreadyRunning": "A Jira job is already running for this project."
+    },
+    "github": {
+      "title": "GitHub",
+      "description": "Connect the GitHub accounts whose repositories ReqsAI can read, read-only. Each project picks its own on its Code page, and the map updates on every push.",
+      "unavailable": "Connecting GitHub is not configured on this server. Projects can still connect public repositories by name.",
+      "connect": "Connect GitHub",
+      "connectAnother": "Connect another account",
+      "manage": "Manage on GitHub",
+      "disconnect": "Disconnect",
+      "disconnectTitle": "Disconnect {{account}}?",
+      "disconnectBody": "This account's repositories will stop updating; their code map is kept. To uninstall the ReqsAI app, do it on GitHub.",
+      "disconnected": "{{account}} disconnected.",
+      "loadError": "We couldn't load the GitHub connection.",
+      "accountOrganization": "Organization",
+      "accountUser": "Personal account",
+      "selectionAll": "All its repositories",
+      "selectionSelected": "Selected repositories",
+      "suspended": "Suspended",
+      "howItWorks": {
+        "title": "How it works",
+        "step1": "You install the ReqsAI app on your GitHub account or organization and pick the repositories.",
+        "step2": "Each project connects the ones it needs from its Code page.",
+        "step3": "On every push, ReqsAI reads again only what changed.",
+        "privacy": "ReqsAI only asks for read access and stores neither the code nor credentials: each access uses a token that expires within an hour."
+      },
+      "callback": {
+        "connecting": "Connecting GitHub…",
+        "connected": "GitHub connected: {{account}}.",
+        "requestedTitle": "Request sent",
+        "requestedBody": "An owner of the GitHub organization must approve installing ReqsAI. Once approved, connect GitHub again from here.",
+        "cancelled": "Connecting GitHub was not completed.",
+        "back": "Back"
+      }
     }
   },
   "errors": {
@@ -1782,12 +1831,16 @@
     "SPEAKER_NOT_FOUND": "That speaker did not speak in this session.",
     "SHARE_LINK_UNAVAILABLE": "That link is no longer available.",
     "CODE_REPOSITORY_URL_INVALID": "That repository is not valid. Enter owner/name or the repository's GitHub URL.",
-    "CODE_REPOSITORY_NOT_FOUND": "We could not find that repository. Check the name; if it is private, add a token with read access.",
-    "CODE_REPOSITORY_ACCESS_DENIED": "GitHub rejected the token. Use a valid fine-grained token with read-only \"Contents\" access to that repository.",
+    "CODE_REPOSITORY_NOT_FOUND": "We could not find that repository. Check the name; if it is private, connect GitHub and give ReqsAI access to it.",
+    "CODE_REPOSITORY_ACCESS_DENIED": "GitHub does not let ReqsAI read that repository. Check the ReqsAI app's access on GitHub.",
     "CODE_REPOSITORY_ALREADY_CONNECTED": "That repository is already connected to this project.",
     "CODE_REPOSITORY_LIMIT_REACHED": "This project already has the maximum of 3 repositories. Remove one to connect another.",
     "CODE_HOST_UNAVAILABLE": "GitHub is not responding or rate-limited us. Try again in a few minutes.",
-    "CODE_REPOSITORY_INDEXING": "That repository is already being indexed. Wait for it to finish."
+    "CODE_REPOSITORY_INDEXING": "That repository is already being indexed. Wait for it to finish.",
+    "CODE_HOST_APP_NOT_CONFIGURED": "Connecting GitHub is not available on this server.",
+    "CODE_HOST_INSTALL_STATE_INVALID": "The GitHub link expired or is not valid. Connect GitHub again from ReqsAI.",
+    "CODE_HOST_INSTALLATION_FORBIDDEN": "We could not confirm that your GitHub account can access that installation. Connect GitHub again from ReqsAI.",
+    "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization."
   },
   "share": {
     "action": "Share with client",

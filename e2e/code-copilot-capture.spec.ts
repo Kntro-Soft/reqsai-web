@@ -48,7 +48,7 @@ async function seed(request: APIRequestContext) {
   const email = uniqueEmail('codecap');
   await registerReady(request, email, PASSWORD);
   const token = await apiLogin(request, email, PASSWORD);
-  const orgId = await apiCreateOrganization(request, token, `Code capture ${Date.now()}`);
+  const orgId = await apiCreateOrganization(request, token, `Code capture ${email.split('@')[0]}`);
   await apiSetActiveOrganization(request, token, orgId);
   const active = await apiRefresh(request);
   const projectId = await apiCreateProject(request, active, orgId, 'Restaurante La Tradición');

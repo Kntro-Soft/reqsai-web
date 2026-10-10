@@ -8,7 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -23,6 +23,7 @@ import {
   lucideGlobe,
   lucideInfo,
   lucideKeyRound,
+  lucideWebhook,
   lucideLockKeyhole,
   lucidePlus,
   lucideRefreshCw,
@@ -36,23 +37,16 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { messageForError } from '../../../../core/errors/error-message';
-import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HasPermission } from '../../../../shared/directives/has-permission';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { FromNowPipe } from '../../../../shared/pipes/from-now.pipe';
 import { ToastService } from '../../../../shared/toast/toast.service';
-import {
-  HlmButton,
-  HlmIcon,
-  HlmInput,
-  HlmLabel,
-  HlmSkeleton,
-  HlmSpinner,
-} from '../../../../shared/ui';
+import { HlmButton, HlmIcon, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
 import { WorkspaceApiService } from '../../../workspace/data/workspace-api.service';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ProjectResponse } from '../../../workspace/data/workspace.models';
 import { CodebaseApiService } from '../../data/codebase-api.service';
+import { CodeConnect } from '../../components/code-connect/code-connect';
 import { CodeModuleResponse, CodeRepositoryResponse } from '../../data/codebase.models';
 import {
   INDEXING_POLL_MS,
@@ -68,7 +62,6 @@ import {
   isProfileEmpty,
   mergeProfile,
   modulesLoadKey,
-  parseRepositoryInput,
   pluralKey,
   profileAdditions,
   shortSha,
@@ -106,15 +99,13 @@ const CAPABILITY_PREVIEW = 4;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
-    NgTemplateOutlet,
+    CodeConnect,
     TranslocoPipe,
     FromNowPipe,
     HasPermission,
     Modal,
     HlmButton,
     HlmIcon,
-    HlmInput,
-    HlmLabel,
     HlmSkeleton,
     HlmSpinner,
   ],
@@ -131,6 +122,7 @@ const CAPABILITY_PREVIEW = 4;
       lucideGlobe,
       lucideInfo,
       lucideKeyRound,
+      lucideWebhook,
       lucideLockKeyhole,
       lucidePlus,
       lucideRefreshCw,
@@ -221,7 +213,7 @@ const CAPABILITY_PREVIEW = 4;
               </div>
               <div class="border-t border-border bg-muted/30 p-5">
                 @if (canWrite()) {
-                  <ng-container [ngTemplateOutlet]="connectForm" />
+                  <app-code-connect [projectId]="projectId()" (connected)="onConnected($event)" />
                 } @else {
                   <p class="text-sm text-muted-foreground" data-testid="code-no-permission">
                     {{ 'code.empty.noPermission' | transloco }}
@@ -242,7 +234,13 @@ const CAPABILITY_PREVIEW = 4;
                   </p>
                 </div>
                 <div class="border-t border-border bg-muted/30 p-5">
-                  <ng-container [ngTemplateOutlet]="connectForm" />
+                  <app-code-connect
+                    [projectId]="projectId()"
+                    [showCancel]="true"
+                    [autofocus]="true"
+                    (connected)="onConnected($event)"
+                    (cancelled)="closeForm()"
+                  />
                 </div>
               </section>
             }
@@ -321,6 +319,15 @@ const CAPABILITY_PREVIEW = 4;
                             />
                             <span class="truncate font-mono">{{ repo.branch }}</span>
                           </span>
+                          @if (repo.autoUpdate) {
+                            <span
+                              class="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                              data-testid="code-repo-auto-update"
+                            >
+                              <hlm-icon name="lucideWebhook" size="12px" aria-hidden="true" />
+                              {{ 'code.github.autoUpdate' | transloco }}
+                            </span>
+                          }
                         </div>
 
                         <!-- Status line -->
@@ -977,135 +984,6 @@ const CAPABILITY_PREVIEW = 4;
       </app-modal>
     </div>
 
-    <!-- Connect form: owner/name or a GitHub URL, optional branch, token only for private repos. -->
-    <ng-template #connectForm>
-      <form
-        class="flex flex-col gap-4"
-        novalidate
-        (submit)="connect($event)"
-        data-testid="code-connect-form"
-      >
-        <div class="flex flex-col gap-1.5">
-          <label hlmLabel for="code-repository">{{ 'code.connect.repository' | transloco }}</label>
-          <input
-            hlmInput
-            id="code-repository"
-            name="repository"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            inputmode="url"
-            [value]="repositoryInput()"
-            (input)="setRepository($any($event.target).value)"
-            (blur)="touchRepository()"
-            [placeholder]="'code.connect.repositoryPlaceholder' | transloco"
-            [disabled]="connecting()"
-            [attr.aria-invalid]="repositoryInvalid()"
-            [attr.aria-describedby]="repositoryInvalid() ? 'code-repository-error' : null"
-            data-testid="code-repo-input"
-          />
-          @if (repositoryInvalid()) {
-            <p
-              id="code-repository-error"
-              class="text-xs text-destructive"
-              data-testid="code-connect-invalid"
-            >
-              {{ 'code.connect.invalid' | transloco }}
-            </p>
-          }
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="code-branch">
-              {{ 'code.connect.branch' | transloco }}
-              <span class="font-normal text-muted-foreground"
-                >· {{ 'common.optional' | transloco }}</span
-              >
-            </label>
-            <input
-              hlmInput
-              id="code-branch"
-              name="branch"
-              autocomplete="off"
-              autocapitalize="off"
-              spellcheck="false"
-              maxlength="255"
-              [value]="branchInput()"
-              (input)="branchInput.set($any($event.target).value)"
-              [placeholder]="branchPlaceholder()"
-              [disabled]="connecting()"
-              data-testid="code-branch-input"
-            />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="code-token">
-              {{ 'code.connect.token' | transloco }}
-              <span class="font-normal text-muted-foreground"
-                >· {{ 'common.optional' | transloco }}</span
-              >
-            </label>
-            <input
-              hlmInput
-              id="code-token"
-              name="accessToken"
-              type="password"
-              autocomplete="off"
-              spellcheck="false"
-              [value]="tokenInput()"
-              (input)="tokenInput.set($any($event.target).value)"
-              [placeholder]="'code.connect.tokenPlaceholder' | transloco"
-              [disabled]="connecting()"
-              aria-describedby="code-token-hint"
-              data-testid="code-token-input"
-            />
-          </div>
-        </div>
-        <p
-          id="code-token-hint"
-          class="-mt-2 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"
-        >
-          <hlm-icon name="lucideKeyRound" size="13px" class="mt-0.5 shrink-0" aria-hidden="true" />
-          {{ 'code.connect.tokenHint' | transloco }}
-        </p>
-
-        @if (connectError()) {
-          <p class="text-sm text-destructive" role="alert" data-testid="code-connect-error">
-            {{ connectError() }}
-          </p>
-        }
-
-        <div class="flex flex-wrap items-center justify-end gap-2">
-          @if (repositories().length > 0) {
-            <button
-              hlmBtn
-              size="sm"
-              variant="ghost"
-              type="button"
-              (click)="closeForm()"
-              [disabled]="connecting()"
-              data-testid="code-connect-cancel"
-            >
-              {{ 'common.cancel' | transloco }}
-            </button>
-          }
-          <button
-            hlmBtn
-            size="sm"
-            type="submit"
-            [disabled]="connecting() || !repositoryInput().trim()"
-            data-testid="code-connect-submit"
-          >
-            @if (connecting()) {
-              <hlm-spinner class="h-4 w-4" />
-            } @else {
-              <hlm-icon name="lucideFolderGit2" size="15px" />
-            }
-            {{ 'code.connect.submit' | transloco }}
-          </button>
-        </div>
-      </form>
-    </ng-template>
-
     <style>
       @media (prefers-reduced-motion: no-preference) {
         .code-indeterminate {
@@ -1162,18 +1040,8 @@ export class ProjectCode implements OnInit, OnDestroy {
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
 
-  // ---- Connect form ----
+  // ---- Connect panel ----
   protected readonly formOpen = signal(false);
-  protected readonly repositoryInput = signal('');
-  protected readonly branchInput = signal('');
-  protected readonly tokenInput = signal('');
-  private readonly repositoryTouched = signal(false);
-  protected readonly connecting = signal(false);
-  protected readonly connectError = signal<string | null>(null);
-  protected readonly parsed = computed(() => parseRepositoryInput(this.repositoryInput()));
-  protected readonly repositoryInvalid = computed(
-    () => this.repositoryTouched() && this.repositoryInput().trim().length > 0 && !this.parsed(),
-  );
   protected readonly canOpenForm = computed(
     () =>
       this.listState() === 'ready' &&
@@ -1182,12 +1050,6 @@ export class ProjectCode implements OnInit, OnDestroy {
       !this.atLimit() &&
       !this.formOpen(),
   );
-  /** A `/tree/<branch>` URL names its branch; otherwise the repository's default one is used. */
-  private readonly translate = translateFn(this.transloco);
-  protected readonly branchPlaceholder = computed(() => {
-    const t = this.translate();
-    return this.parsed()?.branch ?? (t ? t('code.connect.branchPlaceholder') : '');
-  });
 
   // ---- Detected profile ----
   private readonly project = signal<ProjectResponse | null>(null);
@@ -1268,6 +1130,13 @@ export class ProjectCode implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Back from installing the GitHub App: open the panel with the repositories it now shares (once;
+    // a reload of this history entry does not reopen it).
+    const state = history.state as { githubConnected?: boolean } | null;
+    if (state?.githubConnected) {
+      this.formOpen.set(true);
+      history.replaceState({ ...state, githubConnected: false }, '');
+    }
     this.loadRepositories();
     this.loadProject();
   }
@@ -1430,62 +1299,18 @@ export class ProjectCode implements OnInit, OnDestroy {
 
   protected openForm(): void {
     this.formOpen.set(true);
-    setTimeout(() => document.getElementById('code-repository')?.focus());
   }
 
   protected closeForm(): void {
     this.formOpen.set(false);
-    this.resetForm();
   }
 
-  protected setRepository(value: string): void {
-    this.repositoryInput.set(value);
-    this.connectError.set(null);
-  }
-
-  protected touchRepository(): void {
-    if (this.repositoryInput().trim()) this.repositoryTouched.set(true);
-  }
-
-  private resetForm(): void {
-    this.repositoryInput.set('');
-    this.branchInput.set('');
-    this.tokenInput.set('');
-    this.repositoryTouched.set(false);
-    this.connectError.set(null);
-  }
-
-  protected connect(event?: Event): void {
-    event?.preventDefault();
-    this.repositoryTouched.set(true);
-    const ref = this.parsed();
-    if (!ref || this.connecting()) return;
-    const branch = this.branchInput().trim() || ref.branch || null;
-    const accessToken = this.tokenInput().trim() || null;
-    this.connecting.set(true);
-    this.connectError.set(null);
-    this.api
-      .connectRepository(this.projectId(), {
-        repository: `${ref.owner}/${ref.name}`,
-        branch,
-        accessToken,
-      })
-      .subscribe({
-        next: (repo) => {
-          this.connecting.set(false);
-          this.formOpen.set(false);
-          this.resetForm();
-          this.applyRepositories([...this.repositories().filter((r) => r.id !== repo.id), repo]);
-          this.toast.success(
-            this.transloco.translate('code.connect.connected', { name: repo.fullName }),
-          );
-          this.schedulePoll();
-        },
-        error: (err: unknown) => {
-          this.connecting.set(false);
-          this.connectError.set(messageForError(err, this.transloco));
-        },
-      });
+  /** A repository was connected from the panel: list it, and poll while it is indexed. */
+  protected onConnected(repo: CodeRepositoryResponse): void {
+    this.formOpen.set(false);
+    this.applyRepositories([...this.repositories().filter((r) => r.id !== repo.id), repo]);
+    this.toast.success(this.transloco.translate('code.connect.connected', { name: repo.fullName }));
+    this.schedulePoll();
   }
 
   // ---- Detected profile ----

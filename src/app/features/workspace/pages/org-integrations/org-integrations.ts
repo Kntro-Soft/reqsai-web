@@ -12,6 +12,7 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { GitHubConnection } from '../../../discovery/components/github-connection/github-connection';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import { IntegrationConnectionResponse } from '../../data/integrations.models';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -57,6 +58,7 @@ import {
     HlmSkeleton,
     HlmSpinner,
     TranslocoPipe,
+    GitHubConnection,
   ],
   viewProviders: [
     provideIcons({
@@ -411,6 +413,10 @@ import {
             </a>
           </aside>
         </div>
+
+        @if (orgId(); as id) {
+          <app-github-connection [orgId]="id" />
+        }
 
         <!-- Disconnect confirm modal -->
         <app-modal [(open)]="disconnectOpen">

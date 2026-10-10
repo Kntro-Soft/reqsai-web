@@ -7,6 +7,9 @@
 /** Where a repository is hosted. Only GitHub for now. */
 export type CodeProvider = 'GITHUB';
 
+/** How ReqsAI reads a repository: through the organization's GitHub App, or anonymously (public). */
+export type CodeRepositorySource = 'GITHUB_APP' | 'PUBLIC';
+
 /** Indexing lifecycle: queued, reading the files, done, or failed (`error` says why). */
 export type CodeRepositoryStatus = 'PENDING' | 'INDEXING' | 'READY' | 'FAILED';
 
@@ -32,8 +35,9 @@ export interface CodeRepositoryResponse {
   branch: string;
   htmlUrl: string;
   private: boolean;
-  /** Whether an access token is stored for it (never returned). */
-  hasToken: boolean;
+  source: CodeRepositorySource;
+  /** Whether every push to the branch updates the index (repositories read through the App). */
+  autoUpdate: boolean;
   status: CodeRepositoryStatus;
   error: string | null;
   commitSha: string | null;
@@ -49,11 +53,65 @@ export interface CodeRepositoryResponse {
   createdAt: string;
 }
 
-/** `POST …/code/repositories`: `owner/name` or a github.com URL; token only for private repos. */
+/**
+ * `POST …/code/repositories`: `owner/name` or a github.com URL. `installationId` comes from the
+ * GitHub picker; without it ReqsAI uses the organization's installation that shares the repository,
+ * or reads it anonymously (public repositories only).
+ */
 export interface ConnectCodeRepositoryRequest {
   repository: string;
   branch?: string | null;
-  accessToken?: string | null;
+  installationId?: number | null;
+}
+
+/** A GitHub account where the organization installed the ReqsAI GitHub App. */
+export interface GitHubInstallationResponse {
+  installationId: number;
+  /** GitHub login of the account. */
+  account: string;
+  accountType: string;
+  /** `all` the account's repositories, or a `selected` few; null when GitHub did not say. */
+  repositorySelection: 'all' | 'selected' | null;
+  /** Where the account changes the shared repositories or uninstalls the App, on GitHub. */
+  manageUrl: string | null;
+  suspended: boolean;
+  connectedAt: string;
+}
+
+/** `GET …/code/github`: whether the server has the App, and where the organization installed it. */
+export interface GitHubConnectionResponse {
+  available: boolean;
+  installations: GitHubInstallationResponse[];
+}
+
+/** A repository the organization's GitHub App installation shares with ReqsAI. */
+export interface GitHubRepositoryResponse {
+  installationId: number;
+  owner: string;
+  name: string;
+  fullName: string;
+  defaultBranch: string;
+  htmlUrl: string;
+  private: boolean;
+  description: string | null;
+  /** Last push (ISO 8601). */
+  pushedAt: string | null;
+  /** Whether the project already reads it. */
+  connected: boolean;
+}
+
+/** `POST /api/organizations/{orgId}/code/github/installations`: what GitHub put in the redirect. */
+export interface CompleteGitHubInstallRequest {
+  installationId: number | null;
+  setupAction: string | null;
+  state: string | null;
+  code: string | null;
+}
+
+/** LINKED to the organization, or REQUESTED: a GitHub organization owner must approve it first. */
+export interface GitHubInstallResultResponse {
+  status: 'LINKED' | 'REQUESTED';
+  installation: GitHubInstallationResponse | null;
 }
 
 /** One module of a repository's map (`GET …/repositories/{id}/modules`, ordered by path). */

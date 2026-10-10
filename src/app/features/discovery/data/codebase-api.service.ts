@@ -5,13 +5,18 @@ import { silentForbidden } from '../../../core/interceptors/error.interceptor';
 import {
   CodeModuleResponse,
   CodeRepositoryResponse,
+  CompleteGitHubInstallRequest,
   ConnectCodeRepositoryRequest,
+  GitHubConnectionResponse,
+  GitHubInstallResultResponse,
+  GitHubRepositoryResponse,
 } from './codebase.models';
 
 /**
  * Client for a project's connected code: connect a GitHub repository (indexing runs in the
  * background), list the repositories (polled while indexing), reindex, remove, and read the module
- * map. The reads are page loads and polls, so a 403 stays out of the global "no access" toast.
+ * map; and the organization's GitHub App connection (install, link, unlink, and the repositories it
+ * shares). The reads are page loads and polls, so a 403 stays out of the global "no access" toast.
  */
 @Injectable({ providedIn: 'root' })
 export class CodebaseApiService {
@@ -49,5 +54,49 @@ export class CodebaseApiService {
     return this.http.get<CodeModuleResponse[]>(`${this.base(projectId)}/${repositoryId}/modules`, {
       context: silentForbidden(),
     });
+  }
+
+  // ---- GitHub App ----
+
+  /** The organization's GitHub connection, as a project sees it. */
+  projectGitHub(projectId: string): Observable<GitHubConnectionResponse> {
+    return this.http.get<GitHubConnectionResponse>(`/api/projects/${projectId}/code/github`, {
+      context: silentForbidden(),
+    });
+  }
+
+  /** What the organization's installations share, to pick a repository for the project. */
+  gitHubRepositories(projectId: string): Observable<GitHubRepositoryResponse[]> {
+    return this.http.get<GitHubRepositoryResponse[]>(
+      `/api/projects/${projectId}/code/github/repositories`,
+      { context: silentForbidden() },
+    );
+  }
+
+  organizationGitHub(orgId: string): Observable<GitHubConnectionResponse> {
+    return this.http.get<GitHubConnectionResponse>(`/api/organizations/${orgId}/code/github`, {
+      context: silentForbidden(),
+    });
+  }
+
+  /** The GitHub page where the organization installs the App (carries a signed state). */
+  startGitHubInstall(orgId: string): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(`/api/organizations/${orgId}/code/github/install`, {});
+  }
+
+  completeGitHubInstall(
+    orgId: string,
+    request: CompleteGitHubInstallRequest,
+  ): Observable<GitHubInstallResultResponse> {
+    return this.http.post<GitHubInstallResultResponse>(
+      `/api/organizations/${orgId}/code/github/installations`,
+      request,
+    );
+  }
+
+  disconnectGitHub(orgId: string, installationId: number): Observable<void> {
+    return this.http.delete<void>(
+      `/api/organizations/${orgId}/code/github/installations/${installationId}`,
+    );
   }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   additionsCount,
   aggregateProfile,
+  filterGitHubRepositories,
   anyIndexing,
   filterModules,
   indexingProgress,
@@ -14,6 +15,7 @@ import {
   parseRepositoryInput,
   pluralKey,
   profileAdditions,
+  safeReturnPath,
   shortSha,
   statusKey,
 } from './codebase';
@@ -41,7 +43,8 @@ function repo(overrides: Partial<CodeRepositoryResponse> = {}): CodeRepositoryRe
     branch: 'main',
     htmlUrl: 'https://github.com/acme/reservas',
     private: false,
-    hasToken: false,
+    source: 'PUBLIC',
+    autoUpdate: false,
     status: 'READY',
     error: null,
     commitSha: '0123456789abcdef',
@@ -311,5 +314,41 @@ describe('labelReferences', () => {
     ]).map((r) => r.label);
 
     expect(labels).toEqual(['Reservas · acme/reservas', 'Pagos', 'reservas · src/reservations']);
+  });
+});
+
+describe('GitHub picker helpers', () => {
+  const repo = (fullName: string, description: string | null = null) => ({
+    installationId: 1,
+    owner: fullName.split('/')[0],
+    name: fullName.split('/')[1],
+    fullName,
+    defaultBranch: 'main',
+    htmlUrl: `https://github.com/${fullName}`,
+    private: false,
+    description,
+    pushedAt: null,
+    connected: false,
+  });
+
+  it('filters by every word of the query over name and description, ignoring accents', () => {
+    const list = [repo('acme/facturacion', 'Cobros y facturación'), repo('acme/web', null)];
+    expect(filterGitHubRepositories(list, '  ').map((r) => r.fullName)).toEqual([
+      'acme/facturacion',
+      'acme/web',
+    ]);
+    expect(filterGitHubRepositories(list, 'FACTURACION cobros').map((r) => r.fullName)).toEqual([
+      'acme/facturacion',
+    ]);
+    expect(filterGitHubRepositories(list, 'acme mobile')).toEqual([]);
+  });
+
+  it('accepts only in-app return paths', () => {
+    expect(safeReturnPath('/projects/p1/code?x=1')).toBe('/projects/p1/code?x=1');
+    expect(safeReturnPath('//evil.example')).toBeNull();
+    expect(safeReturnPath('/\\evil.example')).toBeNull();
+    expect(safeReturnPath('https://evil.example')).toBeNull();
+    expect(safeReturnPath('/javascript:alert(1)')).toBeNull();
+    expect(safeReturnPath(null)).toBeNull();
   });
 });

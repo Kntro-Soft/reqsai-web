@@ -42,7 +42,8 @@ function repo(overrides: Partial<CodeRepositoryResponse> = {}): CodeRepositoryRe
     branch: 'main',
     htmlUrl: 'https://github.com/acme/reservas',
     private: false,
-    hasToken: false,
+    source: 'PUBLIC',
+    autoUpdate: false,
     status: 'READY',
     error: null,
     commitSha: '0123456789abcdef',
@@ -114,6 +115,8 @@ describe('ProjectCode', () => {
     reindexRepository: ReturnType<typeof vi.fn>;
     removeRepository: ReturnType<typeof vi.fn>;
     listModules: ReturnType<typeof vi.fn>;
+    projectGitHub: ReturnType<typeof vi.fn>;
+    gitHubRepositories: ReturnType<typeof vi.fn>;
   };
   let workspaceApi: {
     getProject: ReturnType<typeof vi.fn>;
@@ -142,6 +145,8 @@ describe('ProjectCode', () => {
       reindexRepository: vi.fn(() => of(repo({ status: 'INDEXING' }))),
       removeRepository: vi.fn(() => of(undefined)),
       listModules: vi.fn(() => of(MODULES)),
+      projectGitHub: vi.fn(() => of({ available: false, installations: [] })),
+      gitHubRepositories: vi.fn(() => of([])),
     };
     workspaceApi = {
       getProject: vi.fn(() => of(PROJECT)),
@@ -194,9 +199,9 @@ describe('ProjectCode', () => {
     expect(api.listRepositories).toHaveBeenCalledWith('p1');
     expect(byTestId(el, 'code-empty')).not.toBeNull();
     expect(byTestId(el, 'code-connect-form')).not.toBeNull();
-    const token = byTestId(el, 'code-token-input') as HTMLInputElement;
-    expect(token.type).toBe('password');
-    expect(token.autocomplete).toBe('off');
+    // No token is ever asked for: private repositories come through the GitHub App.
+    expect(byTestId(el, 'code-token-input')).toBeNull();
+    expect(api.projectGitHub).toHaveBeenCalledWith('p1');
   });
 
   it('refuses a reference that is not a GitHub repository before calling the API', () => {
@@ -216,14 +221,12 @@ describe('ProjectCode', () => {
     const { fixture, el } = render();
 
     type(fixture, 'code-repo-input', 'https://github.com/acme/reservas/tree/develop');
-    type(fixture, 'code-token-input', '  ghp_secret  ');
     byTestId(el, 'code-connect-submit')!.click();
     fixture.detectChanges();
 
     expect(api.connectRepository).toHaveBeenCalledWith('p1', {
       repository: 'acme/reservas',
       branch: 'develop',
-      accessToken: 'ghp_secret',
     });
     expect(toast.success).toHaveBeenCalled();
     let card = byTestId(el, 'code-repo')!;
@@ -285,6 +288,17 @@ describe('ProjectCode', () => {
 
     expect(byTestId(el, 'code-connect-error')).not.toBeNull();
     expect(byTestId(el, 'code-connect-form')).not.toBeNull();
+  });
+
+  it('says when a repository updates itself on every push', () => {
+    const { el } = render([
+      repo({ source: 'GITHUB_APP', autoUpdate: true, private: true }),
+      repo({ id: 'repo-2', fullName: 'acme/web', name: 'web' }),
+    ]);
+
+    const cards = allByTestId(el, 'code-repo');
+    expect(byTestId(cards[0], 'code-repo-auto-update')).not.toBeNull();
+    expect(byTestId(cards[1], 'code-repo-auto-update')).toBeNull();
   });
 
   it('marks a failed indexing and retries it', () => {
