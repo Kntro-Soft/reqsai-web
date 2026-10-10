@@ -9,7 +9,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_Feature module implementation (iam, billing, workspace, discovery) in progress._
+## [1.3.0] - 2026-10-10
 
 ### Changed (Release pipeline — `feature/79-release-pipeline`, #79)
 
