@@ -500,6 +500,7 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `MEMBER_UPDATE_ROLE`, `MEMBER_REMOVE`, `ROLE_CREATE`/`ROLE_UPDATE`/`ROLE_DELETE`) with owner/admin
   bypass, and the members list shows each member's role inline (name embedded by the API) without needing
   `ROLE_READ`.
+- A weekly `branch-cleanup.yml` (Mondays 04:00 UTC, or by hand with a dry run) deletes branches merged 7+ days ago and unmerged branches with no commits for 30+ days; it never touches `main`, `develop`, `release/*`, `hotfix/*`, branches with an open pull request or pull requests labelled `do-not-delete`, and `BRANCH_CLEANUP_ENABLED=false` turns it off.
 
 ### Changed
 
