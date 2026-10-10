@@ -2,6 +2,7 @@ name: Feature request
 description: Propose a new feature or UI capability
 title: "feat: <short description>"
 labels: ["enhancement"]
+projects: ["Kntro-Soft/3"]
 body:
   - type: textarea
     id: problem
