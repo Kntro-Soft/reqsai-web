@@ -16,7 +16,7 @@
         "@jsverse/transloco-locale": "^8.4.0",
         "@ng-icons/core": "^36.1.0",
         "@ng-icons/lucide": "^36.1.0",
-        "@spartan-ng/brain": "^1.6.0",
+        "@spartan-ng/brain": "^1.6.1",
         "@stomp/rx-stomp": "^2.4.0",
         "rxjs": "~7.8.0",
         "tailwind-merge": "^3.7.0",
@@ -31,7 +31,7 @@
         "@commitlint/config-conventional": "^21.2.3",
         "@eslint/js": "^10.0.1",
         "@playwright/test": "1.63.0",
-        "@spartan-ng/cli": "^1.6.0",
+        "@spartan-ng/cli": "^1.6.1",
         "@tailwindcss/postcss": "^4.3.3",
         "@types/node": "^26.1.1",
         "@vitest/browser-playwright": "^5.0.3",
@@ -39,7 +39,7 @@
         "eslint": "^10.12.0",
         "eslint-config-prettier": "^10.1.8",
         "jsdom": "^28.0.0",
-        "knip": "^6.39.0",
+        "knip": "^6.40.0",
         "lefthook": "^2.1.17",
         "lint-staged": "^17.6.0",
         "playwright-ng-schematics": "^22.1.2",
@@ -854,9 +854,9 @@
 
     "@sinclair/typebox": ["@sinclair/typebox@0.34.49", "", {}, "sha512-brySQQs7Jtn0joV8Xh9ZV/hZb9Ozb0pmazDIASBkYKCjXrXU3mpcFahmK/z4YDhGkQvP9mWJbVyahdtU5wQA+A=="],
 
-    "@spartan-ng/brain": ["@spartan-ng/brain@1.6.0", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/cdk": ">=21.0.0 <23.0.0", "@angular/common": ">=21.0.0 <23.0.0", "@angular/core": ">=21.0.0 <23.0.0", "@angular/forms": ">=21.0.0 <23.0.0", "clsx": ">=2.0.0", "luxon": ">=3.0.0", "rxjs": ">=6.6.0", "tailwindcss": ">=4.0.0", "tw-animate-css": ">=1.0.0" }, "optionalPeers": ["luxon"] }, "sha512-DDxgPjj+13T35k7II2taS4yYTLjTPPLPVvurWPoxZ0+Bcokyl57FFFAUV1Vew+S4UXfTgrzN6G482JKI7K0rVg=="],
+    "@spartan-ng/brain": ["@spartan-ng/brain@1.6.1", "", { "dependencies": { "tslib": "^2.3.0" }, "peerDependencies": { "@angular/cdk": ">=21.0.0 <23.0.0", "@angular/common": ">=21.0.0 <23.0.0", "@angular/core": ">=21.0.0 <23.0.0", "@angular/forms": ">=21.0.0 <23.0.0", "clsx": ">=2.0.0", "luxon": ">=3.0.0", "rxjs": ">=6.6.0", "tailwindcss": ">=4.0.0", "tw-animate-css": ">=1.0.0" }, "optionalPeers": ["luxon"] }, "sha512-LYUaJ23DWC2ejLvKfSTWQKoqyL3Jv9pHVQp2JmvrduKFSXGZ5uo2EKBhpd8cnRM1C3tU7rN6Nm12xOZM6nPJIQ=="],
 
-    "@spartan-ng/cli": ["@spartan-ng/cli@1.6.0", "", { "dependencies": { "@angular/core": ">=21.0.0", "@nx/angular": ">=21.0.0", "@nx/devkit": ">=21.0.0", "@nx/js": ">=21.0.0", "@nx/workspace": ">=21.0.0", "@phenomnomnominal/tsquery": "^6.1.3", "@schematics/angular": "21.2.14", "enquirer": "2.3.6", "jsonc-eslint-parser": "^2.1.0", "node-html-parser": "^7.0.1", "nx": ">=21.0.0", "picocolors": "^1.1.1", "postcss": "^8.4.47", "postcss-selector-parser": "^7.1.1", "semver": "7.5.4", "tailwind-merge": "^3.3.1", "ts-morph": "25.0.1", "typescript": ">=5.0.0 <7.0.0", "zod": "^3.25.76" }, "peerDependencies": { "tslib": "^2.3.0" } }, "sha512-pt0wmq5x43+RNsVZNC5BiJMvDxSxhGx1rif1cQlhgF6J/Smqtsct12mEJ8BvoYOVXdoNt+txUkFW5DZ7lvcWLA=="],
+    "@spartan-ng/cli": ["@spartan-ng/cli@1.6.1", "", { "dependencies": { "@angular/core": ">=21.0.0", "@nx/angular": ">=21.0.0", "@nx/devkit": ">=21.0.0", "@nx/js": ">=21.0.0", "@nx/workspace": ">=21.0.0", "@phenomnomnominal/tsquery": "^6.1.3", "@schematics/angular": "21.2.14", "enquirer": "2.3.6", "jsonc-eslint-parser": "^2.1.0", "node-html-parser": "^7.0.1", "nx": ">=21.0.0", "picocolors": "^1.1.1", "postcss": "^8.4.47", "postcss-selector-parser": "^7.1.1", "semver": "7.5.4", "tailwind-merge": "^3.3.1", "ts-morph": "25.0.1", "typescript": ">=5.0.0 <7.0.0", "zod": "^3.25.76" }, "peerDependencies": { "tslib": "^2.3.0" } }, "sha512-DjBNLOHOqboJU+XT6/uRQvFM+h9rSo6BRJwbgryWPnAzP8E0qp0e4sKx9HtqCWflROlZ7aJyEIRr8VTbYcyk6g=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
@@ -1556,7 +1556,7 @@
 
     "kind-of": ["kind-of@6.0.3", "", {}, "sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw=="],
 
-    "knip": ["knip@6.39.0", "", { "dependencies": { "fdir": "^6.5.0", "formatly": "^0.7.0", "get-tsconfig": "4.14.3", "jiti": "^2.7.0", "oxc-parser": "^0.150.0", "oxc-resolver": "11.24.2", "picomatch": "^4.0.7", "smol-toml": "^1.8.0", "strip-json-comments": "5.0.3", "tinyglobby": "^0.2.17", "unbash": "^4.0.11", "yaml": "^2.9.1", "zod": "^4.4.3" }, "bin": { "knip": "bin/knip.js", "knip-bun": "bin/knip-bun.js" } }, "sha512-Y7g6Ve1ATMox1u1v+gx3z9LTlvzVLTJISm/LVn9TgBU4qc7OoC63AWGO8qCFPVDDdaqlYdXkDDvvO1METBfTRw=="],
+    "knip": ["knip@6.40.0", "", { "dependencies": { "fdir": "^6.5.0", "formatly": "^0.7.0", "get-tsconfig": "4.14.3", "jiti": "^2.7.0", "oxc-parser": "^0.150.0", "oxc-resolver": "11.24.2", "picomatch": "^4.0.7", "smol-toml": "^1.8.0", "strip-json-comments": "5.0.3", "tinyglobby": "^0.2.17", "unbash": "^4.0.11", "yaml": "^2.9.1", "zod": "^4.4.3" }, "bin": { "knip": "bin/knip.js", "knip-bun": "bin/knip-bun.js" } }, "sha512-5Lp/ANJu3AkW5f+J+2QG14z7xKZGi/ybb5MU1EWjeGdt6MpuIaLpLFiyBi0ZKryTiuTHiJqo/WKJRaWYimvavw=="],
 
     "lefthook": ["lefthook@2.1.17", "", { "optionalDependencies": { "lefthook-darwin-arm64": "2.1.17", "lefthook-darwin-x64": "2.1.17", "lefthook-freebsd-arm64": "2.1.17", "lefthook-freebsd-x64": "2.1.17", "lefthook-linux-arm64": "2.1.17", "lefthook-linux-x64": "2.1.17", "lefthook-openbsd-arm64": "2.1.17", "lefthook-openbsd-x64": "2.1.17", "lefthook-windows-arm64": "2.1.17", "lefthook-windows-x64": "2.1.17" }, "bin": { "lefthook": "bin/index.js" } }, "sha512-UWpD0VvZNIA2eA/+x4DvFlIT7uxH7aPrPrShE6nsIrX5qHJXxgDkoslAzF73X/YL2o0/9zDw3aOfpr98XchKFw=="],
 
