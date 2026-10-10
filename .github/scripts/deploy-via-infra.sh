@@ -6,7 +6,15 @@
 # The calling job runs in this repository's produccion environment; upstream_sha is its commit, so reqsai-infra
 # sees that deployment in_progress (already approved) and does not ask for a second approval.
 #
-# Usage: GH_TOKEN=<INFRA_DEPLOY_TOKEN> deploy-via-infra.sh <api|web> <sha256:digest> <upstream-sha> <request-id>
+# Usage: deploy-via-infra.sh <api|web> <sha256:digest> <upstream-sha> <request-id>
+#
+# Environment:
+#   DISPATCH_TOKEN  installation token of the GitHub App reqsai-release-bot on Kntro-Soft/reqsai-infra with
+#                   Actions: write, minted for this job (actions/create-github-app-token); only used to dispatch
+#                   deploy-mvp.yml                                                                      (required)
+#   GH_TOKEN        the workflow's GITHUB_TOKEN: finds and watches the run of reqsai-infra (a public repository).
+#                   An App token expires after one hour and the deploy may take longer                  (required)
+#   WAIT_MINUTES    how long to wait for the run                                                  (default: 80)
 set -euo pipefail
 
 app="${1:?usage: deploy-via-infra.sh <api|web> <digest> <upstream-sha> <request-id>}"
@@ -31,13 +39,14 @@ if [[ ! "$upstream" =~ ^[0-9a-f]{40}$ ]]; then
   echo "::error::Expected a full commit SHA, got: $upstream" >&2
   exit 1
 fi
-if [[ -z "${GH_TOKEN:-}" ]]; then
-  echo "::error title=INFRA_DEPLOY_TOKEN is not set::Add a fine-grained PAT with Actions read and write on $repo (see CONTRIBUTING.md)." >&2
+if [[ -z "${DISPATCH_TOKEN:-}" ]]; then
+  echo "::error title=No release bot token::DISPATCH_TOKEN (a reqsai-release-bot token with Actions: write on $repo) is not set; mint it with actions/create-github-app-token." >&2
   exit 1
 fi
+: "${GH_TOKEN:?GH_TOKEN (the workflow token, to read the runs of $repo) is required}"
 
 since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-response=$(gh api --method POST "repos/$repo/actions/workflows/$workflow/dispatches" \
+response=$(GH_TOKEN="$DISPATCH_TOKEN" gh api --method POST "repos/$repo/actions/workflows/$workflow/dispatches" \
   -f ref=main \
   -f "inputs[image_source]=registry" \
   -f "inputs[${app}_ref]=$digest" \
