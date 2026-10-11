@@ -117,7 +117,7 @@ We follow **Gitflow**, and every branch starts from an issue on the
 
 `main` and `develop` are protected by rulesets: pull request with 1 approval (stale approvals are dismissed),
 the CI checks must pass, no force-push or deletion, merge commits only. CI also runs on pushes to `release/**`
-and `hotfix/**`, because the release pull request is opened by a workflow and starts no `pull_request` run.
+and `hotfix/**`; the release pull request, opened by the GitHub App `reqsai-release-bot`, gets its own `pull_request` run.
 Organization admins can bypass the rules only through a pull request.
 
 ## Commit Convention
@@ -236,7 +236,7 @@ points to the `main` commit that reached production, and the `produccion` enviro
 | `image` | Builds `linux/arm64` **once** and pushes `ghcr.io/kntro-soft/reqsai-web:X.Y.Z-rc.N` and `:sha-<commit>` (labels: revision, version `X.Y.Z`, build number). |
 | `candidate` | Creates the pre-release `vX.Y.Z-rc.N` on the commit with `candidate.json` (digest, tree hash, build). |
 | `verify` | Automatic, no environment, not switchable: runs the nginx image with 64 MB like the MVP host and checks `/health`, the app shell (no-cache, security headers), the SPA fallback, every hashed bundle and both translation files (`.github/scripts/verify-candidate.sh`). There is no second EC2 for a staging environment. |
-| `ready` | Marks the candidate `verified` and opens or updates the PR `release: X.Y.Z` (`release/X.Y.Z → main`) with the candidate, digest and verification run. |
+| `ready` | Marks the candidate `verified` and opens or updates the PR `release: X.Y.Z` (`release/X.Y.Z → main`) as `reqsai-release-bot`, so its CI runs, with the candidate, digest and verification run. |
 
 3. A bug found on the release branch is fixed there (`bugfix/<issue>-<slug>` from the release branch, or a direct
    commit): the next push builds `rc.N+1` and updates the PR. The version stays `X.Y.Z`.
@@ -245,8 +245,8 @@ points to the `main` commit that reached production, and the `produccion` enviro
 | Job | What it does |
 |-----|--------------|
 | `prepare` | Finds the newest verified candidate whose tree hash equals the `main` commit's tree. If none matches, it fails: *main differs from the tested candidate; push the change to the release branch to build a new rc*. |
-| `deploy` | Environment **`produccion`: waits for approval** by `jhosepmyr`. Asks `reqsai-infra` (`deploy-mvp.yml`, `image_source=registry`) to ship that digest and waits; `reqsai-infra` dumps the database before changing the stack and does not ask for a second approval. Switch `ENABLE_REQSAI_WEB_DEPLOY`. |
-| `release` | Only if `deploy` succeeded: tags the digest `X.Y.Z` and `latest` in GHCR (no rebuild), creates `vX.Y.Z` + GitHub Release on the `main` commit (notes = CHANGELOG section + candidate), and opens `chore: merge release X.Y.Z back into develop`. |
+| `deploy` | Environment **`produccion`: waits for approval** by `jhosepmyr`. Asks `reqsai-infra` (`deploy-mvp.yml`, `image_source=registry`) to ship that digest, with a `reqsai-release-bot` token limited to `reqsai-infra` (*Actions: write*), and watches the run with the workflow token; `reqsai-infra` dumps the database before changing the stack and does not ask for a second approval. Switch `ENABLE_REQSAI_WEB_DEPLOY`. |
+| `release` | Only if `deploy` succeeded: tags the digest `X.Y.Z` and `latest` in GHCR (no rebuild), creates `vX.Y.Z` + GitHub Release on the `main` commit (notes = CHANGELOG section + candidate), and opens `chore: merge release X.Y.Z back into develop` as `reqsai-release-bot`, with auto-merge (merge commit) when the repository allows it. |
 
 If `deploy` fails nothing is tagged; *Re-run failed jobs* reuses the same candidate. Move the issues to Done
 when `vX.Y.Z` exists.
@@ -277,11 +277,15 @@ turns a channel on, and the run summary says which variable stopped a job. Verif
 ### One-time set-up
 
 - Environment `produccion`: required reviewer `jhosepmyr`, deployment branches **`main` only**.
-- `INFRA_DEPLOY_TOKEN`: fine-grained PAT with *Actions: read and write* on `Kntro-Soft/reqsai-infra` only. Prefer
-  storing it as a secret of the `produccion` environment, so only an approved job can use it.
-- *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests* (organization and
-  repository), so the workflows can open the release and back-merge PRs. While it is off, the run prints the
-  compare link and the title to open them by hand.
+- GitHub App **`reqsai-release-bot`** (installed on every Kntro-Soft repository with *Contents*, *Pull requests*,
+  *Actions* and *Workflows*: read and write), organization variable `RELEASE_APP_ID` (its App ID) and organization
+  secret `RELEASE_APP_PRIVATE_KEY`. Each job that needs it mints a short-lived token (`actions/create-github-app-token`)
+  with only the permissions of that job: the release and back-merge PRs (opened with `GITHUB_TOKEN` they would start
+  no `pull_request` workflow, so their CI would never report) and the dispatch of `reqsai-infra`'s `deploy-mvp.yml`.
+  Without them the job fails with *Release bot not configured*; nothing falls back to `GITHUB_TOKEN` or a personal
+  token.
+- *Settings → General → Allow auto-merge* (optional): the back-merge PR then merges itself, with a merge commit, once
+  approved and green; while it is off the run warns and the PR waits for a person.
 - GHCR: the first `release.yml` run creates the package `reqsai-web` linked to this repository. Grant
   `reqsai-infra` **Read** in *Package settings → Manage Actions access* (or make the package public).
 - The `main` ruleset must not require a `produccion` deployment of the PR head any more (production runs after

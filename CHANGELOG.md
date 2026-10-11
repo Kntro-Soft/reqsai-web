@@ -9,7 +9,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-_Feature module implementation (iam, billing, workspace, discovery) in progress._
+### Changed
+- The release pull request and the back-merge pull request are opened by the GitHub App `reqsai-release-bot` (a short-lived token minted per job from `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`), so their CI runs: opened with `GITHUB_TOKEN` they started no `pull_request` workflow. The back-merge turns on auto-merge (merge commit) when the repository allows it; without the App configuration the job fails instead of falling back to `GITHUB_TOKEN`.
+- `produccion.yml` and `rollback.yml` dispatch `reqsai-infra`'s `deploy-mvp.yml` with a `reqsai-release-bot` token limited to `reqsai-infra` (Actions: write) and watch the run with the workflow token, instead of the personal token `INFRA_DEPLOY_TOKEN`, which is no longer used.
+
+### Fixed
+- Release notes longer than GitHub's 125000-character limit are cut at a line break with a link to the full CHANGELOG, instead of failing the tag after the deploy (1.2.0 of reqsai-api).
+
+## [1.3.0] - 2026-10-10
 
 ### Added (Code-aware requirements copilot — `feature/code-aware-copilot`)
 
@@ -577,6 +584,7 @@ _Feature module implementation (iam, billing, workspace, discovery) in progress.
   `MEMBER_UPDATE_ROLE`, `MEMBER_REMOVE`, `ROLE_CREATE`/`ROLE_UPDATE`/`ROLE_DELETE`) with owner/admin
   bypass, and the members list shows each member's role inline (name embedded by the API) without needing
   `ROLE_READ`.
+- A weekly `branch-cleanup.yml` (Mondays 04:00 UTC, or by hand with a dry run) deletes branches merged 7+ days ago and unmerged branches with no commits for 30+ days; it never touches `main`, `develop`, `release/*`, `hotfix/*`, branches with an open pull request or pull requests labelled `do-not-delete`, and `BRANCH_CLEANUP_ENABLED=false` turns it off.
 
 ### Changed
 
