@@ -23,18 +23,29 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
+import { ProjectGitHub } from '../../../discovery/components/project-github/project-github';
 
 /**
- * Project Integrations mapping page — maps this project to a Jira project + issue
+ * Project Integrations page. Jira: maps this project to a Jira project + issue
  * type so stories can be pushed as issues. Picks the org Jira connection, loads its
  * Jira projects into a select, then the chosen project's issue types into a second
  * select, and saves the mapping (PUT target). Shows the current target when set and
- * allows clearing it (DELETE). Mirrors the settings-card layout.
+ * allows clearing it (DELETE). GitHub: the organization's connection and the repositories this
+ * project reads (managed on the Code page). Mirrors the settings-card layout.
  */
 @Component({
   selector: 'app-project-integrations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Select, Modal, HlmButton, HlmSkeleton, HlmSpinner, TranslocoPipe],
+  imports: [
+    RouterLink,
+    Select,
+    Modal,
+    HlmButton,
+    HlmSkeleton,
+    HlmSpinner,
+    TranslocoPipe,
+    ProjectGitHub,
+  ],
   template: `
     <div class="flex flex-col gap-6">
       <div>
@@ -66,6 +77,7 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
           class="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border p-6"
           data-testid="project-integrations-no-connection"
         >
+          <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
           <p class="text-sm text-muted-foreground">
             {{ 'integrations.project.noConnection' | transloco }}
           </p>
@@ -212,6 +224,9 @@ import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
           </button>
         </app-modal>
       }
+
+      <!-- GitHub: independent of Jira, so it shows whatever the Jira state is. -->
+      <app-project-github [projectId]="projectId()" />
     </div>
   `,
 })

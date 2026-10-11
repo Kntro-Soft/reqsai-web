@@ -1639,7 +1639,7 @@
       }
     },
     "project": {
-      "subtitle": "Asocia este proyecto a un proyecto de Jira para enviar historias como incidencias.",
+      "subtitle": "Asocia este proyecto a Jira para enviar historias como incidencias, y revisa el código de GitHub que lee el copiloto.",
       "mappingDescription": "Elige el proyecto de Jira y el tipo de incidencia con que se crean las nuevas historias.",
       "connection": "Conexión",
       "noConnection": "Todavía no existe una conexión con Jira para esta organización.",
@@ -1652,7 +1652,18 @@
       "clear": "Quitar mapeo",
       "cleared": "Mapeo de Jira eliminado.",
       "clearTitle": "¿Quitar el mapeo de Jira?",
-      "clearBody": "Esto elimina el mapeo de Jira del proyecto. No podrás enviar historias hasta volver a asociarlo."
+      "clearBody": "Esto elimina el mapeo de Jira del proyecto. No podrás enviar historias hasta volver a asociarlo.",
+      "github": {
+        "title": "GitHub",
+        "description": "Los repositorios de este proyecto que el copiloto lee para comparar lo que pide el cliente con lo que ya está construido.",
+        "unavailable": "La conexión con GitHub no está configurada en este servidor. En Código puedes conectar repositorios públicos por su nombre.",
+        "notConnected": "La organización todavía no conectó GitHub.",
+        "connectedTo": "GitHub conectado: {{accounts}}",
+        "noRepos": "Este proyecto todavía no lee ningún repositorio.",
+        "manage": "Gestionar en Código",
+        "orgSettings": "Cuentas de GitHub de la organización",
+        "loadError": "No pudimos cargar la conexión con GitHub de este proyecto."
+      }
     },
     "push": {
       "pushStory": "Enviar a Jira",

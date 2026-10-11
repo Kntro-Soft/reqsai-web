@@ -1639,7 +1639,7 @@
       }
     },
     "project": {
-      "subtitle": "Map this project to a Jira project so stories can be pushed as issues.",
+      "subtitle": "Map this project to Jira to push stories as issues, and review the GitHub code the copilot reads.",
       "mappingDescription": "Choose the Jira project and issue type new stories are created as.",
       "connection": "Connection",
       "noConnection": "No Jira connection exists for this organization yet.",
@@ -1652,7 +1652,18 @@
       "clear": "Clear mapping",
       "cleared": "Jira mapping cleared.",
       "clearTitle": "Clear Jira mapping?",
-      "clearBody": "This removes the project's Jira mapping. You won't be able to push stories until you map it again."
+      "clearBody": "This removes the project's Jira mapping. You won't be able to push stories until you map it again.",
+      "github": {
+        "title": "GitHub",
+        "description": "This project's repositories the copilot reads to compare what the client asks for with what is already built.",
+        "unavailable": "Connecting GitHub is not configured on this server. On the Code page you can connect public repositories by name.",
+        "notConnected": "The organization has not connected GitHub yet.",
+        "connectedTo": "GitHub connected: {{accounts}}",
+        "noRepos": "This project does not read any repository yet.",
+        "manage": "Manage on the Code page",
+        "orgSettings": "Organization's GitHub accounts",
+        "loadError": "We couldn't load this project's GitHub connection."
+      }
     },
     "push": {
       "pushStory": "Push to Jira",
