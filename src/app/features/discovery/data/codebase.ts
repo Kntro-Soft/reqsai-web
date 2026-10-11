@@ -336,13 +336,3 @@ export function filterGitHubRepositories(
 
 /** Session key of the page to come back to after installing the GitHub App. */
 export const GITHUB_RETURN_KEY = 'reqsai.github.return';
-
-/**
- * An in-app path to return to: it must start with a single `/` (no `//host`, no backslashes and
- * no scheme), so a value planted in storage can never send the user to another site.
- */
-export function safeReturnPath(value: string | null | undefined): string | null {
-  const path = value?.trim();
-  if (!path || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null;
-  return /^\/[^:]*$/.test(path.split('?')[0]) ? path : null;
-}

@@ -22,6 +22,7 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { rememberReturnPath } from '../../../../core/navigation/return-path';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { messageForError } from '../../../../core/errors/error-message';
 import { GitHubMark } from '../../../../shared/components/github-mark/github-mark';
@@ -283,11 +284,7 @@ export class ProjectGitHub implements OnInit {
     this.installError.set(null);
     this.api.startGitHubInstall(orgId).subscribe({
       next: ({ url }) => {
-        try {
-          sessionStorage.setItem(GITHUB_RETURN_KEY, this.router.url);
-        } catch {
-          // Without storage the callback returns to Settings → Integrations instead.
-        }
+        rememberReturnPath(GITHUB_RETURN_KEY, this.router.url);
         this.redirect(url);
       },
       error: (err: unknown) => {

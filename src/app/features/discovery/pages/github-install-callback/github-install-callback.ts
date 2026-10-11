@@ -9,7 +9,8 @@ import { messageForError } from '../../../../core/errors/error-message';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 import { CodebaseApiService } from '../../data/codebase-api.service';
-import { GITHUB_RETURN_KEY, safeReturnPath } from '../../data/codebase';
+import { takeReturnPath } from '../../../../core/navigation/return-path';
+import { GITHUB_RETURN_KEY } from '../../data/codebase';
 
 /** Where the user lands when no page asked to be returned to. */
 const INTEGRATIONS_PATH = '/settings/integrations';
@@ -108,7 +109,7 @@ export class GitHubInstallCallback {
 
   protected readonly view = signal<View>('linking');
   protected readonly errorMessage = signal<string | null>(null);
-  private readonly returnTo = takeReturnPath();
+  private readonly returnTo = takeReturnPath(GITHUB_RETURN_KEY, INTEGRATIONS_PATH);
 
   constructor() {
     const params = parseGitHubInstallParams(this.route.snapshot.queryParamMap);
@@ -159,16 +160,5 @@ export class GitHubInstallCallback {
   private fail(message: string): void {
     this.errorMessage.set(message);
     this.view.set('error');
-  }
-}
-
-/** The page that started the install, once (it is cleared), or Settings → Integrations. */
-function takeReturnPath(): string {
-  try {
-    const saved = safeReturnPath(sessionStorage.getItem(GITHUB_RETURN_KEY));
-    sessionStorage.removeItem(GITHUB_RETURN_KEY);
-    return saved ?? INTEGRATIONS_PATH;
-  } catch {
-    return INTEGRATIONS_PATH;
   }
 }

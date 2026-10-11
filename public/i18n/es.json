@@ -1642,7 +1642,7 @@
       "subtitle": "Asocia este proyecto a Jira para enviar historias como incidencias, y revisa el código de GitHub que lee el copiloto.",
       "mappingDescription": "Elige el proyecto de Jira y el tipo de incidencia con que se crean las nuevas historias.",
       "connection": "Conexión",
-      "noConnection": "Todavía no existe una conexión con Jira para esta organización.",
+      "noConnection": "La organización todavía no conectó Jira. La conexión es de toda la organización: después cada proyecto elige su proyecto de Jira.",
       "goToOrg": "Conectar Jira en la configuración de la organización",
       "noProjects": "No se encontraron proyectos de Jira",
       "noIssueTypes": "No se encontraron tipos de incidencia",
@@ -1657,13 +1657,15 @@
         "title": "GitHub",
         "description": "Los repositorios de este proyecto que el copiloto lee para comparar lo que pide el cliente con lo que ya está construido.",
         "unavailable": "La conexión con GitHub no está configurada en este servidor. En Código puedes conectar repositorios públicos por su nombre.",
-        "notConnected": "La organización todavía no conectó GitHub.",
+        "notConnected": "La organización todavía no conectó GitHub. La conexión es de toda la organización: después cada proyecto elige sus repositorios.",
         "connectedTo": "GitHub conectado: {{accounts}}",
         "noRepos": "Este proyecto todavía no lee ningún repositorio.",
         "manage": "Gestionar en Código",
         "orgSettings": "Cuentas de GitHub de la organización",
         "loadError": "No pudimos cargar la conexión con GitHub de este proyecto."
-      }
+      },
+      "askAdmin": "Pide a un administrador de la organización que conecte Jira.",
+      "jiraToken": "Conectar con un token de API"
     },
     "push": {
       "pushStory": "Enviar a Jira",

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { takeReturnPath } from '../../../../core/navigation/return-path';
+import { JIRA_RETURN_KEY } from '../../data/integrations.models';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import {
@@ -13,7 +15,7 @@ import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmSpinner } from '../../../../shared/ui';
 
-/** Where the callback returns the user once the exchange completes (or aborts). */
+/** Where the callback returns the user when no page asked to be returned to. */
 const INTEGRATIONS_PATH = '/settings/integrations';
 
 /** The parts of the Atlassian redirect we read off the URL. */
@@ -46,7 +48,8 @@ type View = 'exchanging' | 'sitePicker' | 'error';
  * before this component runs.
  *
  * Flow: read `?code`/`?state`/`?error`. On `error` → toast + back to integrations.
- * Otherwise POST the code/state; a saved connection → success toast + back, while a
+ * Otherwise POST the code/state; a saved connection → success toast + back to the page
+ * that started the consent (a project's integrations, say), while a
  * `{ sites }` result renders a site picker and re-POSTs with the chosen `cloudId`.
  * A 401 during the exchange (lost session) routes to sign-in.
  *
@@ -134,6 +137,8 @@ export class JiraOAuthCallback {
   protected readonly exchanging = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly sites = signal<JiraSiteResponse[]>([]);
+  /** The page that started the consent, or Settings → Integrations (read once). */
+  private readonly returnTo = takeReturnPath(JIRA_RETURN_KEY, INTEGRATIONS_PATH);
 
   /** The verified `state` from the redirect, replayed on a site-picker re-POST. */
   private state = '';
@@ -146,7 +151,7 @@ export class JiraOAuthCallback {
     // Atlassian denied consent (or another provider error) — nothing to exchange.
     if (params.error) {
       this.toast.error(this.transloco.translate('integrations.jira.oauth.denied'));
-      void this.router.navigateByUrl(INTEGRATIONS_PATH);
+      void this.router.navigateByUrl(this.returnTo);
       return;
     }
 
@@ -196,7 +201,7 @@ export class JiraOAuthCallback {
       return;
     }
     this.toast.success(this.transloco.translate('integrations.jira.oauth.connected'));
-    void this.router.navigateByUrl(INTEGRATIONS_PATH);
+    void this.router.navigateByUrl(this.returnTo);
   }
 
   /** Re-POST the exchange bound to a chosen Atlassian site. */
@@ -207,7 +212,7 @@ export class JiraOAuthCallback {
   }
 
   protected back(): void {
-    void this.router.navigateByUrl(INTEGRATIONS_PATH);
+    void this.router.navigateByUrl(this.returnTo);
   }
 
   /** Show the error view with a translated message. */

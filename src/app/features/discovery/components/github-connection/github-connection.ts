@@ -19,6 +19,7 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { messageForError } from '../../../../core/errors/error-message';
+import { rememberReturnPath } from '../../../../core/navigation/return-path';
 import { GitHubMark } from '../../../../shared/components/github-mark/github-mark';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
@@ -295,11 +296,7 @@ export class GitHubConnection implements OnInit {
     this.error.set(null);
     this.api.startGitHubInstall(this.orgId()).subscribe({
       next: ({ url }) => {
-        try {
-          sessionStorage.removeItem(GITHUB_RETURN_KEY);
-        } catch {
-          // The callback falls back to Integrations either way.
-        }
+        rememberReturnPath(GITHUB_RETURN_KEY, '/settings/integrations');
         this.redirect(url);
       },
       error: (err: unknown) => {

@@ -15,7 +15,6 @@ import {
   parseRepositoryInput,
   pluralKey,
   profileAdditions,
-  safeReturnPath,
   shortSha,
   statusKey,
 } from './codebase';
@@ -341,14 +340,5 @@ describe('GitHub picker helpers', () => {
       'acme/facturacion',
     ]);
     expect(filterGitHubRepositories(list, 'acme mobile')).toEqual([]);
-  });
-
-  it('accepts only in-app return paths', () => {
-    expect(safeReturnPath('/projects/p1/code?x=1')).toBe('/projects/p1/code?x=1');
-    expect(safeReturnPath('//evil.example')).toBeNull();
-    expect(safeReturnPath('/\\evil.example')).toBeNull();
-    expect(safeReturnPath('https://evil.example')).toBeNull();
-    expect(safeReturnPath('/javascript:alert(1)')).toBeNull();
-    expect(safeReturnPath(null)).toBeNull();
   });
 });

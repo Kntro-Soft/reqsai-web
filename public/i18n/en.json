@@ -1642,7 +1642,7 @@
       "subtitle": "Map this project to Jira to push stories as issues, and review the GitHub code the copilot reads.",
       "mappingDescription": "Choose the Jira project and issue type new stories are created as.",
       "connection": "Connection",
-      "noConnection": "No Jira connection exists for this organization yet.",
+      "noConnection": "The organization has not connected Jira yet. The connection is for the whole organization; then each project picks its Jira project.",
       "goToOrg": "Connect Jira in organization settings",
       "noProjects": "No Jira projects found",
       "noIssueTypes": "No issue types found",
@@ -1657,13 +1657,15 @@
         "title": "GitHub",
         "description": "This project's repositories the copilot reads to compare what the client asks for with what is already built.",
         "unavailable": "Connecting GitHub is not configured on this server. On the Code page you can connect public repositories by name.",
-        "notConnected": "The organization has not connected GitHub yet.",
+        "notConnected": "The organization has not connected GitHub yet. The connection is for the whole organization; then each project picks its repositories.",
         "connectedTo": "GitHub connected: {{accounts}}",
         "noRepos": "This project does not read any repository yet.",
         "manage": "Manage on the Code page",
         "orgSettings": "Organization's GitHub accounts",
         "loadError": "We couldn't load this project's GitHub connection."
-      }
+      },
+      "askAdmin": "Ask an organization admin to connect Jira.",
+      "jiraToken": "Connect with an API token"
     },
     "push": {
       "pushStory": "Push to Jira",

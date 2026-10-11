@@ -7,10 +7,13 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { PermissionsStore } from '../../../../core/authz/permissions.store';
+import { rememberReturnPath } from '../../../../core/navigation/return-path';
+import { JIRA_RETURN_KEY } from '../../data/integrations.models';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import {
   IntegrationConnectionResponse,
@@ -72,18 +75,63 @@ import { ProjectGitHub } from '../../../discovery/components/project-github/proj
       } @else if (state() === 'error') {
         <p class="text-sm text-destructive">{{ 'integrations.loadError' | transloco }}</p>
       } @else if (connections().length === 0) {
-        <!-- No org connection: point the user at org settings to add one first. -->
+        <!-- No Jira connection yet: it belongs to the whole organization. An owner or admin
+             connects it from here (Atlassian consent, then back to this page); others ask one. -->
         <section
-          class="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border p-6"
+          class="overflow-hidden rounded-2xl border border-border"
           data-testid="project-integrations-no-connection"
         >
-          <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
-          <p class="text-sm text-muted-foreground">
-            {{ 'integrations.project.noConnection' | transloco }}
-          </p>
-          <a hlmBtn size="sm" variant="outline" [routerLink]="['/settings', 'integrations']">
-            {{ 'integrations.project.goToOrg' | transloco }}
-          </a>
+          <div class="flex flex-col gap-3 p-5">
+            <div class="flex flex-col gap-1">
+              <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
+              <p class="text-sm text-muted-foreground">
+                {{ 'integrations.project.noConnection' | transloco }}
+              </p>
+            </div>
+            @if (!canManageOrg()) {
+              <p class="text-sm text-muted-foreground" data-testid="project-jira-ask-admin">
+                {{ 'integrations.project.askAdmin' | transloco }}
+              </p>
+            }
+            @if (connectError()) {
+              <p class="text-sm text-destructive" role="alert">{{ connectError() }}</p>
+            }
+          </div>
+          @if (canManageOrg()) {
+            <div
+              class="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
+            >
+              <a
+                hlmBtn
+                size="sm"
+                variant="ghost"
+                [routerLink]="['/settings', 'integrations']"
+                data-testid="project-jira-org-settings"
+              >
+                {{
+                  (oauthDisabled()
+                    ? 'integrations.project.goToOrg'
+                    : 'integrations.project.jiraToken'
+                  ) | transloco
+                }}
+              </a>
+              @if (!oauthDisabled()) {
+                <button
+                  hlmBtn
+                  size="sm"
+                  type="button"
+                  (click)="connectJira()"
+                  [disabled]="redirecting()"
+                  data-testid="project-jira-connect"
+                >
+                  @if (redirecting()) {
+                    <hlm-spinner class="h-4 w-4" />
+                  }
+                  {{ 'integrations.jira.oauth.connect' | transloco }}
+                </button>
+              }
+            </div>
+          }
         </section>
       } @else {
         <section class="overflow-hidden rounded-2xl border border-border">
@@ -235,8 +283,17 @@ export class ProjectIntegrations implements OnInit {
   private readonly store = inject(AuthStore);
   private readonly transloco = inject(TranslocoService);
   private readonly toast = inject(ToastService);
+  private readonly permissions = inject(PermissionsStore);
+  private readonly router = inject(Router);
 
   readonly projectId = input.required<string>();
+
+  /** Org owners and admins connect Jira (an organization connection) right from the project. */
+  protected readonly canManageOrg = computed(() => this.permissions.isOrgOwnerOrAdmin());
+  protected readonly redirecting = signal(false);
+  /** The server has no Atlassian OAuth app: only the API-token form, in organization settings. */
+  protected readonly oauthDisabled = signal(false);
+  protected readonly connectError = signal<string | null>(null);
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly saving = signal(false);
@@ -296,6 +353,42 @@ export class ProjectIntegrations implements OnInit {
     () => !!this.connectionId() && !!this.jiraProjectKey() && !!this.issueTypeName(),
   );
 
+  /** Whether the server can connect Jira with Atlassian; otherwise only the API-token form remains. */
+  private probeOAuth(orgId: string): void {
+    this.api.getJiraAuthorizeUrl(orgId).subscribe({
+      next: () => this.oauthDisabled.set(false),
+      error: (err: HttpErrorResponse) => {
+        const code = (err.error as { code?: unknown } | null)?.code;
+        if (code === 'JIRA_OAUTH_NOT_CONFIGURED') this.oauthDisabled.set(true);
+      },
+    });
+  }
+
+  /** Off to Atlassian's consent; the callback connects the organization and comes back here. */
+  protected connectJira(): void {
+    const orgId = this.store.organizationId();
+    if (!orgId || this.redirecting()) return;
+    this.redirecting.set(true);
+    this.connectError.set(null);
+    this.api.getJiraAuthorizeUrl(orgId).subscribe({
+      next: (res) => {
+        rememberReturnPath(JIRA_RETURN_KEY, this.router.url);
+        this.redirect(res.url);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.redirecting.set(false);
+        const code = (err.error as { code?: unknown } | null)?.code;
+        if (code === 'JIRA_OAUTH_NOT_CONFIGURED') this.oauthDisabled.set(true);
+        this.connectError.set(messageForError(err, this.transloco));
+      },
+    });
+  }
+
+  /** Full navigation to Atlassian (overridden in tests). */
+  protected redirect(url: string): void {
+    window.location.assign(url);
+  }
+
   ngOnInit(): void {
     const orgId = this.store.organizationId();
     if (!orgId) {
@@ -308,6 +401,7 @@ export class ProjectIntegrations implements OnInit {
         this.connections.set(jira);
         if (jira.length === 0) {
           this.state.set('ready');
+          if (this.canManageOrg()) this.probeOAuth(orgId);
           return;
         }
         this.loadTarget(orgId, jira);
