@@ -9,6 +9,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-12
+
 ### Added (Share a session — `feature/101-session-share-link`, #101)
 - "Share session" in the capture page's ⋯ menu opens a dialog to create a link for the live (or latest) session, as a **spectator** (only follows along) or a **reviewer** (also decides; offered only to people who can decide). Links of that session are listed and can be revoked; the URL is shown once.
 - Public page `/share/session/:token` (no account): the session's state (live, paused, ended), the conversation with speaker names, the suggestions waiting for a decision and the stories it produced. It re-reads the session every few seconds. A reviewer can accept (as draft or approving) or dismiss suggestions and approve, reject or send back to draft the stories; a spectator sees no decision buttons. Unknown, revoked and expired links show the same dead end.
