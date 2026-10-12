@@ -9,6 +9,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (First steps — `feature/100-welcome-tour`, #100)
+- A welcome panel above the projects after creating an organization: try the demo project first, create your own, or connect Jira and GitHub (the last only for owners and admins). It is dismissed with the X and remembered per user and organization.
+- A guided tour (driver.js) over the organization switcher, search, menu, new-project button and account menu. It starts once on the first visit, can be repeated from the welcome panel or the account menu, and is skipped on later visits. E2E runs opt out through the `reqsai.tour.disabled` flag in `playwright.config.ts`.
+
 ## [1.4.0] - 2026-10-11
 
 ### Added (Token usage — `feature/93-token-usage-ui`, #93)
