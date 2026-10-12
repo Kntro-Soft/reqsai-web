@@ -1,4 +1,5 @@
 import {
+  AssistantMessageResponse,
   DiscoverySessionResponse,
   DisplayStory,
   SegmentPage,
@@ -37,7 +38,11 @@ export type FeedItem =
   | { kind: 'paragraph'; id: string; text: string }
   | { kind: 'segment'; id: string; segment: SessionTranscriptSegmentMessage }
   | { kind: 'decision'; id: string; decision: DecisionEntry }
-  | { kind: 'story'; id: string; story: DisplayStory };
+  | { kind: 'story'; id: string; story: DisplayStory }
+  /** An assistant-chat message that was sent while this session ran (see `timeline.ts`). */
+  | { kind: 'chat'; id: string; message: AssistantMessageResponse }
+  /** The question being answered right now, shown with the "thinking" line (see `timeline.ts`). */
+  | { kind: 'chat-pending'; id: string; text: string };
 
 /** One session's chunk of the feed (sessions are the chat's natural separators). */
 export interface SessionBlock {
@@ -300,7 +305,7 @@ export function buildSessionItems(block: BuildInput): FeedItem[] {
 }
 
 /** The timestamp a feed item sorts by, in epoch ms (NaN when the source carried none). */
-function itemTime(item: FeedItem): number {
+export function itemTime(item: FeedItem): number {
   switch (item.kind) {
     case 'segment':
       return Date.parse(item.segment.occurredAt);
@@ -308,6 +313,8 @@ function itemTime(item: FeedItem): number {
       return Date.parse(item.decision.occurredAt);
     case 'story':
       return item.story.createdAt ? Date.parse(item.story.createdAt) : Number.NaN;
+    case 'chat':
+      return Date.parse(item.message.createdAt);
     default:
       return Number.NaN;
   }
