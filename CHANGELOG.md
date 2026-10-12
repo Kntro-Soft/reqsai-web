@@ -23,6 +23,27 @@ follows [Semantic Versioning](https://semver.org/).
 - **Create a project with Jira and GitHub (#95).** The new-project page is a three-step wizard: basics, sources and confirm. The sources step is optional: pick the Jira project and issue type (and whether to import its existing stories) and up to three repositories from what the organization's GitHub App shares, each with an optional branch. An organization that has not connected Jira or GitHub is shown how: owners and admins get the connect actions (the wizard is kept across the trip to GitHub or Atlassian and comes back to the same step); anyone else is told to ask an admin. "Create project" on the first step still creates a project with no sources.
 - **"Configurando tu proyecto" bar.** The project opens right away and a slim bar under the top bar, on every page of the project, follows the setup in the background (the Jira link and import, the repositories' indexing with "Indexando 3/7 módulos"), live over the socket with a poll as backup. Each open or failed step can be left out ("Omitir"), a failed one retried, and once the code is indexed "Aplicar el stack detectado" adds the detected technology to the project's profile in one click (never on its own). It dismisses itself when everything finished, remembered per project.
 
+### Added
+
+- **Organization overview** (`/overview`, first item of the organization sidebar, for every member; #92).
+  - KPIs (projects, active stories, sessions, AI acceptance and, for owners and admins, members),
+    weekly activity, stories by status and priority, how the copilot's proposals fared, the busiest
+    projects and, for the owner, the AI token consumption against the plan.
+  - Covers only the projects the caller may reach; a new organization shows an empty state that points to
+    projects.
+- **Project overview with charts and KPIs**, keeping the shortcuts: active stories, story points, sessions
+  and AI acceptance with a trend against the previous 4 weeks, weekly sessions and stories, stories by
+  status and priority, copilot proposals (accepted, dismissed, pending), requirement coverage (acceptance
+  criteria, origin quote, linked code), the project's context (glossary, constraints, documents, code) and
+  the latest sessions and stories.
+  - A section the caller's project permissions do not allow is left out; a project with no data says
+    what to do instead of showing zeros.
+- **Dashboard components without a charting dependency** (`shared/charts`): stat tile with trend,
+  stacked bar, bar list, donut, meter and a weekly line chart in inline SVG and CSS.
+  - Each one is its own text alternative (legend with counts, `role="meter"`, an svg label); the line chart
+    adds a crosshair readout reachable with the arrow keys and a "Show as table" toggle.
+  - Chart colours are `--chart-*` tokens in both themes, checked with the dataviz palette validator.
+
 ### Changed
 - Deciding a suggestion no longer leaves a draft behind an "Aceptar" button (#96). Every suggestion that creates or changes a story (new story, update, edge case) offers "Aprobar" (the story ends approved, shown only with the `STORY_APPROVE` permission) and "Guardar como borrador" (the story ends as a draft), plus "Descartar"; without the permission "Guardar como borrador" is the main action. The clarifying question keeps "Resolver". This covers the review tray and the chat cards, also after editing the suggestion. The decision row and the chat now say "Aprobada" or "Borrador" (and "Aprobada por el analista" / "Guardada como borrador por el analista"), from the `resolvedStoryStatus` the API returns and pushes. On a phone the two main actions take the full width. Test ids: `suggestion-accept` stays on the main action (Aprobar), `suggestion-save-draft` is new.
 - Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.

@@ -3,6 +3,7 @@ import {
   ACCOUNT_NAV,
   NavAccess,
   NavSeg,
+  ORG_ROOT_NAV,
   ORG_SETTINGS_NAV,
   PROJECT_ROOT_NAV,
   PROJECT_SETTINGS_NAV,
@@ -32,6 +33,14 @@ describe('visibleNavSegs', () => {
     const items: NavSeg[] = [{ seg: 'members', permission: 'MEMBER_READ' }];
     expect(visibleNavSegs(items, access('MEMBER'))).toEqual([]);
     expect(segs(visibleNavSegs(items, access('MEMBER', ['MEMBER_READ'])))).toEqual(['members']);
+  });
+
+  it('opens the organization nav with the overview, for every role', () => {
+    expect(segs(visibleNavSegs(ORG_ROOT_NAV, access('MEMBER')))).toEqual([
+      'overview',
+      'projects',
+      'settings',
+    ]);
   });
 
   it('shows the owner the full org settings nav', () => {

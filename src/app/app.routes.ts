@@ -132,6 +132,15 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     canActivate: [authGuard, termsGuard],
     children: [
+      // Organization overview: charts and statistics over the projects the caller can reach. Any member
+      // may open it; the server limits the figures to what they can see.
+      {
+        path: 'overview',
+        title: 'titles.overview',
+        canActivate: [orgGuard],
+        loadComponent: () =>
+          import('./features/workspace/pages/org-overview/org-overview').then((m) => m.OrgOverview),
+      },
       {
         path: 'projects',
         title: 'titles.projects',

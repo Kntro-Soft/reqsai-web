@@ -261,7 +261,105 @@
     "dark": "Dark"
   },
   "overview": {
-    "subtitle": "A quick view of this project and shortcuts to its sections."
+    "subtitle": "A quick view of this project, its charts, and shortcuts to its sections.",
+    "shortcuts": "Shortcuts",
+    "loadError": "We couldn't load the overview.",
+    "retry": "Try again",
+    "forbidden": "You don't have access to any figure of this project.",
+    "kpiAria": "Key figures",
+    "kpi": {
+      "stories": "Active stories",
+      "storiesHint": "Approved {{approved}} · Draft {{drafts}}",
+      "points": "Story points",
+      "pointsHintApproved": "In approved: {{n}}",
+      "pointsHintUnestimated": "Unestimated: {{n}}",
+      "sessions": "Sessions",
+      "sessionsHint": "Completed: {{n}}",
+      "aiRate": "AI acceptance",
+      "aiRateHint": "Accepted {{accepted}} of {{decided}}",
+      "aiRateNone": "No proposal decided yet",
+      "projects": "Projects",
+      "members": "Members",
+      "membersHint": "Admins {{admins}} · Pending invitations {{pending}}"
+    },
+    "trend": {
+      "up": "+{{n}} vs. the previous 4 weeks",
+      "down": "−{{n}} vs. the previous 4 weeks",
+      "flat": "Same as the previous 4 weeks"
+    },
+    "empty": {
+      "title": "Nothing to chart yet",
+      "body": "Run a discovery session and ReqsAI will start proposing user stories. The charts fill in as the project moves.",
+      "cta": "Open discovery",
+      "stories": "No stories yet.",
+      "activity": "No sessions or stories in the last {{n}} weeks.",
+      "assistance": "The copilot hasn't proposed any story yet.",
+      "coverage": "Coverage appears once the project has active stories.",
+      "recent": "Nothing here yet.",
+      "orgTitle": "No projects to summarize yet",
+      "orgBody": "Create a project and this page will show its stories, sessions and how the team works with the copilot.",
+      "orgCta": "Go to projects"
+    },
+    "stories": {
+      "title": "Stories by status",
+      "description": "How the backlog review is going"
+    },
+    "priority": {
+      "title": "Stories by priority",
+      "description": "Every story, whatever its status"
+    },
+    "activity": {
+      "title": "Weekly activity",
+      "description": "Sessions and stories created in the last {{n}} weeks",
+      "stories": "Stories",
+      "sessions": "Sessions",
+      "aria": "Stories and sessions created per week over the last {{n}} weeks"
+    },
+    "assistance": {
+      "title": "AI proposals",
+      "description": "What analysts did with the copilot's story proposals",
+      "accepted": "Accepted",
+      "dismissed": "Dismissed",
+      "pending": "Pending",
+      "center": "accepted",
+      "centerNone": "decided",
+      "questions": "Clarifying questions raised: {{n}}"
+    },
+    "coverage": {
+      "title": "Requirement coverage",
+      "description": "Of the {{n}} active stories",
+      "criteria": "With acceptance criteria",
+      "origin": "With a quote from the conversation",
+      "code": "Linked to your code"
+    },
+    "context": {
+      "title": "Project context",
+      "description": "What the copilot knows about the client",
+      "glossary": "{{n}}",
+      "constraints": "{{n}}",
+      "documents": "{{n}}",
+      "code": "Repositories {{repos}} · Modules {{modules}}",
+      "codeNone": "No code connected"
+    },
+    "recent": {
+      "title": "Recent activity",
+      "sessions": "Latest sessions",
+      "stories": "Latest stories"
+    },
+    "org": {
+      "subtitle": "Figures for the projects you can access.",
+      "topProjects": {
+        "title": "Busiest projects",
+        "description": "By stories and sessions created",
+        "detail": "Stories {{stories}} · Sessions {{sessions}}"
+      },
+      "tokens": {
+        "title": "AI usage this period",
+        "description": "Tokens consumed against your plan",
+        "used": "{{used}} / {{limit}} tokens · {{pct}}%",
+        "manage": "See usage"
+      }
+    }
   },
   "demo": {
     "badge": "Demo",
@@ -2057,5 +2155,11 @@
         "SKIPPED": "Code skipped"
       }
     }
+  },
+  "charts": {
+    "showTable": "Show as table",
+    "showChart": "Show chart",
+    "week": "Week",
+    "weekOf": "Week of {{date}}"
   }
 }
