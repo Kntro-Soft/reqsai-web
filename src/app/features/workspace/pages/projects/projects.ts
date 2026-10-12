@@ -12,6 +12,9 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideLayoutGrid, lucidePlus, lucideRows3, lucideSearch } from '@ng-icons/lucide';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { OnboardingStore } from '../../../../core/onboarding/onboarding.store';
+import { ProductTour } from '../../../../core/onboarding/product-tour';
+import { WelcomePanel } from '../../components/welcome-panel/welcome-panel';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { Avatar } from '../../../../shared/components/avatar/avatar';
 import { DemoBadge } from '../../../../shared/components/demo-badge/demo-badge';
@@ -30,6 +33,7 @@ const VIEW_KEY = 'projects.view';
     FormsModule,
     Avatar,
     DemoBadge,
+    WelcomePanel,
     HlmButton,
     HlmIcon,
     HlmSkeleton,
@@ -43,6 +47,14 @@ const VIEW_KEY = 'projects.view';
         <h1 class="text-2xl font-bold tracking-tight">{{ 'projects.title' | transloco }}</h1>
         <p class="mt-1 text-sm text-muted-foreground">{{ 'projects.subtitle' | transloco }}</p>
       </div>
+
+      @if (showWelcome()) {
+        <app-welcome-panel
+          [demoProjectId]="demoProjectId()"
+          (dismissed)="onboarding.dismissWelcome()"
+          (tourRequested)="tour.start()"
+        />
+      }
 
       <!-- Toolbar -->
       <div class="flex flex-wrap items-center gap-2">
@@ -99,6 +111,7 @@ const VIEW_KEY = 'projects.view';
           type="button"
           routerLink="/projects/new"
           data-testid="add-project"
+          data-tour="new-project"
         >
           <hlm-icon name="lucidePlus" size="16px" />
           {{ 'projects.addNew' | transloco }}
@@ -279,6 +292,8 @@ const VIEW_KEY = 'projects.view';
 export class Projects {
   private readonly authStore = inject(AuthStore);
   protected readonly store = inject(WorkspaceStore);
+  protected readonly onboarding = inject(OnboardingStore);
+  protected readonly tour = inject(ProductTour);
 
   /** Fixed count of placeholder rows/cards rendered while projects load. */
   protected readonly skeletonRows = [0, 1, 2, 3, 4, 5];
@@ -298,10 +313,23 @@ export class Projects {
     );
   });
 
+  protected readonly showWelcome = computed(
+    () => this.store.projectsState() === 'ready' && !this.onboarding.welcomeDismissed(),
+  );
+  protected readonly demoProjectId = computed(
+    () => this.store.projects().find((project) => project.demo)?.id ?? null,
+  );
+
   constructor() {
     effect(() => {
       const orgId = this.authStore.organizationId();
       if (orgId) this.store.loadProjects(orgId);
+    });
+    // First visit: walk the newcomer through the workspace once (automation opts out with this flag).
+    effect(() => {
+      if (this.store.projectsState() !== 'ready' || this.onboarding.tourDone()) return;
+      if (tourDisabled()) return;
+      setTimeout(() => this.tour.start(), 600);
     });
   }
 
@@ -322,5 +350,13 @@ export class Projects {
       ...project.clientPlatforms,
       ...project.databases,
     ].slice(0, 6);
+  }
+}
+
+function tourDisabled(): boolean {
+  try {
+    return localStorage.getItem('reqsai.tour.disabled') === '1';
+  } catch {
+    return false;
   }
 }

@@ -24,6 +24,7 @@
 /* CDK Overlay structural styles — required so connected popovers (org/project
  * switchers, user menu) position correctly and escape sidebar clipping. */
 @import '@angular/cdk/overlay-prebuilt.css';
+@import 'driver.js/dist/driver.css';
 
 /*
  * ReqsAI design system — dark-first, navy canvas with a single assertive red
@@ -379,4 +380,45 @@
       transition: none;
     }
   }
+}
+
+/* Guided tour (driver.js) in the app's tokens. */
+.driver-popover {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-family: inherit;
+}
+.driver-popover-title {
+  font-weight: 600;
+}
+.driver-popover-description,
+.driver-popover-progress-text {
+  color: var(--muted-foreground);
+}
+.driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--popover);
+}
+.driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--popover);
+}
+.driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--popover);
+}
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--popover);
+}
+.driver-popover-footer button {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  text-shadow: none;
+}
+.driver-popover-next-btn,
+.driver-popover-done-btn {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
 }
