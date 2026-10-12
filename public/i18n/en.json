@@ -1384,7 +1384,9 @@
       "accepted": "Accepted",
       "approved": "Approved",
       "draft": "Draft",
-      "dismissed": "Dismissed"
+      "dismissed": "Dismissed",
+      "codeSearched": "Searched in the source code",
+      "codeReferences": "Cited code"
     },
     "upload": {
       "button": "Upload recording",
@@ -1535,7 +1537,17 @@
       "code": {
         "exists": "Already exists in the code",
         "conflicts": "Contradicts what is built",
-        "references": "Related code modules"
+        "references": "Related places in the code",
+        "notFound": "Not found in the code",
+        "unsure": "The code is not conclusive",
+        "verify": "Verify in the code",
+        "verifyAgain": "Verify again",
+        "verifying": "Searching the code…",
+        "done": "Verification finished:",
+        "failed": "We could not verify this in the code. Try again.",
+        "retry": "Retry",
+        "verifiedInCode": "Verified in the source code",
+        "opensGitHub": "(opens on GitHub in a new tab)"
       },
       "evidence": {
         "show": "Show in the transcript"

@@ -29,6 +29,7 @@ import {
   SessionStoryGeneratedMessage,
   SessionAiQuotaPausedMessage,
   SessionSpeakerUpdatedMessage,
+  SessionSuggestionCodeMessage,
   SessionSuggestionMessage,
   SessionTranscriptSegmentMessage,
   SpeakerOverlapsResponse,
@@ -55,6 +56,15 @@ import {
 import { SessionSpeakersStore } from './session-speakers.store';
 import { SpeakerView, buildSpeakerViews, speakerMap, speakersLoadKey } from './speakers';
 import { EvidenceSegment, locateEvidence } from './evidence';
+import {
+  VERIFY_TIMEOUT_MS,
+  failVerification,
+  startVerifying,
+  updateSuggestion,
+  verifyStateOf,
+  withCodeUpdate,
+} from './code-verification';
+import { SuggestionCodeInsight } from './codebase.models';
 
 /** Sessions fetched per page while scrolling back through history. */
 const PAGE_SIZE = 10;
@@ -155,6 +165,8 @@ export class DiscoveryChatStore {
   private nextPage = 0;
   private morePages = false;
   private readonly topicSubscriptions = new Map<string, Subscription>();
+  /** Gives up on a verification whose verdict never arrived, so its card offers a retry. */
+  private readonly verifyTimers = new Map<string, Subscription>();
 
   // Blocks are kept oldest -> newest, matching the feed's reading order.
   private readonly _blocks = signal<SessionBlock[]>([]);
@@ -301,6 +313,8 @@ export class DiscoveryChatStore {
   reset(): void {
     for (const sub of this.topicSubscriptions.values()) sub.unsubscribe();
     this.topicSubscriptions.clear();
+    for (const timer of this.verifyTimers.values()) timer.unsubscribe();
+    this.verifyTimers.clear();
     this.projectId = null;
     this.sessionsCache = [];
     this.cacheSizeSignal.set(0);
@@ -475,6 +489,75 @@ export class DiscoveryChatStore {
       )
       .subscribe(result);
     return result.asObservable();
+  }
+
+  // ---- Deep verification in the code ----
+
+  /**
+   * Verifies a queued suggestion in the pure source code. The card shows "verifying" at once; the
+   * verdict arrives as a realtime update ({@link applyCodeUpdate}). A request that fails, or a verdict
+   * that never arrives within {@link VERIFY_TIMEOUT_MS}, leaves the card in its failed state with a
+   * retry. The returned observable is for the caller that wants the HTTP error (e.g. a 409).
+   */
+  verifyCode(suggestion: SuggestionResponse): Observable<SuggestionResponse> {
+    this.updateQueued(suggestion.id, startVerifying);
+    this.watchVerification(suggestion.id);
+    const result = new ReplaySubject<SuggestionResponse>(1);
+    this.api
+      .verifySuggestionCode(suggestion.projectId, suggestion.id)
+      .pipe(
+        tap((accepted) => {
+          // The verdict may already have arrived over the socket: never step back to "verifying".
+          this.updateQueued(suggestion.id, (current) =>
+            verifyStateOf(current) === 'VERIFYING'
+              ? withCodeUpdate(current, accepted.code ?? null)
+              : current,
+          );
+        }),
+        catchError((error: unknown) => {
+          this.stopWatching(suggestion.id);
+          this.updateQueued(suggestion.id, (current) => failVerification(current));
+          return throwError(() => error);
+        }),
+      )
+      .subscribe(result);
+    return result.asObservable();
+  }
+
+  /**
+   * Applies what a realtime update says about a suggestion's code (finding, note, references and
+   * verification state) to the queued card. Updates for suggestions not in the queue are ignored.
+   */
+  applyCodeUpdate(suggestionId: string, code: SuggestionCodeInsight | null): void {
+    if (code?.verifyState === 'VERIFYING') this.watchVerification(suggestionId);
+    else this.stopWatching(suggestionId);
+    this.updateQueued(suggestionId, (current) => withCodeUpdate(current, code));
+  }
+
+  private updateQueued(
+    suggestionId: string,
+    change: (suggestion: SuggestionResponse) => SuggestionResponse,
+  ): void {
+    this._queue.update((queue) => updateSuggestion(queue, suggestionId, change));
+    this._pendingPrevious.update((list) => updateSuggestion(list, suggestionId, change));
+  }
+
+  private watchVerification(suggestionId: string): void {
+    this.stopWatching(suggestionId);
+    this.verifyTimers.set(
+      suggestionId,
+      timer(VERIFY_TIMEOUT_MS).subscribe(() => {
+        this.verifyTimers.delete(suggestionId);
+        this.updateQueued(suggestionId, (current) =>
+          verifyStateOf(current) === 'VERIFYING' ? failVerification(current) : current,
+        );
+      }),
+    );
+  }
+
+  private stopWatching(suggestionId: string): void {
+    this.verifyTimers.get(suggestionId)?.unsubscribe();
+    this.verifyTimers.delete(suggestionId);
   }
 
   /** Drops a suggestion someone else already resolved (409) without feed changes. */
@@ -881,6 +964,12 @@ export class DiscoveryChatStore {
           event.occurredAt,
         );
       }
+      return;
+    }
+
+    if (message.type === 'SUGGESTION_CODE_UPDATED') {
+      const update = message as unknown as SessionSuggestionCodeMessage;
+      this.applyCodeUpdate(update.suggestionId, update.code);
       return;
     }
 

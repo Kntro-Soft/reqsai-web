@@ -4,6 +4,7 @@ import {
   ASSISTANT_MESSAGE_MAX,
   messageToSend,
   replaceSuggestion,
+  updateReplySuggestion,
 } from './assistant-chat';
 import { AssistantMessageResponse, SuggestionResponse } from './discovery.models';
 
@@ -77,5 +78,29 @@ describe('replaceSuggestion', () => {
 
     expect(next[1].suggestions.map((s) => s.status)).toEqual(['ACCEPTED', 'PENDING']);
     expect(next[0]).toBe(chat[0]);
+  });
+});
+
+describe('updateReplySuggestion', () => {
+  it('changes only the matching suggestion of the reply that carries it', () => {
+    const chat = [
+      message('q'),
+      message('r', [suggestion('s1'), suggestion('s2')]),
+      message('r2', [suggestion('s3')]),
+    ];
+
+    const next = updateReplySuggestion(chat, 's2', (s) => ({ ...s, draftTitle: 'Cambiada' }));
+
+    expect(next[1].suggestions.map((s) => s.draftTitle)).toEqual(['Cancelar reserva', 'Cambiada']);
+    expect(next[0]).toBe(chat[0]);
+    expect(next[2]).toBe(chat[2]);
+  });
+
+  it('leaves the chat as it was when no reply carries the suggestion', () => {
+    const chat = [message('r', [suggestion('s1')])];
+
+    expect(updateReplySuggestion(chat, 'missing', (s) => ({ ...s, draftTitle: 'x' }))).toEqual(
+      chat,
+    );
   });
 });

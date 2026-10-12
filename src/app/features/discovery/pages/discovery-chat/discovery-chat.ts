@@ -26,6 +26,7 @@ import {
   lucideCircleDashed,
   lucideCircleX,
   lucideClock,
+  lucideFileSearch,
   lucideHeadphones,
   lucideInfo,
   lucideLanguages,
@@ -52,6 +53,7 @@ import { AudioRecorderService } from '../../../../core/audio/audio-recorder.serv
 import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-source';
 import { DiscoveryChatStore, RenderBlock } from '../../data/discovery-chat.store';
 import { AssistantChatStore } from '../../data/assistant-chat.store';
+import { ProjectCodeStore } from '../../data/project-code.store';
 import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { DecisionEntry } from '../../data/feed';
@@ -79,6 +81,7 @@ import { SessionBar } from '../../components/session-bar/session-bar';
 import { AudioSourcePicker } from '../../components/audio-source-picker/audio-source-picker';
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
+import { CodeReferences } from '../../components/code-references/code-references';
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
 import { UploadRecording } from '../../components/upload-recording/upload-recording';
 import { CaptureMenu } from '../../components/capture-menu/capture-menu';
@@ -118,6 +121,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     ActiveParticipants,
     DecisionQueue,
     SuggestionCard,
+    CodeReferences,
     UploadRecording,
     CaptureMenu,
     SidePanel,
@@ -137,6 +141,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideCircleDashed,
       lucideCircleX,
       lucideClock,
+      lucideFileSearch,
       lucideHeadphones,
       lucideInfo,
       lucideLanguages,
@@ -152,7 +157,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideX,
     }),
   ],
-  providers: [AssistantChatStore],
+  providers: [AssistantChatStore, ProjectCodeStore],
   host: { class: 'flex min-h-0 flex-1 flex-col' },
   template: `
     <div class="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-4">
@@ -791,8 +796,10 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             [(collapsed)]="queueCollapsed"
             [canDecide]="canDecide()"
             [canApprove]="canApprove()"
+            [canVerify]="code.canVerify()"
             (decideAccept)="accept($event.suggestion, $event.body)"
             (decideDismiss)="dismiss($event)"
+            (verifyCode)="verifyQueued($event)"
             (openTarget)="focusStory($event)"
             (showEvidence)="revealSegment($event)"
           />
@@ -998,6 +1005,25 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             <p class="text-sm leading-relaxed whitespace-pre-line" data-testid="chat-answer-text">
               {{ message.content }}
             </p>
+            <!-- The reply came from the pure source code: where, with a link to GitHub. -->
+            @if (message.codeSearched) {
+              <div
+                class="mt-2 flex flex-col gap-1.5 border-t border-ai-border/60 pt-2"
+                data-testid="chat-code-search"
+              >
+                <p class="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                  <hlm-icon name="lucideFileSearch" size="12px" aria-hidden="true" />
+                  {{ 'discovery.chat.codeSearched' | transloco }}
+                </p>
+                @if (message.codeReferences?.length) {
+                  <app-code-references
+                    [references]="message.codeReferences"
+                    labelKey="discovery.chat.codeReferences"
+                    chipTestId="chat-code-ref"
+                  />
+                }
+              </div>
+            }
           </div>
           @for (suggestion of message.suggestions; track suggestion.id) {
             @if (suggestion.status === 'PENDING') {
@@ -1007,10 +1033,12 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 [targetStory]="chatTarget(suggestion)"
                 [canDecide]="canDecide()"
                 [canApprove]="canApprove()"
+                [canVerify]="code.canVerify()"
                 [busy]="store.deciding().includes(suggestion.id)"
                 [evidenceSegment]="store.evidenceSegment(suggestion)"
                 (accept)="acceptFromChat(suggestion, $event)"
                 (dismiss)="dismissFromChat(suggestion)"
+                (verify)="verifyFromChat(suggestion)"
                 (openTarget)="focusStory($event)"
                 (showEvidence)="revealSegment($event)"
               />
@@ -1202,6 +1230,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 export class DiscoveryChat implements OnInit {
   protected readonly store = inject(DiscoveryChatStore);
   protected readonly chat = inject(AssistantChatStore);
+  /** Whether the project's code can be searched from here (a ready repository and the permissions). */
+  protected readonly code = inject(ProjectCodeStore);
   protected readonly permissions = inject(PermissionsStore);
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
@@ -1528,6 +1558,7 @@ export class DiscoveryChat implements OnInit {
       // Only the owner can read the usage; everyone else learns of the allowance from the pushes and refusals.
       if (this.permissions.isOrgOwner()) this.billing.loadUsage(orgId);
     }
+    this.code.load(this.projectId());
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
     if (focus) {
@@ -1740,6 +1771,24 @@ export class DiscoveryChat implements OnInit {
         this.toast.error(messageForError(err, this.transloco));
       },
     });
+  }
+
+  /** Verifies a queued suggestion in the source code; the card shows the progress and the verdict. */
+  protected verifyQueued(suggestion: SuggestionResponse): void {
+    this.store
+      .verifyCode(suggestion)
+      .subscribe({ error: (err: HttpErrorResponse) => this.noteVerifyError(err) });
+  }
+
+  protected verifyFromChat(suggestion: SuggestionResponse): void {
+    this.chat
+      .verifyCode(suggestion)
+      .subscribe({ error: (err: HttpErrorResponse) => this.noteVerifyError(err) });
+  }
+
+  /** The card already shows the failure with a retry; a 409 means the repository state changed. */
+  private noteVerifyError(err: HttpErrorResponse): void {
+    if (err.status === 409) this.code.load(this.projectId());
   }
 
   /** The backlog story an UPDATE_STORY / EDGE_CASE suggestion of the chat points at. */

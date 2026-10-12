@@ -1,4 +1,5 @@
 import { AssistantMessageResponse, SuggestionResponse } from './discovery.models';
+import { updateSuggestion } from './code-verification';
 
 /**
  * Pure helpers of the assistant chat, kept free of Angular so they are unit-testable.
@@ -31,6 +32,19 @@ export function replaceSuggestion(
   return messages.map((m) =>
     m.suggestions.some((s) => s.id === updated.id)
       ? { ...m, suggestions: m.suggestions.map((s) => (s.id === updated.id ? updated : s)) }
+      : m,
+  );
+}
+
+/** Applies `change` to the suggestion `id` wherever a reply carries it; the other replies are kept. */
+export function updateReplySuggestion(
+  messages: readonly AssistantMessageResponse[],
+  id: string,
+  change: (suggestion: SuggestionResponse) => SuggestionResponse,
+): AssistantMessageResponse[] {
+  return messages.map((m) =>
+    m.suggestions.some((s) => s.id === id)
+      ? { ...m, suggestions: updateSuggestion(m.suggestions, id, change) }
       : m,
   );
 }

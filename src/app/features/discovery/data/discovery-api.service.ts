@@ -378,6 +378,18 @@ export class DiscoveryApiService {
     );
   }
 
+  /**
+   * Asks to verify a pending suggestion in the pure source code of the project's repositories. It
+   * answers 202 with the suggestion in `code.verifyState` VERIFYING; the verdict arrives as a
+   * `SUGGESTION_CODE_UPDATED` message. 409 when no repository is ready or it was already decided.
+   */
+  verifySuggestionCode(projectId: string, suggestionId: string): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `/api/projects/${projectId}/suggestions/${suggestionId}/verify-code`,
+      {},
+    );
+  }
+
   // ---- Assistant chat ----
 
   /** The newest messages of the project's assistant chat, oldest first. */
