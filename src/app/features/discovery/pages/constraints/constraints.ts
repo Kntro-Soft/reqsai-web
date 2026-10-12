@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   OnDestroy,
   OnInit,
   inject,
   input,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -46,10 +48,10 @@ const MENU_POS: ConnectedPosition[] = [
 const MAX_DESCRIPTION = 500;
 
 /**
- * The project constraints as a Members-style table: an add card, a debounced
- * server-side search over the description, real server pagination, and per-row
- * edit (PUT) / delete (DELETE) with a confirm modal. A duplicate description
- * fails 409 and surfaces a clear message.
+ * The project constraints as a Members-style table: a debounced server-side search over the
+ * description, real server pagination, a "New constraint" button, and per-row edit (PUT) /
+ * delete (DELETE). Create and edit share one form modal; delete asks for confirmation in
+ * another. A duplicate description fails 409 and the message shows inside the modal.
  */
 @Component({
   selector: 'app-project-constraints',
@@ -73,64 +75,27 @@ const MAX_DESCRIPTION = 500;
   host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-6">
-      <div class="shrink-0">
-        <h1 class="text-2xl font-bold tracking-tight">{{ 'constraintsPage.title' | transloco }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">
-          {{ 'constraintsPage.subtitle' | transloco }}
-        </p>
-      </div>
-
-      <!-- Add -->
-      <section
-        *appHasPermission="'CONSTRAINT_WRITE'"
-        class="shrink-0 overflow-hidden rounded-2xl border border-border"
-      >
-        <div class="flex flex-col gap-1 p-5">
-          <h2 class="text-base font-semibold">{{ 'constraintsPage.addTitle' | transloco }}</h2>
-          <p class="text-sm text-muted-foreground">{{ 'constraintsPage.addDesc' | transloco }}</p>
+      <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold tracking-tight">
+            {{ 'constraintsPage.title' | transloco }}
+          </h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ 'constraintsPage.subtitle' | transloco }}
+          </p>
         </div>
-        <form
-          [formGroup]="form"
-          (ngSubmit)="add()"
-          class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5"
+        <button
+          *appHasPermission="'CONSTRAINT_WRITE'"
+          hlmBtn
+          size="sm"
+          type="button"
+          (click)="openCreate()"
+          data-testid="constraints-new"
         >
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="description">
-              {{ 'constraintsPage.fieldDescription' | transloco }}
-            </label>
-            <textarea
-              hlmInput
-              id="description"
-              rows="3"
-              [maxlength]="maxDescription"
-              formControlName="description"
-              [placeholder]="'constraintsPage.placeholderDescription' | transloco"
-              data-testid="constraint-input"
-            ></textarea>
-          </div>
-          <div class="flex justify-end">
-            <button
-              hlmBtn
-              size="sm"
-              type="submit"
-              [disabled]="form.invalid || submitting()"
-              data-testid="constraint-submit"
-            >
-              @if (submitting()) {
-                <hlm-spinner class="h-4 w-4" />
-              } @else {
-                <hlm-icon name="lucidePlus" size="15px" />
-              }
-              {{ 'constraintsPage.submit' | transloco }}
-            </button>
-          </div>
-          @if (formError()) {
-            <p class="text-sm text-destructive" data-testid="constraint-form-error">
-              {{ formError() }}
-            </p>
-          }
-        </form>
-      </section>
+          <hlm-icon name="lucidePlus" size="15px" />
+          {{ 'constraintsPage.new' | transloco }}
+        </button>
+      </div>
 
       <!-- Search -->
       <div
@@ -165,12 +130,27 @@ const MAX_DESCRIPTION = 500;
           {{ 'constraintsPage.loadError' | transloco }}
         </p>
       } @else if (constraints().length === 0) {
-        <p
-          class="min-h-0 flex-1 rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+        <div
+          class="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border px-4 py-10 text-center"
           data-testid="constraints-empty"
         >
-          {{ (query() ? 'constraintsPage.noMatches' : 'constraintsPage.emptyBody') | transloco }}
-        </p>
+          <p class="max-w-sm text-sm text-muted-foreground">
+            {{ (query() ? 'constraintsPage.noMatches' : 'constraintsPage.emptyBody') | transloco }}
+          </p>
+          @if (!query()) {
+            <button
+              *appHasPermission="'CONSTRAINT_WRITE'"
+              hlmBtn
+              size="sm"
+              type="button"
+              (click)="openCreate()"
+              data-testid="constraints-empty-new"
+            >
+              <hlm-icon name="lucidePlus" size="15px" />
+              {{ 'constraintsPage.new' | transloco }}
+            </button>
+          }
+        </div>
       } @else {
         <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
           <table class="w-full min-w-[560px] text-sm">
@@ -284,25 +264,70 @@ const MAX_DESCRIPTION = 500;
         </div>
       }
 
-      <!-- Edit -->
-      <app-modal [(open)]="editOpen">
-        <span modalTitle>{{ 'constraintsPage.editTitle' | transloco }}</span>
-        <form [formGroup]="editForm" class="flex flex-col gap-4">
+      <!-- Create / edit -->
+      <app-modal [(open)]="formOpen">
+        <span modalTitle>
+          {{
+            (editTarget() ? 'constraintsPage.editTitle' : 'constraintsPage.addTitle') | transloco
+          }}
+        </span>
+        <form
+          id="constraint-form"
+          [formGroup]="form"
+          (ngSubmit)="save()"
+          (keydown.control.enter)="save()"
+          (keydown.meta.enter)="save()"
+          novalidate
+          class="flex flex-col gap-4"
+          data-testid="constraint-form"
+        >
+          @if (!editTarget()) {
+            <p>{{ 'constraintsPage.addDesc' | transloco }}</p>
+          }
           <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="edit-description">
+            <label hlmLabel for="description">
               {{ 'constraintsPage.fieldDescription' | transloco }}
             </label>
             <textarea
               hlmInput
-              id="edit-description"
+              id="description"
               rows="4"
               [maxlength]="maxDescription"
               formControlName="description"
-              data-testid="edit-constraint-input"
+              data-autofocus
+              [placeholder]="'constraintsPage.placeholderDescription' | transloco"
+              [attr.aria-invalid]="descriptionError() ? 'true' : null"
+              [attr.aria-describedby]="
+                descriptionError() ? 'description-error description-count' : 'description-count'
+              "
+              data-testid="constraint-input"
             ></textarea>
+            <div class="flex items-start justify-between gap-3">
+              <p
+                id="description-error"
+                class="text-xs text-destructive"
+                data-testid="constraint-error"
+              >
+                @if (descriptionError(); as key) {
+                  {{ key | transloco }}
+                }
+              </p>
+              <span
+                id="description-count"
+                class="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground"
+              >
+                {{ descriptionLength() }}/{{ maxDescription }}
+              </span>
+            </div>
           </div>
-          @if (editError()) {
-            <p class="text-sm text-destructive" data-testid="edit-error">{{ editError() }}</p>
+          @if (formError()) {
+            <p
+              role="alert"
+              class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              data-testid="constraint-form-error"
+            >
+              {{ formError() }}
+            </p>
           }
         </form>
         <button
@@ -311,7 +336,8 @@ const MAX_DESCRIPTION = 500;
           size="sm"
           variant="ghost"
           type="button"
-          (click)="editOpen.set(false)"
+          (click)="formOpen.set(false)"
+          data-testid="constraint-cancel"
         >
           {{ 'common.cancel' | transloco }}
         </button>
@@ -319,15 +345,15 @@ const MAX_DESCRIPTION = 500;
           modalFooter
           hlmBtn
           size="sm"
-          type="button"
-          (click)="saveEdit()"
-          [disabled]="editForm.invalid || actioning()"
-          data-testid="edit-save"
+          type="submit"
+          form="constraint-form"
+          [disabled]="submitting()"
+          data-testid="constraint-submit"
         >
-          @if (actioning()) {
+          @if (submitting()) {
             <hlm-spinner class="h-4 w-4" />
           }
-          {{ 'constraintsPage.save' | transloco }}
+          {{ (editTarget() ? 'constraintsPage.save' : 'constraintsPage.submit') | transloco }}
         </button>
       </app-modal>
 
@@ -397,20 +423,21 @@ export class ProjectConstraints implements OnInit, OnDestroy {
 
   protected readonly submitting = signal(false);
   protected readonly formError = signal<string | null>(null);
+  protected readonly formOpen = signal(false);
+  /** The constraint being edited; null while the modal creates a new one. */
+  protected readonly editTarget = signal<ProjectConstraintResponse | null>(null);
 
   protected readonly actioning = signal(false);
-  protected readonly editOpen = signal(false);
-  protected readonly editError = signal<string | null>(null);
-  protected readonly editTarget = signal<ProjectConstraintResponse | null>(null);
   protected readonly deleteOpen = signal(false);
   protected readonly deleteTarget = signal<ProjectConstraintResponse | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     description: ['', [Validators.required, Validators.maxLength(MAX_DESCRIPTION)]],
   });
-  protected readonly editForm = this.fb.nonNullable.group({
-    description: ['', [Validators.required, Validators.maxLength(MAX_DESCRIPTION)]],
+  private readonly descriptionValue = toSignal(this.form.controls.description.valueChanges, {
+    initialValue: '',
   });
+  protected readonly descriptionLength = computed(() => this.descriptionValue().length);
 
   ngOnInit(): void {
     this.load();
@@ -460,58 +487,65 @@ export class ProjectConstraints implements OnInit, OnDestroy {
       });
   }
 
-  protected add(): void {
+  protected openCreate(): void {
+    this.openForm(null);
+  }
+
+  protected askEdit(constraint: ProjectConstraintResponse): void {
+    this.openForm(constraint);
+  }
+
+  private openForm(constraint: ProjectConstraintResponse | null): void {
+    this.editTarget.set(constraint);
+    this.formError.set(null);
+    this.form.reset({ description: constraint?.description ?? '' });
+    this.formOpen.set(true);
+  }
+
+  /** i18n key of the problem on the description field, once the user has touched it. */
+  protected descriptionError(): string | null {
+    const control = this.form.controls.description;
+    if (!control.touched || !control.errors) return null;
+    return control.errors['required'] ? 'constraintsPage.descriptionRequired' : null;
+  }
+
+  /** Creates the constraint, or saves the edit when a row opened the modal. */
+  protected save(): void {
     const orgId = this.auth.organizationId();
-    if (!orgId || this.form.invalid || this.submitting()) return;
+    if (!orgId || this.submitting()) return;
+    const description = this.form.getRawValue().description.trim();
+    if (!description || this.form.invalid) {
+      if (!description) this.form.controls.description.setErrors({ required: true });
+      this.form.markAllAsTouched();
+      return;
+    }
+    const body: ProjectConstraintRequest = { description };
+    const target = this.editTarget();
     this.submitting.set(true);
     this.formError.set(null);
-    const body: ProjectConstraintRequest = {
-      description: this.form.getRawValue().description.trim(),
-    };
-    this.api.createConstraint(orgId, this.projectId(), body).subscribe({
-      next: () => {
+    const request = target
+      ? this.api.updateConstraint(orgId, this.projectId(), target.id, body)
+      : this.api.createConstraint(orgId, this.projectId(), body);
+    request.subscribe({
+      next: (saved) => {
         this.submitting.set(false);
-        this.form.reset();
-        this.toast.success(this.transloco.translate('constraintsPage.created'));
-        // Newest-first, paginated server-side: reload the first page.
-        this.page.set(0);
-        this.load();
+        this.formOpen.set(false);
+        if (target) {
+          this.constraints.update((list) => list.map((c) => (c.id === saved.id ? saved : c)));
+          this.toast.success(this.transloco.translate('constraintsPage.updated'));
+        } else {
+          this.toast.success(this.transloco.translate('constraintsPage.created'));
+          // Newest-first, paginated server-side: reload the first page.
+          this.page.set(0);
+          this.load();
+        }
       },
       error: (err: unknown) => {
         this.submitting.set(false);
         const message = messageForError(err, this.transloco);
-        this.formError.set(message);
-        this.toast.error(message);
-      },
-    });
-  }
-
-  protected askEdit(constraint: ProjectConstraintResponse): void {
-    this.editTarget.set(constraint);
-    this.editError.set(null);
-    this.editForm.reset({ description: constraint.description });
-    this.editOpen.set(true);
-  }
-
-  protected saveEdit(): void {
-    const orgId = this.auth.organizationId();
-    const target = this.editTarget();
-    if (!orgId || !target || this.editForm.invalid || this.actioning()) return;
-    this.actioning.set(true);
-    this.editError.set(null);
-    const body: ProjectConstraintRequest = {
-      description: this.editForm.getRawValue().description.trim(),
-    };
-    this.api.updateConstraint(orgId, this.projectId(), target.id, body).subscribe({
-      next: (updated) => {
-        this.actioning.set(false);
-        this.constraints.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
-        this.editOpen.set(false);
-        this.toast.success(this.transloco.translate('constraintsPage.updated'));
-      },
-      error: (err: unknown) => {
-        this.actioning.set(false);
-        this.editError.set(messageForError(err, this.transloco));
+        // The modal shows it inline; a dismissed modal falls back to a toast.
+        if (this.formOpen()) this.formError.set(message);
+        else this.toast.error(message);
       },
     });
   }

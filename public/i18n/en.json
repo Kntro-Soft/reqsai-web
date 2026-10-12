@@ -1079,7 +1079,11 @@
     "deleteTitle": "Delete term",
     "deleteBefore": "This will permanently delete",
     "deleteAfter": "from the glossary.",
-    "menuAria": "Term actions"
+    "menuAria": "Term actions",
+    "new": "New term",
+    "termRequired": "Enter the term.",
+    "definitionRequired": "Enter the definition.",
+    "tooLong": "At most {{max}} characters."
   },
   "constraintsPage": {
     "title": "Constraints",
@@ -1111,7 +1115,9 @@
     "deleteTitle": "Delete constraint",
     "deleteBefore": "This will permanently delete this constraint.",
     "deleteAfter": "",
-    "menuAria": "Constraint actions"
+    "menuAria": "Constraint actions",
+    "new": "New constraint",
+    "descriptionRequired": "Describe the constraint."
   },
   "clientDocuments": {
     "title": "Client documents",

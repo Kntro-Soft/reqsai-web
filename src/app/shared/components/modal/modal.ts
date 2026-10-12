@@ -16,7 +16,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
  *
  * Three projection slots: `[modalTitle]` (header), the default slot (body) and `[modalFooter]`
  * (a right-aligned footer row where the caller places Cancel / action buttons). Closes on backdrop
- * click and Escape; focuses the dialog on open. The enter animation is guarded by
+ * click and Escape; on open it focuses the first element marked `data-autofocus` (a form's first
+ * field) and falls back to the dialog itself. The enter animation is guarded by
  * `prefers-reduced-motion`.
  */
 @Component({
@@ -88,10 +89,14 @@ export class Modal {
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
   constructor() {
-    // Focus the dialog when it opens so keyboard users land inside it and Esc works immediately.
+    // Focus inside the dialog when it opens so keyboard users land in it and Esc works immediately.
     effect(() => {
       if (this.open()) {
-        queueMicrotask(() => this.dialog()?.nativeElement.focus());
+        queueMicrotask(() => {
+          const dialog = this.dialog()?.nativeElement;
+          const first = dialog?.querySelector<HTMLElement>('[data-autofocus]');
+          (first ?? dialog)?.focus();
+        });
       }
     });
   }
