@@ -9,6 +9,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Token usage — `feature/93-token-usage-ui`, #93)
+- The usage page (Settings → Usage) says where the period's tokens went: bars by feature (live suggestions, chat, meeting wrap-up, code, documents, similarity search) and by project, the minutes of audio transcribed (measured apart, no tokens) and how much of the AI input came from the provider cache and counts half. A card shows "≈ N min de reunión" left, at the rate measured on the organization's own meetings or the documented default.
+- A banner on the usage page at 80, 90 and 100 % of the monthly AI allowance, with an upgrade link; at the cap it says what stops (suggestions and chat) and what does not (reading, editing, exporting) and when it renews.
+- The capture page shows a compact notice from 90 % on, and when live suggestions are paused by the allowance (`AI_QUOTA_PAUSED`) it says recording and transcription go on. A chat message refused with `AI_QUOTA_EXCEEDED` (402) keeps the draft and shows a clear message. Members who cannot read the usage learn of the allowance from the `TOKEN_QUOTA_WARNING` pushes on `/topic/organizations/{id}/usage` and from refused requests.
+- Small accessible `app-usage-bars` and `app-quota-banner` components (no chart dependency).
+
 ### Changed
 - Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.
 - Capture page: each session's header (name, time, speakers and the "Speakers" action) sticks to the top of the feed while that session is on screen, so naming speakers no longer means scrolling to the top of a long conversation. On a phone the speaker chips shrink to their color dots.

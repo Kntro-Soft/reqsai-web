@@ -44,6 +44,9 @@ import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { WorkspaceStore } from '../../../workspace/data/workspace.store';
 import { ToastService } from '../../../../shared/toast/toast.service';
+import { QuotaBanner } from '../../../billing/components/quota-banner/quota-banner';
+import { AiQuotaStore } from '../../../billing/data/ai-quota.store';
+import { BillingStore } from '../../../billing/data/billing.store';
 import { messageForError } from '../../../../core/errors/error-message';
 import { AudioRecorderService } from '../../../../core/audio/audio-recorder.service';
 import { AudioSource, supportsMeetingAudio } from '../../../../core/audio/audio-source';
@@ -105,6 +108,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
   selector: 'app-discovery-chat',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    QuotaBanner,
     NgTemplateOutlet,
     DatePipe,
     TranslocoPipe,
@@ -792,6 +796,18 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           />
         </div>
 
+        @if (aiQuota.nearOrOver()) {
+          <app-quota-banner
+            class="mt-3 block"
+            [compact]="true"
+            [level]="aiQuota.level()"
+            [used]="aiQuota.used()"
+            [limit]="aiQuota.limit()"
+            [paused]="aiQuota.isPaused(store.liveSession()?.id)"
+            [canUpgrade]="permissions.isOrgOwner()"
+          />
+        }
+
         <!-- Composer: the source of the next recording and the record action. -->
         <div class="mt-3 flex items-center gap-2">
           <!-- Text to ReqsAI, live session or not: a question about the project is answered,
@@ -1183,12 +1199,14 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 export class DiscoveryChat implements OnInit {
   protected readonly store = inject(DiscoveryChatStore);
   protected readonly chat = inject(AssistantChatStore);
-  private readonly permissions = inject(PermissionsStore);
+  protected readonly permissions = inject(PermissionsStore);
   protected readonly recording = inject(SessionRecordingService);
   protected readonly recorder = inject(AudioRecorderService);
   private readonly auth = inject(AuthStore);
   private readonly workspace = inject(WorkspaceStore);
   private readonly toast = inject(ToastService);
+  protected readonly aiQuota = inject(AiQuotaStore);
+  private readonly billing = inject(BillingStore);
   private readonly transloco = inject(TranslocoService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -1499,6 +1517,12 @@ export class DiscoveryChat implements OnInit {
   ngOnInit(): void {
     this.store.init(this.projectId());
     this.chat.load(this.projectId());
+    const orgId = this.auth.organizationId();
+    if (orgId) {
+      this.aiQuota.watch(orgId);
+      // Only the owner can read the usage; everyone else learns of the allowance from the pushes and refusals.
+      if (this.permissions.isOrgOwner()) this.billing.loadUsage(orgId);
+    }
     // History click-through: ?session=<id> reveals that session in the feed.
     const focus = this.route.snapshot.queryParamMap.get('session');
     if (focus) {
