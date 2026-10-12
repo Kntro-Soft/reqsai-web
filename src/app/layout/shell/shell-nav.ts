@@ -21,7 +21,11 @@ export interface NavAccess {
 
 // Nav item segments per sidebar context; the shell resolves their links once the active
 // project id is known.
-export const ORG_ROOT_NAV: readonly NavSeg[] = [{ seg: 'projects' }, { seg: 'settings' }];
+export const ORG_ROOT_NAV: readonly NavSeg[] = [
+  { seg: 'overview' },
+  { seg: 'projects' },
+  { seg: 'settings' },
+];
 export const ORG_SETTINGS_NAV: readonly NavSeg[] = [
   { seg: 'general', role: 'OWNER' },
   { seg: 'members', role: 'ADMIN' },
@@ -36,6 +40,7 @@ export const PROJECT_ROOT_NAV: readonly NavSeg[] = [
   { seg: 'glossary', permission: 'GLOSSARY_READ' },
   { seg: 'constraints', permission: 'CONSTRAINT_READ' },
   { seg: 'documents', permission: 'DOCUMENT_READ' },
+  { seg: 'code', permission: 'INTEGRATION_READ' },
   { seg: 'settings' },
 ];
 export const PROJECT_SETTINGS_NAV: readonly NavSeg[] = [

@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { provideIcons } from '@ng-icons/core';
 import {
   lucideEllipsis,
@@ -37,16 +37,20 @@ import {
   HlmSpinner,
 } from '../../../../shared/ui';
 
+/** Max lengths the backend enforces on a term and its definition. */
+const TERM_MAX = 200;
+const DEFINITION_MAX = 4000;
+
 const MENU_POS: ConnectedPosition[] = [
   { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
   { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -4 },
 ];
 
 /**
- * The project glossary as a Members-style table: an add card, a debounced
- * server-side search over term/definition, real server pagination, and per-row
- * edit (PUT) / delete (DELETE) with a confirm modal. A duplicate term fails 409
- * and surfaces a clear message.
+ * The project glossary as a Members-style table: a debounced server-side search over
+ * term/definition, real server pagination, a "New term" button, and per-row edit (PUT) /
+ * delete (DELETE). Create and edit share one form modal; delete asks for confirmation in
+ * another. A duplicate term fails 409 and the message shows inside the modal.
  */
 @Component({
   selector: 'app-project-glossary',
@@ -70,69 +74,25 @@ const MENU_POS: ConnectedPosition[] = [
   host: { class: 'flex h-full min-h-0 flex-col' },
   template: `
     <div class="flex h-full min-h-0 flex-col gap-6">
-      <div class="shrink-0">
-        <h1 class="text-2xl font-bold tracking-tight">{{ 'glossaryPage.title' | transloco }}</h1>
-        <p class="mt-1 text-sm text-muted-foreground">{{ 'glossaryPage.subtitle' | transloco }}</p>
-      </div>
-
-      <!-- Add -->
-      <section
-        *appHasPermission="'GLOSSARY_TERM_WRITE'"
-        class="shrink-0 overflow-hidden rounded-2xl border border-border"
-      >
-        <div class="flex flex-col gap-1 p-5">
-          <h2 class="text-base font-semibold">{{ 'glossaryPage.addTitle' | transloco }}</h2>
-          <p class="text-sm text-muted-foreground">{{ 'glossaryPage.addDesc' | transloco }}</p>
+      <div class="flex shrink-0 flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold tracking-tight">{{ 'glossaryPage.title' | transloco }}</h1>
+          <p class="mt-1 text-sm text-muted-foreground">
+            {{ 'glossaryPage.subtitle' | transloco }}
+          </p>
         </div>
-        <form
-          [formGroup]="form"
-          (ngSubmit)="add()"
-          class="flex flex-col gap-3 border-t border-border bg-muted/30 p-5"
+        <button
+          *appHasPermission="'GLOSSARY_TERM_WRITE'"
+          hlmBtn
+          size="sm"
+          type="button"
+          (click)="openCreate()"
+          data-testid="glossary-new"
         >
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="term">{{ 'glossaryPage.fieldTerm' | transloco }}</label>
-            <input
-              hlmInput
-              id="term"
-              formControlName="term"
-              [placeholder]="'glossaryPage.placeholderTerm' | transloco"
-              data-testid="term-input"
-            />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="definition">{{
-              'glossaryPage.fieldDefinition' | transloco
-            }}</label>
-            <textarea
-              hlmInput
-              id="definition"
-              rows="3"
-              formControlName="definition"
-              [placeholder]="'glossaryPage.placeholderDefinition' | transloco"
-              data-testid="definition-input"
-            ></textarea>
-          </div>
-          <div class="flex justify-end">
-            <button
-              hlmBtn
-              size="sm"
-              type="submit"
-              [disabled]="form.invalid || submitting()"
-              data-testid="term-submit"
-            >
-              @if (submitting()) {
-                <hlm-spinner class="h-4 w-4" />
-              } @else {
-                <hlm-icon name="lucidePlus" size="15px" />
-              }
-              {{ 'glossaryPage.submit' | transloco }}
-            </button>
-          </div>
-          @if (formError()) {
-            <p class="text-sm text-destructive" data-testid="term-form-error">{{ formError() }}</p>
-          }
-        </form>
-      </section>
+          <hlm-icon name="lucidePlus" size="15px" />
+          {{ 'glossaryPage.new' | transloco }}
+        </button>
+      </div>
 
       <!-- Search -->
       <div
@@ -166,12 +126,27 @@ const MENU_POS: ConnectedPosition[] = [
       } @else if (state() === 'error') {
         <p class="shrink-0 text-sm text-destructive">{{ 'glossaryPage.loadError' | transloco }}</p>
       } @else if (terms().length === 0) {
-        <p
-          class="min-h-0 flex-1 rounded-2xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground"
+        <div
+          class="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border px-4 py-10 text-center"
           data-testid="glossary-empty"
         >
-          {{ (query() ? 'glossaryPage.noMatches' : 'glossaryPage.emptyBody') | transloco }}
-        </p>
+          <p class="max-w-sm text-sm text-muted-foreground">
+            {{ (query() ? 'glossaryPage.noMatches' : 'glossaryPage.emptyBody') | transloco }}
+          </p>
+          @if (!query()) {
+            <button
+              *appHasPermission="'GLOSSARY_TERM_WRITE'"
+              hlmBtn
+              size="sm"
+              type="button"
+              (click)="openCreate()"
+              data-testid="glossary-empty-new"
+            >
+              <hlm-icon name="lucidePlus" size="15px" />
+              {{ 'glossaryPage.new' | transloco }}
+            </button>
+          }
+        </div>
       } @else {
         <div class="min-h-0 flex-1 overflow-auto rounded-2xl border border-border">
           <table class="w-full min-w-[640px] text-sm">
@@ -297,27 +272,75 @@ const MENU_POS: ConnectedPosition[] = [
         </div>
       }
 
-      <!-- Edit -->
-      <app-modal [(open)]="editOpen">
-        <span modalTitle>{{ 'glossaryPage.editTitle' | transloco }}</span>
-        <form [formGroup]="editForm" class="flex flex-col gap-4">
+      <!-- Create / edit -->
+      <app-modal [(open)]="formOpen">
+        <span modalTitle>
+          {{ (editTarget() ? 'glossaryPage.editTitle' : 'glossaryPage.addTitle') | transloco }}
+        </span>
+        <form
+          id="glossary-form"
+          [formGroup]="form"
+          (ngSubmit)="save()"
+          (keydown.control.enter)="save()"
+          (keydown.meta.enter)="save()"
+          novalidate
+          class="flex flex-col gap-4"
+          data-testid="term-form"
+        >
+          @if (!editTarget()) {
+            <p>{{ 'glossaryPage.addDesc' | transloco }}</p>
+          }
           <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="edit-term">{{ 'glossaryPage.fieldTerm' | transloco }}</label>
-            <input hlmInput id="edit-term" formControlName="term" data-testid="edit-term-input" />
+            <label hlmLabel for="term">{{ 'glossaryPage.fieldTerm' | transloco }}</label>
+            <input
+              hlmInput
+              id="term"
+              formControlName="term"
+              autocomplete="off"
+              data-autofocus
+              [placeholder]="'glossaryPage.placeholderTerm' | transloco"
+              [attr.aria-invalid]="termError() ? 'true' : null"
+              [attr.aria-describedby]="termError() ? 'term-error' : null"
+              data-testid="term-input"
+            />
+            @if (termError(); as key) {
+              <p id="term-error" class="text-xs text-destructive" data-testid="term-error">
+                {{ key | transloco: { max: termMax } }}
+              </p>
+            }
           </div>
           <div class="flex flex-col gap-1.5">
-            <label hlmLabel for="edit-definition">
-              {{ 'glossaryPage.fieldDefinition' | transloco }}
-            </label>
+            <label hlmLabel for="definition">{{
+              'glossaryPage.fieldDefinition' | transloco
+            }}</label>
             <textarea
               hlmInput
-              id="edit-definition"
+              id="definition"
               rows="4"
               formControlName="definition"
+              [placeholder]="'glossaryPage.placeholderDefinition' | transloco"
+              [attr.aria-invalid]="definitionError() ? 'true' : null"
+              [attr.aria-describedby]="definitionError() ? 'definition-error' : null"
+              data-testid="definition-input"
             ></textarea>
+            @if (definitionError(); as key) {
+              <p
+                id="definition-error"
+                class="text-xs text-destructive"
+                data-testid="definition-error"
+              >
+                {{ key | transloco: { max: definitionMax } }}
+              </p>
+            }
           </div>
-          @if (editError()) {
-            <p class="text-sm text-destructive" data-testid="edit-error">{{ editError() }}</p>
+          @if (formError()) {
+            <p
+              role="alert"
+              class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              data-testid="term-form-error"
+            >
+              {{ formError() }}
+            </p>
           }
         </form>
         <button
@@ -326,7 +349,8 @@ const MENU_POS: ConnectedPosition[] = [
           size="sm"
           variant="ghost"
           type="button"
-          (click)="editOpen.set(false)"
+          (click)="formOpen.set(false)"
+          data-testid="term-cancel"
         >
           {{ 'common.cancel' | transloco }}
         </button>
@@ -334,15 +358,15 @@ const MENU_POS: ConnectedPosition[] = [
           modalFooter
           hlmBtn
           size="sm"
-          type="button"
-          (click)="saveEdit()"
-          [disabled]="editForm.invalid || actioning()"
-          data-testid="edit-save"
+          type="submit"
+          form="glossary-form"
+          [disabled]="submitting()"
+          data-testid="term-submit"
         >
-          @if (actioning()) {
+          @if (submitting()) {
             <hlm-spinner class="h-4 w-4" />
           }
-          {{ 'glossaryPage.save' | transloco }}
+          {{ (editTarget() ? 'glossaryPage.save' : 'glossaryPage.submit') | transloco }}
         </button>
       </app-modal>
 
@@ -408,23 +432,22 @@ export class ProjectGlossary implements OnInit, OnDestroy {
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+  protected readonly termMax = TERM_MAX;
+  protected readonly definitionMax = DEFINITION_MAX;
+
   protected readonly submitting = signal(false);
   protected readonly formError = signal<string | null>(null);
+  protected readonly formOpen = signal(false);
+  /** The term being edited; null while the modal creates a new one. */
+  protected readonly editTarget = signal<GlossaryTermResponse | null>(null);
 
   protected readonly actioning = signal(false);
-  protected readonly editOpen = signal(false);
-  protected readonly editError = signal<string | null>(null);
-  protected readonly editTarget = signal<GlossaryTermResponse | null>(null);
   protected readonly deleteOpen = signal(false);
   protected readonly deleteTarget = signal<GlossaryTermResponse | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
-    term: ['', [Validators.required, Validators.maxLength(200)]],
-    definition: ['', [Validators.required, Validators.maxLength(4000)]],
-  });
-  protected readonly editForm = this.fb.nonNullable.group({
-    term: ['', [Validators.required, Validators.maxLength(200)]],
-    definition: ['', [Validators.required, Validators.maxLength(4000)]],
+    term: ['', [Validators.required, Validators.maxLength(TERM_MAX)]],
+    definition: ['', [Validators.required, Validators.maxLength(DEFINITION_MAX)]],
   });
 
   ngOnInit(): void {
@@ -475,55 +498,73 @@ export class ProjectGlossary implements OnInit, OnDestroy {
       });
   }
 
-  protected add(): void {
+  protected openCreate(): void {
+    this.openForm(null);
+  }
+
+  protected askEdit(term: GlossaryTermResponse): void {
+    this.openForm(term);
+  }
+
+  private openForm(term: GlossaryTermResponse | null): void {
+    this.editTarget.set(term);
+    this.formError.set(null);
+    this.form.reset({ term: term?.term ?? '', definition: term?.definition ?? '' });
+    this.formOpen.set(true);
+  }
+
+  /** i18n key of the first problem on the term field, once the user has touched it. */
+  protected termError(): string | null {
+    return this.fieldError(this.form.controls.term, 'glossaryPage.termRequired');
+  }
+
+  protected definitionError(): string | null {
+    return this.fieldError(this.form.controls.definition, 'glossaryPage.definitionRequired');
+  }
+
+  private fieldError(control: AbstractControl, requiredKey: string): string | null {
+    if (!control.touched || !control.errors) return null;
+    return control.errors['required'] ? requiredKey : 'glossaryPage.tooLong';
+  }
+
+  /** Creates the term, or saves the edit when a row opened the modal. */
+  protected save(): void {
     const orgId = this.auth.organizationId();
-    if (!orgId || this.form.invalid || this.submitting()) return;
+    if (!orgId || this.submitting()) return;
+    const raw = this.trimmed(this.form.getRawValue());
+    if (!raw.term || !raw.definition || this.form.invalid) {
+      if (!raw.term) this.form.controls.term.setErrors({ required: true });
+      if (!raw.definition) this.form.controls.definition.setErrors({ required: true });
+      this.form.markAllAsTouched();
+      return;
+    }
+    const target = this.editTarget();
     this.submitting.set(true);
     this.formError.set(null);
-    const body = this.trimmed(this.form.getRawValue());
-    this.api.createGlossaryTerm(orgId, this.projectId(), body).subscribe({
-      next: () => {
+    const request = target
+      ? this.api.updateGlossaryTerm(orgId, this.projectId(), target.id, raw)
+      : this.api.createGlossaryTerm(orgId, this.projectId(), raw);
+    request.subscribe({
+      next: (saved) => {
         this.submitting.set(false);
-        this.form.reset();
-        this.toast.success(this.transloco.translate('glossaryPage.created'));
-        // Sort is term-asc and paginated server-side, so reload rather than
-        // guess where the new term lands on the current page.
-        this.page.set(0);
-        this.load();
+        this.formOpen.set(false);
+        if (target) {
+          this.terms.update((list) => list.map((t) => (t.id === saved.id ? saved : t)));
+          this.toast.success(this.transloco.translate('glossaryPage.updated'));
+        } else {
+          this.toast.success(this.transloco.translate('glossaryPage.created'));
+          // Sort is term-asc and paginated server-side, so reload rather than
+          // guess where the new term lands on the current page.
+          this.page.set(0);
+          this.load();
+        }
       },
       error: (err: unknown) => {
         this.submitting.set(false);
         const message = messageForError(err, this.transloco);
-        this.formError.set(message);
-        this.toast.error(message);
-      },
-    });
-  }
-
-  protected askEdit(term: GlossaryTermResponse): void {
-    this.editTarget.set(term);
-    this.editError.set(null);
-    this.editForm.reset({ term: term.term, definition: term.definition });
-    this.editOpen.set(true);
-  }
-
-  protected saveEdit(): void {
-    const orgId = this.auth.organizationId();
-    const target = this.editTarget();
-    if (!orgId || !target || this.editForm.invalid || this.actioning()) return;
-    this.actioning.set(true);
-    this.editError.set(null);
-    const body = this.trimmed(this.editForm.getRawValue());
-    this.api.updateGlossaryTerm(orgId, this.projectId(), target.id, body).subscribe({
-      next: (updated) => {
-        this.actioning.set(false);
-        this.terms.update((list) => list.map((t) => (t.id === updated.id ? updated : t)));
-        this.editOpen.set(false);
-        this.toast.success(this.transloco.translate('glossaryPage.updated'));
-      },
-      error: (err: unknown) => {
-        this.actioning.set(false);
-        this.editError.set(messageForError(err, this.transloco));
+        // The modal shows it inline; a dismissed modal falls back to a toast.
+        if (this.formOpen()) this.formError.set(message);
+        else this.toast.error(message);
       },
     });
   }

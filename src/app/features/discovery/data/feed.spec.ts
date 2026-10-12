@@ -91,6 +91,7 @@ function decision(overrides: Partial<DecisionEntry> = {}): DecisionEntry {
     type: 'NEW_STORY',
     label: 'Export invoices',
     storyId: 'story-1',
+    storyStatus: null,
     occurredAt: '2026-07-04T12:00:05Z',
     anchorSequence: -1,
     ...overrides,
@@ -290,6 +291,23 @@ describe('toDecisionEntry', () => {
       -1,
     );
     expect(entry.label).toBe('Which currencies?');
+  });
+
+  it('carries the status the resolved story ended in, and none without a resolved story', () => {
+    const approved = toDecisionEntry(
+      suggestion({ resolvedStoryId: 'story-r', resolvedStoryStatus: 'APPROVED' }),
+      'ACCEPTED',
+      0,
+    );
+    expect(approved.storyStatus).toBe('APPROVED');
+    expect(toDecisionEntry(suggestion(), 'ACCEPTED', 0).storyStatus).toBeNull();
+    expect(
+      toDecisionEntry(
+        suggestion({ resolvedStoryId: 'story-r', resolvedStoryStatus: 'DRAFT' }),
+        'ACCEPTED',
+        0,
+      ).storyStatus,
+    ).toBe('DRAFT');
   });
 
   it('prefers the resolved story id over the target story id', () => {

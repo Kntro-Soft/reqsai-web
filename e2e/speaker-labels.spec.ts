@@ -46,6 +46,7 @@ test.describe('Speaker labels', () => {
 
     await uiLogin(page, email);
     await page.goto(`/projects/${projectId}/sessions`);
+    await page.getByTestId('capture-menu').click();
     await page.getByTestId('upload-recording-open').click();
     await page.getByTestId('upload-file').setInputFiles(MEETING_AUDIO);
     await page.getByTestId('upload-title').fill('Kickoff con el restaurante');

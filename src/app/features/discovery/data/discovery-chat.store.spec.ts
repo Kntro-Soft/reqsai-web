@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
+import { VERIFY_TIMEOUT_MS } from './code-verification';
 import { DECIDE_RETRY_DELAY_MS, DiscoveryChatStore } from './discovery-chat.store';
 import {
   DiscoverySessionResponse,
@@ -458,6 +459,25 @@ describe('DiscoveryChatStore', () => {
       expect(decisions).toHaveLength(1);
     });
 
+    it('sends the approve flag and records the status the story ended in', () => {
+      const pending = setupWithPending();
+
+      store.decide(pending, 'ACCEPTED', { approve: true });
+      const req = http.expectOne(ACCEPT_URL);
+      expect(req.request.body).toEqual({ approve: true });
+      req.flush(
+        suggestion({
+          status: 'ACCEPTED',
+          resolvedStoryId: 'st-1',
+          resolvedStoryStatus: 'APPROVED',
+        }),
+      );
+      http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
+
+      const decision = store.blocks()[0].items.find((i) => i.kind === 'decision');
+      expect(decision?.kind === 'decision' && decision.decision.storyStatus).toBe('APPROVED');
+    });
+
     it('treats a 409 as an already-applied decision and converges the feed', () => {
       const pending = setupWithPending();
       const errors: unknown[] = [];
@@ -514,6 +534,115 @@ describe('DiscoveryChatStore', () => {
       expect(store.deciding()).toHaveLength(0);
       // The card stays queued so the user can decide again.
       expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+    });
+
+    describe('verify in the code', () => {
+      const VERIFY_URL = '/api/projects/proj-1/suggestions/sug-1/verify-code';
+      const verdict = {
+        finding: 'CONFLICTS_WITH_CODE' as const,
+        note: 'El código permite cancelar hasta 2 h antes; el cliente pide 24 h.',
+        references: [
+          {
+            repository: 'acme/reservas',
+            path: 'src/reservations',
+            name: 'cancellation.policy.ts',
+            url: 'https://github.com/acme/reservas/blob/abc/src/reservations/cancellation.policy.ts#L2',
+            file: 'src/reservations/cancellation.policy.ts',
+            lineStart: 2,
+            lineEnd: 2,
+            quote: 'CANCELLATION_LIMIT_HOURS = 2',
+          },
+        ],
+        verdict: 'CONFLICTS_WITH_CODE' as const,
+        verifyState: 'VERIFIED' as const,
+        verifiedAt: '2026-10-11T10:00:20Z',
+      };
+
+      it('shows the card as verifying at once, then applies the realtime verdict', () => {
+        const pending = setupWithPending();
+
+        store.verifyCode(pending).subscribe();
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+        http.expectOne(VERIFY_URL).flush(
+          {
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          },
+          { status: 202, statusText: 'Accepted' },
+        );
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+
+        store.applyRealtime({
+          type: 'SUGGESTION_CODE_UPDATED',
+          sessionId: 'sess-1',
+          occurredAt: '2026-10-11T10:00:20Z',
+          suggestionId: 'sug-1',
+          code: verdict,
+        } as never);
+
+        const code = store.queue()[0].code!;
+        expect(code.verifyState).toBe('VERIFIED');
+        expect(code.verdict).toBe('CONFLICTS_WITH_CODE');
+        expect(code.references[0].lineStart).toBe(2);
+        http.verify();
+      });
+
+      it('never steps back to verifying when the verdict beat the 202', () => {
+        const pending = setupWithPending();
+        store.verifyCode(pending).subscribe();
+        store.applyCodeUpdate('sug-1', verdict);
+
+        http.expectOne(VERIFY_URL).flush(
+          {
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          },
+          { status: 202, statusText: 'Accepted' },
+        );
+
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFIED');
+      });
+
+      it('marks the card failed when the request is refused, and propagates the error', () => {
+        const pending = setupWithPending();
+        const errors: unknown[] = [];
+
+        store.verifyCode(pending).subscribe({ error: (e) => errors.push(e) });
+        http
+          .expectOne(VERIFY_URL)
+          .flush({ code: 'CODE_REPOSITORY_NOT_READY' }, { status: 409, statusText: 'Conflict' });
+
+        expect(errors).toHaveLength(1);
+        expect(store.queue()[0].code?.verifyState).toBe('FAILED');
+      });
+
+      it('gives up on a verdict that never arrives so the card offers a retry', () => {
+        vi.useFakeTimers();
+        try {
+          const pending = setupWithPending();
+          store.verifyCode(pending).subscribe();
+          http.expectOne(VERIFY_URL).flush({
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          });
+
+          vi.advanceTimersByTime(VERIFY_TIMEOUT_MS - 1);
+          expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+          vi.advanceTimersByTime(2);
+          expect(store.queue()[0].code?.verifyState).toBe('FAILED');
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('ignores an update for a suggestion that is not in the queue', () => {
+        setupWithPending();
+
+        store.applyCodeUpdate('other', verdict);
+
+        expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+        expect(store.queue()[0].code).toBeUndefined();
+      });
     });
   });
 
@@ -605,6 +734,81 @@ describe('DiscoveryChatStore', () => {
       // moment — rather than being pushed to the bottom after seq 2.
       const kinds = store.blocks()[0].items.map((i) => i.kind);
       expect(kinds).toEqual(['segment', 'segment', 'decision', 'segment']);
+    });
+
+    it('records the status of a story another viewer decided, from the realtime message', () => {
+      bootLive();
+      store.applyRealtime({
+        type: 'SUGGESTION_ACCEPTED',
+        sessionId: 'sess-1',
+        occurredAt: '2026-07-04T12:00:40Z',
+        suggestionId: 'sug-9',
+        suggestionType: 'NEW_STORY',
+        status: 'ACCEPTED',
+        draftTitle: 'Cancelar reserva',
+        draftRole: null,
+        draftAction: null,
+        draftBenefit: null,
+        draftPriority: null,
+        draftStoryPoints: null,
+        relatedTopic: null,
+        targetStoryId: null,
+        question: null,
+        resolvedStoryId: 'st-9',
+        resolvedStoryStatus: 'DRAFT',
+        draftAcceptanceCriteria: null,
+      });
+
+      const decision = store.blocks()[0].items.find((i) => i.kind === 'decision');
+      expect(decision?.kind === 'decision' && decision.decision.storyStatus).toBe('DRAFT');
+    });
+
+    it('keeps the evidence and the code insight of a realtime suggestion, and finds its segment', () => {
+      bootLive();
+      const topic = realtime.watch('sessions/sess-1');
+      topic.next({ ...liveSegment(4, '2026-07-04T12:04:00Z'), speakerLabel: 'A' });
+
+      const code = {
+        finding: 'CONFLICTS_WITH_CODE' as const,
+        note: 'El código permite cancelar hasta 2 h antes; el cliente pide 24 h.',
+        references: [
+          { repository: 'acme/reservas', path: 'src/reservas', name: 'Reservas', url: null },
+        ],
+      };
+      store.applyRealtime({
+        type: 'SUGGESTION_GENERATED',
+        sessionId: 'sess-1',
+        occurredAt: '2026-07-04T12:04:10Z',
+        suggestionId: 'sug-9',
+        suggestionType: 'UPDATE_STORY',
+        status: 'PENDING',
+        draftTitle: 'Cancelar reserva',
+        draftRole: null,
+        draftAction: null,
+        draftBenefit: null,
+        draftPriority: null,
+        draftStoryPoints: null,
+        relatedTopic: null,
+        targetStoryId: null,
+        question: null,
+        resolvedStoryId: null,
+        evidence: { sequence: 4, quote: 'hasta 24 horas antes' },
+        code,
+      });
+
+      const queued = store.queue()[0];
+      expect(queued.evidence).toEqual({ sequence: 4, quote: 'hasta 24 horas antes' });
+      expect(queued.code).toEqual(code);
+      const segment = store.evidenceSegment(queued);
+      expect(segment).toMatchObject({
+        sessionId: 'sess-1',
+        sequence: 4,
+        occurredAt: '2026-07-04T12:04:00Z',
+      });
+      expect(segment?.speaker?.label).toBe('A');
+      expect(
+        store.evidenceSegment({ ...queued, evidence: { sequence: 99, quote: 'x' } }),
+      ).toBeNull();
     });
 
     it('stamps a live segment lacking occurredAt so its bubble still has a time', () => {

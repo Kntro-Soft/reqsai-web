@@ -239,3 +239,6 @@ export function isSitesResult(result: OAuthCallbackResult): result is JiraSitesR
 export function defaultImportSelection(preview: JiraImportPreviewResponse): string[] {
   return preview.issues.filter((i) => !i.duplicate).map((i) => i.jiraIssueKey);
 }
+
+/** Session key of the page that started the Atlassian consent (a project's integrations, say). */
+export const JIRA_RETURN_KEY = 'reqsai.jira.return';

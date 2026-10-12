@@ -1,5 +1,12 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
+import {
+  CodeReference,
+  StoryOrigin,
+  SuggestionCodeInsight,
+  SuggestionEvidence,
+} from './codebase.models';
+
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
@@ -196,6 +203,13 @@ export interface UserStoryResponse {
    * (from realtime/older payloads) — consumers that need the id must narrow.
    */
   acceptanceCriteria?: (AcceptanceCriterionResponse | AcceptanceCriterion)[] | null;
+  /**
+   * Where an accepted story comes from: its session, the transcript segment and the client's
+   * words. Null for a manual story; absent on older deployments.
+   */
+  origin?: StoryOrigin | null;
+  /** The code modules the story touches (from the suggestion it was accepted from); [] when none. */
+  codeReferences?: CodeReference[] | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -264,6 +278,12 @@ export interface SuggestionResponse {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
+  /**
+   * Review status of the resolved story: where it ended when the suggestion was accepted
+   * (APPROVED or DRAFT), or its current one when listed. Null without a story; absent on older
+   * deployments, where the decision row stays neutral.
+   */
+  resolvedStoryStatus?: StoryStatus | null;
   createdAt: string;
   updatedAt: string;
   /**
@@ -279,6 +299,16 @@ export interface SuggestionResponse {
    * {@link suggestionCriteria} before rendering.
    */
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
+  /**
+   * The transcript segment the suggestion comes from and the verbatim words said there. Null when
+   * the AI could not point at one (and for assistant-chat suggestions); absent on older deployments.
+   */
+  evidence?: SuggestionEvidence | null;
+  /**
+   * What the project's connected code says: the requested capability already exists, or the
+   * request contradicts what is implemented, with the modules involved. Null without code.
+   */
+  code?: SuggestionCodeInsight | null;
 }
 
 /** A structured acceptance criterion: Given/When/Then plus an optional scenario heading. */
@@ -319,6 +349,11 @@ export function suggestionCriteria(
  * and still commits the flat edits. See {@link editableToAcceptRequest}.
  */
 export interface AcceptSuggestionRequest {
+  /**
+   * True approves the resulting story in the same call (needs STORY_APPROVE); false or absent
+   * saves it as a draft. Ignored for a clarifying question.
+   */
+  approve?: boolean;
   editedTitle?: string;
   editedRole?: string;
   editedAction?: string;
@@ -469,7 +504,9 @@ export type SessionEventType =
   | 'SUGGESTION_GENERATED'
   | 'SUGGESTION_ACCEPTED'
   | 'SUGGESTION_DISMISSED'
+  | 'SUGGESTION_CODE_UPDATED'
   | 'SPEAKER_UPDATED'
+  | 'AI_QUOTA_PAUSED'
   | 'PRESENCE_STATE';
 
 interface SessionRealtimeBase {
@@ -519,8 +556,27 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
+  /** See {@link SuggestionResponse.resolvedStoryStatus}. */
+  resolvedStoryStatus?: StoryStatus | null;
   /** Proposed acceptance criteria; see {@link SuggestionResponse.draftAcceptanceCriteria}. */
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
+  /** See {@link SuggestionResponse.evidence}. */
+  evidence?: SuggestionEvidence | null;
+  /** See {@link SuggestionResponse.code}. */
+  code?: SuggestionCodeInsight | null;
+}
+
+/**
+ * The deep verification of a suggestion against the code started, finished or failed. `sessionId`
+ * is null for a suggestion raised from the assistant chat (announced on the project's suggestions
+ * topic only).
+ */
+export interface SessionSuggestionCodeMessage extends Omit<SessionRealtimeBase, 'sessionId'> {
+  type: 'SUGGESTION_CODE_UPDATED';
+  sessionId: string | null;
+  projectId: string;
+  suggestionId: string;
+  code: SuggestionCodeInsight | null;
 }
 
 /** One user currently viewing a live session, carried by {@link SessionPresenceMessage}. */
@@ -553,6 +609,18 @@ export interface SessionSpeakerUpdatedMessage extends SessionRealtimeBase {
   side: SpeakerSide | null;
 }
 
+/**
+ * The organization's monthly AI allowance is spent: live suggestions pause for this session while
+ * capture and the transcript go on. Sent once per pause; the figures are null when unknown.
+ */
+export interface SessionAiQuotaPausedMessage extends SessionRealtimeBase {
+  type: 'AI_QUOTA_PAUSED';
+  plan: string | null;
+  tokensLimit: number | null;
+  tokensUsed: number | null;
+  resetsAt: string | null;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
@@ -560,7 +628,8 @@ export type SessionRealtimeMessage =
   | SessionProcessingFailedMessage
   | SessionSuggestionMessage
   | SessionPresenceMessage
-  | SessionSpeakerUpdatedMessage;
+  | SessionSpeakerUpdatedMessage
+  | SessionAiQuotaPausedMessage;
 
 // ---- Speakers (US40, /projects/{projectId}/sessions/{sessionId}/speakers) ----
 
@@ -638,6 +707,10 @@ export interface AssistantMessageResponse {
   content: string;
   createdAt: string;
   suggestions: SuggestionResponse[];
+  /** True when the reply came from searching the pure source code of the connected repositories. */
+  codeSearched?: boolean;
+  /** Places in the code the reply cites after a deep search (file, lines, GitHub link). */
+  codeReferences?: CodeReference[] | null;
 }
 
 /** One round of the assistant chat: what the analyst typed and ReqsAI's reply. */

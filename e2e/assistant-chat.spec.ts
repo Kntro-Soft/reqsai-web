@@ -80,10 +80,12 @@ test.describe('Assistant chat', () => {
     );
     const card = page.getByTestId('chat-answer').last().getByTestId('chat-suggestion').first();
     await expect(card).toBeVisible();
-    await card.getByTestId('suggestion-accept').click();
+    await expect(card.getByTestId('suggestion-accept')).toHaveText('Aprobar');
+    await card.getByTestId('suggestion-save-draft').click();
 
     const decision = page.getByTestId('chat-answer').last().getByTestId('chat-decision').first();
     await expect(decision).toHaveAttribute('data-outcome', 'ACCEPTED');
+    await expect(decision).toContainText('Borrador');
 
     // The chat survives a reload, decision included.
     await page.reload();
@@ -92,5 +94,6 @@ test.describe('Assistant chat', () => {
       'data-outcome',
       'ACCEPTED',
     );
+    await expect(page.getByTestId('chat-decision').first()).toContainText('Borrador');
   });
 });
