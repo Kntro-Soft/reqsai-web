@@ -245,7 +245,7 @@
     "restoreDesc": "Reloads the demo project's original content.",
     "restoreHint": "Replaces the sessions, stories, suggestions, glossary and constraints.",
     "restoreTitle": "Restore sample data",
-    "restoreBody": "This deletes this project's sessions, user stories, suggestions, assistant messages, glossary terms and constraints, and loads the original demo content again. This can't be undone.",
+    "restoreBody": "This deletes this project's sessions, user stories, suggestions, assistant messages, glossary terms, constraints and integrations (connected GitHub repositories and the Jira mapping), and loads the original demo content again. The organization's GitHub and Jira connections are not changed. This can't be undone.",
     "restoreConfirm": "Restore"
   },
   "account": {
