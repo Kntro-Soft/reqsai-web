@@ -833,7 +833,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               (valueChange)="setAudioSource($event)"
               [(open)]="sourceMenuOpen"
               [asking]="askingSource()"
-              (picked)="onSourcePicked()"
+              (picked)="onSourcePicked($event)"
               [meetingSupported]="meetingSupported"
               [disabled]="startLocked()"
               (unavailablePicked)="meetingUnavailableHint.set(true)"
@@ -1927,10 +1927,15 @@ export class DiscoveryChat implements OnInit {
     }
   }
 
-  /** A source was picked in the menu; when Record asked for it, recording starts right away. */
-  protected onSourcePicked(): void {
+  /**
+   * A source was picked in the menu; when Record asked for it, the choice is stored and recording starts
+   * right away. Picking the source that is already selected (the microphone, by default) raises no value
+   * change, so it is stored here rather than relying on one.
+   */
+  protected onSourcePicked(source: AudioSource): void {
     if (!this.askingSource()) return;
     this.askingSource.set(false);
+    this.setAudioSource(source);
     void this.record();
   }
 
