@@ -12,6 +12,7 @@ import { TenantContextService } from './core/tenant/tenant-context.service';
 
 /** Every product page; all of them ship (there are no feature flags). */
 const PRODUCT_URLS = [
+  '/overview',
   '/projects',
   '/projects/p1/overview',
   '/projects/p1/sessions/history',

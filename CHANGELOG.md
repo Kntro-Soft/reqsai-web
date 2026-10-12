@@ -9,6 +9,27 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Organization overview** (`/overview`, first item of the organization sidebar, for every member; #92).
+  - KPIs (projects, active stories, sessions, AI acceptance and, for owners and admins, members),
+    weekly activity, stories by status and priority, how the copilot's proposals fared, the busiest
+    projects and, for the owner, the AI token consumption against the plan.
+  - Covers only the projects the caller may reach; a new organization shows an empty state that points to
+    projects.
+- **Project overview with charts and KPIs**, keeping the shortcuts: active stories, story points, sessions
+  and AI acceptance with a trend against the previous 4 weeks, weekly sessions and stories, stories by
+  status and priority, copilot proposals (accepted, dismissed, pending), requirement coverage (acceptance
+  criteria, origin quote, linked code), the project's context (glossary, constraints, documents, code) and
+  the latest sessions and stories.
+  - A section the caller's project permissions do not allow is left out; a project with no data says
+    what to do instead of showing zeros.
+- **Dashboard components without a charting dependency** (`shared/charts`): stat tile with trend,
+  stacked bar, bar list, donut, meter and a weekly line chart in inline SVG and CSS.
+  - Each one is its own text alternative (legend with counts, `role="meter"`, an svg label); the line chart
+    adds a crosshair readout reachable with the arrow keys and a "Show as table" toggle.
+  - Chart colours are `--chart-*` tokens in both themes, checked with the dataviz palette validator.
+
 ### Changed
 - The release pull request and the back-merge pull request are opened by the GitHub App `reqsai-release-bot` (a short-lived token minted per job from `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`), so their CI runs: opened with `GITHUB_TOKEN` they started no `pull_request` workflow. The back-merge turns on auto-merge (merge commit) when the repository allows it; without the App configuration the job fails instead of falling back to `GITHUB_TOKEN`.
 - `produccion.yml` and `rollback.yml` dispatch `reqsai-infra`'s `deploy-mvp.yml` with a `reqsai-release-bot` token limited to `reqsai-infra` (Actions: write) and watch the run with the workflow token, instead of the personal token `INFRA_DEPLOY_TOKEN`, which is no longer used.
