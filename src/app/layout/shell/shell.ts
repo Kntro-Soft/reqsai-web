@@ -101,13 +101,14 @@ interface Crumb {
     <!-- Sidebar content, reused by the desktop aside and the mobile drawer. -->
     <ng-template #sidebar>
       <div class="flex h-full flex-col gap-3 p-3">
-        <app-org-switcher />
+        <div data-tour="org"><app-org-switcher /></div>
 
         <button
           type="button"
           (click)="paletteOpen.set(true)"
           [attr.aria-label]="'commandPalette.open' | transloco"
           data-testid="open-command-palette"
+          data-tour="search"
           class="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-2.5 transition-colors hover:bg-accent"
         >
           <hlm-icon name="lucideSearch" size="15px" class="shrink-0 text-muted-foreground" />
@@ -122,6 +123,7 @@ interface Crumb {
         </button>
 
         <nav
+          data-tour="nav"
           class="flex flex-1 flex-col gap-0.5 overflow-y-auto"
           [attr.aria-label]="navContext().ariaKey | transloco"
         >
@@ -153,7 +155,7 @@ interface Crumb {
           }
         </nav>
 
-        <div class="border-t border-border pt-2">
+        <div class="border-t border-border pt-2" data-tour="user">
           <app-user-menu />
         </div>
       </div>

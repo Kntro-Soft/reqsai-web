@@ -217,7 +217,8 @@
     "createOrganization": "Create organization",
     "signOut": "Sign out",
     "upgrade": "Upgrade",
-    "accountSettings": "Account settings"
+    "accountSettings": "Account settings",
+    "tour": "Guided tour"
   },
   "orgSwitcher": {
     "ariaLabel": "Switch organization",
@@ -2208,5 +2209,49 @@
     "showChart": "Show chart",
     "week": "Week",
     "weekOf": "Week of {{date}}"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Where do you want to start?",
+      "subtitle": "Your workspace is ready. Pick a way in; you can come back to this from the menu at any time.",
+      "dismiss": "Dismiss",
+      "demoTitle": "Try the demo first",
+      "demoBody": "A sample project with sessions, stories and glossary, so you can see ReqsAI at work before adding your own.",
+      "demoCta": "Open the demo",
+      "createTitle": "Create your project",
+      "createBody": "Describe it, or let ReqsAI draft it from Jira or GitHub.",
+      "createCta": "New project",
+      "connectTitle": "Connect Jira or GitHub",
+      "connectBody": "Import your backlog and let the copilot read your code.",
+      "connectBodyMember": "An organization owner or admin connects Jira and GitHub.",
+      "connectCta": "Open integrations",
+      "tourCta": "Take the quick tour"
+    },
+    "tour": {
+      "next": "Next",
+      "back": "Back",
+      "done": "Done",
+      "progress": "{current} of {total}",
+      "org": {
+        "title": "Your organization",
+        "body": "Switch between organizations or create another one from here."
+      },
+      "search": {
+        "title": "Find anything",
+        "body": "Jump to any project, session or page without hunting through menus."
+      },
+      "nav": {
+        "title": "Your workspace",
+        "body": "Everything for the organization or project you are in lives in this menu."
+      },
+      "newProject": {
+        "title": "Start a project",
+        "body": "Create one and record your first requirements session."
+      },
+      "user": {
+        "title": "Your account",
+        "body": "Theme, language, and this tour again whenever you want it."
+      }
+    }
   }
 }

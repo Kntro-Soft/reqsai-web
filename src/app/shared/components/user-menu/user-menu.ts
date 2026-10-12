@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { provideIcons } from '@ng-icons/core';
 import {
+  lucideCompass,
   lucideEllipsisVertical,
   lucideLogOut,
   lucideMonitor,
@@ -18,6 +19,7 @@ import { AuthStore } from '../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../core/authz/permissions.store';
 import { ThemeMode, ThemeService } from '../../../core/theme/theme.service';
 import { Lang, SUPPORTED_LANGS, saveLang } from '../../../core/i18n/language';
+import { ProductTour } from '../../../core/onboarding/product-tour';
 import { Avatar } from '../avatar/avatar';
 import { ABOVE_START } from '../popover/popover-positions';
 import { HlmIcon } from '../../ui';
@@ -34,6 +36,7 @@ import { HlmIcon } from '../../ui';
   imports: [OverlayModule, Avatar, HlmIcon, TranslocoPipe],
   viewProviders: [
     provideIcons({
+      lucideCompass,
       lucideEllipsisVertical,
       lucideLogOut,
       lucideMonitor,
@@ -150,6 +153,16 @@ import { HlmIcon } from '../../ui';
         <button
           role="menuitem"
           type="button"
+          data-testid="replay-tour"
+          (click)="replayTour()"
+          class="flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
+        >
+          {{ 'userMenu.tour' | transloco }}
+          <hlm-icon name="lucideCompass" size="16px" class="text-muted-foreground" />
+        </button>
+        <button
+          role="menuitem"
+          type="button"
           data-testid="logout"
           (click)="logout()"
           class="flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
@@ -183,6 +196,7 @@ export class UserMenu {
   private readonly auth = inject(AuthService);
   private readonly transloco = inject(TranslocoService);
   private readonly router = inject(Router);
+  private readonly tour = inject(ProductTour);
 
   protected readonly langs = SUPPORTED_LANGS;
   protected readonly themes: { mode: ThemeMode; icon: string }[] = [
@@ -223,6 +237,11 @@ export class UserMenu {
   protected upgrade(): void {
     this.close();
     void this.router.navigate(['/settings/billing']);
+  }
+
+  protected replayTour(): void {
+    this.close();
+    setTimeout(() => this.tour.start(), 150);
   }
 
   protected logout(): void {

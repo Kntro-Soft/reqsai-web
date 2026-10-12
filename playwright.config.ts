@@ -9,6 +9,8 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const BASE_URL = process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200';
+
 export default defineConfig({
   testDir: './e2e',
   /* Run tests in files in parallel */
@@ -24,7 +26,18 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4200',
+    baseURL: BASE_URL,
+
+    /* The first-visit tour overlays the page; specs opt out of its auto-start. */
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: new URL(BASE_URL).origin,
+          localStorage: [{ name: 'reqsai.tour.disabled', value: '1' }],
+        },
+      ],
+    },
 
     /* Pin the UI language and timezone so the suite is deterministic regardless of
      * the host/CI locale. The app resolves its language from navigator.language
