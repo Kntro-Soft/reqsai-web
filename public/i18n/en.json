@@ -180,7 +180,34 @@
     "remaining": "{{count}} tokens remaining",
     "exhausted": "You've used your monthly token allowance. Upgrade your plan for more.",
     "planTitle": "Current plan",
-    "managePlan": "Manage plan"
+    "managePlan": "Manage plan",
+    "meeting": {
+      "title": "Meetings you can still capture",
+      "minutes": "≈ {{count}} min of meeting",
+      "hours": "≈ {{count}} h of meeting",
+      "measured": "Based on what your meetings use: about {{rate}} tokens per minute.",
+      "estimated": "Estimated at about {{rate}} tokens per minute; it will sharpen with your own meetings."
+    },
+    "breakdown": {
+      "title": "Where this period went",
+      "byFeature": "By feature",
+      "byProject": "By project",
+      "empty": "No AI usage in this period yet.",
+      "noProjects": "No project has used AI yet.",
+      "unknownProject": "Another project",
+      "transcription": "Audio transcription: {{count}} min (measured separately, uses no tokens).",
+      "cached": "{{percent}} % of the text sent to the AI came from the provider cache and counts half."
+    },
+    "features": {
+      "LIVE_SUGGESTIONS": "Live suggestions",
+      "CHAT": "Chat with ReqsAI",
+      "FINAL_STORIES": "Meeting wrap-up",
+      "CODE_INDEX": "Reading the code",
+      "CODE_DEEP_SEARCH": "Code search",
+      "DOCUMENT_CLASSIFICATION": "Client documents",
+      "EMBEDDINGS": "Similarity search",
+      "OTHER": "Other"
+    }
   },
   "userMenu": {
     "ariaLabel": "User menu",
@@ -1860,7 +1887,8 @@
     "CODE_HOST_APP_NOT_CONFIGURED": "Connecting GitHub is not available on this server.",
     "CODE_HOST_INSTALL_STATE_INVALID": "The GitHub link expired or is not valid. Connect GitHub again from ReqsAI.",
     "CODE_HOST_INSTALLATION_FORBIDDEN": "We could not confirm that your GitHub account can access that installation. Connect GitHub again from ReqsAI.",
-    "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization."
+    "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization.",
+    "AI_QUOTA_EXCEEDED": "Your organization's AI allowance for this month is used up. You can still read and edit."
   },
   "share": {
     "action": "Share with client",
@@ -1916,5 +1944,17 @@
       "unavailableBody": "It may have expired or been revoked by the team. Ask whoever shared it for a new one.",
       "footer": "Shared with ReqsAI"
     }
+  },
+  "quota": {
+    "warningTitle": "You have used {{percent}} % of this month's AI allowance",
+    "warningBody": "You are at {{used}} of {{limit}} tokens. At the limit, suggestions and chat stop; reading, editing and exporting keep working.",
+    "exhaustedTitle": "AI allowance used up",
+    "exhaustedBody": "Suggestions and the chat with ReqsAI are stopped. You can keep reading, editing and exporting your backlog.",
+    "exhaustedShort": "Suggestions and chat stopped; everything else still works.",
+    "renews": "It renews on {{date}}.",
+    "pausedTitle": "Live suggestions paused",
+    "pausedBody": "This month's AI allowance is used up. Recording and transcription continue.",
+    "upgrade": "Upgrade plan",
+    "askOwner": "Ask the owner to upgrade the plan."
   }
 }

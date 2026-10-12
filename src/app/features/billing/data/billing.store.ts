@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { AiQuotaStore } from './ai-quota.store';
 import { BillingApiService } from './billing-api.service';
 import {
   PlanChangeResponse,
@@ -18,6 +19,7 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 @Injectable({ providedIn: 'root' })
 export class BillingStore {
   private readonly api = inject(BillingApiService);
+  private readonly quota = inject(AiQuotaStore);
 
   private readonly _subscription = signal<SubscriptionResponse | null>(null);
   private readonly _usage = signal<SubscriptionUsageResponse | null>(null);
@@ -52,6 +54,7 @@ export class BillingStore {
     this.api.getUsage(orgId).subscribe({
       next: (usage) => {
         this._usage.set(usage);
+        this.quota.applyUsage(usage);
         this._usageState.set('ready');
       },
       error: () => this._usageState.set('error'),
@@ -79,6 +82,7 @@ export class BillingStore {
   }
 
   reset(): void {
+    this.quota.reset();
     this._subscription.set(null);
     this._usage.set(null);
     this._subState.set('idle');

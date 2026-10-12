@@ -23,6 +23,39 @@ export interface SubscriptionResponse {
   cancelledAt: string | null;
 }
 
+/** How far into the monthly AI allowance an organization is; mirrors the backend's warning steps. */
+export type QuotaLevel = 'NONE' | 'WARNING_80' | 'WARNING_90' | 'EXHAUSTED';
+
+/** Tokens and calls of one AI feature in the period; `tokens` is the quota weight, the rest as the provider reported. */
+export interface FeatureUsage {
+  feature: string;
+  tokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  cachedInputTokens: number;
+  calls: number;
+}
+
+/** Quota tokens one project used in the period. */
+export interface ProjectUsage {
+  projectId: string;
+  tokens: number;
+}
+
+/** Where the period's tokens went (from the organization's usage ledger). */
+export interface UsageBreakdown {
+  byFeature: FeatureUsage[];
+  topProjects: ProjectUsage[];
+  transcriptionSeconds: number;
+}
+
+/** Minutes of live meeting the remaining allowance covers, at a measured or default rate. */
+export interface MeetingEstimate {
+  minutesLeft: number;
+  tokensPerMinute: number;
+  measured: boolean;
+}
+
 /** Usage/dashboard view (GET /api/subscriptions/organization/{orgId}/usage). */
 export interface SubscriptionUsageResponse {
   organizationId: string;
@@ -34,6 +67,9 @@ export interface SubscriptionUsageResponse {
   tokensLimit: number;
   tokensRemaining: number;
   usagePercentage: number;
+  warningLevel: QuotaLevel;
+  breakdown: UsageBreakdown;
+  meetingEstimate: MeetingEstimate;
   priceCents: number;
   currency: string;
   stripePriceId: string | null;
