@@ -180,7 +180,34 @@
     "remaining": "{{count}} tokens remaining",
     "exhausted": "You've used your monthly token allowance. Upgrade your plan for more.",
     "planTitle": "Current plan",
-    "managePlan": "Manage plan"
+    "managePlan": "Manage plan",
+    "meeting": {
+      "title": "Meetings you can still capture",
+      "minutes": "≈ {{count}} min of meeting",
+      "hours": "≈ {{count}} h of meeting",
+      "measured": "Based on what your meetings use: about {{rate}} tokens per minute.",
+      "estimated": "Estimated at about {{rate}} tokens per minute; it will sharpen with your own meetings."
+    },
+    "breakdown": {
+      "title": "Where this period went",
+      "byFeature": "By feature",
+      "byProject": "By project",
+      "empty": "No AI usage in this period yet.",
+      "noProjects": "No project has used AI yet.",
+      "unknownProject": "Another project",
+      "transcription": "Audio transcription: {{count}} min (measured separately, uses no tokens).",
+      "cached": "{{percent}} % of the text sent to the AI came from the provider cache and counts half."
+    },
+    "features": {
+      "LIVE_SUGGESTIONS": "Live suggestions",
+      "CHAT": "Chat with ReqsAI",
+      "FINAL_STORIES": "Meeting wrap-up",
+      "CODE_INDEX": "Reading the code",
+      "CODE_DEEP_SEARCH": "Code search",
+      "DOCUMENT_CLASSIFICATION": "Client documents",
+      "EMBEDDINGS": "Similarity search",
+      "OTHER": "Other"
+    }
   },
   "userMenu": {
     "ariaLabel": "User menu",
@@ -234,7 +261,105 @@
     "dark": "Dark"
   },
   "overview": {
-    "subtitle": "A quick view of this project and shortcuts to its sections."
+    "subtitle": "A quick view of this project, its charts, and shortcuts to its sections.",
+    "shortcuts": "Shortcuts",
+    "loadError": "We couldn't load the overview.",
+    "retry": "Try again",
+    "forbidden": "You don't have access to any figure of this project.",
+    "kpiAria": "Key figures",
+    "kpi": {
+      "stories": "Active stories",
+      "storiesHint": "Approved {{approved}} · Draft {{drafts}}",
+      "points": "Story points",
+      "pointsHintApproved": "In approved: {{n}}",
+      "pointsHintUnestimated": "Unestimated: {{n}}",
+      "sessions": "Sessions",
+      "sessionsHint": "Completed: {{n}}",
+      "aiRate": "AI acceptance",
+      "aiRateHint": "Accepted {{accepted}} of {{decided}}",
+      "aiRateNone": "No proposal decided yet",
+      "projects": "Projects",
+      "members": "Members",
+      "membersHint": "Admins {{admins}} · Pending invitations {{pending}}"
+    },
+    "trend": {
+      "up": "+{{n}} vs. the previous 4 weeks",
+      "down": "−{{n}} vs. the previous 4 weeks",
+      "flat": "Same as the previous 4 weeks"
+    },
+    "empty": {
+      "title": "Nothing to chart yet",
+      "body": "Run a discovery session and ReqsAI will start proposing user stories. The charts fill in as the project moves.",
+      "cta": "Open discovery",
+      "stories": "No stories yet.",
+      "activity": "No sessions or stories in the last {{n}} weeks.",
+      "assistance": "The copilot hasn't proposed any story yet.",
+      "coverage": "Coverage appears once the project has active stories.",
+      "recent": "Nothing here yet.",
+      "orgTitle": "No projects to summarize yet",
+      "orgBody": "Create a project and this page will show its stories, sessions and how the team works with the copilot.",
+      "orgCta": "Go to projects"
+    },
+    "stories": {
+      "title": "Stories by status",
+      "description": "How the backlog review is going"
+    },
+    "priority": {
+      "title": "Stories by priority",
+      "description": "Every story, whatever its status"
+    },
+    "activity": {
+      "title": "Weekly activity",
+      "description": "Sessions and stories created in the last {{n}} weeks",
+      "stories": "Stories",
+      "sessions": "Sessions",
+      "aria": "Stories and sessions created per week over the last {{n}} weeks"
+    },
+    "assistance": {
+      "title": "AI proposals",
+      "description": "What analysts did with the copilot's story proposals",
+      "accepted": "Accepted",
+      "dismissed": "Dismissed",
+      "pending": "Pending",
+      "center": "accepted",
+      "centerNone": "decided",
+      "questions": "Clarifying questions raised: {{n}}"
+    },
+    "coverage": {
+      "title": "Requirement coverage",
+      "description": "Of the {{n}} active stories",
+      "criteria": "With acceptance criteria",
+      "origin": "With a quote from the conversation",
+      "code": "Linked to your code"
+    },
+    "context": {
+      "title": "Project context",
+      "description": "What the copilot knows about the client",
+      "glossary": "{{n}}",
+      "constraints": "{{n}}",
+      "documents": "{{n}}",
+      "code": "Repositories {{repos}} · Modules {{modules}}",
+      "codeNone": "No code connected"
+    },
+    "recent": {
+      "title": "Recent activity",
+      "sessions": "Latest sessions",
+      "stories": "Latest stories"
+    },
+    "org": {
+      "subtitle": "Figures for the projects you can access.",
+      "topProjects": {
+        "title": "Busiest projects",
+        "description": "By stories and sessions created",
+        "detail": "Stories {{stories}} · Sessions {{sessions}}"
+      },
+      "tokens": {
+        "title": "AI usage this period",
+        "description": "Tokens consumed against your plan",
+        "used": "{{used}} / {{limit}} tokens · {{pct}}%",
+        "manage": "See usage"
+      }
+    }
   },
   "demo": {
     "badge": "Demo",
@@ -245,7 +370,7 @@
     "restoreDesc": "Reloads the demo project's original content.",
     "restoreHint": "Replaces the sessions, stories, suggestions, glossary and constraints.",
     "restoreTitle": "Restore sample data",
-    "restoreBody": "This deletes this project's sessions, user stories, suggestions, assistant messages, glossary terms and constraints, and loads the original demo content again. This can't be undone.",
+    "restoreBody": "This deletes this project's sessions, user stories, suggestions, assistant messages, glossary terms, constraints and integrations (connected GitHub repositories and the Jira mapping), and loads the original demo content again. The organization's GitHub and Jira connections are not changed. This can't be undone.",
     "restoreConfirm": "Restore"
   },
   "account": {
@@ -394,7 +519,38 @@
     "contextGroup": "Business context",
     "stackGroup": "Tech stack",
     "chipHint": "Type a value and press Enter to add it.",
-    "example": "e.g. {{value}}"
+    "example": "e.g. {{value}}",
+    "steps": {
+      "label": "Steps to create the project",
+      "basics": "Basics",
+      "sources": "Sources",
+      "confirm": "Confirm",
+      "next": "Continue",
+      "back": "Back"
+    },
+    "sources": {
+      "title": "Connect your sources",
+      "subtitle": "Optional. ReqsAI sets them up in the background: the project opens right away and you can keep working meanwhile.",
+      "jira": {
+        "title": "Jira",
+        "notConnected": "The organization has not connected Jira yet. Connect it now and come back here: what you already typed is kept.",
+        "enable": "Link a Jira project",
+        "import": "Import the existing stories",
+        "importHint": "Brings the Jira project's issues into the backlog as user stories.",
+        "incomplete": "Pick a project and an issue type, or turn Jira off."
+      },
+      "github": {
+        "title": "GitHub",
+        "pick": "Project repositories",
+        "count": "{{count}} of {{max}} repositories picked"
+      }
+    },
+    "confirm": {
+      "title": "Ready to create",
+      "withSources": "The project opens right away. Jira and GitHub are set up in the background and you will see progress in a bar at the top.",
+      "withoutSources": "The project is created without sources. You can connect them later from Integrations and Code.",
+      "importStories": "importing its stories"
+    }
   },
   "orgPicker": {
     "title": "Choose an organization",
@@ -1021,7 +1177,11 @@
     "deleteTitle": "Delete term",
     "deleteBefore": "This will permanently delete",
     "deleteAfter": "from the glossary.",
-    "menuAria": "Term actions"
+    "menuAria": "Term actions",
+    "new": "New term",
+    "termRequired": "Enter the term.",
+    "definitionRequired": "Enter the definition.",
+    "tooLong": "At most {{max}} characters."
   },
   "constraintsPage": {
     "title": "Constraints",
@@ -1053,7 +1213,9 @@
     "deleteTitle": "Delete constraint",
     "deleteBefore": "This will permanently delete this constraint.",
     "deleteAfter": "",
-    "menuAria": "Constraint actions"
+    "menuAria": "Constraint actions",
+    "new": "New constraint",
+    "descriptionRequired": "Describe the constraint."
   },
   "clientDocuments": {
     "title": "Client documents",
@@ -1300,6 +1462,7 @@
       "description": "Give each voice its real name and mark whether it is the client or the team. It applies to everything they said, and the AI puts what the client asks for first: the team's remarks are context.",
       "edit": "Edit speakers",
       "view": "View speakers",
+      "open": "Speakers",
       "close": "Close",
       "empty": "This session does not tell speakers apart.",
       "nameLabel": "Name of {{name}}",
@@ -1331,8 +1494,11 @@
       "accepted": "Accepted",
       "dismissed": "Dismissed",
       "acceptedBy": "Accepted by the analyst",
+      "approvedBy": "Approved by the analyst",
+      "draftBy": "Saved as a draft by the analyst",
       "resolvedBy": "Resolved by the analyst",
-      "acceptedToast": "Suggestion accepted: the story is in the backlog as a draft.",
+      "approvedToast": "Story approved: it is in the backlog.",
+      "draftToast": "Story saved as a draft in the backlog.",
       "resolvedToast": "Question marked as resolved."
     },
     "live": {
@@ -1351,7 +1517,11 @@
       "you": "You",
       "thinking": "ReqsAI is thinking…",
       "accepted": "Accepted",
-      "dismissed": "Dismissed"
+      "approved": "Approved",
+      "draft": "Draft",
+      "dismissed": "Dismissed",
+      "codeSearched": "Searched in the source code",
+      "codeReferences": "Cited code"
     },
     "upload": {
       "button": "Upload recording",
@@ -1391,6 +1561,9 @@
       "unsupported": "Virtual meeting: available in desktop Chrome or Edge.",
       "micShort": "In person",
       "meetingShort": "Virtual meeting",
+      "micHint": "This device's microphone",
+      "meetingHint": "Your microphone plus the meeting tab's audio",
+      "ask": "Where does the audio come from?",
       "hintShare": "When you press Record, pick the meeting tab and turn on “Share tab audio”.",
       "hintHeadphones": "Wear headphones so your microphone doesn't pick up the meeting again and duplicate the transcript.",
       "hintDismiss": "Hide these tips"
@@ -1465,9 +1638,11 @@
       "storyNotFound": "Story not found.",
       "noCriterion": "No criterion drafted yet.",
       "viewTarget": "View target story",
-      "accept": "Accept",
+      "approve": "Approve",
+      "approveAria": "Approve the suggested story: it is approved in the backlog",
+      "saveDraft": "Save as draft",
+      "saveDraftAria": "Save the suggested story as a draft in the backlog",
       "resolve": "Resolve",
-      "saveAndAccept": "Save & accept",
       "dismiss": "Dismiss",
       "edit": "Edit",
       "cancelEdit": "Cancel editing",
@@ -1497,7 +1672,17 @@
       "code": {
         "exists": "Already exists in the code",
         "conflicts": "Contradicts what is built",
-        "references": "Related code modules"
+        "references": "Related places in the code",
+        "notFound": "Not found in the code",
+        "unsure": "The code is not conclusive",
+        "verify": "Verify in the code",
+        "verifyAgain": "Verify again",
+        "verifying": "Searching the code…",
+        "done": "Verification finished:",
+        "failed": "We could not verify this in the code. Try again.",
+        "retry": "Retry",
+        "verifiedInCode": "Verified in the source code",
+        "opensGitHub": "(opens on GitHub in a new tab)"
       },
       "evidence": {
         "show": "Show in the transcript"
@@ -1538,6 +1723,9 @@
       "PROCESSING": "Processing",
       "COMPLETED": "Completed",
       "FAILED": "Failed"
+    },
+    "menu": {
+      "label": "More actions"
     },
     "history": {
       "button": "History",
@@ -1853,7 +2041,12 @@
     "CODE_HOST_APP_NOT_CONFIGURED": "Connecting GitHub is not available on this server.",
     "CODE_HOST_INSTALL_STATE_INVALID": "The GitHub link expired or is not valid. Connect GitHub again from ReqsAI.",
     "CODE_HOST_INSTALLATION_FORBIDDEN": "We could not confirm that your GitHub account can access that installation. Connect GitHub again from ReqsAI.",
-    "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization."
+    "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization.",
+    "AI_QUOTA_EXCEEDED": "Your organization's AI allowance for this month is used up. You can still read and edit.",
+    "PROJECT_SETUP_STEP_NOT_FOUND": "This project did not ask for that setup step.",
+    "PROJECT_SETUP_STEP_NOT_RETRIABLE": "That step did not fail, so there is nothing to retry.",
+    "SETUP_STEP_FAILED": "An unexpected error occurred. Try again.",
+    "JIRA_LINK_FAILED": "Jira has to be linked first."
   },
   "share": {
     "action": "Share with client",
@@ -1909,5 +2102,64 @@
       "unavailableBody": "It may have expired or been revoked by the team. Ask whoever shared it for a new one.",
       "footer": "Shared with ReqsAI"
     }
+  },
+  "quota": {
+    "warningTitle": "You have used {{percent}} % of this month's AI allowance",
+    "warningBody": "You are at {{used}} of {{limit}} tokens. At the limit, suggestions and chat stop; reading, editing and exporting keep working.",
+    "exhaustedTitle": "AI allowance used up",
+    "exhaustedBody": "Suggestions and the chat with ReqsAI are stopped. You can keep reading, editing and exporting your backlog.",
+    "exhaustedShort": "Suggestions and chat stopped; everything else still works.",
+    "renews": "It renews on {{date}}.",
+    "pausedTitle": "Live suggestions paused",
+    "pausedBody": "This month's AI allowance is used up. Recording and transcription continue.",
+    "upgrade": "Upgrade plan",
+    "askOwner": "Ask the owner to upgrade the plan."
+  },
+  "setup": {
+    "title": "Setting up your project",
+    "titleFailed": "Something did not finish setting up",
+    "titleDone": "Your project is set up",
+    "titleStack": "Your code is ready",
+    "collapse": "Hide steps",
+    "expand": "Show steps",
+    "dismiss": "Close",
+    "skip": "Skip",
+    "retry": "Retry",
+    "partial": "{{count}} failed",
+    "stack": {
+      "found": {
+        "one": "We found {{count}} technology missing from the project profile.",
+        "other": "We found {{count}} technologies missing from the project profile."
+      },
+      "apply": "Apply the detected stack"
+    },
+    "step": {
+      "JIRA_LINK": {
+        "RUNNING": "Linking the Jira project…",
+        "DONE": "Jira linked",
+        "FAILED": "Could not link Jira",
+        "SKIPPED": "Jira skipped"
+      },
+      "JIRA_IMPORT": {
+        "RUNNING": "Importing stories…",
+        "PROGRESS": "Importing {{done}}/{{total}} stories",
+        "DONE": "Stories imported",
+        "FAILED": "Could not import the stories",
+        "SKIPPED": "Import skipped"
+      },
+      "GITHUB_REPOS": {
+        "RUNNING": "Connecting and indexing the code…",
+        "PROGRESS": "Indexing {{done}}/{{total}} modules",
+        "DONE": "Code indexed",
+        "FAILED": "Could not index the code",
+        "SKIPPED": "Code skipped"
+      }
+    }
+  },
+  "charts": {
+    "showTable": "Show as table",
+    "showChart": "Show chart",
+    "week": "Week",
+    "weekOf": "Week of {{date}}"
   }
 }

@@ -14,6 +14,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { rememberReturnPath } from '../../../../core/navigation/return-path';
 import { JIRA_RETURN_KEY } from '../../data/integrations.models';
+import { JiraMark } from '../../../../shared/components/jira-mark/jira-mark';
 import { GitHubConnection } from '../../../discovery/components/github-connection/github-connection';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import { IntegrationConnectionResponse } from '../../data/integrations.models';
@@ -61,6 +62,7 @@ import {
     HlmSpinner,
     TranslocoPipe,
     GitHubConnection,
+    JiraMark,
   ],
   viewProviders: [
     provideIcons({
@@ -100,11 +102,20 @@ import {
         <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
           <section class="overflow-hidden rounded-2xl border border-border">
             <div class="flex flex-col gap-4 p-5">
-              <div class="flex flex-col gap-1">
-                <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
-                <p class="text-sm text-muted-foreground">
-                  {{ 'integrations.jira.description' | transloco }}
-                </p>
+              <div class="flex items-start gap-3">
+                <span
+                  class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#0052CC] text-white"
+                >
+                  <app-jira-mark [size]="18" />
+                </span>
+                <div class="flex min-w-0 flex-col gap-1">
+                  <h2 class="text-base font-semibold">
+                    {{ 'integrations.jira.title' | transloco }}
+                  </h2>
+                  <p class="text-sm text-muted-foreground">
+                    {{ 'integrations.jira.description' | transloco }}
+                  </p>
+                </div>
               </div>
 
               @if (connection(); as conn) {

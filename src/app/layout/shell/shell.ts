@@ -26,6 +26,7 @@ import { NavIcon } from '../../shared/components/nav-icon/nav-icon';
 import { CommandPalette } from '../../shared/components/command-palette/command-palette';
 import { ToastHost } from '../../shared/toast/toast-host';
 import { RecordingMinibar } from '../../features/discovery/components/recording-minibar/recording-minibar';
+import { ProjectSetupBar } from '../../features/workspace/components/project-setup-bar/project-setup-bar';
 import { IntegrationJobsBanner } from '../../features/workspace/components/integration-jobs-banner/integration-jobs-banner';
 import { HlmIcon } from '../../shared/ui';
 import {
@@ -91,6 +92,7 @@ interface Crumb {
     ToastHost,
     RecordingMinibar,
     IntegrationJobsBanner,
+    ProjectSetupBar,
     HlmIcon,
     TranslocoPipe,
   ],
@@ -223,6 +225,9 @@ interface Crumb {
             }
           </nav>
         </header>
+
+        <!-- Setup of a project created with Jira or GitHub sources, on every page of the project. -->
+        <app-project-setup-bar [projectId]="projectId()" />
 
         <!-- Global background-job progress (Jira import / push-all), any page of the project. -->
         <app-integration-jobs-banner [projectId]="projectId()" />

@@ -6,6 +6,7 @@ import {
   CodeRepositoryResponse,
   CodeRepositoryStatus,
 } from './codebase.models';
+import { lineReferenceLabel } from './code-verification';
 
 /**
  * Pure rules for a project's connected code: which repository references the connect form accepts,
@@ -126,22 +127,28 @@ export function normalizeTerm(value: string): string {
 
 /** A code reference as its chip shows it. */
 export interface LabelledReference extends CodeReference {
-  /** The module's name, followed by where it lives when another reference has the same name. */
+  /**
+   * A place in a file reads `path:lineStart-lineEnd`; a module reads its name, followed by where it
+   * lives when another module reference has the same name.
+   */
   label: string;
 }
 
 /**
- * Labels for a list of code references: the module's name, and for names that repeat (several
- * folders summarized as "Reservas") the folder too, or the repository for its root, so the chips
- * can be told apart.
+ * Labels for a list of code references: `path:lineStart-lineEnd` for a place in a file, and for a
+ * module its name, with the folder too for names that repeat (several folders summarized as
+ * "Reservas"), or the repository for its root, so the chips can be told apart.
  */
 export function labelReferences(refs: readonly CodeReference[]): LabelledReference[] {
   const counts = new Map<string, number>();
   for (const ref of refs) {
+    if (lineReferenceLabel(ref)) continue;
     const key = normalizeTerm(ref.name ?? '');
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return refs.map((ref) => {
+    const place = lineReferenceLabel(ref);
+    if (place) return { ...ref, label: place };
     const repeated = (counts.get(normalizeTerm(ref.name ?? '')) ?? 0) > 1;
     return { ...ref, label: repeated ? `${ref.name} · ${ref.path || ref.repository}` : ref.name };
   });

@@ -314,6 +314,33 @@ describe('labelReferences', () => {
 
     expect(labels).toEqual(['Reservas · acme/reservas', 'Pagos', 'reservas · src/reservations']);
   });
+
+  it('writes a place in a file as path:lines and keeps old references without lines as modules', () => {
+    const place = {
+      repository: 'acme/reservas',
+      path: 'src/reservations',
+      name: 'cancellation.policy.ts',
+      url: 'https://github.com/acme/reservas/blob/abc/src/reservations/cancellation.policy.ts#L2-L4',
+      file: 'src/reservations/cancellation.policy.ts',
+      lineStart: 2,
+      lineEnd: 4,
+      quote: 'LIMIT = 2',
+    };
+
+    const labels = labelReferences([place, ref('Reservas', 'src/reservations')]).map(
+      (r) => r.label,
+    );
+
+    expect(labels).toEqual(['src/reservations/cancellation.policy.ts:2-4', 'Reservas']);
+  });
+
+  it('does not count a place in a file against the module names', () => {
+    const place = { ...ref('Reservas', 'src'), file: 'src/a.ts', lineStart: 1, lineEnd: 1 };
+
+    expect(
+      labelReferences([place, ref('Reservas', 'src/reservations')]).map((r) => r.label),
+    ).toEqual(['src/a.ts:1', 'Reservas']);
+  });
 });
 
 describe('GitHub picker helpers', () => {

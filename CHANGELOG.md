@@ -9,11 +9,52 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Token usage — `feature/93-token-usage-ui`, #93)
+- The usage page (Settings → Usage) says where the period's tokens went: bars by feature (live suggestions, chat, meeting wrap-up, code, documents, similarity search) and by project, the minutes of audio transcribed (measured apart, no tokens) and how much of the AI input came from the provider cache and counts half. A card shows "≈ N min de reunión" left, at the rate measured on the organization's own meetings or the documented default.
+- A banner on the usage page at 80, 90 and 100 % of the monthly AI allowance, with an upgrade link; at the cap it says what stops (suggestions and chat) and what does not (reading, editing, exporting) and when it renews.
+- The capture page shows a compact notice from 90 % on, and when live suggestions are paused by the allowance (`AI_QUOTA_PAUSED`) it says recording and transcription go on. A chat message refused with `AI_QUOTA_EXCEEDED` (402) keeps the draft and shows a clear message. Members who cannot read the usage learn of the allowance from the `TOKEN_QUOTA_WARNING` pushes on `/topic/organizations/{id}/usage` and from refused requests.
+- Small accessible `app-usage-bars` and `app-quota-banner` components (no chart dependency).
+
+### Added
+- "Verificar en el código" on suggestion cards, in the capture queue and in the assistant chat (#94). It is offered only when the project has a READY repository and the user can read integrations and decide suggestions. It asks the API to search the pure source code (`POST …/suggestions/{id}/verify-code`), shows the progress on the button (with an `aria-live` announcement), and applies the result live from `SUGGESTION_CODE_UPDATED` (session topic, and `/topic/projects/{id}/suggestions` for chat suggestions): a banner (already exists, contradicts, not found, inconclusive), the note and the places cited as `path:lineStart-lineEnd` links that open GitHub at the indexed commit in a new tab. A refused request or a verdict that does not arrive in 35 seconds shows an error with a retry. References without lines (older ones) keep showing the module.
+- The assistant chat shows when a reply came from searching the source code, with the same reference chips.
+
+### Added
+- **Create a project with Jira and GitHub (#95).** The new-project page is a three-step wizard: basics, sources and confirm. The sources step is optional: pick the Jira project and issue type (and whether to import its existing stories) and up to three repositories from what the organization's GitHub App shares, each with an optional branch. An organization that has not connected Jira or GitHub is shown how: owners and admins get the connect actions (the wizard is kept across the trip to GitHub or Atlassian and comes back to the same step); anyone else is told to ask an admin. "Create project" on the first step still creates a project with no sources.
+- **"Configurando tu proyecto" bar.** The project opens right away and a slim bar under the top bar, on every page of the project, follows the setup in the background (the Jira link and import, the repositories' indexing with "Indexando 3/7 módulos"), live over the socket with a poll as backup. Each open or failed step can be left out ("Omitir"), a failed one retried, and once the code is indexed "Aplicar el stack detectado" adds the detected technology to the project's profile in one click (never on its own). It dismisses itself when everything finished, remembered per project.
+
+### Added
+
+- **Organization overview** (`/overview`, first item of the organization sidebar, for every member; #92).
+  - KPIs (projects, active stories, sessions, AI acceptance and, for owners and admins, members),
+    weekly activity, stories by status and priority, how the copilot's proposals fared, the busiest
+    projects and, for the owner, the AI token consumption against the plan.
+  - Covers only the projects the caller may reach; a new organization shows an empty state that points to
+    projects.
+- **Project overview with charts and KPIs**, keeping the shortcuts: active stories, story points, sessions
+  and AI acceptance with a trend against the previous 4 weeks, weekly sessions and stories, stories by
+  status and priority, copilot proposals (accepted, dismissed, pending), requirement coverage (acceptance
+  criteria, origin quote, linked code), the project's context (glossary, constraints, documents, code) and
+  the latest sessions and stories.
+  - A section the caller's project permissions do not allow is left out; a project with no data says
+    what to do instead of showing zeros.
+- **Dashboard components without a charting dependency** (`shared/charts`): stat tile with trend,
+  stacked bar, bar list, donut, meter and a weekly line chart in inline SVG and CSS.
+  - Each one is its own text alternative (legend with counts, `role="meter"`, an svg label); the line chart
+    adds a crosshair readout reachable with the arrow keys and a "Show as table" toggle.
+  - Chart colours are `--chart-*` tokens in both themes, checked with the dataviz palette validator.
+
 ### Changed
+- Deciding a suggestion no longer leaves a draft behind an "Aceptar" button (#96). Every suggestion that creates or changes a story (new story, update, edge case) offers "Aprobar" (the story ends approved, shown only with the `STORY_APPROVE` permission) and "Guardar como borrador" (the story ends as a draft), plus "Descartar"; without the permission "Guardar como borrador" is the main action. The clarifying question keeps "Resolver". This covers the review tray and the chat cards, also after editing the suggestion. The decision row and the chat now say "Aprobada" or "Borrador" (and "Aprobada por el analista" / "Guardada como borrador por el analista"), from the `resolvedStoryStatus` the API returns and pushes. On a phone the two main actions take the full width. Test ids: `suggestion-accept` stays on the main action (Aprobar), `suggestion-save-draft` is new.
+- Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.
+- Capture page: each session's header (name, time, speakers and the "Speakers" action) sticks to the top of the feed while that session is on screen, so naming speakers no longer means scrolling to the top of a long conversation. On a phone the speaker chips shrink to their color dots.
+
+- Glossary and Constraints: creating a term or a constraint no longer uses the inline "add" card above the table. A "New term" / "New constraint" button in the page header (and on the empty state), gated by the same write permission as before, opens a modal, like the other dialogs of the Stories page. Create and edit now share that one modal: the first field is focused on open, Enter (or Ctrl/Cmd+Enter in the text areas) submits, required fields are validated inline (a whitespace-only value counts as empty), the constraint description shows a character counter, the submit button shows a spinner while saving, and an API error such as a duplicate (409) appears inside the modal, which stays open. A saved term or constraint shows a success toast and the list reloads. `Modal` focuses the first element marked `data-autofocus` instead of only the dialog. The `product` E2E spec follows the modal flow.
 - The release pull request and the back-merge pull request are opened by the GitHub App `reqsai-release-bot` (a short-lived token minted per job from `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`), so their CI runs: opened with `GITHUB_TOKEN` they started no `pull_request` workflow. The back-merge turns on auto-merge (merge commit) when the repository allows it; without the App configuration the job fails instead of falling back to `GITHUB_TOKEN`.
 - `produccion.yml` and `rollback.yml` dispatch `reqsai-infra`'s `deploy-mvp.yml` with a `reqsai-release-bot` token limited to `reqsai-infra` (Actions: write) and watch the run with the workflow token, instead of the personal token `INFRA_DEPLOY_TOKEN`, which is no longer used.
 
 ### Fixed
+- Capture page: the assistant chat and the recordings now read as one timeline in the order things happened (#90). Chat used to be drawn as a block after every session, so writing to ReqsAI and then recording put the new session above the older chat. Sessions are ordered by start time; a message sent during a session sits among its segments, and messages between sessions form their own runs. A feed too short to scroll now keeps paging older history in.
 - Release notes longer than GitHub's 125000-character limit are cut at a line break with a link to the full CHANGELOG, instead of failing the tag after the deploy (1.2.0 of reqsai-api).
 
 ## [1.3.0] - 2026-10-10
@@ -39,6 +80,9 @@ follows [Semantic Versioning](https://semver.org/).
   - **GitHub in Settings → Integrations** (owners and admins), next to Jira: the connected GitHub
     accounts (organization or personal, all or selected repositories, suspended), "Gestionar en GitHub",
     "Desconectar" with a confirmation, and "Conectar GitHub" / "Conectar otra cuenta".
+  - **Jira gets its mark too**, like GitHub, on the Jira cards of the organization and of the project.
+  - **Restoring the demo project** now says it also clears the project's integrations (connected GitHub
+    repositories and the Jira mapping), which the API does.
   - **GitHub's redirect** lands on `/settings/integrations/github/callback` (chrome-less, like Jira's): it
     posts the installation id, signed state and OAuth code for the API to verify, explains a request a
     GitHub organization owner must approve, and returns to the page that started the install (only an

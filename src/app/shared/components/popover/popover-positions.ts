@@ -20,3 +20,15 @@ export const ABOVE_START: ConnectedPosition[] = [
   { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -GAP },
   { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: GAP },
 ];
+
+/** Panel below the trigger, right-aligned (a toolbar button at the end of a header). */
+export const BELOW_END: ConnectedPosition[] = [
+  { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: GAP },
+  { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -GAP },
+];
+
+/** Panel above the trigger, right-aligned (a composer button at the end of a bottom bar). */
+export const ABOVE_END: ConnectedPosition[] = [
+  { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -GAP },
+  { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: GAP },
+];

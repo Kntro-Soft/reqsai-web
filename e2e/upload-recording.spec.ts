@@ -42,6 +42,7 @@ test.describe('Upload a recording', () => {
 
     await uiLogin(page, email);
     await page.goto(`/projects/${projectId}/sessions`);
+    await page.getByTestId('capture-menu').click();
     await page.getByTestId('upload-recording-open').click();
 
     // A file that is not audio is refused before anything is sent.

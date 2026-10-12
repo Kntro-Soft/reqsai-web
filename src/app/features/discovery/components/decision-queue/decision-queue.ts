@@ -220,10 +220,13 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                     [suggestion]="suggestion"
                     [targetStory]="targetStory(suggestion)"
                     [canDecide]="canDecide()"
+                    [canApprove]="canApprove()"
+                    [canVerify]="canVerify()"
                     [busy]="store.deciding().includes(suggestion.id)"
                     [evidenceSegment]="store.evidenceSegment(suggestion)"
                     (accept)="decideAccept.emit({ suggestion, body: $event })"
                     (dismiss)="decideDismiss.emit(suggestion)"
+                    (verify)="verifyCode.emit(suggestion)"
                     (openTarget)="openTarget.emit($event)"
                     (showEvidence)="showEvidence.emit($event)"
                   />
@@ -315,11 +318,17 @@ export class DecisionQueue {
 
   /** False renders read-only cards (viewer without decide rights). */
   readonly canDecide = input(true);
+  /** True when the viewer holds STORY_APPROVE (see the card's `canApprove`). */
+  readonly canApprove = input(false);
+  /** Whether the cards offer "Verificar en el código" (ready repository and the permissions). */
+  readonly canVerify = input(false);
   readonly decideAccept = output<{
     suggestion: SuggestionResponse;
     body: AcceptSuggestionRequest;
   }>();
   readonly decideDismiss = output<SuggestionResponse>();
+  /** Asks the page to verify a suggestion in the source code (also the retry after a failure). */
+  readonly verifyCode = output<SuggestionResponse>();
   readonly openTarget = output<string>();
   /** Asks the page to scroll the feed to the transcript bubble a suggestion's evidence quotes. */
   readonly showEvidence = output<EvidenceSegment>();

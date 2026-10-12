@@ -1,12 +1,17 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  afterNextRender,
   computed,
+  effect,
+  Injector,
   inject,
   input,
   linkedSignal,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,8 +21,11 @@ import {
   lucideArrowUpRight,
   lucideCircleHelp,
   lucideCodeXml,
+  lucideFileSearch,
   lucidePlus,
   lucideQuote,
+  lucideRefreshCw,
+  lucideSearchX,
   lucideSparkles,
   lucideTrash2,
   lucideTriangleAlert,
@@ -34,16 +42,52 @@ import {
   emptyEditableCriterion,
   suggestionCriteria,
 } from '../../data/discovery.models';
-import { CodeReference, SuggestionCodeInsight } from '../../data/codebase.models';
-import { LabelledReference, labelReferences } from '../../data/codebase';
+import { CodeBannerKind, codeBannerKind, verifyStateOf } from '../../data/code-verification';
+import { CodeReference } from '../../data/codebase.models';
 import { EvidenceSegment, evidenceSpeakerLabel } from '../../data/evidence';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { translateFn } from '../../../../core/i18n/translate-fn';
 import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
+import { CodeReferences } from '../code-references/code-references';
 import { GherkinSteps } from '../gherkin-steps/gherkin-steps';
 import { PriorityBadge } from '../story-badges/story-badges';
 
 const PRIORITIES: SuggestionPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+/** How each outcome of the code check reads on the card. */
+const BANNERS: Record<CodeBannerKind, { testId: string; labelKey: string; icon: string }> = {
+  exists: {
+    testId: 'suggestion-code-exists',
+    labelKey: 'discovery.suggestion.code.exists',
+    icon: 'lucideCodeXml',
+  },
+  conflicts: {
+    testId: 'suggestion-code-conflict',
+    labelKey: 'discovery.suggestion.code.conflicts',
+    icon: 'lucideTriangleAlert',
+  },
+  notFound: {
+    testId: 'suggestion-code-notfound',
+    labelKey: 'discovery.suggestion.code.notFound',
+    icon: 'lucideSearchX',
+  },
+  unsure: {
+    testId: 'suggestion-code-unsure',
+    labelKey: 'discovery.suggestion.code.unsure',
+    icon: 'lucideCircleHelp',
+  },
+};
+
+/** The code banner of a card: its look, the note, the places it cites and whether it was verified. */
+interface CodeBanner {
+  kind: CodeBannerKind;
+  testId: string;
+  labelKey: string;
+  icon: string;
+  note: string | null;
+  references: CodeReference[];
+  verified: boolean;
+}
 
 /** Story fields an UPDATE_STORY suggestion can change (highlighted on the proposed side). */
 type StoryField = 'title' | 'role' | 'action' | 'benefit';
@@ -55,7 +99,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
  * so it never reads like content an analyst already validated. The story reads
  * as its canonical sentence ("Como …, quiero …, para …") and criteria as
  * Given/When/Then steps. Clicking "Edit" opens labelled, auto-growing fields;
- * accepting sends only the changed fields to the backend. Read-only when
+ * approving or saving as a draft sends only the changed fields to the backend. Read-only when
  * `canDecide` is false. `openTarget` asks the page to reveal the target story.
  */
 @Component({
@@ -66,6 +110,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
     NgTemplateOutlet,
     FormsModule,
     Select,
+    CodeReferences,
     GherkinSteps,
     PriorityBadge,
     HlmButton,
@@ -79,8 +124,11 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
       lucideArrowUpRight,
       lucideCircleHelp,
       lucideCodeXml,
+      lucideFileSearch,
       lucidePlus,
       lucideQuote,
+      lucideRefreshCw,
+      lucideSearchX,
       lucideSparkles,
       lucideTrash2,
       lucideTriangleAlert,
@@ -139,91 +187,85 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
       <!-- Body (scrolls when long) -->
       <div class="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-4 py-3">
         <!-- What the connected code says, before the proposal itself: it changes the decision.
-             A conflict reads amber (look closer), an existing capability stays neutral. -->
-        @if (codeInsight(); as insight) {
-          @let conflict = insight.finding === 'CONFLICTS_WITH_CODE';
+             A conflict reads amber (look closer); an existing capability, nothing found or an
+             inconclusive check stay neutral. -->
+        @if (codeBanner(); as banner) {
           <div
+            #codeBlock
             class="mb-3 rounded-xl border px-3 py-2.5"
             [class]="
-              conflict ? 'border-pending-border bg-pending-soft' : 'border-border bg-muted/60'
+              banner.kind === 'conflicts'
+                ? 'border-pending-border bg-pending-soft'
+                : 'border-border bg-muted/60'
             "
             role="note"
-            [attr.data-testid]="conflict ? 'suggestion-code-conflict' : 'suggestion-code-exists'"
+            [attr.data-testid]="banner.testId"
           >
             <p
               class="flex items-center gap-1.5 text-xs font-semibold"
-              [class.text-pending]="conflict"
-              [class.text-foreground]="!conflict"
+              [class.text-pending]="banner.kind === 'conflicts'"
+              [class.text-foreground]="banner.kind !== 'conflicts'"
             >
-              <hlm-icon
-                [name]="conflict ? 'lucideTriangleAlert' : 'lucideCodeXml'"
-                size="14px"
-                class="shrink-0"
-                aria-hidden="true"
-              />
-              {{
-                (conflict
-                  ? 'discovery.suggestion.code.conflicts'
-                  : 'discovery.suggestion.code.exists'
-                ) | transloco
-              }}
+              <hlm-icon [name]="banner.icon" size="14px" class="shrink-0" aria-hidden="true" />
+              {{ banner.labelKey | transloco }}
             </p>
-            @if (insight.note) {
+            @if (banner.note) {
               <p
                 class="mt-1 text-sm leading-relaxed text-foreground"
                 data-testid="suggestion-code-note"
               >
-                {{ insight.note }}
+                {{ banner.note }}
               </p>
             }
-            @if (insight.references.length > 0) {
-              <ul
-                class="mt-2 flex flex-wrap gap-1.5"
-                [attr.aria-label]="'discovery.suggestion.code.references' | transloco"
+            @if (banner.references.length > 0) {
+              <app-code-references
+                class="mt-2 block"
+                [references]="banner.references"
+                chipTestId="suggestion-code-ref"
+              />
+            }
+            @if (banner.verified) {
+              <p
+                class="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground"
+                data-testid="suggestion-code-verified"
               >
-                @for (ref of insight.references; track ref.repository + ':' + ref.path) {
-                  <li class="min-w-0 max-w-full">
-                    @if (ref.url) {
-                      <a
-                        [href]="ref.url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        [title]="referenceTitle(ref)"
-                        class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                        data-testid="suggestion-code-ref"
-                      >
-                        <hlm-icon
-                          name="lucideCodeXml"
-                          size="12px"
-                          class="shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span class="truncate">{{ ref.label }}</span>
-                        <hlm-icon
-                          name="lucideArrowUpRight"
-                          size="12px"
-                          class="shrink-0 text-muted-foreground"
-                          aria-hidden="true"
-                        />
-                      </a>
-                    } @else {
-                      <span
-                        [title]="referenceTitle(ref)"
-                        class="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs font-medium text-foreground"
-                        data-testid="suggestion-code-ref"
-                      >
-                        <hlm-icon
-                          name="lucideCodeXml"
-                          size="12px"
-                          class="shrink-0"
-                          aria-hidden="true"
-                        />
-                        <span class="truncate">{{ ref.label }}</span>
-                      </span>
-                    }
-                  </li>
+                <hlm-icon name="lucideFileSearch" size="12px" class="shrink-0" aria-hidden="true" />
+                {{ 'discovery.suggestion.code.verifiedInCode' | transloco }}
+                @if (verifiedAt(); as at) {
+                  · <time [attr.datetime]="at">{{ at | date: 'HH:mm' }}</time>
                 }
-              </ul>
+              </p>
+            }
+          </div>
+        }
+
+        @if (verifyState() === 'FAILED') {
+          <div
+            #failedBlock
+            class="mb-3 flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5"
+            data-testid="suggestion-verify-error"
+          >
+            <p class="flex min-w-0 items-start gap-1.5 text-sm text-foreground">
+              <hlm-icon
+                name="lucideTriangleAlert"
+                size="14px"
+                class="mt-0.5 shrink-0 text-destructive"
+                aria-hidden="true"
+              />
+              <span>{{ 'discovery.suggestion.code.failed' | transloco }}</span>
+            </p>
+            @if (canVerify()) {
+              <button
+                hlmBtn
+                size="sm"
+                variant="outline"
+                type="button"
+                (click)="verify.emit()"
+                data-testid="suggestion-verify-retry"
+              >
+                <hlm-icon name="lucideRefreshCw" size="13px" aria-hidden="true" />
+                {{ 'discovery.suggestion.code.retry' | transloco }}
+              </button>
             }
           </div>
         }
@@ -399,22 +441,65 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
         }
       </div>
 
+      <!-- Announces the verification to screen readers; the visual state lives in the banner and the button. -->
+      <p class="sr-only" role="status" aria-live="polite" data-testid="suggestion-verify-status">
+        {{ verifyAnnouncement() }}
+      </p>
+
       @if (canDecide()) {
         <footer class="flex flex-wrap items-center gap-2 border-t border-border/70 px-4 py-3">
-          <button
-            hlmBtn
-            size="sm"
-            type="button"
-            [disabled]="busy()"
-            (click)="onAccept()"
-            data-testid="suggestion-accept"
-          >
-            @if (busy()) {
-              <hlm-spinner class="h-3.5 w-3.5" />
+          @if (isQuestion()) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="busy()"
+              (click)="onAccept(false)"
+              data-testid="suggestion-accept"
+            >
+              @if (busy()) {
+                <hlm-spinner class="h-3.5 w-3.5" />
+              }
+              {{ 'discovery.suggestion.resolve' | transloco }}
+            </button>
+          } @else {
+            <!-- Approving needs STORY_APPROVE: without it nobody is offered an action they cannot take,
+                 and saving as a draft is the primary action. -->
+            @if (canApprove()) {
+              <button
+                hlmBtn
+                class="w-full sm:w-auto"
+                size="sm"
+                type="button"
+                [disabled]="busy()"
+                [attr.aria-label]="'discovery.suggestion.approveAria' | transloco"
+                (click)="onAccept(true)"
+                data-testid="suggestion-accept"
+              >
+                @if (busy()) {
+                  <hlm-spinner class="h-3.5 w-3.5" />
+                }
+                {{ 'discovery.suggestion.approve' | transloco }}
+              </button>
             }
-            {{ acceptLabel() | transloco }}
-          </button>
-          @if (suggestion().type !== 'CLARIFYING_QUESTION') {
+            <button
+              hlmBtn
+              class="w-full sm:w-auto"
+              size="sm"
+              [variant]="canApprove() ? 'outline' : 'default'"
+              type="button"
+              [disabled]="busy()"
+              [attr.aria-label]="'discovery.suggestion.saveDraftAria' | transloco"
+              (click)="onAccept(false)"
+              [attr.data-testid]="canApprove() ? 'suggestion-save-draft' : 'suggestion-accept'"
+            >
+              @if (busy() && !canApprove()) {
+                <hlm-spinner class="h-3.5 w-3.5" />
+              }
+              {{ 'discovery.suggestion.saveDraft' | transloco }}
+            </button>
+          }
+          @if (!isQuestion()) {
             <button
               hlmBtn
               size="sm"
@@ -428,6 +513,32 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
                 (editing() ? 'discovery.suggestion.cancelEdit' : 'discovery.suggestion.edit')
                   | transloco
               }}
+            </button>
+          }
+          @if (canVerify() && verifyState() !== 'FAILED') {
+            <button
+              hlmBtn
+              size="sm"
+              variant="ghost"
+              type="button"
+              class="text-muted-foreground"
+              [disabled]="busy() || verifyState() === 'VERIFYING'"
+              [attr.aria-busy]="verifyState() === 'VERIFYING'"
+              (click)="verify.emit()"
+              data-testid="suggestion-verify"
+            >
+              @if (verifyState() === 'VERIFYING') {
+                <hlm-spinner class="h-3.5 w-3.5" />
+                {{ 'discovery.suggestion.code.verifying' | transloco }}
+              } @else {
+                <hlm-icon name="lucideFileSearch" size="14px" aria-hidden="true" />
+                {{
+                  (verifyState() === 'VERIFIED'
+                    ? 'discovery.suggestion.code.verifyAgain'
+                    : 'discovery.suggestion.code.verify'
+                  ) | transloco
+                }}
+              }
             </button>
           }
           <!-- Discard is irreversible: kept apart from Edit/Cancel and visually quiet. -->
@@ -662,6 +773,8 @@ export class SuggestionCard {
   readonly targetStory = input<DisplayStory | undefined>(undefined);
   /** False renders the card read-only (viewer without decide rights). */
   readonly canDecide = input(true);
+  /** True when the viewer holds STORY_APPROVE: only then is "Aprobar" offered next to the draft save. */
+  readonly canApprove = input(false);
   /** True while this suggestion's accept/dismiss (incl. its retry) is in flight. */
   readonly busy = input(false);
   /**
@@ -669,8 +782,15 @@ export class SuggestionCard {
    * not in the feed — then the quote shows without a link.
    */
   readonly evidenceSegment = input<EvidenceSegment | null>(null);
+  /**
+   * Whether the analyst may verify the suggestion in the code: the project has a ready repository
+   * and they can read integrations and decide suggestions.
+   */
+  readonly canVerify = input(false);
   readonly accept = output<AcceptSuggestionRequest>();
   readonly dismiss = output<void>();
+  /** Asks the page to verify this suggestion in the pure source code (also the retry). */
+  readonly verify = output<void>();
   /** Asks the page to reveal the target story in the side panel. */
   readonly openTarget = output<string>();
   /** Asks the page to scroll the feed to the evidence's transcript bubble. */
@@ -686,18 +806,63 @@ export class SuggestionCard {
   private readonly transloco = inject(TranslocoService);
   private readonly translate = translateFn(this.transloco);
 
-  /** The code insight worth a banner: only a real finding (the code was checked with none = no banner). */
-  protected readonly codeInsight = computed<
-    (SuggestionCodeInsight & { references: LabelledReference[] }) | null
-  >(() => {
+  private readonly injector = inject(Injector);
+  private readonly codeBlock = viewChild<ElementRef<HTMLElement>>('codeBlock');
+  private readonly failedBlock = viewChild<ElementRef<HTMLElement>>('failedBlock');
+
+  constructor() {
+    // The result lands at the top of a scrollable body while the button that asked for it is in the
+    // footer: bring it into view when the verification ends.
+    effect(() => {
+      const state = this.verifyState();
+      if (state !== 'VERIFIED' && state !== 'FAILED') return;
+      afterNextRender(
+        () => {
+          const block = state === 'FAILED' ? this.failedBlock() : this.codeBlock();
+          block?.nativeElement.scrollIntoView?.({ block: 'nearest' });
+        },
+        { injector: this.injector },
+      );
+    });
+  }
+
+  protected readonly verifyState = computed(() => verifyStateOf(this.suggestion()));
+
+  protected readonly verifiedAt = computed(() => this.suggestion().code?.verifiedAt ?? null);
+
+  /**
+   * The code banner: a deep verdict when the analyst verified, else the quick finding. Nothing
+   * when the code was checked and said nothing worth a banner.
+   */
+  protected readonly codeBanner = computed<CodeBanner | null>(() => {
     const code = this.suggestion().code;
-    if (!code || (code.finding !== 'ALREADY_EXISTS' && code.finding !== 'CONFLICTS_WITH_CODE')) {
-      return null;
-    }
+    const kind = codeBannerKind(code);
+    if (!code || !kind) return null;
     return {
-      ...code,
-      references: labelReferences(Array.isArray(code.references) ? code.references : []),
+      kind,
+      ...BANNERS[kind],
+      note: code.note,
+      references: Array.isArray(code.references) ? code.references : [],
+      verified: !!code.verdict,
     };
+  });
+
+  /** What a screen reader hears as the verification moves. */
+  protected readonly verifyAnnouncement = computed(() => {
+    const t = this.translate();
+    if (!t) return '';
+    switch (this.verifyState()) {
+      case 'VERIFYING':
+        return t('discovery.suggestion.code.verifying');
+      case 'FAILED':
+        return t('discovery.suggestion.code.failed');
+      case 'VERIFIED': {
+        const kind = this.codeBanner()?.kind;
+        return kind ? t('discovery.suggestion.code.done') + ' ' + t(BANNERS[kind].labelKey) : '';
+      }
+      default:
+        return '';
+    }
   });
 
   /** The transcript evidence, shown only for a suggestion raised in a session. */
@@ -743,14 +908,8 @@ export class SuggestionCard {
     this.editing() ? this.model().storyPoints : this.suggestion().draftStoryPoints,
   );
 
-  /** Questions are "resolved", not "accepted" — accepting just records them as addressed. */
-  protected readonly acceptLabel = computed(() =>
-    this.suggestion().type === 'CLARIFYING_QUESTION'
-      ? 'discovery.suggestion.resolve'
-      : this.editing()
-        ? 'discovery.suggestion.saveAndAccept'
-        : 'discovery.suggestion.accept',
-  );
+  /** Questions are "resolved", not approved: they produce no story, so they have one action. */
+  protected readonly isQuestion = computed(() => this.suggestion().type === 'CLARIFYING_QUESTION');
 
   /** True when an UPDATE_STORY proposal differs from its target in any story field. */
   protected readonly hasChanges = computed(() =>
@@ -799,11 +958,6 @@ export class SuggestionCard {
     );
   }
 
-  /** The module's place in the code: `owner/name/path` (the repository alone for its root). */
-  protected referenceTitle(ref: CodeReference): string {
-    return ref.path ? `${ref.repository}/${ref.path}` : ref.repository;
-  }
-
   /** A stable, unique id for a criterion field so its gutter label can point at it. */
   protected fieldId(index: number, field: string): string {
     return `sg-${this.suggestion().id}-c${index}-${field}`;
@@ -830,12 +984,14 @@ export class SuggestionCard {
       : '';
   }
 
-  protected onAccept(): void {
+  /** Accepts the draft (or the edits) and approves the resulting story, or saves it as a draft. */
+  protected onAccept(approve: boolean): void {
+    const flag = approve && !this.isQuestion() ? { approve: true } : {};
     if (!this.editing()) {
-      this.accept.emit({});
+      this.accept.emit(flag);
       return;
     }
-    this.accept.emit(editableToAcceptRequest(this.suggestion(), this.model()));
+    this.accept.emit({ ...editableToAcceptRequest(this.suggestion(), this.model()), ...flag });
     this.editing.set(false);
   }
 }
