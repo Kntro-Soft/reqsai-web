@@ -217,7 +217,8 @@
     "createOrganization": "Crear organización",
     "signOut": "Cerrar sesión",
     "upgrade": "Mejorar plan",
-    "accountSettings": "Ajustes de cuenta"
+    "accountSettings": "Ajustes de cuenta",
+    "tour": "Tour guiado"
   },
   "orgSwitcher": {
     "ariaLabel": "Cambiar organización",
@@ -2100,7 +2101,54 @@
       "approvedByYou": "Aprobaste esta historia",
       "unavailableTitle": "Este enlace ya no está disponible",
       "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
-      "footer": "Compartido con ReqsAI"
+      "footer": "Compartido con ReqsAI",
+      "session": {
+        "eyebrow": "Sesión compartida",
+        "introView": "Estás viendo esta sesión. La página se actualiza sola y no puedes cambiar nada.",
+        "introReview": "Sigues esta sesión como revisor. La página se actualiza sola; acepta o descarta lo que sugiere el asistente y aprueba o rechaza las historias.",
+        "transcript": "Conversación",
+        "noTranscript": "Todavía no se ha dicho nada.",
+        "latest": "Mostrando las últimas {{shown}} de {{total}} líneas.",
+        "suggestions": "Sugerencias",
+        "noSuggestions": "Nada esperando una decisión.",
+        "stories": "Historias",
+        "noStories": "Aún no hay historias.",
+        "status": {
+          "DRAFT": "Sin iniciar",
+          "RECORDING": "En vivo",
+          "PAUSED": "En pausa",
+          "STOPPED": "Terminada",
+          "PROCESSING": "Procesando",
+          "COMPLETED": "Terminada",
+          "FAILED": "Con error"
+        },
+        "type": {
+          "NEW_STORY": "Historia nueva",
+          "UPDATE_STORY": "Cambio a una historia",
+          "EDGE_CASE": "Caso límite",
+          "CLARIFYING_QUESTION": "Pregunta por aclarar"
+        },
+        "acceptApprove": "Aceptar y aprobar",
+        "acceptDraft": "Aceptar como borrador",
+        "resolve": "Marcar como respondida",
+        "dismiss": "Descartar",
+        "approve": "Aprobar",
+        "reject": "Rechazar",
+        "backToDraft": "Volver a borrador",
+        "readOnly": "Este enlace solo permite mirar.",
+        "decideFailed": "No se pudo. La página se actualizó; inténtalo de nuevo."
+      }
+    },
+    "session": {
+      "action": "Compartir sesión",
+      "title": "Compartir esta sesión",
+      "description": "Crea un enlace para que tu cliente siga esta sesión sin cuenta. Ve la transcripción, las sugerencias y las historias, y la página se actualiza sola.",
+      "access": "¿Qué puede hacer?",
+      "VIEW": "Espectador",
+      "VIEWHint": "Solo mira. No puede cambiar nada.",
+      "REVIEW": "Revisor",
+      "REVIEWHint": "Mira y además acepta o descarta sugerencias y aprueba o rechaza historias.",
+      "none": "Todavía no compartiste esta sesión."
     }
   },
   "quota": {
@@ -2161,5 +2209,49 @@
     "showChart": "Ver gráfico",
     "week": "Semana",
     "weekOf": "Semana del {{date}}"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "¿Por dónde quieres empezar?",
+      "subtitle": "Tu espacio ya está listo. Elige una entrada; puedes volver a esto desde el menú cuando quieras.",
+      "dismiss": "Cerrar",
+      "demoTitle": "Prueba primero el demo",
+      "demoBody": "Un proyecto de ejemplo con sesiones, historias y glosario para ver ReqsAI en acción antes de crear el tuyo.",
+      "demoCta": "Abrir el demo",
+      "createTitle": "Crea tu proyecto",
+      "createBody": "Descríbelo, o deja que ReqsAI lo redacte desde Jira o GitHub.",
+      "createCta": "Nuevo proyecto",
+      "connectTitle": "Conecta Jira o GitHub",
+      "connectBody": "Importa tu backlog y deja que el copiloto lea tu código.",
+      "connectBodyMember": "Quien administra la organización conecta Jira y GitHub.",
+      "connectCta": "Abrir integraciones",
+      "tourCta": "Hacer el tour rápido"
+    },
+    "tour": {
+      "next": "Siguiente",
+      "back": "Atrás",
+      "done": "Listo",
+      "progress": "{current} de {total}",
+      "org": {
+        "title": "Tu organización",
+        "body": "Cambia de organización o crea otra desde aquí."
+      },
+      "search": {
+        "title": "Encuentra lo que sea",
+        "body": "Salta a cualquier proyecto, sesión o página sin buscar en menús."
+      },
+      "nav": {
+        "title": "Tu espacio de trabajo",
+        "body": "Todo lo de la organización o del proyecto en el que estás vive en este menú."
+      },
+      "newProject": {
+        "title": "Empieza un proyecto",
+        "body": "Crea uno y graba tu primera sesión de levantamiento."
+      },
+      "user": {
+        "title": "Tu cuenta",
+        "body": "Tema, idioma y este tour otra vez cuando lo quieras."
+      }
+    }
   }
 }

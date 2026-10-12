@@ -85,6 +85,7 @@ import { CodeReferences } from '../../components/code-references/code-references
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
 import { UploadRecording } from '../../components/upload-recording/upload-recording';
 import { CaptureMenu } from '../../components/capture-menu/capture-menu';
+import { ShareLinks } from '../../components/share-links/share-links';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -113,6 +114,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     QuotaBanner,
+    ShareLinks,
     NgTemplateOutlet,
     DatePipe,
     TranslocoPipe,
@@ -229,6 +231,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               [canUpload]="canRecord() && !store.liveSession()"
               [speakers]="speakersTarget() !== null"
               [canEditSpeakers]="canRecord()"
+              [canShare]="canShareSession()"
+              (shareRequested)="shareOpen.set(true)"
               (uploadRequested)="uploadOpen.set(true)"
               (speakersRequested)="openCurrentSpeakers()"
             />
@@ -1191,6 +1195,15 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       </button>
     </app-modal>
 
+    @if (shareTarget(); as target) {
+      <app-share-links
+        [projectId]="projectId()"
+        [sessionId]="target"
+        [canDecide]="canDecide()"
+        [(open)]="shareOpen"
+      />
+    }
+
     <app-upload-recording
       [(open)]="uploadOpen"
       [projectId]="projectId()"
@@ -1269,6 +1282,7 @@ export class DiscoveryChat implements OnInit {
 
   /** The "upload a recording" dialog (US41). */
   protected readonly uploadOpen = signal(false);
+  protected readonly shareOpen = signal(false);
 
   /** The transcript bubble (`sessionId:sequence`) briefly highlighted after revealing evidence. */
   protected readonly flashSegment = signal<string | null>(null);
@@ -1352,6 +1366,20 @@ export class DiscoveryChat implements OnInit {
   protected readonly canRecord = computed(() => this.permissions.has('SESSION_RUN'));
   /** Accepting or dismissing AI suggestions. */
   protected readonly canDecide = computed(() => this.permissions.has('SESSION_DECIDE'));
+
+  /** The session a link would follow: the live one, else the latest on the page. */
+  protected readonly shareTarget = computed<string | null>(() => {
+    const live = this.store.liveSession()?.id;
+    if (live) return live;
+    const blocks = this.store.blocks();
+    return blocks.length > 0 ? blocks[blocks.length - 1].session.id : null;
+  });
+  protected readonly canShareSession = computed(
+    () =>
+      this.shareTarget() !== null &&
+      this.permissions.has('STORY_WRITE') &&
+      this.permissions.has('SESSION_READ'),
+  );
   /** Approving the story an accepted suggestion produces (the story review permission). */
   protected readonly canApprove = computed(() => this.permissions.has('STORY_APPROVE'));
   /** Writing to ReqsAI can raise suggestions, so it needs the same permission as running a session. */

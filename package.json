@@ -1,6 +1,6 @@
 {
   "name": "reqsai-web",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -40,6 +40,7 @@
     "@ng-icons/lucide": "^36.1.0",
     "@spartan-ng/brain": "^1.6.1",
     "@stomp/rx-stomp": "^2.4.0",
+    "driver.js": "^1.9.0",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.7.0",
     "tslib": "^2.3.0"
