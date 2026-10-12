@@ -493,6 +493,7 @@ export type SessionEventType =
   | 'SUGGESTION_GENERATED'
   | 'SUGGESTION_ACCEPTED'
   | 'SUGGESTION_DISMISSED'
+  | 'SUGGESTION_CODE_UPDATED'
   | 'SPEAKER_UPDATED'
   | 'PRESENCE_STATE';
 
@@ -549,6 +550,19 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   evidence?: SuggestionEvidence | null;
   /** See {@link SuggestionResponse.code}. */
   code?: SuggestionCodeInsight | null;
+}
+
+/**
+ * The deep verification of a suggestion against the code started, finished or failed. `sessionId`
+ * is null for a suggestion raised from the assistant chat (announced on the project's suggestions
+ * topic only).
+ */
+export interface SessionSuggestionCodeMessage extends Omit<SessionRealtimeBase, 'sessionId'> {
+  type: 'SUGGESTION_CODE_UPDATED';
+  sessionId: string | null;
+  projectId: string;
+  suggestionId: string;
+  code: SuggestionCodeInsight | null;
 }
 
 /** One user currently viewing a live session, carried by {@link SessionPresenceMessage}. */
@@ -666,6 +680,10 @@ export interface AssistantMessageResponse {
   content: string;
   createdAt: string;
   suggestions: SuggestionResponse[];
+  /** True when the reply came from searching the pure source code of the connected repositories. */
+  codeSearched?: boolean;
+  /** Places in the code the reply cites after a deep search (file, lines, GitHub link). */
+  codeReferences?: CodeReference[] | null;
 }
 
 /** One round of the assistant chat: what the analyst typed and ReqsAI's reply. */

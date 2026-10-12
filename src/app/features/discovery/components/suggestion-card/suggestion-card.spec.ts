@@ -10,7 +10,21 @@ const EN = {
     speaker: 'Speaker {{n}}',
     speakers: { side: { CLIENT: 'Client', TEAM: 'Team' } },
     suggestion: {
-      code: { exists: 'Already exists in the code', conflicts: 'Contradicts what is built' },
+      code: {
+        exists: 'Already exists in the code',
+        conflicts: 'Contradicts what is built',
+        notFound: 'Not found in the code',
+        unsure: 'The code is not conclusive',
+        verify: 'Verify in the code',
+        verifyAgain: 'Verify again',
+        verifying: 'Searching the code…',
+        done: 'Verification finished:',
+        failed: 'We could not verify this in the code.',
+        retry: 'Retry',
+        verifiedInCode: 'Verified in the source code',
+        opensGitHub: '(opens on GitHub)',
+        references: 'Related places in the code',
+      },
       evidence: { show: 'Show in the transcript' },
     },
   },
@@ -173,5 +187,162 @@ describe('SuggestionCard code insight and evidence', () => {
       SEGMENT,
     );
     expect(byTestId(el, 'suggestion-evidence')).toBeNull();
+  });
+});
+
+describe('SuggestionCard deep verification', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        SuggestionCard,
+        TranslocoTestingModule.forRoot({
+          langs: { en: EN },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    });
+  });
+
+  function render(
+    value: SuggestionResponse,
+    canVerify = true,
+  ): { fixture: ComponentFixture<SuggestionCard>; el: HTMLElement; asked: () => number } {
+    const fixture = TestBed.createComponent(SuggestionCard);
+    fixture.componentRef.setInput('suggestion', value);
+    fixture.componentRef.setInput('canVerify', canVerify);
+    let asked = 0;
+    fixture.componentInstance.verify.subscribe(() => asked++);
+    fixture.detectChanges();
+    return { fixture, el: fixture.nativeElement as HTMLElement, asked: () => asked };
+  }
+
+  const byTestId = (el: HTMLElement, id: string) =>
+    el.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+
+  const verified = (verdict: 'ALREADY_EXISTS' | 'CONFLICTS_WITH_CODE' | 'NOT_FOUND' | 'UNSURE') =>
+    suggestion({
+      code: {
+        finding: verdict === 'ALREADY_EXISTS' || verdict === 'CONFLICTS_WITH_CODE' ? verdict : null,
+        note: 'Lo que dice el código.',
+        references: [],
+        verdict,
+        verifyState: 'VERIFIED',
+        verifiedAt: '2026-10-11T10:05:00Z',
+      },
+    });
+
+  it('offers the action only when the analyst can verify, and asks for it on click', () => {
+    const allowed = render(suggestion());
+    const button = byTestId(allowed.el, 'suggestion-verify') as HTMLButtonElement;
+    expect(button.textContent).toContain('Verify in the code');
+    button.click();
+    expect(allowed.asked()).toBe(1);
+
+    expect(byTestId(render(suggestion(), false).el, 'suggestion-verify')).toBeNull();
+  });
+
+  it('shows the work in progress on the button and announces it politely', () => {
+    const { el, fixture } = render(
+      suggestion({
+        code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+      }),
+    );
+    fixture.detectChanges();
+
+    const button = byTestId(el, 'suggestion-verify') as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.textContent).toContain('Searching the code…');
+    const live = byTestId(el, 'suggestion-verify-status')!;
+    expect(live.getAttribute('aria-live')).toBe('polite');
+    expect(live.textContent).toContain('Searching the code…');
+  });
+
+  it('shows the failure with a retry that asks again', () => {
+    const { el, asked } = render(
+      suggestion({
+        code: { finding: null, note: null, references: [], verifyState: 'FAILED' },
+      }),
+    );
+
+    expect(byTestId(el, 'suggestion-verify-error')!.textContent).toContain('could not verify');
+    expect(byTestId(el, 'suggestion-verify')).toBeNull();
+    (byTestId(el, 'suggestion-verify-retry') as HTMLButtonElement).click();
+    expect(asked()).toBe(1);
+    expect(byTestId(el, 'suggestion-verify-status')!.textContent).toContain('could not verify');
+  });
+
+  it('reads a conflict verified in the code with the lines it cites as GitHub links', () => {
+    const { el } = render(
+      suggestion({
+        code: {
+          finding: 'CONFLICTS_WITH_CODE',
+          note: 'El código permite cancelar hasta 2 h antes; el cliente pide 24 h.',
+          references: [
+            {
+              repository: 'acme/reservas',
+              path: 'src/reservations',
+              name: 'cancellation.policy.ts',
+              url: 'https://github.com/acme/reservas/blob/abc1234/src/reservations/cancellation.policy.ts#L2-L4',
+              file: 'src/reservations/cancellation.policy.ts',
+              lineStart: 2,
+              lineEnd: 4,
+              quote: 'CANCELLATION_LIMIT_HOURS = 2',
+            },
+            { repository: 'acme/reservas', path: 'src/old', name: 'Viejo', url: null },
+          ],
+          verdict: 'CONFLICTS_WITH_CODE',
+          verifyState: 'VERIFIED',
+          verifiedAt: '2026-10-11T10:05:00Z',
+        },
+      }),
+    );
+
+    const banner = byTestId(el, 'suggestion-code-conflict')!;
+    const refs = banner.querySelectorAll('[data-testid="suggestion-code-ref"]');
+    expect(refs).toHaveLength(2);
+    const place = refs[0] as HTMLAnchorElement;
+    expect(place.textContent).toContain('src/reservations/cancellation.policy.ts:2-4');
+    expect(place.getAttribute('href')).toBe(
+      'https://github.com/acme/reservas/blob/abc1234/src/reservations/cancellation.policy.ts#L2-L4',
+    );
+    expect(place.target).toBe('_blank');
+    expect(place.rel).toContain('noopener');
+    expect(place.title).toContain('CANCELLATION_LIMIT_HOURS = 2');
+    expect(refs[1].textContent).toContain('Viejo');
+    expect(byTestId(banner, 'suggestion-code-verified')!.textContent).toContain(
+      'Verified in the source code',
+    );
+    expect(byTestId(el, 'suggestion-verify')!.textContent).toContain('Verify again');
+  });
+
+  it('shows what the code does not have, and what it cannot settle, without alarm', () => {
+    const missing = render(verified('NOT_FOUND')).el;
+    expect(byTestId(missing, 'suggestion-code-notfound')!.textContent).toContain(
+      'Not found in the code',
+    );
+    expect(byTestId(missing, 'suggestion-code-conflict')).toBeNull();
+
+    const unsure = render(verified('UNSURE')).el;
+    expect(byTestId(unsure, 'suggestion-code-unsure')!.textContent).toContain(
+      'The code is not conclusive',
+    );
+  });
+
+  it('a deep verdict replaces the quick finding on the banner', () => {
+    const { el } = render(
+      suggestion({
+        code: {
+          finding: null,
+          note: 'Nada.',
+          references: [],
+          verdict: 'NOT_FOUND',
+          verifyState: 'VERIFIED',
+        },
+      }),
+    );
+    expect(byTestId(el, 'suggestion-code-exists')).toBeNull();
+    expect(byTestId(el, 'suggestion-code-notfound')).not.toBeNull();
   });
 });

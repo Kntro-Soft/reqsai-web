@@ -9,6 +9,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- "Verificar en el código" on suggestion cards, in the capture queue and in the assistant chat (#94). It is offered only when the project has a READY repository and the user can read integrations and decide suggestions. It asks the API to search the pure source code (`POST …/suggestions/{id}/verify-code`), shows the progress on the button (with an `aria-live` announcement), and applies the result live from `SUGGESTION_CODE_UPDATED` (session topic, and `/topic/projects/{id}/suggestions` for chat suggestions): a banner (already exists, contradicts, not found, inconclusive), the note and the places cited as `path:lineStart-lineEnd` links that open GitHub at the indexed commit in a new tab. A refused request or a verdict that does not arrive in 35 seconds shows an error with a retry. References without lines (older ones) keep showing the module.
+- The assistant chat shows when a reply came from searching the source code, with the same reference chips.
+
 ### Changed
 - Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.
 - Capture page: each session's header (name, time, speakers and the "Speakers" action) sticks to the top of the feed while that session is on screen, so naming speakers no longer means scrolling to the top of a long conversation. On a phone the speaker chips shrink to their color dots.

@@ -1352,7 +1352,9 @@
       "you": "Tú",
       "thinking": "ReqsAI está pensando…",
       "accepted": "Aceptada",
-      "dismissed": "Descartada"
+      "dismissed": "Descartada",
+      "codeSearched": "Buscado en el código fuente",
+      "codeReferences": "Código citado"
     },
     "upload": {
       "button": "Subir grabación",
@@ -1501,7 +1503,17 @@
       "code": {
         "exists": "Ya existe en el código",
         "conflicts": "Contradice lo implementado",
-        "references": "Módulos del código relacionados"
+        "references": "Lugares del código relacionados",
+        "notFound": "No aparece en el código",
+        "unsure": "El código no es concluyente",
+        "verify": "Verificar en el código",
+        "verifyAgain": "Verificar de nuevo",
+        "verifying": "Buscando en el código…",
+        "done": "Verificación terminada:",
+        "failed": "No pudimos verificar esto en el código. Inténtalo de nuevo.",
+        "retry": "Reintentar",
+        "verifiedInCode": "Verificado en el código fuente",
+        "opensGitHub": "(se abre en GitHub, en una pestaña nueva)"
       },
       "evidence": {
         "show": "Ver en la transcripción"

@@ -268,7 +268,10 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
                     {{ 'storyForm.origin.code' | transloco }}
                   </h3>
                   <ul class="flex flex-wrap gap-1.5">
-                    @for (ref of codeRefs; track ref.repository + ':' + ref.path) {
+                    @for (
+                      ref of codeRefs;
+                      track ref.repository + ':' + ref.label + ':' + (ref.url ?? '')
+                    ) {
                       <li class="min-w-0 max-w-full">
                         @if (ref.url) {
                           <a

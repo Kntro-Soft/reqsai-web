@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject } from 'rxjs';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
+import { VERIFY_TIMEOUT_MS } from './code-verification';
 import { DECIDE_RETRY_DELAY_MS, DiscoveryChatStore } from './discovery-chat.store';
 import {
   DiscoverySessionResponse,
@@ -514,6 +515,121 @@ describe('DiscoveryChatStore', () => {
       expect(store.deciding()).toHaveLength(0);
       // The card stays queued so the user can decide again.
       expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+    });
+
+    describe('verify in the code', () => {
+      const VERIFY_URL = '/api/projects/proj-1/suggestions/sug-1/verify-code';
+      const verdict = {
+        finding: 'CONFLICTS_WITH_CODE' as const,
+        note: 'El código permite cancelar hasta 2 h antes; el cliente pide 24 h.',
+        references: [
+          {
+            repository: 'acme/reservas',
+            path: 'src/reservations',
+            name: 'cancellation.policy.ts',
+            url: 'https://github.com/acme/reservas/blob/abc/src/reservations/cancellation.policy.ts#L2',
+            file: 'src/reservations/cancellation.policy.ts',
+            lineStart: 2,
+            lineEnd: 2,
+            quote: 'CANCELLATION_LIMIT_HOURS = 2',
+          },
+        ],
+        verdict: 'CONFLICTS_WITH_CODE' as const,
+        verifyState: 'VERIFIED' as const,
+        verifiedAt: '2026-10-11T10:00:20Z',
+      };
+
+      it('shows the card as verifying at once, then applies the realtime verdict', () => {
+        const pending = setupWithPending();
+
+        store.verifyCode(pending).subscribe();
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+        http
+          .expectOne(VERIFY_URL)
+          .flush(
+            {
+              ...pending,
+              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+            },
+            { status: 202, statusText: 'Accepted' },
+          );
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+
+        store.applyRealtime({
+          type: 'SUGGESTION_CODE_UPDATED',
+          sessionId: 'sess-1',
+          occurredAt: '2026-10-11T10:00:20Z',
+          suggestionId: 'sug-1',
+          code: verdict,
+        } as never);
+
+        const code = store.queue()[0].code!;
+        expect(code.verifyState).toBe('VERIFIED');
+        expect(code.verdict).toBe('CONFLICTS_WITH_CODE');
+        expect(code.references[0].lineStart).toBe(2);
+        http.verify();
+      });
+
+      it('never steps back to verifying when the verdict beat the 202', () => {
+        const pending = setupWithPending();
+        store.verifyCode(pending).subscribe();
+        store.applyCodeUpdate('sug-1', verdict);
+
+        http
+          .expectOne(VERIFY_URL)
+          .flush(
+            {
+              ...pending,
+              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+            },
+            { status: 202, statusText: 'Accepted' },
+          );
+
+        expect(store.queue()[0].code?.verifyState).toBe('VERIFIED');
+      });
+
+      it('marks the card failed when the request is refused, and propagates the error', () => {
+        const pending = setupWithPending();
+        const errors: unknown[] = [];
+
+        store.verifyCode(pending).subscribe({ error: (e) => errors.push(e) });
+        http
+          .expectOne(VERIFY_URL)
+          .flush({ code: 'CODE_REPOSITORY_NOT_READY' }, { status: 409, statusText: 'Conflict' });
+
+        expect(errors).toHaveLength(1);
+        expect(store.queue()[0].code?.verifyState).toBe('FAILED');
+      });
+
+      it('gives up on a verdict that never arrives so the card offers a retry', () => {
+        vi.useFakeTimers();
+        try {
+          const pending = setupWithPending();
+          store.verifyCode(pending).subscribe();
+          http
+            .expectOne(VERIFY_URL)
+            .flush({
+              ...pending,
+              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+            });
+
+          vi.advanceTimersByTime(VERIFY_TIMEOUT_MS - 1);
+          expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
+          vi.advanceTimersByTime(2);
+          expect(store.queue()[0].code?.verifyState).toBe('FAILED');
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('ignores an update for a suggestion that is not in the queue', () => {
+        setupWithPending();
+
+        store.applyCodeUpdate('other', verdict);
+
+        expect(store.queue().map((s) => s.id)).toEqual(['sug-1']);
+        expect(store.queue()[0].code).toBeUndefined();
+      });
     });
   });
 
