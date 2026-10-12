@@ -9,6 +9,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Create a project with Jira and GitHub (#95).** The new-project page is a three-step wizard: basics, sources and confirm. The sources step is optional: pick the Jira project and issue type (and whether to import its existing stories) and up to three repositories from what the organization's GitHub App shares, each with an optional branch. An organization that has not connected Jira or GitHub is shown how: owners and admins get the connect actions (the wizard is kept across the trip to GitHub or Atlassian and comes back to the same step); anyone else is told to ask an admin. "Create project" on the first step still creates a project with no sources.
+- **"Configurando tu proyecto" bar.** The project opens right away and a slim bar under the top bar, on every page of the project, follows the setup in the background (the Jira link and import, the repositories' indexing with "Indexando 3/7 módulos"), live over the socket with a poll as backup. Each open or failed step can be left out ("Omitir"), a failed one retried, and once the code is indexed "Aplicar el stack detectado" adds the detected technology to the project's profile in one click (never on its own). It dismisses itself when everything finished, remembered per project.
+
 ### Changed
 - Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.
 - Capture page: each session's header (name, time, speakers and the "Speakers" action) sticks to the top of the feed while that session is on screen, so naming speakers no longer means scrolling to the top of a long conversation. On a phone the speaker chips shrink to their color dots.

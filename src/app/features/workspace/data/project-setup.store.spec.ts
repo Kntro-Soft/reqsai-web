@@ -106,13 +106,11 @@ describe('ProjectSetupStore', () => {
     store.setProject('p1');
     http.expectOne(URL).flush(setup());
 
-    realtime.topics
-      .get('projects/p1/setup')!
-      .next(
-        setup({
-          steps: [{ key: 'GITHUB_REPOS', status: 'RUNNING', done: 3, total: 4, detail: null }],
-        }),
-      );
+    realtime.topics.get('projects/p1/setup')!.next(
+      setup({
+        steps: [{ key: 'GITHUB_REPOS', status: 'RUNNING', done: 3, total: 4, detail: null }],
+      }),
+    );
     expect(store.setup()?.steps[0].done).toBe(3);
 
     realtime.topics.get('projects/p1/setup')!.next(setup({ projectId: 'other' }));
@@ -159,14 +157,12 @@ describe('ProjectSetupStore', () => {
 
   it('remembers the dismissal per project, for good', () => {
     store.setProject('p1');
-    http
-      .expectOne(URL)
-      .flush(
-        setup({
-          active: false,
-          steps: [{ key: 'JIRA_LINK', status: 'DONE', done: 0, total: 0, detail: null }],
-        }),
-      );
+    http.expectOne(URL).flush(
+      setup({
+        active: false,
+        steps: [{ key: 'JIRA_LINK', status: 'DONE', done: 0, total: 0, detail: null }],
+      }),
+    );
 
     store.dismiss();
     expect(store.visible()).toBe(false);
@@ -174,14 +170,12 @@ describe('ProjectSetupStore', () => {
 
     store.setProject(null);
     store.setProject('p1');
-    http
-      .expectOne(URL)
-      .flush(
-        setup({
-          active: false,
-          steps: [{ key: 'JIRA_LINK', status: 'DONE', done: 0, total: 0, detail: null }],
-        }),
-      );
+    http.expectOne(URL).flush(
+      setup({
+        active: false,
+        steps: [{ key: 'JIRA_LINK', status: 'DONE', done: 0, total: 0, detail: null }],
+      }),
+    );
     expect(store.visible()).toBe(false);
   });
 
