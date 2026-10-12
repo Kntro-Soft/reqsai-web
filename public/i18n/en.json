@@ -2101,7 +2101,54 @@
       "approvedByYou": "You approved this story",
       "unavailableTitle": "This link is no longer available",
       "unavailableBody": "It may have expired or been revoked by the team. Ask whoever shared it for a new one.",
-      "footer": "Shared with ReqsAI"
+      "footer": "Shared with ReqsAI",
+      "session": {
+        "eyebrow": "Shared session",
+        "introView": "You are watching this session. The page updates on its own and you cannot change anything.",
+        "introReview": "You are following this session as a reviewer. The page updates on its own; accept or dismiss what the assistant suggests and approve or reject the stories.",
+        "transcript": "Conversation",
+        "noTranscript": "Nothing has been said yet.",
+        "latest": "Showing the latest {{shown}} of {{total}} lines.",
+        "suggestions": "Suggestions",
+        "noSuggestions": "Nothing waiting for a decision.",
+        "stories": "Stories",
+        "noStories": "No stories yet.",
+        "status": {
+          "DRAFT": "Not started",
+          "RECORDING": "Live",
+          "PAUSED": "Paused",
+          "STOPPED": "Ended",
+          "PROCESSING": "Processing",
+          "COMPLETED": "Ended",
+          "FAILED": "Failed"
+        },
+        "type": {
+          "NEW_STORY": "New story",
+          "UPDATE_STORY": "Change to a story",
+          "EDGE_CASE": "Edge case",
+          "CLARIFYING_QUESTION": "Question to clarify"
+        },
+        "acceptApprove": "Accept and approve",
+        "acceptDraft": "Accept as draft",
+        "resolve": "Mark as answered",
+        "dismiss": "Dismiss",
+        "approve": "Approve",
+        "reject": "Reject",
+        "backToDraft": "Back to draft",
+        "readOnly": "This link only lets you watch.",
+        "decideFailed": "That did not go through. The page was refreshed; try again."
+      }
+    },
+    "session": {
+      "action": "Share session",
+      "title": "Share this session",
+      "description": "Create a link so your client can follow this session without an account. They see the transcript, the suggestions and the stories, and the page keeps up on its own.",
+      "access": "What can they do?",
+      "VIEW": "Spectator",
+      "VIEWHint": "Only watches. Cannot change anything.",
+      "REVIEW": "Reviewer",
+      "REVIEWHint": "Watches and also accepts or dismisses suggestions and approves or rejects stories.",
+      "none": "You have not shared this session yet."
     }
   },
   "quota": {

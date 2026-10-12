@@ -2101,7 +2101,54 @@
       "approvedByYou": "Aprobaste esta historia",
       "unavailableTitle": "Este enlace ya no está disponible",
       "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
-      "footer": "Compartido con ReqsAI"
+      "footer": "Compartido con ReqsAI",
+      "session": {
+        "eyebrow": "Sesión compartida",
+        "introView": "Estás viendo esta sesión. La página se actualiza sola y no puedes cambiar nada.",
+        "introReview": "Sigues esta sesión como revisor. La página se actualiza sola; acepta o descarta lo que sugiere el asistente y aprueba o rechaza las historias.",
+        "transcript": "Conversación",
+        "noTranscript": "Todavía no se ha dicho nada.",
+        "latest": "Mostrando las últimas {{shown}} de {{total}} líneas.",
+        "suggestions": "Sugerencias",
+        "noSuggestions": "Nada esperando una decisión.",
+        "stories": "Historias",
+        "noStories": "Aún no hay historias.",
+        "status": {
+          "DRAFT": "Sin iniciar",
+          "RECORDING": "En vivo",
+          "PAUSED": "En pausa",
+          "STOPPED": "Terminada",
+          "PROCESSING": "Procesando",
+          "COMPLETED": "Terminada",
+          "FAILED": "Con error"
+        },
+        "type": {
+          "NEW_STORY": "Historia nueva",
+          "UPDATE_STORY": "Cambio a una historia",
+          "EDGE_CASE": "Caso límite",
+          "CLARIFYING_QUESTION": "Pregunta por aclarar"
+        },
+        "acceptApprove": "Aceptar y aprobar",
+        "acceptDraft": "Aceptar como borrador",
+        "resolve": "Marcar como respondida",
+        "dismiss": "Descartar",
+        "approve": "Aprobar",
+        "reject": "Rechazar",
+        "backToDraft": "Volver a borrador",
+        "readOnly": "Este enlace solo permite mirar.",
+        "decideFailed": "No se pudo. La página se actualizó; inténtalo de nuevo."
+      }
+    },
+    "session": {
+      "action": "Compartir sesión",
+      "title": "Compartir esta sesión",
+      "description": "Crea un enlace para que tu cliente siga esta sesión sin cuenta. Ve la transcripción, las sugerencias y las historias, y la página se actualiza sola.",
+      "access": "¿Qué puede hacer?",
+      "VIEW": "Espectador",
+      "VIEWHint": "Solo mira. No puede cambiar nada.",
+      "REVIEW": "Revisor",
+      "REVIEWHint": "Mira y además acepta o descarta sugerencias y aprueba o rechaza historias.",
+      "none": "Todavía no compartiste esta sesión."
     }
   },
   "quota": {
