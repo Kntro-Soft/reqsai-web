@@ -1300,6 +1300,7 @@
       "description": "Give each voice its real name and mark whether it is the client or the team. It applies to everything they said, and the AI puts what the client asks for first: the team's remarks are context.",
       "edit": "Edit speakers",
       "view": "View speakers",
+      "open": "Speakers",
       "close": "Close",
       "empty": "This session does not tell speakers apart.",
       "nameLabel": "Name of {{name}}",
@@ -1391,6 +1392,9 @@
       "unsupported": "Virtual meeting: available in desktop Chrome or Edge.",
       "micShort": "In person",
       "meetingShort": "Virtual meeting",
+      "micHint": "This device's microphone",
+      "meetingHint": "Your microphone plus the meeting tab's audio",
+      "ask": "Where does the audio come from?",
       "hintShare": "When you press Record, pick the meeting tab and turn on “Share tab audio”.",
       "hintHeadphones": "Wear headphones so your microphone doesn't pick up the meeting again and duplicate the transcript.",
       "hintDismiss": "Hide these tips"
@@ -1538,6 +1542,9 @@
       "PROCESSING": "Processing",
       "COMPLETED": "Completed",
       "FAILED": "Failed"
+    },
+    "menu": {
+      "label": "More actions"
     },
     "history": {
       "button": "History",
