@@ -505,6 +505,7 @@ export type SessionEventType =
   | 'SUGGESTION_ACCEPTED'
   | 'SUGGESTION_DISMISSED'
   | 'SPEAKER_UPDATED'
+  | 'AI_QUOTA_PAUSED'
   | 'PRESENCE_STATE';
 
 interface SessionRealtimeBase {
@@ -594,6 +595,18 @@ export interface SessionSpeakerUpdatedMessage extends SessionRealtimeBase {
   side: SpeakerSide | null;
 }
 
+/**
+ * The organization's monthly AI allowance is spent: live suggestions pause for this session while
+ * capture and the transcript go on. Sent once per pause; the figures are null when unknown.
+ */
+export interface SessionAiQuotaPausedMessage extends SessionRealtimeBase {
+  type: 'AI_QUOTA_PAUSED';
+  plan: string | null;
+  tokensLimit: number | null;
+  tokensUsed: number | null;
+  resetsAt: string | null;
+}
+
 export type SessionRealtimeMessage =
   | SessionRealtimeBase
   | SessionTranscriptSegmentMessage
@@ -601,7 +614,8 @@ export type SessionRealtimeMessage =
   | SessionProcessingFailedMessage
   | SessionSuggestionMessage
   | SessionPresenceMessage
-  | SessionSpeakerUpdatedMessage;
+  | SessionSpeakerUpdatedMessage
+  | SessionAiQuotaPausedMessage;
 
 // ---- Speakers (US40, /projects/{projectId}/sessions/{sessionId}/speakers) ----
 

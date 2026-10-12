@@ -12,6 +12,7 @@ import {
 } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { RealtimeService } from '../../../core/realtime/realtime.service';
+import { AiQuotaStore } from '../../billing/data/ai-quota.store';
 import { DiscoveryApiService } from './discovery-api.service';
 import { SessionRecordingService } from './session-recording.service';
 import {
@@ -26,6 +27,7 @@ import {
   SessionRealtimeMessage,
   SessionStatus,
   SessionStoryGeneratedMessage,
+  SessionAiQuotaPausedMessage,
   SessionSpeakerUpdatedMessage,
   SessionSuggestionMessage,
   SessionTranscriptSegmentMessage,
@@ -143,6 +145,7 @@ export interface RenderBlock {
 export class DiscoveryChatStore {
   private readonly api = inject(DiscoveryApiService);
   private readonly realtime = inject(RealtimeService);
+  private readonly aiQuota = inject(AiQuotaStore);
   private readonly recording = inject(SessionRecordingService);
   private readonly speakersStore = inject(SessionSpeakersStore);
 
@@ -832,6 +835,17 @@ export class DiscoveryChatStore {
       return;
     }
 
+    if (message.type === 'AI_QUOTA_PAUSED') {
+      const paused = message as SessionAiQuotaPausedMessage;
+      this.aiQuota.notePaused(sessionId, {
+        plan: paused.plan,
+        limit: paused.tokensLimit,
+        used: paused.tokensUsed,
+        resetsAt: paused.resetsAt,
+      });
+      return;
+    }
+
     if (message.type === 'SPEAKER_UPDATED') {
       this.speakersStore.applyRealtime(message as SessionSpeakerUpdatedMessage);
       return;
@@ -850,6 +864,7 @@ export class DiscoveryChatStore {
     ) {
       const event = message as SessionSuggestionMessage;
       if (event.type === 'SUGGESTION_GENERATED') {
+        this.aiQuota.clearPaused(sessionId);
         this._queue.update((queue) => addToQueue(queue, this.suggestionFromMessage(event)));
         return;
       }

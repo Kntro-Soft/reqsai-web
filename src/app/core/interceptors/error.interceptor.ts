@@ -10,6 +10,8 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AuthStore } from '../auth/auth.store';
 import { ToastService } from '../../shared/toast/toast.service';
+import { aiQuotaError } from '../../features/billing/data/ai-quota';
+import { AiQuotaStore } from '../../features/billing/data/ai-quota.store';
 
 /** Marks a request already replayed after a refresh, so it never loops. */
 const RETRY_HEADER = 'X-Auth-Retry';
@@ -60,9 +62,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const authStore = inject(AuthStore);
   const toast = inject(ToastService);
   const transloco = inject(TranslocoService);
+  const aiQuota = inject(AiQuotaStore);
 
   return next(req).pipe(
     catchError((err) => {
+      // A refused AI request means the monthly allowance is spent: remember it so the pages that use
+      // AI can say so. The caller still gets the error and shows its own message.
+      const spent = aiQuotaError(err);
+      if (spent) aiQuota.applyExceeded(spent);
+
       const isForbidden = err.status === HttpStatusCode.Forbidden;
       if (isForbidden) {
         if (req.context.get(SILENCE_FORBIDDEN_TOAST)) {
