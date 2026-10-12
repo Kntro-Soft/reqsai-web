@@ -110,7 +110,9 @@ test.describe('Code-aware copilot in a live meeting', () => {
     await uiLogin(page, email);
 
     await page.goto(`/projects/${projectId}/sessions`);
+    // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
+    await page.getByTestId('audio-source-mic').click();
     await expect(page.getByTestId('segment-bubble').first()).toBeVisible({ timeout: 60_000 });
 
     // A live suggestion carries the client's words; they point at a bubble of this transcript.

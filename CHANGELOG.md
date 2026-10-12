@@ -10,10 +10,13 @@ follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- Capture page header and composer take less room (#90): "Upload recording" and "History" move into one "⋯" menu (which also opens the speakers of the current session), and the "In person / Virtual meeting" switch is a round button next to Record that opens a small menu upward. The first time someone presses Record without having chosen a source, the page asks where the audio comes from and the answer starts the recording.
+- Capture page: each session's header (name, time, speakers and the "Speakers" action) sticks to the top of the feed while that session is on screen, so naming speakers no longer means scrolling to the top of a long conversation. On a phone the speaker chips shrink to their color dots.
 - The release pull request and the back-merge pull request are opened by the GitHub App `reqsai-release-bot` (a short-lived token minted per job from `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`), so their CI runs: opened with `GITHUB_TOKEN` they started no `pull_request` workflow. The back-merge turns on auto-merge (merge commit) when the repository allows it; without the App configuration the job fails instead of falling back to `GITHUB_TOKEN`.
 - `produccion.yml` and `rollback.yml` dispatch `reqsai-infra`'s `deploy-mvp.yml` with a `reqsai-release-bot` token limited to `reqsai-infra` (Actions: write) and watch the run with the workflow token, instead of the personal token `INFRA_DEPLOY_TOKEN`, which is no longer used.
 
 ### Fixed
+- Capture page: the assistant chat and the recordings now read as one timeline in the order things happened (#90). Chat used to be drawn as a block after every session, so writing to ReqsAI and then recording put the new session above the older chat. Sessions are ordered by start time; a message sent during a session sits among its segments, and messages between sessions form their own runs. A feed too short to scroll now keeps paging older history in.
 - Release notes longer than GitHub's 125000-character limit are cut at a line break with a link to the full CHANGELOG, instead of failing the tag after the deploy (1.2.0 of reqsai-api).
 
 ## [1.3.0] - 2026-10-10

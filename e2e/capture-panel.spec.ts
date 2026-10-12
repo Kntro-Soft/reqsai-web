@@ -66,11 +66,13 @@ test.describe('Capture side panel', () => {
     await expect(page.getByText('Procesando la sesión')).toHaveCount(0);
 
     // Virtual meeting: the tips show once, can be hidden, and stay hidden after a reload.
+    await page.getByTestId('audio-source-trigger').click();
     await page.getByTestId('audio-source-meeting').click();
     await expect(page.getByTestId('audio-source-hint')).toBeVisible();
     await page.getByTestId('audio-source-hint-dismiss').click();
     await expect(page.getByTestId('audio-source-hint')).toHaveCount(0);
     await page.reload();
+    await page.getByTestId('audio-source-trigger').click();
     await expect(page.getByTestId('audio-source-meeting')).toBeVisible();
     await page.getByTestId('audio-source-meeting').click();
     await expect(page.getByTestId('audio-source-hint')).toHaveCount(0);

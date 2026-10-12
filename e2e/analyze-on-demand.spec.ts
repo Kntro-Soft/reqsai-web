@@ -49,7 +49,9 @@ test.describe('Analyze on demand', () => {
 
     await uiLogin(page, email);
     await page.goto(`/projects/${projectId}/sessions`);
+    // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
+    await page.getByTestId('audio-source-mic').click();
     await expect(page.getByTestId('session-bar')).toBeVisible();
 
     const mode = page.getByTestId('session-bar-ai-mode');

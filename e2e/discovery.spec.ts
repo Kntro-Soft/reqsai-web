@@ -53,7 +53,9 @@ test.describe('Discovery capture', () => {
 
     await uiLogin(page, email, PASSWORD);
     await page.goto(`/projects/${projectId}/sessions`);
+    // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
+    await page.getByTestId('audio-source-mic').click();
 
     // Live: the session bar shows the recording and the transcript streams in.
     await expect(page.getByTestId('session-bar')).toBeVisible();

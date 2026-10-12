@@ -13,8 +13,8 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
@@ -27,7 +27,6 @@ import {
   lucideCircleX,
   lucideClock,
   lucideHeadphones,
-  lucideHistory,
   lucideInfo,
   lucideLanguages,
   lucideMic,
@@ -38,7 +37,6 @@ import {
   lucideSendHorizontal,
   lucideSparkles,
   lucideTriangleAlert,
-  lucideUpload,
   lucideUsers,
   lucideX,
 } from '@ng-icons/lucide';
@@ -54,6 +52,7 @@ import { AssistantChatStore } from '../../data/assistant-chat.store';
 import { ASSISTANT_MESSAGE_MAX, messageToSend } from '../../data/assistant-chat';
 import { SessionRecordingService } from '../../data/session-recording.service';
 import { DecisionEntry } from '../../data/feed';
+import { buildTimeline, sessionStart } from '../../data/timeline';
 import { EvidenceSegment, locateEvidence, segmentKey } from '../../data/evidence';
 import { SessionSpeakersStore } from '../../data/session-speakers.store';
 import {
@@ -78,6 +77,7 @@ import { ActiveParticipants } from '../../components/active-participants/active-
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
 import { UploadRecording } from '../../components/upload-recording/upload-recording';
+import { CaptureMenu } from '../../components/capture-menu/capture-menu';
 import { SidePanel } from '../../components/side-panel/side-panel';
 import { Select, SelectOption } from '../../../../shared/components/select/select';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -105,7 +105,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
   selector: 'app-discovery-chat',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    RouterLink,
+    NgTemplateOutlet,
     DatePipe,
     TranslocoPipe,
     SessionBar,
@@ -114,6 +114,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     DecisionQueue,
     SuggestionCard,
     UploadRecording,
+    CaptureMenu,
     SidePanel,
     SpeakersPanel,
     Select,
@@ -132,7 +133,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideCircleX,
       lucideClock,
       lucideHeadphones,
-      lucideHistory,
       lucideInfo,
       lucideLanguages,
       lucideMic,
@@ -143,7 +143,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       lucideSendHorizontal,
       lucideSparkles,
       lucideTriangleAlert,
-      lucideUpload,
       lucideUsers,
       lucideX,
     }),
@@ -160,7 +159,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
             <h1 class="truncate text-lg font-bold tracking-tight">
               {{ 'discovery.title' | transloco }}
             </h1>
-            <p class="truncate text-xs text-muted-foreground">
+            <p class="truncate text-xs text-muted-foreground max-sm:hidden">
               {{ 'discovery.subtitle' | transloco }}
             </p>
           </div>
@@ -200,36 +199,6 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 data-testid="discovery-language"
               />
             }
-            @if (canRecord() && !store.liveSession()) {
-              <!-- A past meeting's recording goes through the same pipeline (US41). -->
-              <button
-                type="button"
-                hlmBtn
-                variant="outline"
-                size="sm"
-                class="gap-0 px-2 sm:gap-2 sm:px-3"
-                (click)="uploadOpen.set(true)"
-                [attr.aria-label]="'discovery.upload.button' | transloco"
-                [title]="'discovery.upload.button' | transloco"
-                data-testid="upload-recording-open"
-              >
-                <hlm-icon name="lucideUpload" size="15px" />
-                <span class="hidden sm:inline">{{ 'discovery.upload.button' | transloco }}</span>
-              </button>
-            }
-            <a
-              [routerLink]="['history']"
-              hlmBtn
-              variant="outline"
-              size="sm"
-              class="gap-0 px-2 sm:gap-2 sm:px-3"
-              [attr.aria-label]="'discovery.history.button' | transloco"
-              [title]="'discovery.history.button' | transloco"
-              data-testid="discovery-history"
-            >
-              <hlm-icon name="lucideHistory" size="15px" />
-              <span class="hidden sm:inline">{{ 'discovery.history.button' | transloco }}</span>
-            </a>
             <button
               type="button"
               hlmBtn
@@ -244,6 +213,15 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
               <hlm-icon name="lucidePanelRight" size="15px" />
               <span class="hidden sm:inline">{{ 'discovery.panel.toggle' | transloco }}</span>
             </button>
+            <!-- Secondary actions behind one button: a past recording's upload, the session
+                 history and the speakers of the current session. -->
+            <app-capture-menu
+              [canUpload]="canRecord() && !store.liveSession()"
+              [speakers]="speakersTarget() !== null"
+              [canEditSpeakers]="canRecord()"
+              (uploadRequested)="uploadOpen.set(true)"
+              (speakersRequested)="openCurrentSpeakers()"
+            />
           </div>
         </div>
 
@@ -362,80 +340,109 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                   </div>
                 }
 
-                @for (block of store.blocks(); track block.session.id) {
-                  <div [attr.data-session-id]="block.session.id" class="flex flex-col gap-3">
-                    <!-- Session separator: a pill that sticks to the top of the feed while
-                       this session's messages are on screen (no flanking rules, so it never
-                       strikes through the bubbles scrolling under it). -->
-                    <div class="pointer-events-none sticky top-0 z-10 flex justify-center py-1.5">
-                      @let sessionAt = block.session.startedAt ?? block.session.createdAt;
-                      <span
-                        class="pointer-events-auto rounded-full border border-border bg-card/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
-                        [title]="sessionAt | date: 'd MMM y, HH:mm'"
-                      >
-                        {{ 'discovery.sessionSeparator' | transloco }}
-                        @let sessionTime = timeLabel(sessionAt);
-                        @if (sessionTime.kind === 'relative') {
-                          {{ sessionTime.key | transloco: sessionTime.params }}
-                        } @else {
-                          {{ sessionAt | date: 'MMM d · HH:mm' }}
-                        }
-                        @if (
-                          block.session.storiesGenerated !== null &&
-                          block.session.storiesGenerated !== undefined
-                        ) {
-                          ·
-                          {{
-                            'discovery.sessionStories'
-                              | transloco: { count: block.session.storiesGenerated }
-                          }}
-                        }
-                      </span>
-                    </div>
-
-                    @if (!block.loaded) {
-                      <div class="flex justify-center py-2"><hlm-spinner class="h-4 w-4" /></div>
-                    }
-
-                    @if (block.speakerList.length > 0) {
-                      <!-- Who spoke (US40): one chip per diarized voice with its color, name and
-                         side; the analyst names them and marks client or team from here. -->
+                @for (entry of timeline(); track entry.key) {
+                  @if (entry.kind === 'session') {
+                    @let block = entry.block;
+                    <div [attr.data-session-id]="block.session.id" class="flex flex-col gap-3">
+                      <!-- Session header: sticks to the top of the feed while this session is on
+                       screen, so its speakers (and the way to edit them) stay one tap away however
+                       long the conversation grows. Chips shrink to their color dots on a phone. -->
                       <div
-                        class="flex flex-wrap items-center justify-center gap-1.5"
-                        data-testid="session-speakers"
+                        class="sticky top-0 z-10 -mx-4 -mt-1 flex items-center gap-2 border-b border-border/60 bg-card/95 px-4 py-1.5 backdrop-blur"
+                        data-testid="session-header"
                       >
-                        @for (speaker of block.speakerList; track speaker.label) {
-                          <span
-                            class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2 py-0.5 text-xs"
-                            data-testid="speaker-chip"
-                            [attr.data-speaker-label]="speaker.label"
-                          >
-                            <span
-                              class="h-2 w-2 rounded-full"
-                              [class]="colorOf(speaker).dot"
-                              aria-hidden="true"
-                            ></span>
-                            <span class="font-medium">{{ nameOf(speaker) }}</span>
-                            @if (speaker.role) {
-                              <span class="text-muted-foreground"
-                                >· {{ 'discovery.speakers.side.' + speaker.role | transloco }}</span
-                              >
-                            }
-                          </span>
-                        }
-                        <button
-                          type="button"
-                          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                          (click)="speakersSessionId.set(block.session.id)"
-                          data-testid="speakers-edit"
+                        @let sessionAt = block.session.startedAt ?? block.session.createdAt;
+                        <span
+                          class="min-w-0 truncate text-xs font-medium text-muted-foreground"
+                          [title]="sessionAt | date: 'd MMM y, HH:mm'"
                         >
-                          <hlm-icon name="lucideUsers" size="12px" />
-                          {{
-                            (canRecord() ? 'discovery.speakers.edit' : 'discovery.speakers.view')
-                              | transloco
-                          }}
-                        </button>
+                          {{ 'discovery.sessionSeparator' | transloco }}
+                          @let sessionTime = timeLabel(sessionAt);
+                          @if (sessionTime.kind === 'relative') {
+                            {{ sessionTime.key | transloco: sessionTime.params }}
+                          } @else {
+                            {{ sessionAt | date: 'MMM d · HH:mm' }}
+                          }
+                          @if (
+                            block.session.storiesGenerated !== null &&
+                            block.session.storiesGenerated !== undefined
+                          ) {
+                            <span class="max-sm:hidden">
+                              ·
+                              {{
+                                'discovery.sessionStories'
+                                  | transloco: { count: block.session.storiesGenerated }
+                              }}
+                            </span>
+                          }
+                        </span>
+                        @if (block.speakerList.length > 0) {
+                          <!-- Who spoke (US40): one chip per diarized voice with its color, name and
+                           side; the analyst names them and marks client or team from here. -->
+                          <div
+                            class="ml-auto flex shrink-0 items-center gap-1.5"
+                            data-testid="session-speakers"
+                          >
+                            @for (speaker of block.speakerList.slice(0, 3); track speaker.label) {
+                              <span
+                                class="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2 py-0.5 text-xs max-sm:border-0 max-sm:bg-transparent max-sm:p-0"
+                                data-testid="speaker-chip"
+                                [attr.data-speaker-label]="speaker.label"
+                              >
+                                <span
+                                  class="h-2 w-2 rounded-full"
+                                  [class]="colorOf(speaker).dot"
+                                  aria-hidden="true"
+                                ></span>
+                                <span class="font-medium max-sm:sr-only">{{
+                                  nameOf(speaker)
+                                }}</span>
+                                @if (speaker.role) {
+                                  <span class="text-muted-foreground max-sm:sr-only"
+                                    >·
+                                    {{
+                                      'discovery.speakers.side.' + speaker.role | transloco
+                                    }}</span
+                                  >
+                                }
+                              </span>
+                            }
+                            @if (block.speakerList.length > 3) {
+                              <span class="text-xs text-muted-foreground">
+                                +{{ block.speakerList.length - 3 }}
+                              </span>
+                            }
+                            <button
+                              type="button"
+                              class="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:w-8 max-sm:px-0"
+                              (click)="speakersSessionId.set(block.session.id)"
+                              [attr.aria-label]="
+                                (canRecord()
+                                  ? 'discovery.speakers.edit'
+                                  : 'discovery.speakers.view'
+                                ) | transloco
+                              "
+                              [title]="
+                                (canRecord()
+                                  ? 'discovery.speakers.edit'
+                                  : 'discovery.speakers.view'
+                                ) | transloco
+                              "
+                              data-testid="speakers-edit"
+                            >
+                              <hlm-icon name="lucideUsers" size="14px" />
+                              <span class="max-sm:hidden">{{
+                                'discovery.speakers.open' | transloco
+                              }}</span>
+                            </button>
+                          </div>
+                        }
                       </div>
+
+                      @if (!block.loaded) {
+                        <div class="flex justify-center py-2"><hlm-spinner class="h-4 w-4" /></div>
+                      }
+
                       @if (overlapNoticeOf(block); as notice) {
                         <p
                           class="mx-auto flex w-fit max-w-[85%] items-start gap-2 rounded-lg border border-pending-border bg-pending-soft px-3 py-1.5 text-xs text-pending"
@@ -451,416 +458,314 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                           {{ notice.key | transloco: notice.params }}
                         </p>
                       }
-                    }
 
-                    @for (item of block.items; track item.id) {
-                      @switch (item.kind) {
-                        @case ('paragraph') {
-                          <div
-                            class="max-w-[85%] rounded-2xl rounded-tl-md bg-secondary px-3.5 py-2"
-                          >
-                            <p class="text-sm leading-relaxed">{{ item.text }}</p>
-                          </div>
-                        }
-                        @case ('segment') {
-                          <!-- Transcript: neutral bubbles (speaker 1 filled, speaker 2 outlined),
-                             so the conversation recedes behind AI and human decisions. -->
-                          @let speaker = speakerFor(block, item.segment);
-                          @let segKey = segmentKeyOf(block.session.id, item.segment.sequence);
-                          <div
-                            class="flex max-w-[85%] flex-col"
-                            [class.self-end]="speaker?.side === 'right'"
-                            [class.items-end]="speaker?.side === 'right'"
-                            data-testid="segment-bubble"
-                            [attr.data-side]="speaker?.side ?? 'left'"
-                            [attr.data-segment]="segKey"
-                          >
-                            <span
-                              class="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
-                            >
-                              @if (speaker) {
-                                <span
-                                  class="h-2 w-2 shrink-0 rounded-full"
-                                  [class]="colorOf(speaker).dot"
-                                  aria-hidden="true"
-                                ></span>
-                                <span
-                                  class="font-medium"
-                                  [class]="colorOf(speaker).text"
-                                  data-testid="segment-speaker"
-                                  [attr.data-speaker-label]="speaker.label"
-                                  >{{ nameOf(speaker) }}</span
-                                >
-                                @if (speaker.role) {
-                                  <span
-                                    class="rounded px-1 text-[10px] font-medium"
-                                    [class]="roleClass(speaker)"
-                                    data-testid="segment-speaker-side"
-                                    >{{
-                                      'discovery.speakers.side.' + speaker.role | transloco
-                                    }}</span
-                                  >
-                                }
-                                <span aria-hidden="true">·</span>
-                              }
-                              <time
-                                class="tabular-nums"
-                                [attr.datetime]="item.segment.occurredAt"
-                                [title]="item.segment.occurredAt | date: 'd MMM y, HH:mm'"
-                                >{{ item.segment.occurredAt | date: 'HH:mm' }}</time
-                              >
-                            </span>
+                      @for (item of block.items; track item.id) {
+                        @switch (item.kind) {
+                          @case ('paragraph') {
                             <div
-                              class="rounded-2xl px-3.5 py-2 text-foreground"
-                              [class]="segmentBubbleClass(speaker)"
-                              [class.opacity-60]="!item.segment.isFinal"
-                              [class.segment-flash]="flashSegment() === segKey"
+                              class="max-w-[85%] rounded-2xl rounded-tl-md bg-secondary px-3.5 py-2"
                             >
-                              <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
+                              <p class="text-sm leading-relaxed">{{ item.text }}</p>
                             </div>
-                          </div>
-                        }
-                        @case ('decision') {
-                          <!-- A human decision on an AI suggestion: a compact event row. Accepted
-                             reads "validated by the analyst" (emerald), dismissed stays neutral. -->
-                          @let accepted = item.decision.outcome === 'ACCEPTED';
-                          <div
-                            class="flex w-full max-w-[85%] items-start gap-2.5 self-center rounded-xl px-3 py-2 text-sm"
-                            [class]="decisionClass(item.decision.outcome)"
-                            data-testid="decision-entry"
-                            [attr.data-outcome]="item.decision.outcome"
-                          >
-                            <hlm-icon
-                              [name]="accepted ? 'lucideCircleCheck' : 'lucideCircleX'"
-                              size="16px"
-                              class="mt-0.5 shrink-0"
-                              [class.text-verified]="accepted"
-                              aria-hidden="true"
-                            />
-                            <div class="min-w-0 flex-1">
-                              <p class="flex flex-wrap items-center gap-x-1.5 text-xs">
-                                <span class="font-semibold" [class.text-verified]="accepted">{{
-                                  decisionLabel(item.decision) | transloco
-                                }}</span>
-                                <span class="text-muted-foreground" data-testid="decision-type"
-                                  >·
-                                  {{
-                                    'discovery.suggestion.type.' + item.decision.type | transloco
-                                  }}</span
-                                >
-                                @let decisionTime = timeLabel(item.decision.occurredAt);
-                                <time
-                                  class="text-muted-foreground"
-                                  [attr.datetime]="item.decision.occurredAt"
-                                  [title]="item.decision.occurredAt | date: 'd MMM y, HH:mm'"
-                                >
-                                  ·
-                                  @if (decisionTime.kind === 'relative') {
-                                    {{ decisionTime.key | transloco: decisionTime.params }}
-                                  } @else {
-                                    {{ item.decision.occurredAt | date: 'd MMM' }}
-                                  }
-                                </time>
-                              </p>
-                              @if (item.decision.label) {
-                                <p
-                                  class="mt-0.5 leading-snug"
-                                  [class.text-foreground]="accepted"
-                                  [class.line-through]="!accepted"
-                                  data-testid="decision-label"
-                                >
-                                  {{ item.decision.label }}
-                                </p>
-                              }
-                            </div>
-                            @if (item.decision.storyId) {
-                              <button
-                                type="button"
-                                (click)="focusStory(item.decision.storyId)"
-                                class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
-                                [attr.aria-label]="'discovery.goToStory' | transloco"
-                                [title]="'discovery.goToStory' | transloco"
-                                data-testid="decision-go-to-story"
-                              >
-                                <hlm-icon name="lucideArrowUpRight" size="12px" />
-                                <span class="hidden sm:inline">{{
-                                  'discovery.goToStory' | transloco
-                                }}</span>
-                              </button>
-                            }
-                          </div>
-                        }
-                        @case ('story') {
-                          <!-- A story the AI generated when the session was processed: violet
-                             provenance plus an explicit "awaiting review" state. -->
-                          <div
-                            class="rounded-2xl border border-ai-border bg-card p-3.5"
-                            data-testid="feed-story"
-                          >
-                            <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                          }
+                          @case ('segment') {
+                            <!-- Transcript: neutral bubbles (speaker 1 filled, speaker 2 outlined),
+                             so the conversation recedes behind AI and human decisions. -->
+                            @let speaker = speakerFor(block, item.segment);
+                            @let segKey = segmentKeyOf(block.session.id, item.segment.sequence);
+                            <div
+                              class="flex max-w-[85%] flex-col"
+                              [class.self-end]="speaker?.side === 'right'"
+                              [class.items-end]="speaker?.side === 'right'"
+                              data-testid="segment-bubble"
+                              [attr.data-side]="speaker?.side ?? 'left'"
+                              [attr.data-segment]="segKey"
+                            >
                               <span
-                                class="inline-flex items-center gap-1 rounded-full bg-ai-soft px-2 py-0.5 text-xs font-medium text-ai"
+                                class="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
                               >
-                                <hlm-icon name="lucideSparkles" size="12px" aria-hidden="true" />
-                                {{ 'discovery.generatedStory' | transloco }}
-                              </span>
-                              <span
-                                class="inline-flex items-center gap-1 rounded-full bg-pending-soft px-2 py-0.5 text-xs font-medium text-pending"
-                              >
-                                <hlm-icon
-                                  name="lucideCircleDashed"
-                                  size="12px"
-                                  aria-hidden="true"
-                                />
-                                {{ 'discovery.pendingReview' | transloco }}
-                              </span>
-                            </div>
-                            <p class="text-sm font-semibold">{{ item.story.title }}</p>
-                            <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-                              {{ 'discovery.story.as' | transloco }}
-                              <span class="text-foreground">{{ item.story.role }}</span
-                              >{{ 'discovery.story.want' | transloco }}
-                              <span class="text-foreground">{{ item.story.action }}</span
-                              >{{ 'discovery.story.soThat' | transloco }}
-                              <span class="text-foreground">{{ item.story.benefit }}</span
-                              >.
-                            </p>
-                            <div class="mt-2 flex items-center gap-2">
-                              @if (item.story.createdAt; as storyAt) {
-                                @let storyTime = timeLabel(storyAt);
-                                <time
-                                  class="text-xs text-muted-foreground"
-                                  [attr.datetime]="storyAt"
-                                  [title]="storyAt | date: 'd MMM y, HH:mm'"
-                                >
-                                  @if (storyTime.kind === 'relative') {
-                                    {{ storyTime.key | transloco: storyTime.params }}
-                                  } @else {
-                                    {{ storyAt | date: 'd MMM' }}
-                                  }
-                                </time>
-                              }
-                              <button
-                                type="button"
-                                (click)="focusStory(item.story.id)"
-                                class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                                [attr.aria-label]="'discovery.goToStory' | transloco"
-                                [title]="'discovery.goToStory' | transloco"
-                                data-testid="story-go-to-story"
-                              >
-                                <hlm-icon name="lucideArrowUpRight" size="12px" />
-                                {{ 'discovery.goToStory' | transloco }}
-                              </button>
-                            </div>
-                          </div>
-                        }
-                      }
-                    }
-
-                    <!-- What the AI is doing for this session right now: listening while
-                       recording, waiting while paused, generating stories after Stop, or
-                       why processing failed. A chat-style status line at the live edge. -->
-                    @if (activityFor(block); as activity) {
-                      <div
-                        class="flex max-w-[85%] items-start gap-2.5 self-start rounded-2xl px-3.5 py-2.5 text-sm"
-                        [class]="activityClass(activity.state)"
-                        role="status"
-                        data-testid="ai-activity"
-                        [attr.data-state]="activity.state"
-                      >
-                        @switch (activity.state) {
-                          @case ('listening') {
-                            <span
-                              class="ai-dots mt-1.5 flex shrink-0 items-center gap-1"
-                              aria-hidden="true"
-                            >
-                              <span></span><span></span><span></span>
-                            </span>
-                          }
-                          @case ('paused') {
-                            <hlm-icon name="lucidePause" size="15px" class="mt-0.5 shrink-0" />
-                          }
-                          @case ('manual') {
-                            <hlm-icon name="lucideSparkles" size="15px" class="mt-0.5 shrink-0" />
-                          }
-                          @case ('processing') {
-                            <hlm-spinner class="mt-0.5 h-4 w-4 shrink-0" />
-                          }
-                          @case ('failed') {
-                            <hlm-icon
-                              name="lucideCircleAlert"
-                              size="15px"
-                              class="mt-0.5 shrink-0"
-                            />
-                          }
-                        }
-                        <div class="min-w-0">
-                          <p class="font-medium text-foreground">
-                            {{ 'discovery.ai.' + activity.state | transloco }}
-                          </p>
-                          @if (activity.detail; as detail) {
-                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                              {{ detail }}
-                            </p>
-                          } @else if (activity.state === 'listening' && activity.last) {
-                            <p class="mt-0.5 text-xs text-muted-foreground">
-                              {{
-                                'discovery.ai.lastSuggestion'
-                                  | transloco
-                                    : {
-                                        time: (activity.last.key | transloco: activity.last.params),
-                                      }
-                              }}
-                            </p>
-                          } @else {
-                            <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                              {{ 'discovery.ai.' + activity.state + 'Hint' | transloco }}
-                            </p>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                <!-- Assistant chat: what the analyst typed and ReqsAI's replies, after the
-                     sessions. A reply that raised suggestions shows them as review cards; a
-                     decided one collapses to a decision row. -->
-                @if (chat.hasMessages()) {
-                  <div class="flex flex-col gap-3" data-testid="assistant-chat">
-                    <div class="pointer-events-none sticky top-0 z-10 flex justify-center py-1.5">
-                      <span
-                        class="pointer-events-auto rounded-full border border-ai-border bg-card/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
-                        >{{ 'discovery.chat.separator' | transloco }}</span
-                      >
-                    </div>
-                    @for (message of chat.messages(); track message.id) {
-                      @if (message.role === 'ANALYST') {
-                        <div
-                          class="flex max-w-[85%] flex-col items-end self-end"
-                          data-testid="chat-question"
-                        >
-                          <span class="mb-1 px-1 text-[11px] text-muted-foreground">
-                            {{ 'discovery.chat.you' | transloco }} ·
-                            <time [attr.datetime]="message.createdAt">{{
-                              message.createdAt | date: 'HH:mm'
-                            }}</time>
-                          </span>
-                          <div
-                            class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground"
-                          >
-                            <p class="text-sm leading-relaxed whitespace-pre-line">
-                              {{ message.content }}
-                            </p>
-                          </div>
-                        </div>
-                      } @else {
-                        <div
-                          class="flex w-full max-w-[85%] flex-col gap-2"
-                          data-testid="chat-answer"
-                        >
-                          <span
-                            class="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground"
-                          >
-                            <hlm-icon name="lucideSparkles" size="12px" class="text-ai" />
-                            <span class="font-medium">ReqsAI</span> ·
-                            <time [attr.datetime]="message.createdAt">{{
-                              message.createdAt | date: 'HH:mm'
-                            }}</time>
-                          </span>
-                          <div
-                            class="rounded-2xl rounded-tl-md border border-ai-border bg-ai-soft px-3.5 py-2"
-                          >
-                            <p
-                              class="text-sm leading-relaxed whitespace-pre-line"
-                              data-testid="chat-answer-text"
-                            >
-                              {{ message.content }}
-                            </p>
-                          </div>
-                          @for (suggestion of message.suggestions; track suggestion.id) {
-                            @if (suggestion.status === 'PENDING') {
-                              <app-suggestion-card
-                                data-testid="chat-suggestion"
-                                [suggestion]="suggestion"
-                                [targetStory]="chatTarget(suggestion)"
-                                [canDecide]="canDecide()"
-                                [busy]="store.deciding().includes(suggestion.id)"
-                                [evidenceSegment]="store.evidenceSegment(suggestion)"
-                                (accept)="acceptFromChat(suggestion, $event)"
-                                (dismiss)="dismissFromChat(suggestion)"
-                                (openTarget)="focusStory($event)"
-                                (showEvidence)="revealSegment($event)"
-                              />
-                            } @else {
-                              @let chatAccepted = suggestion.status === 'ACCEPTED';
-                              <div
-                                class="flex items-start gap-2.5 rounded-xl px-3 py-2 text-sm"
-                                [class]="decisionClass(chatAccepted ? 'ACCEPTED' : 'DISMISSED')"
-                                data-testid="chat-decision"
-                                [attr.data-outcome]="suggestion.status"
-                              >
-                                <hlm-icon
-                                  [name]="chatAccepted ? 'lucideCircleCheck' : 'lucideCircleX'"
-                                  size="16px"
-                                  class="mt-0.5 shrink-0"
-                                  [class.text-verified]="chatAccepted"
-                                  aria-hidden="true"
-                                />
-                                <p class="min-w-0 flex-1 leading-snug">
+                                @if (speaker) {
                                   <span
-                                    class="text-xs font-semibold"
-                                    [class.text-verified]="chatAccepted"
-                                    >{{
-                                      (chatAccepted
-                                        ? 'discovery.chat.accepted'
-                                        : 'discovery.chat.dismissed'
-                                      ) | transloco
+                                    class="h-2 w-2 shrink-0 rounded-full"
+                                    [class]="colorOf(speaker).dot"
+                                    aria-hidden="true"
+                                  ></span>
+                                  <span
+                                    class="font-medium"
+                                    [class]="colorOf(speaker).text"
+                                    data-testid="segment-speaker"
+                                    [attr.data-speaker-label]="speaker.label"
+                                    >{{ nameOf(speaker) }}</span
+                                  >
+                                  @if (speaker.role) {
+                                    <span
+                                      class="rounded px-1 text-[10px] font-medium"
+                                      [class]="roleClass(speaker)"
+                                      data-testid="segment-speaker-side"
+                                      >{{
+                                        'discovery.speakers.side.' + speaker.role | transloco
+                                      }}</span
+                                    >
+                                  }
+                                  <span aria-hidden="true">·</span>
+                                }
+                                <time
+                                  class="tabular-nums"
+                                  [attr.datetime]="item.segment.occurredAt"
+                                  [title]="item.segment.occurredAt | date: 'd MMM y, HH:mm'"
+                                  >{{ item.segment.occurredAt | date: 'HH:mm' }}</time
+                                >
+                              </span>
+                              <div
+                                class="rounded-2xl px-3.5 py-2 text-foreground"
+                                [class]="segmentBubbleClass(speaker)"
+                                [class.opacity-60]="!item.segment.isFinal"
+                                [class.segment-flash]="flashSegment() === segKey"
+                              >
+                                <p class="text-sm leading-relaxed">{{ item.segment.text }}</p>
+                              </div>
+                            </div>
+                          }
+                          @case ('decision') {
+                            <!-- A human decision on an AI suggestion: a compact event row. Accepted
+                             reads "validated by the analyst" (emerald), dismissed stays neutral. -->
+                            @let accepted = item.decision.outcome === 'ACCEPTED';
+                            <div
+                              class="flex w-full max-w-[85%] items-start gap-2.5 self-center rounded-xl px-3 py-2 text-sm"
+                              [class]="decisionClass(item.decision.outcome)"
+                              data-testid="decision-entry"
+                              [attr.data-outcome]="item.decision.outcome"
+                            >
+                              <hlm-icon
+                                [name]="accepted ? 'lucideCircleCheck' : 'lucideCircleX'"
+                                size="16px"
+                                class="mt-0.5 shrink-0"
+                                [class.text-verified]="accepted"
+                                aria-hidden="true"
+                              />
+                              <div class="min-w-0 flex-1">
+                                <p class="flex flex-wrap items-center gap-x-1.5 text-xs">
+                                  <span class="font-semibold" [class.text-verified]="accepted">{{
+                                    decisionLabel(item.decision) | transloco
+                                  }}</span>
+                                  <span class="text-muted-foreground" data-testid="decision-type"
+                                    >·
+                                    {{
+                                      'discovery.suggestion.type.' + item.decision.type | transloco
                                     }}</span
                                   >
-                                  <span class="block" [class.line-through]="!chatAccepted">{{
-                                    suggestion.draftTitle ?? suggestion.question
-                                  }}</span>
-                                </p>
-                                @if (suggestion.resolvedStoryId; as storyId) {
-                                  <button
-                                    type="button"
-                                    (click)="focusStory(storyId)"
-                                    class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
-                                    data-testid="chat-go-to-story"
+                                  @let decisionTime = timeLabel(item.decision.occurredAt);
+                                  <time
+                                    class="text-muted-foreground"
+                                    [attr.datetime]="item.decision.occurredAt"
+                                    [title]="item.decision.occurredAt | date: 'd MMM y, HH:mm'"
                                   >
-                                    <hlm-icon name="lucideArrowUpRight" size="12px" />
-                                    <span class="hidden sm:inline">{{
-                                      'discovery.goToStory' | transloco
-                                    }}</span>
-                                  </button>
+                                    ·
+                                    @if (decisionTime.kind === 'relative') {
+                                      {{ decisionTime.key | transloco: decisionTime.params }}
+                                    } @else {
+                                      {{ item.decision.occurredAt | date: 'd MMM' }}
+                                    }
+                                  </time>
+                                </p>
+                                @if (item.decision.label) {
+                                  <p
+                                    class="mt-0.5 leading-snug"
+                                    [class.text-foreground]="accepted"
+                                    [class.line-through]="!accepted"
+                                    data-testid="decision-label"
+                                  >
+                                    {{ item.decision.label }}
+                                  </p>
                                 }
                               </div>
+                              @if (item.decision.storyId) {
+                                <button
+                                  type="button"
+                                  (click)="focusStory(item.decision.storyId)"
+                                  class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
+                                  [attr.aria-label]="'discovery.goToStory' | transloco"
+                                  [title]="'discovery.goToStory' | transloco"
+                                  data-testid="decision-go-to-story"
+                                >
+                                  <hlm-icon name="lucideArrowUpRight" size="12px" />
+                                  <span class="hidden sm:inline">{{
+                                    'discovery.goToStory' | transloco
+                                  }}</span>
+                                </button>
+                              }
+                            </div>
+                          }
+                          @case ('chat') {
+                            <ng-container
+                              [ngTemplateOutlet]="chatMessage"
+                              [ngTemplateOutletContext]="{ $implicit: item.message }"
+                            />
+                          }
+                          @case ('chat-pending') {
+                            <ng-container
+                              [ngTemplateOutlet]="chatPending"
+                              [ngTemplateOutletContext]="{ $implicit: item.text }"
+                            />
+                          }
+                          @case ('story') {
+                            <!-- A story the AI generated when the session was processed: violet
+                             provenance plus an explicit "awaiting review" state. -->
+                            <div
+                              class="rounded-2xl border border-ai-border bg-card p-3.5"
+                              data-testid="feed-story"
+                            >
+                              <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                                <span
+                                  class="inline-flex items-center gap-1 rounded-full bg-ai-soft px-2 py-0.5 text-xs font-medium text-ai"
+                                >
+                                  <hlm-icon name="lucideSparkles" size="12px" aria-hidden="true" />
+                                  {{ 'discovery.generatedStory' | transloco }}
+                                </span>
+                                <span
+                                  class="inline-flex items-center gap-1 rounded-full bg-pending-soft px-2 py-0.5 text-xs font-medium text-pending"
+                                >
+                                  <hlm-icon
+                                    name="lucideCircleDashed"
+                                    size="12px"
+                                    aria-hidden="true"
+                                  />
+                                  {{ 'discovery.pendingReview' | transloco }}
+                                </span>
+                              </div>
+                              <p class="text-sm font-semibold">{{ item.story.title }}</p>
+                              <p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+                                {{ 'discovery.story.as' | transloco }}
+                                <span class="text-foreground">{{ item.story.role }}</span
+                                >{{ 'discovery.story.want' | transloco }}
+                                <span class="text-foreground">{{ item.story.action }}</span
+                                >{{ 'discovery.story.soThat' | transloco }}
+                                <span class="text-foreground">{{ item.story.benefit }}</span
+                                >.
+                              </p>
+                              <div class="mt-2 flex items-center gap-2">
+                                @if (item.story.createdAt; as storyAt) {
+                                  @let storyTime = timeLabel(storyAt);
+                                  <time
+                                    class="text-xs text-muted-foreground"
+                                    [attr.datetime]="storyAt"
+                                    [title]="storyAt | date: 'd MMM y, HH:mm'"
+                                  >
+                                    @if (storyTime.kind === 'relative') {
+                                      {{ storyTime.key | transloco: storyTime.params }}
+                                    } @else {
+                                      {{ storyAt | date: 'd MMM' }}
+                                    }
+                                  </time>
+                                }
+                                <button
+                                  type="button"
+                                  (click)="focusStory(item.story.id)"
+                                  class="ml-auto inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                                  [attr.aria-label]="'discovery.goToStory' | transloco"
+                                  [title]="'discovery.goToStory' | transloco"
+                                  data-testid="story-go-to-story"
+                                >
+                                  <hlm-icon name="lucideArrowUpRight" size="12px" />
+                                  {{ 'discovery.goToStory' | transloco }}
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        }
+                      }
+
+                      <!-- What the AI is doing for this session right now: listening while
+                       recording, waiting while paused, generating stories after Stop, or
+                       why processing failed. A chat-style status line at the live edge. -->
+                      @if (activityFor(block); as activity) {
+                        <div
+                          class="flex max-w-[85%] items-start gap-2.5 self-start rounded-2xl px-3.5 py-2.5 text-sm"
+                          [class]="activityClass(activity.state)"
+                          role="status"
+                          data-testid="ai-activity"
+                          [attr.data-state]="activity.state"
+                        >
+                          @switch (activity.state) {
+                            @case ('listening') {
+                              <span
+                                class="ai-dots mt-1.5 flex shrink-0 items-center gap-1"
+                                aria-hidden="true"
+                              >
+                                <span></span><span></span><span></span>
+                              </span>
+                            }
+                            @case ('paused') {
+                              <hlm-icon name="lucidePause" size="15px" class="mt-0.5 shrink-0" />
+                            }
+                            @case ('manual') {
+                              <hlm-icon name="lucideSparkles" size="15px" class="mt-0.5 shrink-0" />
+                            }
+                            @case ('processing') {
+                              <hlm-spinner class="mt-0.5 h-4 w-4 shrink-0" />
+                            }
+                            @case ('failed') {
+                              <hlm-icon
+                                name="lucideCircleAlert"
+                                size="15px"
+                                class="mt-0.5 shrink-0"
+                              />
                             }
                           }
+                          <div class="min-w-0">
+                            <p class="font-medium text-foreground">
+                              {{ 'discovery.ai.' + activity.state | transloco }}
+                            </p>
+                            @if (activity.detail; as detail) {
+                              <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                {{ detail }}
+                              </p>
+                            } @else if (activity.state === 'listening' && activity.last) {
+                              <p class="mt-0.5 text-xs text-muted-foreground">
+                                {{
+                                  'discovery.ai.lastSuggestion'
+                                    | transloco
+                                      : {
+                                          time:
+                                            (activity.last.key | transloco: activity.last.params),
+                                        }
+                                }}
+                              </p>
+                            } @else {
+                              <p class="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                                {{ 'discovery.ai.' + activity.state + 'Hint' | transloco }}
+                              </p>
+                            }
+                          </div>
                         </div>
                       }
-                    }
-                    @if (chat.pendingQuestion(); as pending) {
-                      <div class="flex max-w-[85%] flex-col items-end self-end opacity-80">
-                        <div
-                          class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground"
+                    </div>
+                  } @else {
+                    <!-- Chat with ReqsAI between sessions (before, after or in the gaps): what the
+                       analyst typed and ReqsAI's replies, in the order they happened. A reply that
+                       raised suggestions shows them as review cards; a decided one collapses to a
+                       decision row. Chat sent during a session sits inside that session instead. -->
+                    <div class="flex flex-col gap-3" data-testid="assistant-chat">
+                      <div class="pointer-events-none sticky top-0 z-10 flex justify-center py-1.5">
+                        <span
+                          class="pointer-events-auto rounded-full border border-ai-border bg-card/90 px-2.5 py-0.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur"
+                          >{{ 'discovery.chat.separator' | transloco }}</span
                         >
-                          <p class="text-sm leading-relaxed whitespace-pre-line">{{ pending }}</p>
-                        </div>
                       </div>
-                      <div
-                        class="flex max-w-[85%] items-center gap-2.5 self-start rounded-2xl border border-ai-border bg-ai-soft px-3.5 py-2.5 text-sm"
-                        role="status"
-                        data-testid="chat-thinking"
-                      >
-                        <span class="ai-dots flex shrink-0 items-center gap-1" aria-hidden="true">
-                          <span></span><span></span><span></span>
-                        </span>
-                        {{ 'discovery.chat.thinking' | transloco }}
-                      </div>
-                    }
-                  </div>
+                      @for (message of entry.messages; track message.id) {
+                        <ng-container
+                          [ngTemplateOutlet]="chatMessage"
+                          [ngTemplateOutletContext]="{ $implicit: message }"
+                        />
+                      }
+                      @if (entry.pending; as pending) {
+                        <ng-container
+                          [ngTemplateOutlet]="chatPending"
+                          [ngTemplateOutletContext]="{ $implicit: pending }"
+                        />
+                      }
+                    </div>
+                  }
                 }
               }
             }
@@ -924,9 +829,11 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           @if (canRecord()) {
             <!-- Locked once a session is live: the recorder owns the source then. -->
             <app-audio-source-picker
-              class="min-w-0 flex-1 sm:flex-none sm:shrink-0"
               [value]="audioSource()"
               (valueChange)="setAudioSource($event)"
+              [(open)]="sourceMenuOpen"
+              [asking]="askingSource()"
+              (picked)="onSourcePicked()"
               [meetingSupported]="meetingSupported"
               [disabled]="startLocked()"
               (unavailablePicked)="meetingUnavailableHint.set(true)"
@@ -1046,6 +953,108 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
         </aside>
       }
     </div>
+
+    <!-- One assistant-chat message, shared by chat runs between sessions and by the
+         messages woven into a session. -->
+    <ng-template #chatMessage let-message>
+      @if (message.role === 'ANALYST') {
+        <div class="flex max-w-[85%] flex-col items-end self-end" data-testid="chat-question">
+          <span class="mb-1 px-1 text-[11px] text-muted-foreground">
+            {{ 'discovery.chat.you' | transloco }} ·
+            <time [attr.datetime]="message.createdAt">{{ message.createdAt | date: 'HH:mm' }}</time>
+          </span>
+          <div class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground">
+            <p class="text-sm leading-relaxed whitespace-pre-line">
+              {{ message.content }}
+            </p>
+          </div>
+        </div>
+      } @else {
+        <div class="flex w-full max-w-[85%] flex-col gap-2" data-testid="chat-answer">
+          <span class="flex items-center gap-1.5 px-1 text-[11px] text-muted-foreground">
+            <hlm-icon name="lucideSparkles" size="12px" class="text-ai" />
+            <span class="font-medium">ReqsAI</span> ·
+            <time [attr.datetime]="message.createdAt">{{ message.createdAt | date: 'HH:mm' }}</time>
+          </span>
+          <div class="rounded-2xl rounded-tl-md border border-ai-border bg-ai-soft px-3.5 py-2">
+            <p class="text-sm leading-relaxed whitespace-pre-line" data-testid="chat-answer-text">
+              {{ message.content }}
+            </p>
+          </div>
+          @for (suggestion of message.suggestions; track suggestion.id) {
+            @if (suggestion.status === 'PENDING') {
+              <app-suggestion-card
+                data-testid="chat-suggestion"
+                [suggestion]="suggestion"
+                [targetStory]="chatTarget(suggestion)"
+                [canDecide]="canDecide()"
+                [busy]="store.deciding().includes(suggestion.id)"
+                [evidenceSegment]="store.evidenceSegment(suggestion)"
+                (accept)="acceptFromChat(suggestion, $event)"
+                (dismiss)="dismissFromChat(suggestion)"
+                (openTarget)="focusStory($event)"
+                (showEvidence)="revealSegment($event)"
+              />
+            } @else {
+              @let chatAccepted = suggestion.status === 'ACCEPTED';
+              <div
+                class="flex items-start gap-2.5 rounded-xl px-3 py-2 text-sm"
+                [class]="decisionClass(chatAccepted ? 'ACCEPTED' : 'DISMISSED')"
+                data-testid="chat-decision"
+                [attr.data-outcome]="suggestion.status"
+              >
+                <hlm-icon
+                  [name]="chatAccepted ? 'lucideCircleCheck' : 'lucideCircleX'"
+                  size="16px"
+                  class="mt-0.5 shrink-0"
+                  [class.text-verified]="chatAccepted"
+                  aria-hidden="true"
+                />
+                <p class="min-w-0 flex-1 leading-snug">
+                  <span class="text-xs font-semibold" [class.text-verified]="chatAccepted">{{
+                    (chatAccepted ? 'discovery.chat.accepted' : 'discovery.chat.dismissed')
+                      | transloco
+                  }}</span>
+                  <span class="block" [class.line-through]="!chatAccepted">{{
+                    suggestion.draftTitle ?? suggestion.question
+                  }}</span>
+                </p>
+                @if (suggestion.resolvedStoryId; as storyId) {
+                  <button
+                    type="button"
+                    (click)="focusStory(storyId)"
+                    class="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 hover:underline"
+                    data-testid="chat-go-to-story"
+                  >
+                    <hlm-icon name="lucideArrowUpRight" size="12px" />
+                    <span class="hidden sm:inline">{{ 'discovery.goToStory' | transloco }}</span>
+                  </button>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+    </ng-template>
+
+    <!-- The question being answered and the "thinking" line: always the newest thing. -->
+    <ng-template #chatPending let-pending>
+      <div class="flex max-w-[85%] flex-col items-end self-end opacity-80">
+        <div class="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2 text-primary-foreground">
+          <p class="text-sm leading-relaxed whitespace-pre-line">{{ pending }}</p>
+        </div>
+      </div>
+      <div
+        class="flex max-w-[85%] items-center gap-2.5 self-start rounded-2xl border border-ai-border bg-ai-soft px-3.5 py-2.5 text-sm"
+        role="status"
+        data-testid="chat-thinking"
+      >
+        <span class="ai-dots flex shrink-0 items-center gap-1" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        {{ 'discovery.chat.thinking' | transloco }}
+      </div>
+    </ng-template>
 
     <!-- Screen readers hear the review queue grow (the tray itself is visual). -->
     <p class="sr-only" aria-live="polite" data-testid="queue-announcer">
@@ -1225,6 +1234,18 @@ export class DiscoveryChat implements OnInit {
     return id ? (this.store.blocks().find((b) => b.session.id === id) ?? null) : null;
   });
 
+  /**
+   * The session the "Speakers" menu entry opens: the live session while one runs, else the latest
+   * one that has diarized voices. Null when no session distinguishes speakers.
+   */
+  protected readonly speakersTarget = computed<RenderBlock | null>(() => {
+    const blocks = this.store.blocks();
+    const liveId = this.store.liveSession()?.id;
+    const live = liveId ? blocks.find((b) => b.session.id === liveId) : undefined;
+    if (live && live.speakerList.length > 0) return live;
+    return [...blocks].reverse().find((b) => b.speakerList.length > 0) ?? null;
+  });
+
   /** Controls the "leave while recording" confirmation modal (in-app nav guard). */
   protected readonly leaveOpen = signal(false);
   /** Resolver for the CanDeactivate promise, pending while the modal is open. */
@@ -1236,8 +1257,11 @@ export class DiscoveryChat implements OnInit {
    * session. Watched to restore scroll position after the prepend.
    */
   private readonly topAnchor = computed(() => {
-    const top = this.store.blocks()[0];
-    return top ? `${top.session.id}:${top.items.length}` : null;
+    const top = this.timeline()[0];
+    if (!top) return null;
+    return top.kind === 'session'
+      ? `${top.key}:${top.block.items.length}`
+      : `${top.key}:${top.messages.length}`;
   });
   /** feed.scrollHeight captured right before an older-history load, to offset the prepend. */
   private pendingPrependHeight: number | null = null;
@@ -1246,12 +1270,31 @@ export class DiscoveryChat implements OnInit {
   protected readonly projectCreatedAt = computed(
     () => this.workspace.projects().find((p) => p.id === this.projectId())?.createdAt ?? null,
   );
-  /** Total feed entries across sessions and the chat; changes when content arrives, to trigger auto-stick. */
-  protected readonly feedItemCount = computed(
-    () =>
-      this.store.blocks().reduce((total, block) => total + block.items.length, 0) +
-      this.chat.messages().length +
-      (this.chat.sending() ? 1 : 0),
+  /**
+   * The single chronological timeline: sessions by start time with the assistant chat woven in by
+   * time. Chat sent during a session sits among its segments; chat before, between or after
+   * sessions forms runs of its own. While older history is still to be paged in, chat older than
+   * the oldest loaded session waits for it, so it never shows above sessions that have not loaded.
+   */
+  protected readonly timeline = computed(() => {
+    const blocks = this.store.blocks();
+    const oldest = blocks.length > 0 ? sessionStart(blocks[0].session) : Number.NaN;
+    return buildTimeline(blocks, this.chat.messages(), {
+      pending: this.chat.pendingQuestion(),
+      now: Date.now(),
+      cutoff: this.store.hasOlder() && !Number.isNaN(oldest) ? oldest : null,
+    });
+  });
+  /** Total timeline entries; changes when content arrives, to trigger auto-stick. */
+  protected readonly feedItemCount = computed(() =>
+    this.timeline().reduce(
+      (total, entry) =>
+        total +
+        (entry.kind === 'session'
+          ? entry.block.items.length
+          : entry.messages.length + (entry.pending !== null ? 1 : 0)),
+      0,
+    ),
   );
 
   /** Recording follows the project permission (org owners and admins always pass). */
@@ -1315,6 +1358,15 @@ export class DiscoveryChat implements OnInit {
   protected readonly audioSource = linkedSignal<AudioSource>(() =>
     resolveAudioSource(this.storedAudioSource(), this.meetingSupported),
   );
+  /**
+   * Whether this user has ever picked a source. Until they do, pressing Record asks first instead
+   * of silently recording the microphone (it only matters where meeting capture is possible).
+   */
+  private readonly audioSourceChosen = linkedSignal(() => this.storedAudioSource() !== null);
+  /** The source menu next to the record button is open. */
+  protected readonly sourceMenuOpen = signal(false);
+  /** The menu was opened by Record to ask where the audio comes from; picking one then records. */
+  protected readonly askingSource = signal(false);
   /** Set when the unavailable "virtual meeting" option is tapped, to explain why. */
   protected readonly meetingUnavailableHint = signal(false);
   /** True while the share picker / mic prompt is open, so a second click can't stack another. */
@@ -1348,6 +1400,10 @@ export class DiscoveryChat implements OnInit {
     // plenty for "Nm ago" granularity). Cleared on destroy so no timer leaks.
     const ticker = setInterval(() => this.now.set(Date.now()), 60_000);
     this.destroyRef.onDestroy(() => clearInterval(ticker));
+    // Closing the source menu (by any means) ends the "ask before recording" question.
+    effect(() => {
+      if (!this.sourceMenuOpen()) this.askingSource.set(false);
+    });
     // Scroll a freshly focused session into view (history row click / new session).
     effect(() => {
       const sessionId = this.store.focusSessionId();
@@ -1393,6 +1449,20 @@ export class DiscoveryChat implements OnInit {
     effect(() => {
       this.feedItemCount();
       if (untracked(() => this.atBottom())) setTimeout(() => this.scrollToBottom(), 0);
+    });
+    // A feed too short to scroll never fires a scroll event, so older history (and the chat that
+    // belongs before it) would be unreachable: keep paging it in until the feed overflows.
+    effect(() => {
+      this.feedItemCount();
+      const hasOlder = this.store.hasOlder();
+      const loading = this.store.loadingOlder();
+      if (!hasOlder || loading || this.store.state() !== 'ready') return;
+      setTimeout(() => {
+        const el = this.feed()?.nativeElement;
+        if (!el || el.scrollHeight > el.clientHeight + 8 || this.store.loadingOlder()) return;
+        this.pendingPrependHeight = el.scrollHeight;
+        this.store.loadOlder();
+      }, 0);
     });
     // If the leave modal is dismissed via backdrop/Escape (not the buttons),
     // treat it as "stay" so the router's CanDeactivate promise never hangs.
@@ -1496,6 +1566,12 @@ export class DiscoveryChat implements OnInit {
 
   protected async record(): Promise<void> {
     if (this.startLocked()) return;
+    if (this.meetingSupported && !this.audioSourceChosen()) {
+      // First recording: ask where the audio comes from; the pick starts it (see onSourcePicked).
+      this.askingSource.set(true);
+      this.sourceMenuOpen.set(true);
+      return;
+    }
     this.preparingCapture.set(true);
     // Must stay the first await: the meeting source opens the screen-share
     // picker, which needs this click's transient activation.
@@ -1838,6 +1914,7 @@ export class DiscoveryChat implements OnInit {
   /** Picks the audio source and persists it as this user's preference. */
   protected setAudioSource(source: AudioSource): void {
     this.audioSource.set(source);
+    this.audioSourceChosen.set(true);
     this.meetingUnavailableHint.set(false);
     // A previous attempt's capture warning no longer applies to the new choice.
     this.recorder.notice.set(null);
@@ -1848,6 +1925,19 @@ export class DiscoveryChat implements OnInit {
     } catch {
       // Storage can be unavailable (private mode / quota); the in-memory value still applies.
     }
+  }
+
+  /** A source was picked in the menu; when Record asked for it, recording starts right away. */
+  protected onSourcePicked(): void {
+    if (!this.askingSource()) return;
+    this.askingSource.set(false);
+    void this.record();
+  }
+
+  /** Opens the speakers dialog of the current (live or latest) session from the ⋯ menu. */
+  protected openCurrentSpeakers(): void {
+    const target = this.speakersTarget();
+    if (target) this.speakersSessionId.set(target.session.id);
   }
 
   /** Hides the virtual-meeting tips for good on this browser. */
