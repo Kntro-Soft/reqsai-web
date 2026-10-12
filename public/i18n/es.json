@@ -421,7 +421,38 @@
     "contextGroup": "Contexto del negocio",
     "stackGroup": "Stack técnico",
     "chipHint": "Escribe un valor y pulsa Enter para añadirlo.",
-    "example": "p. ej. {{value}}"
+    "example": "p. ej. {{value}}",
+    "steps": {
+      "label": "Pasos para crear el proyecto",
+      "basics": "Básicos",
+      "sources": "Fuentes",
+      "confirm": "Confirmar",
+      "next": "Continuar",
+      "back": "Atrás"
+    },
+    "sources": {
+      "title": "Conecta tus fuentes",
+      "subtitle": "Opcional. ReqsAI las configura en segundo plano: el proyecto se abre al instante y puedes seguir trabajando mientras tanto.",
+      "jira": {
+        "title": "Jira",
+        "notConnected": "La organización todavía no conectó Jira. Conéctalo ahora y vuelve aquí: no pierdes lo que ya escribiste.",
+        "enable": "Vincular un proyecto de Jira",
+        "import": "Importar las historias existentes",
+        "importHint": "Trae las incidencias del proyecto de Jira al backlog como historias de usuario.",
+        "incomplete": "Elige un proyecto y un tipo de incidencia, o desactiva Jira."
+      },
+      "github": {
+        "title": "GitHub",
+        "pick": "Repositorios del proyecto",
+        "count": "{{count}} de {{max}} repositorios elegidos"
+      }
+    },
+    "confirm": {
+      "title": "Todo listo para crear",
+      "withSources": "El proyecto se abre al instante. Jira y GitHub se configuran en segundo plano y verás el avance en una barra arriba.",
+      "withoutSources": "El proyecto se crea sin fuentes. Puedes conectarlas más tarde desde Integraciones y Código.",
+      "importStories": "importando sus historias"
+    }
   },
   "orgPicker": {
     "title": "Elige una organización",
@@ -1907,7 +1938,11 @@
     "CODE_HOST_INSTALL_STATE_INVALID": "El enlace de GitHub caducó o no es válido. Vuelve a conectar GitHub desde ReqsAI.",
     "CODE_HOST_INSTALLATION_FORBIDDEN": "No pudimos confirmar que tu cuenta de GitHub tenga acceso a esa instalación. Vuelve a conectar GitHub desde ReqsAI.",
     "CODE_HOST_INSTALLATION_NOT_FOUND": "Esa cuenta de GitHub ya no está conectada a la organización.",
-    "AI_QUOTA_EXCEEDED": "Se agotó la cuota de IA de tu organización este mes. Puedes seguir leyendo y editando."
+    "AI_QUOTA_EXCEEDED": "Se agotó la cuota de IA de tu organización este mes. Puedes seguir leyendo y editando.",
+    "PROJECT_SETUP_STEP_NOT_FOUND": "Este proyecto no pidió ese paso de configuración.",
+    "PROJECT_SETUP_STEP_NOT_RETRIABLE": "Ese paso no falló, no hace falta reintentarlo.",
+    "SETUP_STEP_FAILED": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+    "JIRA_LINK_FAILED": "Primero hay que vincular Jira."
   },
   "share": {
     "action": "Compartir con el cliente",
@@ -1975,5 +2010,46 @@
     "pausedBody": "La cuota de IA del mes se agotó. La grabación y la transcripción continúan.",
     "upgrade": "Mejorar plan",
     "askOwner": "Pide al propietario que mejore el plan."
+  },
+  "setup": {
+    "title": "Configurando tu proyecto",
+    "titleFailed": "Algo no terminó de configurarse",
+    "titleDone": "Tu proyecto está configurado",
+    "titleStack": "Tu código está listo",
+    "collapse": "Ocultar pasos",
+    "expand": "Mostrar pasos",
+    "dismiss": "Cerrar",
+    "skip": "Omitir",
+    "retry": "Reintentar",
+    "partial": "{{count}} con error",
+    "stack": {
+      "found": {
+        "one": "Detectamos {{count}} tecnología que falta en el perfil del proyecto.",
+        "other": "Detectamos {{count}} tecnologías que faltan en el perfil del proyecto."
+      },
+      "apply": "Aplicar el stack detectado"
+    },
+    "step": {
+      "JIRA_LINK": {
+        "RUNNING": "Vinculando el proyecto de Jira…",
+        "DONE": "Jira vinculado",
+        "FAILED": "No se pudo vincular Jira",
+        "SKIPPED": "Jira omitido"
+      },
+      "JIRA_IMPORT": {
+        "RUNNING": "Importando historias…",
+        "PROGRESS": "Importando {{done}}/{{total}} historias",
+        "DONE": "Historias importadas",
+        "FAILED": "No se pudieron importar las historias",
+        "SKIPPED": "Importación omitida"
+      },
+      "GITHUB_REPOS": {
+        "RUNNING": "Conectando e indexando el código…",
+        "PROGRESS": "Indexando {{done}}/{{total}} módulos",
+        "DONE": "Código indexado",
+        "FAILED": "No se pudo indexar el código",
+        "SKIPPED": "Código omitido"
+      }
+    }
   }
 }

@@ -563,15 +563,13 @@ describe('DiscoveryChatStore', () => {
 
         store.verifyCode(pending).subscribe();
         expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
-        http
-          .expectOne(VERIFY_URL)
-          .flush(
-            {
-              ...pending,
-              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
-            },
-            { status: 202, statusText: 'Accepted' },
-          );
+        http.expectOne(VERIFY_URL).flush(
+          {
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          },
+          { status: 202, statusText: 'Accepted' },
+        );
         expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');
 
         store.applyRealtime({
@@ -594,15 +592,13 @@ describe('DiscoveryChatStore', () => {
         store.verifyCode(pending).subscribe();
         store.applyCodeUpdate('sug-1', verdict);
 
-        http
-          .expectOne(VERIFY_URL)
-          .flush(
-            {
-              ...pending,
-              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
-            },
-            { status: 202, statusText: 'Accepted' },
-          );
+        http.expectOne(VERIFY_URL).flush(
+          {
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          },
+          { status: 202, statusText: 'Accepted' },
+        );
 
         expect(store.queue()[0].code?.verifyState).toBe('VERIFIED');
       });
@@ -625,12 +621,10 @@ describe('DiscoveryChatStore', () => {
         try {
           const pending = setupWithPending();
           store.verifyCode(pending).subscribe();
-          http
-            .expectOne(VERIFY_URL)
-            .flush({
-              ...pending,
-              code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
-            });
+          http.expectOne(VERIFY_URL).flush({
+            ...pending,
+            code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+          });
 
           vi.advanceTimersByTime(VERIFY_TIMEOUT_MS - 1);
           expect(store.queue()[0].code?.verifyState).toBe('VERIFYING');

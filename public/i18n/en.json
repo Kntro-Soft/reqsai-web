@@ -421,7 +421,38 @@
     "contextGroup": "Business context",
     "stackGroup": "Tech stack",
     "chipHint": "Type a value and press Enter to add it.",
-    "example": "e.g. {{value}}"
+    "example": "e.g. {{value}}",
+    "steps": {
+      "label": "Steps to create the project",
+      "basics": "Basics",
+      "sources": "Sources",
+      "confirm": "Confirm",
+      "next": "Continue",
+      "back": "Back"
+    },
+    "sources": {
+      "title": "Connect your sources",
+      "subtitle": "Optional. ReqsAI sets them up in the background: the project opens right away and you can keep working meanwhile.",
+      "jira": {
+        "title": "Jira",
+        "notConnected": "The organization has not connected Jira yet. Connect it now and come back here: what you already typed is kept.",
+        "enable": "Link a Jira project",
+        "import": "Import the existing stories",
+        "importHint": "Brings the Jira project's issues into the backlog as user stories.",
+        "incomplete": "Pick a project and an issue type, or turn Jira off."
+      },
+      "github": {
+        "title": "GitHub",
+        "pick": "Project repositories",
+        "count": "{{count}} of {{max}} repositories picked"
+      }
+    },
+    "confirm": {
+      "title": "Ready to create",
+      "withSources": "The project opens right away. Jira and GitHub are set up in the background and you will see progress in a bar at the top.",
+      "withoutSources": "The project is created without sources. You can connect them later from Integrations and Code.",
+      "importStories": "importing its stories"
+    }
   },
   "orgPicker": {
     "title": "Choose an organization",
@@ -1907,7 +1938,11 @@
     "CODE_HOST_INSTALL_STATE_INVALID": "The GitHub link expired or is not valid. Connect GitHub again from ReqsAI.",
     "CODE_HOST_INSTALLATION_FORBIDDEN": "We could not confirm that your GitHub account can access that installation. Connect GitHub again from ReqsAI.",
     "CODE_HOST_INSTALLATION_NOT_FOUND": "That GitHub account is no longer connected to the organization.",
-    "AI_QUOTA_EXCEEDED": "Your organization's AI allowance for this month is used up. You can still read and edit."
+    "AI_QUOTA_EXCEEDED": "Your organization's AI allowance for this month is used up. You can still read and edit.",
+    "PROJECT_SETUP_STEP_NOT_FOUND": "This project did not ask for that setup step.",
+    "PROJECT_SETUP_STEP_NOT_RETRIABLE": "That step did not fail, so there is nothing to retry.",
+    "SETUP_STEP_FAILED": "An unexpected error occurred. Try again.",
+    "JIRA_LINK_FAILED": "Jira has to be linked first."
   },
   "share": {
     "action": "Share with client",
@@ -1975,5 +2010,46 @@
     "pausedBody": "This month's AI allowance is used up. Recording and transcription continue.",
     "upgrade": "Upgrade plan",
     "askOwner": "Ask the owner to upgrade the plan."
+  },
+  "setup": {
+    "title": "Setting up your project",
+    "titleFailed": "Something did not finish setting up",
+    "titleDone": "Your project is set up",
+    "titleStack": "Your code is ready",
+    "collapse": "Hide steps",
+    "expand": "Show steps",
+    "dismiss": "Close",
+    "skip": "Skip",
+    "retry": "Retry",
+    "partial": "{{count}} failed",
+    "stack": {
+      "found": {
+        "one": "We found {{count}} technology missing from the project profile.",
+        "other": "We found {{count}} technologies missing from the project profile."
+      },
+      "apply": "Apply the detected stack"
+    },
+    "step": {
+      "JIRA_LINK": {
+        "RUNNING": "Linking the Jira project…",
+        "DONE": "Jira linked",
+        "FAILED": "Could not link Jira",
+        "SKIPPED": "Jira skipped"
+      },
+      "JIRA_IMPORT": {
+        "RUNNING": "Importing stories…",
+        "PROGRESS": "Importing {{done}}/{{total}} stories",
+        "DONE": "Stories imported",
+        "FAILED": "Could not import the stories",
+        "SKIPPED": "Import skipped"
+      },
+      "GITHUB_REPOS": {
+        "RUNNING": "Connecting and indexing the code…",
+        "PROGRESS": "Indexing {{done}}/{{total}} modules",
+        "DONE": "Code indexed",
+        "FAILED": "Could not index the code",
+        "SKIPPED": "Code skipped"
+      }
+    }
   }
 }

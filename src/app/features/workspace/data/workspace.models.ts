@@ -1,5 +1,7 @@
 /** Mirrors the workspace REST contract (backend feature/workspace-read-endpoints). */
 
+import type { ProjectSourcesRequest } from './project-setup.models';
+
 export interface OrganizationResponse {
   id: string;
   name: string;
@@ -47,6 +49,8 @@ export interface CreateProjectRequest {
   databases?: string[];
   architecture?: string;
   domain?: string;
+  /** Jira and GitHub sources to wire up in the background right after the project is created. */
+  sources?: ProjectSourcesRequest;
 }
 
 /** Spring Data page envelope returned by the paginated list endpoints. */

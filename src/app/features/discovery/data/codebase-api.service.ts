@@ -73,6 +73,14 @@ export class CodebaseApiService {
     );
   }
 
+  /** What the organization's installations share, to pick repositories for a project not created yet. */
+  organizationGitHubRepositories(orgId: string): Observable<GitHubRepositoryResponse[]> {
+    return this.http.get<GitHubRepositoryResponse[]>(
+      `/api/organizations/${orgId}/code/github/repositories`,
+      { context: silentForbidden() },
+    );
+  }
+
   organizationGitHub(orgId: string): Observable<GitHubConnectionResponse> {
     return this.http.get<GitHubConnectionResponse>(`/api/organizations/${orgId}/code/github`, {
       context: silentForbidden(),

@@ -79,15 +79,13 @@ describe('AssistantChatStore deep verification', () => {
   it('shows the chat card as verifying, then applies the verdict from the project topic', () => {
     store.verifyCode(store.messages()[0].suggestions[0]).subscribe();
     expect(state()).toBe('VERIFYING');
-    http
-      .expectOne(VERIFY_URL)
-      .flush(
-        {
-          ...chatSuggestion(),
-          code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
-        },
-        { status: 202, statusText: 'Accepted' },
-      );
+    http.expectOne(VERIFY_URL).flush(
+      {
+        ...chatSuggestion(),
+        code: { finding: null, note: null, references: [], verifyState: 'VERIFYING' },
+      },
+      { status: 202, statusText: 'Accepted' },
+    );
 
     realtime.watch('projects/proj-1/suggestions').next({
       type: 'SUGGESTION_CODE_UPDATED',
