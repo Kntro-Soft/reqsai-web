@@ -219,9 +219,10 @@ test.describe.serial('Full product', () => {
     await expect(page.getByTestId('jira-connect-form')).toBeVisible();
 
     await page.goto(`/projects/${owner.projectId}/settings/integrations`);
-    await expect(
-      page.getByText('Todavía no existe una conexión con Jira para esta organización.'),
-    ).toBeVisible();
+    // Jira belongs to the organization: the owner connects it from the project, without a mapping yet.
+    const noConnection = page.getByTestId('project-integrations-no-connection');
+    await expect(noConnection).toContainText('La organización todavía no conectó Jira');
+    await expect(noConnection.getByTestId('project-jira-connect')).toBeVisible();
 
     await page.goto(`/projects/${owner.projectId}/stories`);
     await expect(page.getByRole('button', { name: 'Importar de Jira' })).toBeDisabled();
