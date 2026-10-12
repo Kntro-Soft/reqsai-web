@@ -63,6 +63,18 @@ export const routes: Routes = [
       ),
   },
 
+  // GitHub App install redirect (the App's callback URL): chrome-less like the Jira one, so the
+  // silent refresh has restored the session before the installation is linked.
+  {
+    path: 'settings/integrations/github/callback',
+    title: 'titles.integrations',
+    canActivate: [authGuard, termsGuard],
+    loadComponent: () =>
+      import('./features/discovery/pages/github-install-callback/github-install-callback').then(
+        (m) => m.GitHubInstallCallback,
+      ),
+  },
+
   // Create organization: standalone full-screen page, outside the app shell (no sidebar/header).
   {
     path: 'onboarding',
@@ -302,6 +314,14 @@ export const routes: Routes = [
               import('./features/discovery/pages/documents/documents').then(
                 (m) => m.ProjectDocuments,
               ),
+          },
+          {
+            // Connected GitHub repositories and their module map (code-aware copilot).
+            path: 'code',
+            title: 'titles.code',
+            canActivate: [requirePermission('INTEGRATION_READ')],
+            loadComponent: () =>
+              import('./features/discovery/pages/code/code').then((m) => m.ProjectCode),
           },
           // Members moved under Settings; keep the old path working.
           { path: 'members', redirectTo: 'settings/members', pathMatch: 'full' },

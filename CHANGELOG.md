@@ -18,6 +18,83 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [1.3.0] - 2026-10-10
 
+### Added (Code-aware requirements copilot — `feature/code-aware-copilot`)
+
+- **New "Código" page in the project sidebar** (`/projects/:id/code`, needs `INTEGRATION_READ`), next to
+  "Documentos". The analyst connects the project's GitHub repositories and ReqsAI indexes each one into a
+  map of modules.
+  - The empty state explains what connecting does: the module map, the meeting warnings, that GitHub
+    shares private repositories read-only, and that the code is summarized, never stored.
+  - **Connect** (`INTEGRATION_WRITE`), in `CodeConnect`:
+    - With the organization's GitHub connected, a picker of the repositories the ReqsAI GitHub App
+      shares (filter, private/public, already connected ones marked), an optional branch and a link to
+      share more on GitHub.
+    - Without it, an org owner or admin gets "Conectar GitHub" right there (the install returns to this
+      page and opens the picker); other members are told to ask an admin.
+    - A public repository can always be typed (`owner/name` or a github.com URL, `.git` and
+      `/tree/<branch>` included), checked in the browser before anything is sent. No token is ever
+      asked for.
+    - The API errors (`CODE_REPOSITORY_*`, `CODE_HOST_*`) show under the form. Up to 3 repositories per
+      project.
+  - **GitHub in Settings → Integrations** (owners and admins), next to Jira: the connected GitHub
+    accounts (organization or personal, all or selected repositories, suspended), "Gestionar en GitHub",
+    "Desconectar" with a confirmation, and "Conectar GitHub" / "Conectar otra cuenta".
+  - **GitHub's redirect** lands on `/settings/integrations/github/callback` (chrome-less, like Jira's): it
+    posts the installation id, signed state and OAuth code for the API to verify, explains a request a
+    GitHub organization owner must approve, and returns to the page that started the install (only an
+    in-app path is accepted).
+  - **One card per repository:** name linking to GitHub, public/private, branch, "Se actualiza con cada
+    push" when it is read through the GitHub App, and status. While
+    indexing, "Indexando…" with a progress bar (`modulesDone`/`moduleCount`, indeterminate while the
+    count is unknown); ready, "Listo" with when it was indexed, the short commit and the file and module
+    counts, plus a note when the summaries are basic (no AI model was available); failed, the error and
+    "Reintentar". "Reindexar" (`INTEGRATION_WRITE`) and "Quitar" with a confirmation
+    (`INTEGRATION_DELETE`).
+  - The list is polled every 3 s while a repository is indexing, and stops once none is (or the page is
+    left). A repository's modules load when it becomes ready.
+  - **Perfil técnico detectado:** languages, frameworks, databases and platforms found across the ready
+    repositories, with what the project's profile lacks marked as new, and each repository's overview.
+    "Aplicar al perfil del proyecto" (`PROJECT_UPDATE`) adds only the new items through the workspace
+    project update, keeping every other project field.
+  - **Mapa del código:** a filter (name, path, capability, rule, endpoint, entity) and a repository
+    picker when there are several; each module shows its name, path, summary and capabilities, and opens
+    to its implemented rules, endpoints, entities and a "Ver en GitHub" link.
+- **Suggestion cards say what the code says.** "Ya existe en el código" (neutral) or "Contradice lo
+  implementado" (amber) with the AI's note and chips linking to the modules involved, in the review tray
+  and in the assistant chat. The realtime suggestion events carry `evidence` and `code` too.
+- **Suggestion evidence.** A suggestion raised in a session quotes what was said, by whom (named like
+  the transcript: "Ana (Cliente)", "Hablante 2") and when. Clicking it folds the review tray, scrolls the
+  feed to that transcript bubble and highlights it; when the segment is not loaded, the quote shows
+  alone. Transcript bubbles carry `data-segment="{sessionId}:{sequence}"`.
+- **Story origin.** The story page shows an "Origen" section for an accepted story: the client's words,
+  "Ver en la sesión" (opens the capture page on that session and highlights the quoted segment through
+  `?session=…&segment=…`) and the related code modules.
+- **i18n:** `code.*`, `nav.code`, `titles.code`, `discovery.suggestion.code.*`,
+  `discovery.suggestion.evidence.*`, `storyForm.origin.*` and the errors `CODE_REPOSITORY_URL_INVALID`,
+  `CODE_REPOSITORY_NOT_FOUND`, `CODE_REPOSITORY_ACCESS_DENIED`, `CODE_REPOSITORY_ALREADY_CONNECTED`,
+  `CODE_REPOSITORY_LIMIT_REACHED`, `CODE_HOST_UNAVAILABLE` and `CODE_REPOSITORY_INDEXING`, in Spanish
+  and English.
+- **Tests:**
+  - `codebase.spec.ts`: repository references, indexing state, detected profile and additions, module
+    filter; `codebase-api.service.spec.ts`: the five endpoints; `evidence.spec.ts`: locating and naming
+    the quoted segment;
+  - `code.spec.ts`: validation before connecting, polling until ready (and on leaving), inline server
+    errors, retry, removal after confirming, applying the profile, the module map and permission gating;
+  - `suggestion-card.spec.ts`: the code banners and the evidence line; `discovery-chat.store.spec.ts`:
+    realtime suggestions keep `evidence` and `code`;
+  - `code-connect.spec.ts`, `github-connection.spec.ts`, `github-install-callback.spec.ts`: the picker,
+    connecting GitHub, the organization card and the install redirect (safe return paths included);
+  - `e2e/code-copilot.spec.ts` (local stack with the fixture GitHub of `e2e/fixtures/fake-github` and the
+    real AI, skipped when the fixture is down):
+    - connects `acme/reservas`, waits for "Listo", checks the profile and the 2-hour rule, then a 24-hour
+      request in the assistant chat comes back flagged as contradicting the code;
+    - checks the connect form, applies the detected profile, reindexes and disconnects;
+    - connects GitHub through the App from the Code page, picks the private `acme/facturacion`, sees it
+      update after a push (signed webhook), and disconnects GitHub from Integrations.
+  - `e2e/code-copilot-capture.spec.ts`: a recorded meeting with the code connected; a live suggestion
+    quotes the client, the quote highlights its bubble, and the accepted story keeps it as its origin
+    with a link back to that moment.
+
 ### Changed (Release pipeline — `feature/79-release-pipeline`, #79)
 
 - **Gitflow release candidates, model C + tag at the end.** `release.yml` (on `release/X.Y.Z` and

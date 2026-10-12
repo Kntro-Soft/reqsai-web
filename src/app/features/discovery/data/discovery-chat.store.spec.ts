@@ -607,6 +607,54 @@ describe('DiscoveryChatStore', () => {
       expect(kinds).toEqual(['segment', 'segment', 'decision', 'segment']);
     });
 
+    it('keeps the evidence and the code insight of a realtime suggestion, and finds its segment', () => {
+      bootLive();
+      const topic = realtime.watch('sessions/sess-1');
+      topic.next({ ...liveSegment(4, '2026-07-04T12:04:00Z'), speakerLabel: 'A' });
+
+      const code = {
+        finding: 'CONFLICTS_WITH_CODE' as const,
+        note: 'El código permite cancelar hasta 2 h antes; el cliente pide 24 h.',
+        references: [
+          { repository: 'acme/reservas', path: 'src/reservas', name: 'Reservas', url: null },
+        ],
+      };
+      store.applyRealtime({
+        type: 'SUGGESTION_GENERATED',
+        sessionId: 'sess-1',
+        occurredAt: '2026-07-04T12:04:10Z',
+        suggestionId: 'sug-9',
+        suggestionType: 'UPDATE_STORY',
+        status: 'PENDING',
+        draftTitle: 'Cancelar reserva',
+        draftRole: null,
+        draftAction: null,
+        draftBenefit: null,
+        draftPriority: null,
+        draftStoryPoints: null,
+        relatedTopic: null,
+        targetStoryId: null,
+        question: null,
+        resolvedStoryId: null,
+        evidence: { sequence: 4, quote: 'hasta 24 horas antes' },
+        code,
+      });
+
+      const queued = store.queue()[0];
+      expect(queued.evidence).toEqual({ sequence: 4, quote: 'hasta 24 horas antes' });
+      expect(queued.code).toEqual(code);
+      const segment = store.evidenceSegment(queued);
+      expect(segment).toMatchObject({
+        sessionId: 'sess-1',
+        sequence: 4,
+        occurredAt: '2026-07-04T12:04:00Z',
+      });
+      expect(segment?.speaker?.label).toBe('A');
+      expect(
+        store.evidenceSegment({ ...queued, evidence: { sequence: 99, quote: 'x' } }),
+      ).toBeNull();
+    });
+
     it('stamps a live segment lacking occurredAt so its bubble still has a time', () => {
       bootLive();
       const topic = realtime.watch('sessions/sess-1');

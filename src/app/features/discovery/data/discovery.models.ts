@@ -1,5 +1,12 @@
 /** Mirrors the discovery REST + realtime contracts (backend discovery context). */
 
+import {
+  CodeReference,
+  StoryOrigin,
+  SuggestionCodeInsight,
+  SuggestionEvidence,
+} from './codebase.models';
+
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
@@ -196,6 +203,13 @@ export interface UserStoryResponse {
    * (from realtime/older payloads) — consumers that need the id must narrow.
    */
   acceptanceCriteria?: (AcceptanceCriterionResponse | AcceptanceCriterion)[] | null;
+  /**
+   * Where an accepted story comes from: its session, the transcript segment and the client's
+   * words. Null for a manual story; absent on older deployments.
+   */
+  origin?: StoryOrigin | null;
+  /** The code modules the story touches (from the suggestion it was accepted from); [] when none. */
+  codeReferences?: CodeReference[] | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -279,6 +293,16 @@ export interface SuggestionResponse {
    * {@link suggestionCriteria} before rendering.
    */
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
+  /**
+   * The transcript segment the suggestion comes from and the verbatim words said there. Null when
+   * the AI could not point at one (and for assistant-chat suggestions); absent on older deployments.
+   */
+  evidence?: SuggestionEvidence | null;
+  /**
+   * What the project's connected code says: the requested capability already exists, or the
+   * request contradicts what is implemented, with the modules involved. Null without code.
+   */
+  code?: SuggestionCodeInsight | null;
 }
 
 /** A structured acceptance criterion: Given/When/Then plus an optional scenario heading. */
@@ -521,6 +545,10 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   resolvedStoryId: string | null;
   /** Proposed acceptance criteria; see {@link SuggestionResponse.draftAcceptanceCriteria}. */
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
+  /** See {@link SuggestionResponse.evidence}. */
+  evidence?: SuggestionEvidence | null;
+  /** See {@link SuggestionResponse.code}. */
+  code?: SuggestionCodeInsight | null;
 }
 
 /** One user currently viewing a live session, carried by {@link SessionPresenceMessage}. */

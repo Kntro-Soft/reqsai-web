@@ -34,6 +34,9 @@ class FakeStore {
   findStory(): DisplayStory | undefined {
     return undefined;
   }
+  evidenceSegment(): null {
+    return null;
+  }
 }
 
 function suggestion(overrides: Partial<SuggestionResponse> = {}): SuggestionResponse {

@@ -52,6 +52,7 @@ import {
 } from './feed';
 import { SessionSpeakersStore } from './session-speakers.store';
 import { SpeakerView, buildSpeakerViews, speakerMap, speakersLoadKey } from './speakers';
+import { EvidenceSegment, locateEvidence } from './evidence';
 
 /** Sessions fetched per page while scrolling back through history. */
 const PAGE_SIZE = 10;
@@ -499,6 +500,14 @@ export class DiscoveryChatStore {
 
   /** The project backlog (feeds the side panel's Stories tab). */
   readonly projectStories = this._projectStories.asReadonly();
+
+  /**
+   * The loaded transcript segment a suggestion's evidence points at (speaker and time included),
+   * or null when the suggestion has no evidence or that segment is not in the feed.
+   */
+  evidenceSegment(suggestion: SuggestionResponse): EvidenceSegment | null {
+    return locateEvidence(this.blocks(), suggestion);
+  }
 
   /**
    * Puts a story the analyst just edited or reviewed (side panel) back into the backlog in place,
@@ -1003,6 +1012,8 @@ export class DiscoveryChatStore {
       question: m.question,
       resolvedStoryId: m.resolvedStoryId,
       draftAcceptanceCriteria: m.draftAcceptanceCriteria ?? null,
+      evidence: m.evidence ?? null,
+      code: m.code ?? null,
       createdAt: m.occurredAt,
       updatedAt: m.occurredAt,
     };

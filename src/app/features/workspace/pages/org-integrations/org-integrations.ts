@@ -12,6 +12,9 @@ import {
 } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
+import { rememberReturnPath } from '../../../../core/navigation/return-path';
+import { JIRA_RETURN_KEY } from '../../data/integrations.models';
+import { GitHubConnection } from '../../../discovery/components/github-connection/github-connection';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import { IntegrationConnectionResponse } from '../../data/integrations.models';
 import { Modal } from '../../../../shared/components/modal/modal';
@@ -57,6 +60,7 @@ import {
     HlmSkeleton,
     HlmSpinner,
     TranslocoPipe,
+    GitHubConnection,
   ],
   viewProviders: [
     provideIcons({
@@ -412,6 +416,10 @@ import {
           </aside>
         </div>
 
+        @if (orgId(); as id) {
+          <app-github-connection [orgId]="id" />
+        }
+
         <!-- Disconnect confirm modal -->
         <app-modal [(open)]="disconnectOpen">
           <span modalTitle>{{ 'integrations.jira.disconnectTitle' | transloco }}</span>
@@ -535,6 +543,7 @@ export class OrgIntegrations {
         } catch {
           // Private mode / storage disabled — the backend still verifies state.
         }
+        rememberReturnPath(JIRA_RETURN_KEY, '/settings/integrations');
         window.location.href = res.url;
       },
       error: (err: HttpErrorResponse) => {

@@ -21,6 +21,7 @@ const PRODUCT_URLS = [
   '/projects/p1/glossary',
   '/projects/p1/constraints',
   '/projects/p1/documents',
+  '/projects/p1/code',
   '/projects/p1/settings/general',
   '/projects/p1/settings/roles',
   '/projects/p1/settings/roles/new',
