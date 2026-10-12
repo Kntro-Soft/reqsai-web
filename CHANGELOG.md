@@ -9,6 +9,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-11
+
 ### Added (Token usage — `feature/93-token-usage-ui`, #93)
 - The usage page (Settings → Usage) says where the period's tokens went: bars by feature (live suggestions, chat, meeting wrap-up, code, documents, similarity search) and by project, the minutes of audio transcribed (measured apart, no tokens) and how much of the AI input came from the provider cache and counts half. A card shows "≈ N min de reunión" left, at the rate measured on the organization's own meetings or the documented default.
 - A banner on the usage page at 80, 90 and 100 % of the monthly AI allowance, with an upgrade link; at the cap it says what stops (suggestions and chat) and what does not (reading, editing, exporting) and when it renews.
