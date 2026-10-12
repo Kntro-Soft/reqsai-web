@@ -34,6 +34,16 @@ export const routes: Routes = [
 
   // Share link (US50): chrome-less and public, so a client without an account reviews the
   // stories the team shared. The token in the URL is the credential.
+  // Session link: the same, for a client following one discovery session.
+  {
+    path: 'share/session/:token',
+    title: 'titles.share',
+    loadComponent: () =>
+      import('./features/discovery/pages/shared-session/shared-session').then(
+        (m) => m.SharedSession,
+      ),
+  },
+
   {
     path: 'share/:token',
     title: 'titles.share',

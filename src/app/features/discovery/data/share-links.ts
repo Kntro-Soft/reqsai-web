@@ -18,6 +18,14 @@ export function shareUrl(token: string, origin: string): string {
   return `${origin.replace(/\/$/, '')}/share/${token}`;
 }
 
+/** The public page a visitor opens to follow a session. */
+export function sharedSessionUrl(token: string, origin: string): string {
+  return `${origin.replace(/\/$/, '')}/share/session/${token}`;
+}
+
+/** How often a session link re-reads the session while it is open, in milliseconds. */
+export const SHARED_SESSION_POLL_MS = 5000;
+
 /** Name the client signed with last time on this device, so it is not typed on every story. */
 export const SHARE_AUTHOR_KEY = 'reqsai.share.author';
 

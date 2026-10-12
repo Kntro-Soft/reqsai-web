@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -13,21 +14,23 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideCopy, lucideLink, lucideBan } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ShareApiService } from '../../data/share-api.service';
-import { ShareLinkResponse } from '../../data/share.models';
+import { ShareAccess, ShareLinkResponse } from '../../data/share.models';
 import {
   DEFAULT_SHARE_LINK_DAYS,
   SHARE_LINK_DAYS,
   ShareLinkState,
   shareLinkState,
   shareUrl,
+  sharedSessionUrl,
 } from '../../data/share-links';
 import { Modal } from '../../../../shared/components/modal/modal';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui';
 
 /**
- * Share the backlog with the client (US50). The analyst creates a link valid for a few days; the
- * client opens it without an account, reads the stories, approves them or comments. The URL is
+ * Share with the client (US50): the backlog, or with `sessionId` one discovery session. The analyst
+ * creates a link valid for a few days (for a session, as a spectator or a reviewer); the client opens
+ * it without an account and reads, approves or comments. The URL is
  * shown once, right after creating it (only its hash is stored); older links are listed with their
  * state and can be revoked.
  */
@@ -38,9 +41,41 @@ import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui'
   viewProviders: [provideIcons({ lucideBan, lucideCheck, lucideCopy, lucideLink })],
   template: `
     <app-modal [(open)]="open">
-      <span modalTitle>{{ 'share.title' | transloco }}</span>
+      <span modalTitle>{{
+        (sessionId() ? 'share.session.title' : 'share.title') | transloco
+      }}</span>
       <div class="flex flex-col gap-4" data-testid="share-links">
-        <p class="text-sm text-muted-foreground">{{ 'share.description' | transloco }}</p>
+        <p class="text-sm text-muted-foreground">
+          {{ (sessionId() ? 'share.session.description' : 'share.description') | transloco }}
+        </p>
+
+        @if (sessionId()) {
+          <fieldset class="flex flex-col gap-2" data-testid="share-access">
+            <legend class="mb-1 text-sm text-foreground">
+              {{ 'share.session.access' | transloco }}
+            </legend>
+            @for (option of accessOptions(); track option) {
+              <label
+                class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border p-3 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+              >
+                <input
+                  type="radio"
+                  name="share-access"
+                  class="mt-1"
+                  [checked]="access() === option"
+                  (change)="access.set(option)"
+                  [attr.data-testid]="'share-access-' + option"
+                />
+                <span class="flex flex-col">
+                  <span class="font-medium">{{ 'share.session.' + option | transloco }}</span>
+                  <span class="text-xs text-muted-foreground">{{
+                    'share.session.' + option + 'Hint' | transloco
+                  }}</span>
+                </span>
+              </label>
+            }
+          </fieldset>
+        }
 
         <div class="flex flex-wrap items-center gap-2">
           <label class="text-sm text-foreground" for="share-days">
@@ -113,17 +148,23 @@ import { HlmButton, HlmIcon, HlmInput, HlmSpinner } from '../../../../shared/ui'
           <h3 class="text-sm font-semibold text-foreground">{{ 'share.existing' | transloco }}</h3>
           @if (loading()) {
             <div class="grid place-items-center py-3"><hlm-spinner class="h-5 w-5" /></div>
-          } @else if (links().length === 0) {
+          } @else if (visibleLinks().length === 0) {
             <p class="text-xs text-muted-foreground" data-testid="share-none">
-              {{ 'share.none' | transloco }}
+              {{ (sessionId() ? 'share.session.none' : 'share.none') | transloco }}
             </p>
           } @else {
             <ul class="flex flex-col divide-y divide-border rounded-xl border border-border">
-              @for (link of links(); track link.id) {
+              @for (link of visibleLinks(); track link.id) {
                 @let state = stateOf(link);
                 <li class="flex items-center gap-3 px-3 py-2" data-testid="share-link-row">
                   <div class="min-w-0 flex-1">
                     <p class="text-xs text-foreground">
+                      @if (link.sessionId) {
+                        <span class="mr-1 font-medium" data-testid="share-link-access">{{
+                          'share.session.' + link.access | transloco
+                        }}</span>
+                        ·
+                      }
                       {{ 'share.createdAt' | transloco }} {{ link.createdAt | date: 'short' }}
                     </p>
                     <p class="text-xs text-muted-foreground">
@@ -183,11 +224,25 @@ export class ShareLinks {
   private readonly transloco = inject(TranslocoService);
 
   readonly projectId = input.required<string>();
+  /** Shares this session instead of the project's stories. */
+  readonly sessionId = input<string | null>(null);
+  /** Whether the person may hand out reviewer links (those that decide). */
+  readonly canDecide = input(false);
   readonly open = model(false);
 
   protected readonly dayOptions = SHARE_LINK_DAYS;
   protected readonly days = signal<number>(DEFAULT_SHARE_LINK_DAYS);
+  protected readonly access = signal<ShareAccess>('VIEW');
+  protected readonly accessOptions = computed<ShareAccess[]>(() =>
+    this.canDecide() ? ['VIEW', 'REVIEW'] : ['VIEW'],
+  );
   protected readonly links = signal<ShareLinkResponse[]>([]);
+  /** Only the links of what is being shared: this session, or the project's stories. */
+  protected readonly visibleLinks = computed(() =>
+    this.links().filter((link) =>
+      this.sessionId() ? link.sessionId === this.sessionId() : !link.sessionId,
+    ),
+  );
   protected readonly loading = signal(false);
   protected readonly creating = signal(false);
   protected readonly revoking = signal<string | null>(null);
@@ -223,11 +278,20 @@ export class ShareLinks {
   protected create(): void {
     this.creating.set(true);
     this.error.set(null);
-    this.api.createLink(this.projectId(), this.days()).subscribe({
+    const sessionId = this.sessionId();
+    const request = sessionId
+      ? this.api.createSessionLink(this.projectId(), sessionId, this.days(), this.access())
+      : this.api.createLink(this.projectId(), this.days());
+    request.subscribe({
       next: (link) => {
         this.creating.set(false);
         this.copied.set(false);
-        if (link.token) this.createdUrl.set(shareUrl(link.token, window.location.origin));
+        if (link.token) {
+          const origin = window.location.origin;
+          this.createdUrl.set(
+            link.sessionId ? sharedSessionUrl(link.token, origin) : shareUrl(link.token, origin),
+          );
+        }
         this.links.update((list) => [link, ...list]);
       },
       error: (err: HttpErrorResponse) => {

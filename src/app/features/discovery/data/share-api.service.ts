@@ -1,10 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SuggestionResponse, UserStoryResponse } from './discovery.models';
 import {
+  CreateShareLinkRequest,
   LeaveStoryFeedbackRequest,
+  ShareAccess,
   ShareLinkResponse,
+  SharedAcceptRequest,
   SharedBacklogResponse,
+  SharedSessionResponse,
+  SharedStoryDecision,
   StoryFeedbackResponse,
 } from './share.models';
 
@@ -19,6 +25,17 @@ export class ShareApiService {
   /** Creates a link valid for `days` days; the response is the only one that carries the token. */
   createLink(projectId: string, days: number): Observable<ShareLinkResponse> {
     return this.http.post<ShareLinkResponse>(`/api/projects/${projectId}/share-links`, { days });
+  }
+
+  /** Creates a link that follows one session, as a spectator (`VIEW`) or a reviewer (`REVIEW`). */
+  createSessionLink(
+    projectId: string,
+    sessionId: string,
+    days: number,
+    access: ShareAccess,
+  ): Observable<ShareLinkResponse> {
+    const body: CreateShareLinkRequest = { days, sessionId, access };
+    return this.http.post<ShareLinkResponse>(`/api/projects/${projectId}/share-links`, body);
   }
 
   /** The project's links, newest first, without their tokens. */
@@ -52,5 +69,46 @@ export class ShareApiService {
       `/api/share/${encodeURIComponent(token)}/stories/${storyId}/feedback`,
       request,
     );
+  }
+
+  /** Public: the shared session, as it stands now. */
+  openSharedSession(token: string): Observable<SharedSessionResponse> {
+    return this.http.get<SharedSessionResponse>(`${this.sessionBase(token)}`);
+  }
+
+  /** Public, reviewer links only: accepts a suggestion, optionally editing the draft or approving. */
+  acceptSharedSuggestion(
+    token: string,
+    suggestionId: string,
+    request: SharedAcceptRequest = {},
+  ): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `${this.sessionBase(token)}/suggestions/${suggestionId}/accept`,
+      request,
+    );
+  }
+
+  /** Public, reviewer links only: dismisses a suggestion. */
+  dismissSharedSuggestion(token: string, suggestionId: string): Observable<SuggestionResponse> {
+    return this.http.post<SuggestionResponse>(
+      `${this.sessionBase(token)}/suggestions/${suggestionId}/dismiss`,
+      {},
+    );
+  }
+
+  /** Public, reviewer links only: approves, rejects or sends back to draft a story of the session. */
+  changeSharedStoryStatus(
+    token: string,
+    storyId: string,
+    status: SharedStoryDecision,
+  ): Observable<UserStoryResponse> {
+    return this.http.post<UserStoryResponse>(
+      `${this.sessionBase(token)}/stories/${storyId}/status`,
+      { status },
+    );
+  }
+
+  private sessionBase(token: string): string {
+    return `/api/share/session/${encodeURIComponent(token)}`;
   }
 }

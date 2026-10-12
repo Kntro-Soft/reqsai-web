@@ -11,7 +11,13 @@ import { RouterLink } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { provideIcons } from '@ng-icons/core';
-import { lucideEllipsis, lucideHistory, lucideUpload, lucideUsers } from '@ng-icons/lucide';
+import {
+  lucideEllipsis,
+  lucideHistory,
+  lucideShare2,
+  lucideUpload,
+  lucideUsers,
+} from '@ng-icons/lucide';
 import { MenuKeys } from '../../../../shared/components/popover/menu-keys';
 import { BELOW_END } from '../../../../shared/components/popover/popover-positions';
 import { HlmButton, HlmIcon } from '../../../../shared/ui';
@@ -25,7 +31,9 @@ import { HlmButton, HlmIcon } from '../../../../shared/ui';
   selector: 'app-capture-menu',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [OverlayModule, RouterLink, TranslocoPipe, HlmButton, HlmIcon, MenuKeys],
-  viewProviders: [provideIcons({ lucideEllipsis, lucideHistory, lucideUpload, lucideUsers })],
+  viewProviders: [
+    provideIcons({ lucideEllipsis, lucideHistory, lucideShare2, lucideUpload, lucideUsers }),
+  ],
   host: { class: 'block shrink-0' },
   template: `
     <button
@@ -78,6 +86,18 @@ import { HlmButton, HlmIcon } from '../../../../shared/ui';
             }}
           </button>
         }
+        @if (canShare()) {
+          <button
+            type="button"
+            role="menuitem"
+            (click)="pick(shareRequested)"
+            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+            data-testid="share-session-open"
+          >
+            <hlm-icon name="lucideShare2" size="16px" class="text-muted-foreground" />
+            {{ 'share.session.action' | transloco }}
+          </button>
+        }
         @if (canUpload()) {
           <button
             type="button"
@@ -126,7 +146,11 @@ export class CaptureMenu {
   /** The speakers entry reads "Edit" for people who can change them, else "View". */
   readonly canEditSpeakers = input(false);
 
+  /** Offer sharing the current (live or latest) session through a link. */
+  readonly canShare = input(false);
+
   readonly uploadRequested = output<void>();
+  readonly shareRequested = output<void>();
   readonly speakersRequested = output<void>();
 
   protected readonly positions = BELOW_END;

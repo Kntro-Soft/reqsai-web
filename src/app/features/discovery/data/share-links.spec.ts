@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { shareLinkState, shareUrl } from './share-links';
+import { shareLinkState, shareUrl, sharedSessionUrl } from './share-links';
 import { ShareLinkResponse } from './share.models';
 
 const link = (patch: Partial<ShareLinkResponse>): ShareLinkResponse => ({
   id: 'l1',
   projectId: 'p1',
+  sessionId: null,
+  access: 'REVIEW',
   createdAt: '2026-10-01T00:00:00Z',
   expiresAt: '2026-10-15T00:00:00Z',
   revokedAt: null,
@@ -33,5 +35,13 @@ describe('shareUrl', () => {
   it('builds the public page URL without a double slash', () => {
     expect(shareUrl('abc', 'https://reqsai.tech/')).toBe('https://reqsai.tech/share/abc');
     expect(shareUrl('abc', 'http://localhost:4200')).toBe('http://localhost:4200/share/abc');
+  });
+});
+
+describe('sharedSessionUrl', () => {
+  it('points at the session page and tolerates a trailing slash', () => {
+    expect(sharedSessionUrl('tok', 'https://reqsai.tech/')).toBe(
+      'https://reqsai.tech/share/session/tok',
+    );
   });
 });
