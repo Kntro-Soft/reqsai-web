@@ -1021,7 +1021,11 @@
     "deleteTitle": "Eliminar término",
     "deleteBefore": "Esto eliminará permanentemente",
     "deleteAfter": "del glosario.",
-    "menuAria": "Acciones del término"
+    "menuAria": "Acciones del término",
+    "new": "Nuevo término",
+    "termRequired": "Escribe el término.",
+    "definitionRequired": "Escribe la definición.",
+    "tooLong": "Máximo {{max}} caracteres."
   },
   "constraintsPage": {
     "title": "Restricciones",
@@ -1053,7 +1057,9 @@
     "deleteTitle": "Eliminar restricción",
     "deleteBefore": "Esto eliminará permanentemente esta restricción.",
     "deleteAfter": "",
-    "menuAria": "Acciones de la restricción"
+    "menuAria": "Acciones de la restricción",
+    "new": "Nueva restricción",
+    "descriptionRequired": "Describe la restricción."
   },
   "clientDocuments": {
     "title": "Documentos del cliente",
