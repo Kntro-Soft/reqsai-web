@@ -220,6 +220,7 @@ const DRAG_HORIZONTAL_LOCK_PX = 8;
                     [suggestion]="suggestion"
                     [targetStory]="targetStory(suggestion)"
                     [canDecide]="canDecide()"
+                    [canApprove]="canApprove()"
                     [busy]="store.deciding().includes(suggestion.id)"
                     [evidenceSegment]="store.evidenceSegment(suggestion)"
                     (accept)="decideAccept.emit({ suggestion, body: $event })"
@@ -315,6 +316,8 @@ export class DecisionQueue {
 
   /** False renders read-only cards (viewer without decide rights). */
   readonly canDecide = input(true);
+  /** True when the viewer holds STORY_APPROVE (see the card's `canApprove`). */
+  readonly canApprove = input(false);
   readonly decideAccept = output<{
     suggestion: SuggestionResponse;
     body: AcceptSuggestionRequest;

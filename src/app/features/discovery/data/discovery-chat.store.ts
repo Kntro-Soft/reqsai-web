@@ -1011,6 +1011,7 @@ export class DiscoveryChatStore {
       targetStoryId: m.targetStoryId,
       question: m.question,
       resolvedStoryId: m.resolvedStoryId,
+      resolvedStoryStatus: m.resolvedStoryStatus ?? null,
       draftAcceptanceCriteria: m.draftAcceptanceCriteria ?? null,
       evidence: m.evidence ?? null,
       code: m.code ?? null,

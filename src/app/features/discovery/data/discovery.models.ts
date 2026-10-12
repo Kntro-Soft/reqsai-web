@@ -278,6 +278,12 @@ export interface SuggestionResponse {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
+  /**
+   * Review status of the resolved story: where it ended when the suggestion was accepted
+   * (APPROVED or DRAFT), or its current one when listed. Null without a story; absent on older
+   * deployments, where the decision row stays neutral.
+   */
+  resolvedStoryStatus?: StoryStatus | null;
   createdAt: string;
   updatedAt: string;
   /**
@@ -343,6 +349,11 @@ export function suggestionCriteria(
  * and still commits the flat edits. See {@link editableToAcceptRequest}.
  */
 export interface AcceptSuggestionRequest {
+  /**
+   * True approves the resulting story in the same call (needs STORY_APPROVE); false or absent
+   * saves it as a draft. Ignored for a clarifying question.
+   */
+  approve?: boolean;
   editedTitle?: string;
   editedRole?: string;
   editedAction?: string;
@@ -543,6 +554,8 @@ export interface SessionSuggestionMessage extends SessionRealtimeBase {
   targetStoryId: string | null;
   question: string | null;
   resolvedStoryId: string | null;
+  /** See {@link SuggestionResponse.resolvedStoryStatus}. */
+  resolvedStoryStatus?: StoryStatus | null;
   /** Proposed acceptance criteria; see {@link SuggestionResponse.draftAcceptanceCriteria}. */
   draftAcceptanceCriteria?: AcceptanceCriterion[] | null;
   /** See {@link SuggestionResponse.evidence}. */

@@ -66,6 +66,7 @@ import { SpeakersPanel } from '../../components/speakers-panel/speakers-panel';
 import { RelativeTime, relativeTime } from '../../data/relative-time';
 import {
   AcceptSuggestionRequest,
+  StoryStatus,
   ProcessTranscriptResponse,
   SessionTranscriptSegmentMessage,
   SuggestionResponse,
@@ -785,6 +786,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
           <app-decision-queue
             [(collapsed)]="queueCollapsed"
             [canDecide]="canDecide()"
+            [canApprove]="canApprove()"
             (decideAccept)="accept($event.suggestion, $event.body)"
             (decideDismiss)="dismiss($event)"
             (openTarget)="focusStory($event)"
@@ -988,6 +990,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 [suggestion]="suggestion"
                 [targetStory]="chatTarget(suggestion)"
                 [canDecide]="canDecide()"
+                [canApprove]="canApprove()"
                 [busy]="store.deciding().includes(suggestion.id)"
                 [evidenceSegment]="store.evidenceSegment(suggestion)"
                 (accept)="acceptFromChat(suggestion, $event)"
@@ -1012,7 +1015,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                 />
                 <p class="min-w-0 flex-1 leading-snug">
                   <span class="text-xs font-semibold" [class.text-verified]="chatAccepted">{{
-                    (chatAccepted ? 'discovery.chat.accepted' : 'discovery.chat.dismissed')
+                    (chatAccepted ? chatAcceptedKey(suggestion) : 'discovery.chat.dismissed')
                       | transloco
                   }}</span>
                   <span class="block" [class.line-through]="!chatAccepted">{{
@@ -1301,6 +1304,8 @@ export class DiscoveryChat implements OnInit {
   protected readonly canRecord = computed(() => this.permissions.has('SESSION_RUN'));
   /** Accepting or dismissing AI suggestions. */
   protected readonly canDecide = computed(() => this.permissions.has('SESSION_DECIDE'));
+  /** Approving the story an accepted suggestion produces (the story review permission). */
+  protected readonly canApprove = computed(() => this.permissions.has('STORY_APPROVE'));
   /** Writing to ReqsAI can raise suggestions, so it needs the same permission as running a session. */
   protected readonly canChat = this.canRecord;
 
@@ -1651,17 +1656,17 @@ export class DiscoveryChat implements OnInit {
   protected accept(suggestion: SuggestionResponse, body: AcceptSuggestionRequest): void {
     this.store.decide(suggestion, 'ACCEPTED', body).subscribe({
       // Confirm where the accepted content went: a question is only marked as
-      // addressed, everything else lands in the backlog as a draft.
+      // addressed, everything else lands in the backlog approved or as a draft.
       next: () =>
-        this.toast.success(
-          this.transloco.translate(
-            suggestion.type === 'CLARIFYING_QUESTION'
-              ? 'discovery.decision.resolvedToast'
-              : 'discovery.decision.acceptedToast',
-          ),
-        ),
+        this.toast.success(this.transloco.translate(this.acceptedToastKey(suggestion, body))),
       error: (err: HttpErrorResponse) => this.handleDecideError(err, suggestion.id),
     });
+  }
+
+  /** The toast that confirms where an accepted suggestion went: resolved, approved or saved as draft. */
+  private acceptedToastKey(suggestion: SuggestionResponse, body: AcceptSuggestionRequest): string {
+    if (suggestion.type === 'CLARIFYING_QUESTION') return 'discovery.decision.resolvedToast';
+    return body.approve ? 'discovery.decision.approvedToast' : 'discovery.decision.draftToast';
   }
 
   protected dismiss(suggestion: SuggestionResponse): void {
@@ -1722,13 +1727,7 @@ export class DiscoveryChat implements OnInit {
     this.store.decide(suggestion, 'ACCEPTED', body).subscribe({
       next: (resolved) => {
         this.chat.applyDecision(resolved);
-        this.toast.success(
-          this.transloco.translate(
-            suggestion.type === 'CLARIFYING_QUESTION'
-              ? 'discovery.decision.resolvedToast'
-              : 'discovery.decision.acceptedToast',
-          ),
-        );
+        this.toast.success(this.transloco.translate(this.acceptedToastKey(suggestion, body)));
       },
       error: (err: HttpErrorResponse) => this.handleChatDecideError(err, suggestion, 'ACCEPTED'),
     });
@@ -1790,6 +1789,13 @@ export class DiscoveryChat implements OnInit {
     return relativeTime(iso, this.now());
   }
 
+  /** "Aprobada" / "Borrador" for an accepted chat suggestion, from the status its story ended in. */
+  protected chatAcceptedKey(suggestion: SuggestionResponse): string {
+    const status = suggestion.resolvedStoryStatus;
+    if (status === 'APPROVED' || status === 'EXPORTED') return 'discovery.chat.approved';
+    return status === 'DRAFT' ? 'discovery.chat.draft' : 'discovery.chat.accepted';
+  }
+
   protected decisionClass(outcome: 'ACCEPTED' | 'DISMISSED'): string {
     return outcome === 'ACCEPTED'
       ? 'bg-verified-soft ring-1 ring-inset ring-verified-border'
@@ -1799,9 +1805,15 @@ export class DiscoveryChat implements OnInit {
   /** "Accepted/resolved by the analyst" makes the human validation explicit; questions are resolved. */
   protected decisionLabel(decision: DecisionEntry): string {
     if (decision.outcome === 'DISMISSED') return 'discovery.decision.dismissed';
-    return decision.type === 'CLARIFYING_QUESTION'
-      ? 'discovery.decision.resolvedBy'
-      : 'discovery.decision.acceptedBy';
+    if (decision.type === 'CLARIFYING_QUESTION') return 'discovery.decision.resolvedBy';
+    return this.storyOutcomeKey(decision.storyStatus, 'discovery.decision');
+  }
+
+  /** The decision wording for the status the story ended in; neutral when the backend did not say. */
+  private storyOutcomeKey(status: StoryStatus | null | undefined, prefix: string): string {
+    if (status === 'APPROVED' || status === 'EXPORTED') return `${prefix}.approvedBy`;
+    if (status === 'DRAFT') return `${prefix}.draftBy`;
+    return `${prefix}.acceptedBy`;
   }
 
   /**

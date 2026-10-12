@@ -62,20 +62,22 @@ test.describe('Discovery capture', () => {
     await expect(page.getByTestId('segment-bubble').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('discovery-feed')).toContainText(/reserv/i, { timeout: 60_000 });
 
-    // The AI drafts a story from what it heard; accepting it adds it to the backlog.
+    // The AI drafts a story from what it heard; approving it adds it to the backlog already approved.
     const card = page.getByTestId('suggestion-card').first();
     await expect(card).toBeVisible({ timeout: 120_000 });
+    await expect(card.getByTestId('suggestion-save-draft')).toBeVisible();
     await card.getByTestId('suggestion-accept').click();
     await expect(page.getByTestId('decision-go-to-story').first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('panel-story').first()).toContainText('Borrador');
+    await expect(page.getByTestId('decision-entry').first()).toContainText('Aprobada');
+    await expect(page.getByTestId('panel-story').first()).toContainText('Aprobada');
 
     await page.getByTestId('session-bar-stop').click();
     await expect(page.getByTestId('session-bar')).toHaveCount(0, { timeout: 30_000 });
 
     await page.goto(`/projects/${projectId}/stories`);
-    // The accepted suggestion is now a draft in the backlog, waiting for review.
+    // The approved suggestion is an approved story in the backlog, not a draft.
     await expect(page.getByTestId('status-badge').filter({ visible: true }).first()).toHaveText(
-      'Borrador',
+      'Aprobada',
     );
   });
 });

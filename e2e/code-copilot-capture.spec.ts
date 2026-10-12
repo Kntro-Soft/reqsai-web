@@ -134,6 +134,7 @@ test.describe('Code-aware copilot in a live meeting', () => {
     await expect(same.locator(`[data-evidence-segment="${key}"]`)).toBeVisible();
     await same.getByTestId('suggestion-accept').click();
     await expect(page.getByTestId('decision-go-to-story').first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('decision-entry').first()).toContainText('Aprobada');
     await page.getByTestId('session-bar-stop').click();
     await expect(page.getByTestId('session-bar')).toHaveCount(0, { timeout: 30_000 });
 

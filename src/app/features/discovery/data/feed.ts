@@ -5,6 +5,7 @@ import {
   SegmentPage,
   SessionSegmentResponse,
   SessionTranscriptSegmentMessage,
+  StoryStatus,
   SuggestionResponse,
   SuggestionType,
 } from './discovery.models';
@@ -26,6 +27,8 @@ export interface DecisionEntry {
   label: string | null;
   /** Story the decision created/updated, when the backend reported one. */
   storyId: string | null;
+  /** Review status the story ended in (APPROVED or DRAFT), when the backend reported it. */
+  storyStatus: StoryStatus | null;
   occurredAt: string;
   /**
    * The highest live-segment sequence present when the decision happened; the
@@ -234,6 +237,7 @@ export function toDecisionEntry(
     type: suggestion.type,
     label: suggestion.type === 'CLARIFYING_QUESTION' ? suggestion.question : suggestion.draftTitle,
     storyId: suggestion.resolvedStoryId ?? suggestion.targetStoryId,
+    storyStatus: suggestion.resolvedStoryId ? (suggestion.resolvedStoryStatus ?? null) : null,
     occurredAt,
     anchorSequence,
   };

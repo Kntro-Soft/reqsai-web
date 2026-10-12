@@ -1332,8 +1332,11 @@
       "accepted": "Accepted",
       "dismissed": "Dismissed",
       "acceptedBy": "Accepted by the analyst",
+      "approvedBy": "Approved by the analyst",
+      "draftBy": "Saved as a draft by the analyst",
       "resolvedBy": "Resolved by the analyst",
-      "acceptedToast": "Suggestion accepted: the story is in the backlog as a draft.",
+      "approvedToast": "Story approved: it is in the backlog.",
+      "draftToast": "Story saved as a draft in the backlog.",
       "resolvedToast": "Question marked as resolved."
     },
     "live": {
@@ -1352,6 +1355,8 @@
       "you": "You",
       "thinking": "ReqsAI is thinking…",
       "accepted": "Accepted",
+      "approved": "Approved",
+      "draft": "Draft",
       "dismissed": "Dismissed"
     },
     "upload": {
@@ -1469,9 +1474,11 @@
       "storyNotFound": "Story not found.",
       "noCriterion": "No criterion drafted yet.",
       "viewTarget": "View target story",
-      "accept": "Accept",
+      "approve": "Approve",
+      "approveAria": "Approve the suggested story: it is approved in the backlog",
+      "saveDraft": "Save as draft",
+      "saveDraftAria": "Save the suggested story as a draft in the backlog",
       "resolve": "Resolve",
-      "saveAndAccept": "Save & accept",
       "dismiss": "Dismiss",
       "edit": "Edit",
       "cancelEdit": "Cancel editing",

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslocoTestingModule } from '@jsverse/transloco';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SuggestionResponse } from '../../data/discovery.models';
+import { AcceptSuggestionRequest, SuggestionResponse } from '../../data/discovery.models';
 import { EvidenceSegment } from '../../data/evidence';
 import { SuggestionCard } from './suggestion-card';
 
@@ -173,5 +173,69 @@ describe('SuggestionCard code insight and evidence', () => {
       SEGMENT,
     );
     expect(byTestId(el, 'suggestion-evidence')).toBeNull();
+  });
+});
+
+describe('SuggestionCard decide actions', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        SuggestionCard,
+        TranslocoTestingModule.forRoot({
+          langs: { en: EN },
+          translocoConfig: { availableLangs: ['en'], defaultLang: 'en' },
+          preloadLangs: true,
+        }),
+      ],
+    });
+  });
+
+  function render(value: SuggestionResponse, canApprove: boolean) {
+    const fixture = TestBed.createComponent(SuggestionCard);
+    fixture.componentRef.setInput('suggestion', value);
+    fixture.componentRef.setInput('canApprove', canApprove);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const emitted: AcceptSuggestionRequest[] = [];
+    fixture.componentInstance.accept.subscribe((body) => emitted.push(body));
+    const byTestId = (id: string) =>
+      el.querySelector(`[data-testid="${id}"]`) as HTMLButtonElement | null;
+    return { fixture, emitted, byTestId };
+  }
+
+  it('offers Aprobar and Guardar como borrador to an approver, each sending its own flag', () => {
+    const { emitted, byTestId } = render(suggestion(), true);
+    byTestId('suggestion-accept')!.click();
+    byTestId('suggestion-save-draft')!.click();
+    expect(emitted).toEqual([{ approve: true }, {}]);
+  });
+
+  it('offers only the draft save, as the primary action, without STORY_APPROVE', () => {
+    const { emitted, byTestId } = render(suggestion(), false);
+    expect(byTestId('suggestion-save-draft')).toBeNull();
+    byTestId('suggestion-accept')!.click();
+    expect(emitted).toEqual([{}]);
+  });
+
+  it('keeps a single Resolver action for a clarifying question, never approving', () => {
+    const { emitted, byTestId } = render(
+      suggestion({ type: 'CLARIFYING_QUESTION', question: 'Which currencies?' }),
+      true,
+    );
+    expect(byTestId('suggestion-save-draft')).toBeNull();
+    byTestId('suggestion-accept')!.click();
+    expect(emitted).toEqual([{}]);
+  });
+
+  it('sends the edits together with the approval', () => {
+    const { fixture, emitted, byTestId } = render(suggestion(), true);
+    byTestId('suggestion-edit')!.click();
+    fixture.detectChanges();
+    const title = byTestId('edit-title') as unknown as HTMLTextAreaElement;
+    title.value = 'Cancelar reserva online';
+    title.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    byTestId('suggestion-accept')!.click();
+    expect(emitted).toEqual([{ editedTitle: 'Cancelar reserva online', approve: true }]);
   });
 });

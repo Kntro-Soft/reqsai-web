@@ -458,6 +458,25 @@ describe('DiscoveryChatStore', () => {
       expect(decisions).toHaveLength(1);
     });
 
+    it('sends the approve flag and records the status the story ended in', () => {
+      const pending = setupWithPending();
+
+      store.decide(pending, 'ACCEPTED', { approve: true });
+      const req = http.expectOne(ACCEPT_URL);
+      expect(req.request.body).toEqual({ approve: true });
+      req.flush(
+        suggestion({
+          status: 'ACCEPTED',
+          resolvedStoryId: 'st-1',
+          resolvedStoryStatus: 'APPROVED',
+        }),
+      );
+      http.expectOne('/api/projects/proj-1/stories').flush(page<UserStoryResponse>([]));
+
+      const decision = store.blocks()[0].items.find((i) => i.kind === 'decision');
+      expect(decision?.kind === 'decision' && decision.decision.storyStatus).toBe('APPROVED');
+    });
+
     it('treats a 409 as an already-applied decision and converges the feed', () => {
       const pending = setupWithPending();
       const errors: unknown[] = [];
@@ -605,6 +624,33 @@ describe('DiscoveryChatStore', () => {
       // moment — rather than being pushed to the bottom after seq 2.
       const kinds = store.blocks()[0].items.map((i) => i.kind);
       expect(kinds).toEqual(['segment', 'segment', 'decision', 'segment']);
+    });
+
+    it('records the status of a story another viewer decided, from the realtime message', () => {
+      bootLive();
+      store.applyRealtime({
+        type: 'SUGGESTION_ACCEPTED',
+        sessionId: 'sess-1',
+        occurredAt: '2026-07-04T12:00:40Z',
+        suggestionId: 'sug-9',
+        suggestionType: 'NEW_STORY',
+        status: 'ACCEPTED',
+        draftTitle: 'Cancelar reserva',
+        draftRole: null,
+        draftAction: null,
+        draftBenefit: null,
+        draftPriority: null,
+        draftStoryPoints: null,
+        relatedTopic: null,
+        targetStoryId: null,
+        question: null,
+        resolvedStoryId: 'st-9',
+        resolvedStoryStatus: 'DRAFT',
+        draftAcceptanceCriteria: null,
+      });
+
+      const decision = store.blocks()[0].items.find((i) => i.kind === 'decision');
+      expect(decision?.kind === 'decision' && decision.decision.storyStatus).toBe('DRAFT');
     });
 
     it('keeps the evidence and the code insight of a realtime suggestion, and finds its segment', () => {

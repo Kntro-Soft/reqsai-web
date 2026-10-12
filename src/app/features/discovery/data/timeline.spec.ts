@@ -53,6 +53,7 @@ function decisionItem(id: string, occurredAt: string): FeedItem {
     type: 'NEW_STORY',
     label: id,
     storyId: null,
+    storyStatus: null,
     occurredAt,
     anchorSequence: 0,
   };

@@ -1332,8 +1332,11 @@
       "accepted": "Aceptada",
       "dismissed": "Descartada",
       "acceptedBy": "Aceptada por el analista",
+      "approvedBy": "Aprobada por el analista",
+      "draftBy": "Guardada como borrador por el analista",
       "resolvedBy": "Resuelta por el analista",
-      "acceptedToast": "Sugerencia aceptada: la historia quedó en el backlog como borrador.",
+      "approvedToast": "Historia aprobada: ya está en el backlog.",
+      "draftToast": "Historia guardada como borrador en el backlog.",
       "resolvedToast": "Pregunta marcada como resuelta."
     },
     "live": {
@@ -1352,6 +1355,8 @@
       "you": "Tú",
       "thinking": "ReqsAI está pensando…",
       "accepted": "Aceptada",
+      "approved": "Aprobada",
+      "draft": "Borrador",
       "dismissed": "Descartada"
     },
     "upload": {
@@ -1469,9 +1474,11 @@
       "storyNotFound": "Historia no encontrada.",
       "noCriterion": "Aún no hay un criterio redactado.",
       "viewTarget": "Ver historia objetivo",
-      "accept": "Aceptar",
+      "approve": "Aprobar",
+      "approveAria": "Aprobar la historia sugerida: queda aprobada en el backlog",
+      "saveDraft": "Guardar como borrador",
+      "saveDraftAria": "Guardar la historia sugerida como borrador en el backlog",
       "resolve": "Resolver",
-      "saveAndAccept": "Guardar y aceptar",
       "dismiss": "Descartar",
       "edit": "Editar",
       "cancelEdit": "Cancelar edición",

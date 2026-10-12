@@ -55,7 +55,7 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
  * so it never reads like content an analyst already validated. The story reads
  * as its canonical sentence ("Como …, quiero …, para …") and criteria as
  * Given/When/Then steps. Clicking "Edit" opens labelled, auto-growing fields;
- * accepting sends only the changed fields to the backend. Read-only when
+ * approving or saving as a draft sends only the changed fields to the backend. Read-only when
  * `canDecide` is false. `openTarget` asks the page to reveal the target story.
  */
 @Component({
@@ -401,20 +401,58 @@ type StoryField = 'title' | 'role' | 'action' | 'benefit';
 
       @if (canDecide()) {
         <footer class="flex flex-wrap items-center gap-2 border-t border-border/70 px-4 py-3">
-          <button
-            hlmBtn
-            size="sm"
-            type="button"
-            [disabled]="busy()"
-            (click)="onAccept()"
-            data-testid="suggestion-accept"
-          >
-            @if (busy()) {
-              <hlm-spinner class="h-3.5 w-3.5" />
+          @if (isQuestion()) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="busy()"
+              (click)="onAccept(false)"
+              data-testid="suggestion-accept"
+            >
+              @if (busy()) {
+                <hlm-spinner class="h-3.5 w-3.5" />
+              }
+              {{ 'discovery.suggestion.resolve' | transloco }}
+            </button>
+          } @else {
+            <!-- Approving needs STORY_APPROVE: without it nobody is offered an action they cannot take,
+                 and saving as a draft is the primary action. -->
+            @if (canApprove()) {
+              <button
+                hlmBtn
+                class="w-full sm:w-auto"
+                size="sm"
+                type="button"
+                [disabled]="busy()"
+                [attr.aria-label]="'discovery.suggestion.approveAria' | transloco"
+                (click)="onAccept(true)"
+                data-testid="suggestion-accept"
+              >
+                @if (busy()) {
+                  <hlm-spinner class="h-3.5 w-3.5" />
+                }
+                {{ 'discovery.suggestion.approve' | transloco }}
+              </button>
             }
-            {{ acceptLabel() | transloco }}
-          </button>
-          @if (suggestion().type !== 'CLARIFYING_QUESTION') {
+            <button
+              hlmBtn
+              class="w-full sm:w-auto"
+              size="sm"
+              [variant]="canApprove() ? 'outline' : 'default'"
+              type="button"
+              [disabled]="busy()"
+              [attr.aria-label]="'discovery.suggestion.saveDraftAria' | transloco"
+              (click)="onAccept(false)"
+              [attr.data-testid]="canApprove() ? 'suggestion-save-draft' : 'suggestion-accept'"
+            >
+              @if (busy() && !canApprove()) {
+                <hlm-spinner class="h-3.5 w-3.5" />
+              }
+              {{ 'discovery.suggestion.saveDraft' | transloco }}
+            </button>
+          }
+          @if (!isQuestion()) {
             <button
               hlmBtn
               size="sm"
@@ -662,6 +700,8 @@ export class SuggestionCard {
   readonly targetStory = input<DisplayStory | undefined>(undefined);
   /** False renders the card read-only (viewer without decide rights). */
   readonly canDecide = input(true);
+  /** True when the viewer holds STORY_APPROVE: only then is "Aprobar" offered next to the draft save. */
+  readonly canApprove = input(false);
   /** True while this suggestion's accept/dismiss (incl. its retry) is in flight. */
   readonly busy = input(false);
   /**
@@ -743,14 +783,8 @@ export class SuggestionCard {
     this.editing() ? this.model().storyPoints : this.suggestion().draftStoryPoints,
   );
 
-  /** Questions are "resolved", not "accepted" — accepting just records them as addressed. */
-  protected readonly acceptLabel = computed(() =>
-    this.suggestion().type === 'CLARIFYING_QUESTION'
-      ? 'discovery.suggestion.resolve'
-      : this.editing()
-        ? 'discovery.suggestion.saveAndAccept'
-        : 'discovery.suggestion.accept',
-  );
+  /** Questions are "resolved", not approved: they produce no story, so they have one action. */
+  protected readonly isQuestion = computed(() => this.suggestion().type === 'CLARIFYING_QUESTION');
 
   /** True when an UPDATE_STORY proposal differs from its target in any story field. */
   protected readonly hasChanges = computed(() =>
@@ -830,12 +864,14 @@ export class SuggestionCard {
       : '';
   }
 
-  protected onAccept(): void {
+  /** Accepts the draft (or the edits) and approves the resulting story, or saves it as a draft. */
+  protected onAccept(approve: boolean): void {
+    const flag = approve && !this.isQuestion() ? { approve: true } : {};
     if (!this.editing()) {
-      this.accept.emit({});
+      this.accept.emit(flag);
       return;
     }
-    this.accept.emit(editableToAcceptRequest(this.suggestion(), this.model()));
+    this.accept.emit({ ...editableToAcceptRequest(this.suggestion(), this.model()), ...flag });
     this.editing.set(false);
   }
 }
