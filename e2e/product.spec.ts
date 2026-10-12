@@ -56,16 +56,25 @@ test.describe.serial('Full product', () => {
     await uiLogin(page, owner.email, PASSWORD);
 
     await page.goto(`/projects/${owner.projectId}/glossary`);
-    await page.getByLabel('Término').fill('Reserva');
-    await page
+    await page.getByTestId('glossary-new').click();
+    const termDialog = page.getByRole('dialog');
+    await expect(termDialog.getByLabel('Término')).toBeFocused();
+    await termDialog.getByLabel('Término').fill('Reserva');
+    await termDialog
       .getByLabel('Definición')
       .fill('Mesa apartada por un comensal para una fecha y hora.');
-    await page.getByRole('button', { name: 'Añadir término' }).click();
+    await termDialog.getByRole('button', { name: 'Añadir término' }).click();
+    await expect(termDialog).toBeHidden();
     await expect(page.getByRole('main').getByText('Reserva', { exact: true })).toBeVisible();
 
     await page.goto(`/projects/${owner.projectId}/constraints`);
-    await page.getByLabel('Descripción').fill('Debe funcionar en celulares con conexión 3G.');
-    await page.getByRole('button', { name: 'Añadir restricción' }).click();
+    await page.getByTestId('constraints-new').click();
+    const constraintDialog = page.getByRole('dialog');
+    await constraintDialog
+      .getByLabel('Descripción')
+      .fill('Debe funcionar en celulares con conexión 3G.');
+    await constraintDialog.getByRole('button', { name: 'Añadir restricción' }).click();
+    await expect(constraintDialog).toBeHidden();
     await expect(page.getByText('Debe funcionar en celulares con conexión 3G.')).toBeVisible();
   });
 
