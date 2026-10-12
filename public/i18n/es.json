@@ -234,7 +234,105 @@
     "dark": "Oscuro"
   },
   "overview": {
-    "subtitle": "Una vista rápida del proyecto y accesos a sus secciones."
+    "subtitle": "El estado del proyecto de un vistazo, sus gráficos y accesos a sus secciones.",
+    "shortcuts": "Accesos rápidos",
+    "loadError": "No pudimos cargar el resumen.",
+    "retry": "Reintentar",
+    "forbidden": "No tienes acceso a ninguna cifra de este proyecto.",
+    "kpiAria": "Cifras clave",
+    "kpi": {
+      "stories": "Historias activas",
+      "storiesHint": "Aprobadas {{approved}} · Borrador {{drafts}}",
+      "points": "Puntos de historia",
+      "pointsHintApproved": "En aprobadas: {{n}}",
+      "pointsHintUnestimated": "Sin estimar: {{n}}",
+      "sessions": "Sesiones",
+      "sessionsHint": "Completadas: {{n}}",
+      "aiRate": "Aceptación de la IA",
+      "aiRateHint": "Aceptadas {{accepted}} de {{decided}}",
+      "aiRateNone": "Aún sin propuestas decididas",
+      "projects": "Proyectos",
+      "members": "Miembros",
+      "membersHint": "Administradores {{admins}} · Invitaciones {{pending}}"
+    },
+    "trend": {
+      "up": "+{{n}} frente a las 4 semanas anteriores",
+      "down": "−{{n}} frente a las 4 semanas anteriores",
+      "flat": "Igual que las 4 semanas anteriores"
+    },
+    "empty": {
+      "title": "Todavía no hay nada que graficar",
+      "body": "Haz una sesión de descubrimiento y ReqsAI empezará a proponer historias de usuario. Los gráficos se llenan a medida que avanza el proyecto.",
+      "cta": "Abrir descubrimiento",
+      "stories": "Aún no hay historias.",
+      "activity": "Sin sesiones ni historias en las últimas {{n}} semanas.",
+      "assistance": "El copiloto todavía no propuso ninguna historia.",
+      "coverage": "La cobertura aparece cuando el proyecto tiene historias activas.",
+      "recent": "Aún no hay nada por aquí.",
+      "orgTitle": "Aún no hay proyectos que resumir",
+      "orgBody": "Crea un proyecto y esta página mostrará sus historias, sesiones y cómo trabaja el equipo con el copiloto.",
+      "orgCta": "Ir a proyectos"
+    },
+    "stories": {
+      "title": "Historias por estado",
+      "description": "Cómo va la revisión del backlog"
+    },
+    "priority": {
+      "title": "Historias por prioridad",
+      "description": "Todas las historias, sea cual sea su estado"
+    },
+    "activity": {
+      "title": "Actividad semanal",
+      "description": "Sesiones e historias creadas en las últimas {{n}} semanas",
+      "stories": "Historias",
+      "sessions": "Sesiones",
+      "aria": "Historias y sesiones creadas por semana durante las últimas {{n}} semanas"
+    },
+    "assistance": {
+      "title": "Propuestas de la IA",
+      "description": "Qué hicieron los analistas con las historias que propuso el copiloto",
+      "accepted": "Aceptadas",
+      "dismissed": "Descartadas",
+      "pending": "Pendientes",
+      "center": "aceptadas",
+      "centerNone": "decididas",
+      "questions": "Preguntas aclaratorias planteadas: {{n}}"
+    },
+    "coverage": {
+      "title": "Cobertura de requisitos",
+      "description": "Sobre las {{n}} historias activas",
+      "criteria": "Con criterios de aceptación",
+      "origin": "Con una cita de la conversación",
+      "code": "Vinculadas a tu código"
+    },
+    "context": {
+      "title": "Contexto del proyecto",
+      "description": "Lo que el copiloto sabe del cliente",
+      "glossary": "{{n}}",
+      "constraints": "{{n}}",
+      "documents": "{{n}}",
+      "code": "Repositorios {{repos}} · Módulos {{modules}}",
+      "codeNone": "Sin código conectado"
+    },
+    "recent": {
+      "title": "Actividad reciente",
+      "sessions": "Últimas sesiones",
+      "stories": "Últimas historias"
+    },
+    "org": {
+      "subtitle": "Cifras de los proyectos a los que tienes acceso.",
+      "topProjects": {
+        "title": "Proyectos más activos",
+        "description": "Por historias y sesiones creadas",
+        "detail": "Historias {{stories}} · Sesiones {{sessions}}"
+      },
+      "tokens": {
+        "title": "Uso de IA en este periodo",
+        "description": "Tokens consumidos frente a tu plan",
+        "used": "{{used}} / {{limit}} tokens · {{pct}}%",
+        "manage": "Ver uso"
+      }
+    }
   },
   "demo": {
     "badge": "Demo",
@@ -1909,5 +2007,11 @@
       "unavailableBody": "Puede que haya vencido o que el equipo lo haya revocado. Pide uno nuevo a quien te lo compartió.",
       "footer": "Compartido con ReqsAI"
     }
+  },
+  "charts": {
+    "showTable": "Ver como tabla",
+    "showChart": "Ver gráfico",
+    "week": "Semana",
+    "weekOf": "Semana del {{date}}"
   }
 }
