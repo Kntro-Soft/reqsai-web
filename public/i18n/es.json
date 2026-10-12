@@ -245,7 +245,7 @@
     "restoreDesc": "Vuelve a cargar el contenido original del proyecto de demostración.",
     "restoreHint": "Reemplaza las sesiones, historias, sugerencias, glosario y restricciones.",
     "restoreTitle": "Restaurar datos de prueba",
-    "restoreBody": "Se eliminarán las sesiones, historias de usuario, sugerencias, mensajes del asistente, términos del glosario y restricciones de este proyecto, y se cargará de nuevo el contenido original de la demostración. Esta acción no se puede deshacer.",
+    "restoreBody": "Se eliminarán las sesiones, historias de usuario, sugerencias, mensajes del asistente, términos del glosario, restricciones y las integraciones de este proyecto (repositorios de GitHub conectados y el mapeo de Jira), y se cargará de nuevo el contenido original de la demostración. Las conexiones de la organización con GitHub y Jira no cambian. Esta acción no se puede deshacer.",
     "restoreConfirm": "Restaurar"
   },
   "account": {

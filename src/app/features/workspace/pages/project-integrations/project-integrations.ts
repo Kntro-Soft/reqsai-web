@@ -26,6 +26,7 @@ import { Modal } from '../../../../shared/components/modal/modal';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
 import { HlmButton, HlmSkeleton, HlmSpinner } from '../../../../shared/ui';
+import { JiraMark } from '../../../../shared/components/jira-mark/jira-mark';
 import { ProjectGitHub } from '../../../discovery/components/project-github/project-github';
 
 /**
@@ -48,6 +49,7 @@ import { ProjectGitHub } from '../../../discovery/components/project-github/proj
     HlmSpinner,
     TranslocoPipe,
     ProjectGitHub,
+    JiraMark,
   ],
   template: `
     <div class="flex flex-col gap-6">
@@ -82,11 +84,18 @@ import { ProjectGitHub } from '../../../discovery/components/project-github/proj
           data-testid="project-integrations-no-connection"
         >
           <div class="flex flex-col gap-3 p-5">
-            <div class="flex flex-col gap-1">
-              <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
-              <p class="text-sm text-muted-foreground">
-                {{ 'integrations.project.noConnection' | transloco }}
-              </p>
+            <div class="flex items-start gap-3">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#0052CC] text-white"
+              >
+                <app-jira-mark [size]="18" />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.project.noConnection' | transloco }}
+                </p>
+              </div>
             </div>
             @if (!canManageOrg()) {
               <p class="text-sm text-muted-foreground" data-testid="project-jira-ask-admin">
@@ -136,11 +145,18 @@ import { ProjectGitHub } from '../../../discovery/components/project-github/proj
       } @else {
         <section class="overflow-hidden rounded-2xl border border-border">
           <div class="flex flex-col gap-4 p-5">
-            <div class="flex flex-col gap-1">
-              <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
-              <p class="text-sm text-muted-foreground">
-                {{ 'integrations.project.mappingDescription' | transloco }}
-              </p>
+            <div class="flex items-start gap-3">
+              <span
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#0052CC] text-white"
+              >
+                <app-jira-mark [size]="18" />
+              </span>
+              <div class="flex min-w-0 flex-col gap-1">
+                <h2 class="text-base font-semibold">{{ 'integrations.jira.title' | transloco }}</h2>
+                <p class="text-sm text-muted-foreground">
+                  {{ 'integrations.project.mappingDescription' | transloco }}
+                </p>
+              </div>
             </div>
 
             @if (connections().length > 1) {

@@ -42,6 +42,9 @@ follows [Semantic Versioning](https://semver.org/).
   - **GitHub in Settings → Integrations** (owners and admins), next to Jira: the connected GitHub
     accounts (organization or personal, all or selected repositories, suspended), "Gestionar en GitHub",
     "Desconectar" with a confirmation, and "Conectar GitHub" / "Conectar otra cuenta".
+  - **Jira gets its mark too**, like GitHub, on the Jira cards of the organization and of the project.
+  - **Restoring the demo project** now says it also clears the project's integrations (connected GitHub
+    repositories and the Jira mapping), which the API does.
   - **GitHub's redirect** lands on `/settings/integrations/github/callback` (chrome-less, like Jira's): it
     posts the installation id, signed state and OAuth code for the API to verify, explains a request a
     GitHub organization owner must approve, and returns to the page that started the install (only an
