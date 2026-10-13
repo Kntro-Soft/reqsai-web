@@ -354,3 +354,45 @@ export function rememberDismissed(projectId: string): void {
     // Without storage the bar just shows again on the next visit.
   }
 }
+
+/** What the chosen sources can tell about the project, to fill its basics. */
+export interface SourceProfile {
+  name: string | null;
+  description: string | null;
+  languages: string[];
+}
+
+export const EMPTY_SOURCE_PROFILE: SourceProfile = { name: null, description: null, languages: [] };
+
+/** Minimal shape of what the sources step knows about a Jira project and a GitHub repository. */
+export interface SourceJiraProject {
+  name: string;
+  description?: string | null;
+}
+export interface SourceRepository {
+  name: string;
+  description?: string | null;
+  language?: string | null;
+}
+
+/**
+ * The project profile the sources suggest: the Jira project's name and description win (it is the team's
+ * own name for the work); otherwise the first repository's. Languages come from the repositories.
+ */
+export function profileFromSources(
+  jira: SourceJiraProject | null,
+  repositories: readonly SourceRepository[],
+): SourceProfile {
+  const clean = (text: string | null | undefined) => text?.trim() || null;
+  const first = repositories[0];
+  const languages: string[] = [];
+  for (const repo of repositories) {
+    const language = clean(repo.language);
+    if (language && !languages.includes(language)) languages.push(language);
+  }
+  return {
+    name: clean(jira?.name) ?? clean(first?.name),
+    description: clean(jira?.description) ?? clean(first?.description),
+    languages,
+  };
+}

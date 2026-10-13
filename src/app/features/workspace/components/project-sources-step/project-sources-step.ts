@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   model,
@@ -32,7 +33,12 @@ import {
   JiraIssueTypeResponse,
   JiraProjectResponse,
 } from '../../data/integrations.models';
-import { JiraDraft, PickedRepository } from '../../data/project-setup';
+import {
+  JiraDraft,
+  PickedRepository,
+  SourceProfile,
+  profileFromSources,
+} from '../../data/project-setup';
 
 type Load = 'loading' | 'ready' | 'error';
 
@@ -297,6 +303,8 @@ export class ProjectSourcesStep implements OnInit {
 
   readonly jira = model.required<JiraDraft>();
   readonly picks = model<PickedRepository[]>([]);
+  /** What the chosen Jira project and repositories say about the project (name, description, languages). */
+  readonly profile = output<SourceProfile>();
   /** Fired right before the page is left for Atlassian, GitHub or the settings: keep the draft. */
   readonly leaving = output<'jira' | 'github' | 'settings'>();
   /** The full navigation to the third party (overridden in tests). */
@@ -341,6 +349,21 @@ export class ProjectSourcesStep implements OnInit {
     if (!github?.available) return 'unavailable';
     return github.installations.some((i) => !i.suspended) ? 'picker' : 'connect';
   });
+
+  constructor() {
+    effect(() => {
+      const jira = this.jira();
+      const project = jira.enabled
+        ? (this.projects().find((p) => p.key === jira.projectKey) ?? null)
+        : null;
+      const chosen = this.repositories().filter((repo) =>
+        this.picks().some(
+          (p) => p.installationId === repo.installationId && p.fullName === repo.fullName,
+        ),
+      );
+      this.profile.emit(profileFromSources(project, chosen));
+    });
+  }
 
   ngOnInit(): void {
     const orgId = this.auth.organizationId();

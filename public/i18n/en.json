@@ -551,6 +551,15 @@
       "withSources": "The project opens right away. Jira and GitHub are set up in the background and you will see progress in a bar at the top.",
       "withoutSources": "The project is created without sources. You can connect them later from Integrations and Code.",
       "importStories": "importing its stories"
+    },
+    "fromSources": {
+      "link": "Prefer to start from Jira or GitHub? Pick the source first",
+      "title": "Fill the project from these sources",
+      "intro": "Taken now, no need to apply anything later. You can still edit it all.",
+      "name": "Use \"{{value}}\" as the name",
+      "description": "Use as the description: {{value}}",
+      "languages": "Add the languages: {{value}}",
+      "needName": "Pick a Jira project or a repository, or go back and type a name."
     }
   },
   "orgPicker": {

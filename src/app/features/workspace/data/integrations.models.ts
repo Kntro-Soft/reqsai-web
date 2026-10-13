@@ -58,6 +58,8 @@ export interface TestConnectionResponse {
 export interface JiraProjectResponse {
   key: string;
   name: string;
+  /** The project's own description in Jira; absent when it has none. */
+  description?: string | null;
 }
 
 /** A Jira issue type available in a project. */
