@@ -1552,7 +1552,8 @@
         "creating": "Creando la sesión",
         "transcribing": "Transcribiendo el audio",
         "generating": "Generando historias con la IA"
-      }
+      },
+      "quotaBlocked": "Se agotó la cuota de IA del mes. Grabar en vivo sigue funcionando."
     },
     "composer": {
       "record": "Iniciar grabación",
@@ -1834,7 +1835,10 @@
         "whatSyncs": "El título de la historia se convierte en el resumen de la incidencia, y la descripción lleva el rol, la acción y el beneficio más los criterios de aceptación (Dado/Cuando/Entonces).",
         "oauthHint": "Conectar con Atlassian es lo más fácil: un clic, sin escribir nada. El API token es una alternativa si no puedes usar OAuth.",
         "learnMore": "Más información sobre los API tokens"
-      }
+      },
+      "addSite": "Conectar otro sitio",
+      "needsSite": "Necesitas una cuenta de Atlassian que tenga un sitio de Jira Cloud.",
+      "createSite": "Crear un sitio gratis"
     },
     "project": {
       "subtitle": "Asocia este proyecto a Jira para enviar historias como incidencias, y revisa el código de GitHub que lee el copiloto.",
