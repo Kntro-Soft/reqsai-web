@@ -12,6 +12,9 @@ follows [Semantic Versioning](https://semver.org/).
 ### Changed (Jira sites — `feature/108-jira-sites-ui`, #108)
 - Settings → Integrations lists every connected Jira site (Test and Disconnect per site) and "Connect another site" opens the connect options, like GitHub's accounts. The connect options now say an Atlassian account with a Jira Cloud site is needed, with a link to create one free (the "Access denied" Atlassian shows to accounts without a site). Needs reqsai-api#144.
 
+### Fixed (AI allowance — `feature/106-quota-gaps-ui`, #106)
+- With the monthly AI allowance spent, "Upload a recording" in the capture menu is disabled and says why (recording live keeps working). The API now also refuses uploading, processing and code verification with `AI_QUOTA_EXCEEDED`.
+
 ## [1.5.0] - 2026-10-12
 
 ### Added (Share a session — `feature/101-session-share-link`, #101)

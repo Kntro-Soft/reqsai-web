@@ -1543,7 +1543,8 @@
         "creating": "Creating the session",
         "transcribing": "Transcribing the audio",
         "generating": "Generating stories with AI"
-      }
+      },
+      "quotaBlocked": "The monthly AI allowance is spent. Recording live still works."
     },
     "composer": {
       "record": "Start recording",

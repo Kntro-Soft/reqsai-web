@@ -229,6 +229,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                  history and the speakers of the current session. -->
             <app-capture-menu
               [canUpload]="canRecord() && !store.liveSession()"
+              [uploadBlocked]="aiQuota.exhausted()"
               [speakers]="speakersTarget() !== null"
               [canEditSpeakers]="canRecord()"
               [canShare]="canShareSession()"

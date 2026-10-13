@@ -103,11 +103,20 @@ import { HlmButton, HlmIcon } from '../../../../shared/ui';
             type="button"
             role="menuitem"
             (click)="pick(uploadRequested)"
-            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+            [disabled]="uploadBlocked()"
+            [attr.title]="uploadBlocked() ? ('discovery.upload.quotaBlocked' | transloco) : null"
+            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
             data-testid="upload-recording-open"
           >
             <hlm-icon name="lucideUpload" size="16px" class="text-muted-foreground" />
-            {{ 'discovery.upload.button' | transloco }}
+            <span class="flex flex-col">
+              {{ 'discovery.upload.button' | transloco }}
+              @if (uploadBlocked()) {
+                <span class="text-xs text-muted-foreground">{{
+                  'discovery.upload.quotaBlocked' | transloco
+                }}</span>
+              }
+            </span>
           </button>
         }
         <a
@@ -141,6 +150,8 @@ import { HlmButton, HlmIcon } from '../../../../shared/ui';
 export class CaptureMenu {
   /** Offer "Upload a recording" (recorders, while no session is live). */
   readonly canUpload = input(false);
+  /** The monthly AI allowance is spent: processing a recording would be refused. */
+  readonly uploadBlocked = input(false);
   /** Offer the speakers of the current session (it has diarized voices). */
   readonly speakers = input(false);
   /** The speakers entry reads "Edit" for people who can change them, else "View". */
