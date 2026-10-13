@@ -5,7 +5,12 @@ import { CaptureMenu } from './capture-menu';
 
 describe('CaptureMenu', () => {
   function render(
-    inputs: { canUpload?: boolean; speakers?: boolean; canEditSpeakers?: boolean } = {},
+    inputs: {
+      canUpload?: boolean;
+      uploadBlocked?: boolean;
+      speakers?: boolean;
+      canEditSpeakers?: boolean;
+    } = {},
   ): { fixture: ComponentFixture<CaptureMenu>; el: HTMLElement } {
     TestBed.configureTestingModule({
       imports: [CaptureMenu, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
@@ -13,6 +18,7 @@ describe('CaptureMenu', () => {
     });
     const fixture = TestBed.createComponent(CaptureMenu);
     fixture.componentRef.setInput('canUpload', inputs.canUpload ?? false);
+    fixture.componentRef.setInput('uploadBlocked', inputs.uploadBlocked ?? false);
     fixture.componentRef.setInput('speakers', inputs.speakers ?? false);
     fixture.componentRef.setInput('canEditSpeakers', inputs.canEditSpeakers ?? false);
     fixture.detectChanges();
@@ -48,6 +54,15 @@ describe('CaptureMenu', () => {
     expect(item('discovery-history')).not.toBeNull();
     expect(item('upload-recording-open')).toBeNull();
     expect(item('speakers-menu')).toBeNull();
+  });
+
+  it('disables the upload and says why when the AI allowance is spent', () => {
+    const { fixture, el } = render({ canUpload: true, uploadBlocked: true });
+
+    open(fixture, el);
+
+    expect((item('upload-recording-open') as HTMLButtonElement).disabled).toBe(true);
+    expect(item('upload-recording-open')?.textContent).toContain('discovery.upload.quotaBlocked');
   });
 
   it('offers the upload and the speakers when they apply', () => {

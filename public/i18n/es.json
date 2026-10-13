@@ -1543,7 +1543,8 @@
         "creating": "Creando la sesión",
         "transcribing": "Transcribiendo el audio",
         "generating": "Generando historias con la IA"
-      }
+      },
+      "quotaBlocked": "Se agotó la cuota de IA del mes. Grabar en vivo sigue funcionando."
     },
     "composer": {
       "record": "Iniciar grabación",
