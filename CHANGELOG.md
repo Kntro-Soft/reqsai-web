@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Create a project from its sources — `feature/110-wizard-from-sources`, #110)
+- In the create-project wizard, "Prefer to start from Jira or GitHub?" opens the sources first with no name typed. Once a Jira project or repositories are chosen, a card offers the project's name (the Jira project's, else the first repository's), description and languages (from the repositories) and applies what is ticked on the way to the review, so nothing has to be applied afterwards. A name already typed is kept unless its box is ticked. Needs reqsai-api#146 for the Jira description and the repository language.
+
 ## [1.5.0] - 2026-10-12
 
 ### Added (Share a session — `feature/101-session-share-link`, #101)

@@ -5,6 +5,7 @@ import {
   PickedRepository,
   ProjectDraft,
   buildSources,
+  profileFromSources,
   canRetry,
   canSkip,
   discardDraft,
@@ -215,5 +216,26 @@ describe('dismissal', () => {
     expect(isDismissed('p1')).toBe(true);
     expect(isDismissed('p2')).toBe(false);
     expect(localStorage.getItem(dismissedKey('p1'))).toBe('1');
+  });
+});
+
+describe('profileFromSources', () => {
+  it('says nothing without sources', () => {
+    expect(profileFromSources(null, [])).toEqual({ name: null, description: null, languages: [] });
+  });
+
+  it('prefers the Jira project and falls back to the first repository', () => {
+    const repos = [
+      { name: 'reservas-api', description: 'API de reservas', language: 'Java' },
+      { name: 'reservas-web', description: null, language: 'TypeScript' },
+      { name: 'infra', description: 'x', language: 'java' },
+    ];
+
+    expect(profileFromSources({ name: 'Reservas', description: ' ' }, repos)).toEqual({
+      name: 'Reservas',
+      description: 'API de reservas',
+      languages: ['Java', 'TypeScript', 'java'],
+    });
+    expect(profileFromSources(null, repos).name).toBe('reservas-api');
   });
 });

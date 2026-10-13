@@ -551,6 +551,15 @@
       "withSources": "El proyecto se abre al instante. Jira y GitHub se configuran en segundo plano y verás el avance en una barra arriba.",
       "withoutSources": "El proyecto se crea sin fuentes. Puedes conectarlas más tarde desde Integraciones y Código.",
       "importStories": "importando sus historias"
+    },
+    "fromSources": {
+      "link": "¿Prefieres partir de Jira o GitHub? Elige primero la fuente",
+      "title": "Completar el proyecto con estas fuentes",
+      "intro": "Se toma ahora, sin aplicar nada después. Luego puedes editarlo todo.",
+      "name": "Usar «{{value}}» como nombre",
+      "description": "Usar como descripción: {{value}}",
+      "languages": "Añadir los lenguajes: {{value}}",
+      "needName": "Elige un proyecto de Jira o un repositorio, o vuelve y escribe un nombre."
     }
   },
   "orgPicker": {
