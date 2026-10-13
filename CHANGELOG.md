@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (AI allowance — `feature/106-quota-gaps-ui`, #106)
+- With the monthly AI allowance spent, "Upload a recording" in the capture menu is disabled and says why (recording live keeps working). The API now also refuses uploading, processing and code verification with `AI_QUOTA_EXCEEDED`.
+
 ## [1.5.0] - 2026-10-12
 
 ### Added (Share a session — `feature/101-session-share-link`, #101)
