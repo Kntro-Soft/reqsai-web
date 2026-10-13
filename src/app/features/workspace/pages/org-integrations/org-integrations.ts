@@ -118,60 +118,105 @@ import {
                 </div>
               </div>
 
-              @if (connection(); as conn) {
-                <!-- Connected state -->
-                <dl class="flex flex-col gap-2 text-sm" data-testid="jira-connected">
-                  <div class="flex items-center gap-2">
-                    @if (conn.status === 'CONNECTED') {
-                      <hlm-icon name="lucideCircleCheck" size="16px" class="text-emerald-500" />
-                      <span class="font-medium text-emerald-500">
-                        {{ 'integrations.jira.statusConnected' | transloco }}
-                      </span>
-                    } @else {
-                      <hlm-icon name="lucideTriangleAlert" size="16px" class="text-destructive" />
-                      <span class="font-medium text-destructive">
-                        {{ 'integrations.jira.statusError' | transloco }}
-                      </span>
-                    }
-                  </div>
-                  <div class="flex flex-wrap gap-x-6 gap-y-1">
-                    <div class="flex flex-col">
-                      <dt class="text-xs text-muted-foreground">
-                        {{ 'integrations.jira.method' | transloco }}
-                      </dt>
-                      <dd class="font-medium">
-                        @if (conn.credentialType === 'OAUTH2') {
-                          {{ 'integrations.jira.methodOauth' | transloco }}
-                        } @else {
-                          {{ 'integrations.jira.methodApiToken' | transloco }}
-                        }
-                      </dd>
-                    </div>
-                    <div class="flex flex-col">
-                      <dt class="text-xs text-muted-foreground">
-                        {{ 'integrations.jira.siteUrl' | transloco }}
-                      </dt>
-                      <dd class="font-medium break-all">{{ conn.siteUrl }}</dd>
-                    </div>
-                    @if (conn.email) {
-                      <div class="flex flex-col">
-                        <dt class="text-xs text-muted-foreground">
-                          {{ 'integrations.jira.email' | transloco }}
-                        </dt>
-                        <dd class="font-medium break-all">{{ conn.email }}</dd>
+              @if (connections().length > 0) {
+                <ul class="flex flex-col gap-2" data-testid="jira-sites">
+                  @for (conn of connections(); track conn.id) {
+                    <li
+                      class="flex flex-col gap-3 rounded-lg border border-border p-3"
+                      data-testid="jira-connected"
+                    >
+                      <dl class="flex min-w-0 flex-1 flex-col gap-2 text-sm">
+                        <div class="flex items-center gap-2">
+                          @if (conn.status === 'CONNECTED') {
+                            <hlm-icon
+                              name="lucideCircleCheck"
+                              size="16px"
+                              class="text-emerald-500"
+                            />
+                            <span class="font-medium text-emerald-500">
+                              {{ 'integrations.jira.statusConnected' | transloco }}
+                            </span>
+                          } @else {
+                            <hlm-icon
+                              name="lucideTriangleAlert"
+                              size="16px"
+                              class="text-destructive"
+                            />
+                            <span class="font-medium text-destructive">
+                              {{ 'integrations.jira.statusError' | transloco }}
+                            </span>
+                          }
+                        </div>
+                        <div class="flex flex-wrap gap-x-6 gap-y-1">
+                          <div class="flex flex-col">
+                            <dt class="text-xs text-muted-foreground">
+                              {{ 'integrations.jira.method' | transloco }}
+                            </dt>
+                            <dd class="font-medium">
+                              @if (conn.credentialType === 'OAUTH2') {
+                                {{ 'integrations.jira.methodOauth' | transloco }}
+                              } @else {
+                                {{ 'integrations.jira.methodApiToken' | transloco }}
+                              }
+                            </dd>
+                          </div>
+                          <div class="flex flex-col">
+                            <dt class="text-xs text-muted-foreground">
+                              {{ 'integrations.jira.siteUrl' | transloco }}
+                            </dt>
+                            <dd class="font-medium break-all">{{ conn.siteUrl }}</dd>
+                          </div>
+                          @if (conn.email) {
+                            <div class="flex flex-col">
+                              <dt class="text-xs text-muted-foreground">
+                                {{ 'integrations.jira.email' | transloco }}
+                              </dt>
+                              <dd class="font-medium break-all">{{ conn.email }}</dd>
+                            </div>
+                          }
+                          @if (conn.lastVerifiedAt) {
+                            <div class="flex flex-col">
+                              <dt class="text-xs text-muted-foreground">
+                                {{ 'integrations.jira.lastVerified' | transloco }}
+                              </dt>
+                              <dd class="font-medium">{{ formatDate(conn.lastVerifiedAt) }}</dd>
+                            </div>
+                          }
+                        </div>
+                      </dl>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <button
+                          hlmBtn
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          (click)="test(conn)"
+                          [disabled]="testing() === conn.id"
+                          data-testid="jira-test"
+                        >
+                          @if (testing() === conn.id) {
+                            <hlm-spinner class="h-4 w-4" />
+                          }
+                          {{ 'integrations.jira.test' | transloco }}
+                        </button>
+                        <button
+                          hlmBtn
+                          size="sm"
+                          variant="ghost"
+                          type="button"
+                          class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          (click)="askDisconnect(conn)"
+                          data-testid="jira-disconnect"
+                        >
+                          {{ 'integrations.jira.disconnect' | transloco }}
+                        </button>
                       </div>
-                    }
-                    @if (conn.lastVerifiedAt) {
-                      <div class="flex flex-col">
-                        <dt class="text-xs text-muted-foreground">
-                          {{ 'integrations.jira.lastVerified' | transloco }}
-                        </dt>
-                        <dd class="font-medium">{{ formatDate(conn.lastVerifiedAt) }}</dd>
-                      </div>
-                    }
-                  </div>
-                </dl>
-              } @else {
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (connections().length === 0 || addOpen()) {
                 <!-- Primary: connect with Atlassian (OAuth 2.0) -->
                 <div class="flex flex-col gap-2">
                   <button
@@ -200,6 +245,17 @@ import {
                       {{ 'integrations.jira.oauth.notConfiguredHint' | transloco }}
                     </p>
                   }
+                  <p class="max-w-md text-xs text-muted-foreground" data-testid="jira-site-hint">
+                    {{ 'integrations.jira.needsSite' | transloco }}
+                    <a
+                      [href]="freeSiteUrl"
+                      target="_blank"
+                      rel="noopener"
+                      class="font-medium text-primary hover:underline"
+                    >
+                      {{ 'integrations.jira.createSite' | transloco }}
+                    </a>
+                  </p>
                 </div>
 
                 <!-- Divider + collapsible API-token fallback -->
@@ -312,49 +368,49 @@ import {
               }
             </div>
 
-            @if (connection() || tokenOpen()) {
+            @if (connections().length > 0 || tokenOpen()) {
               <div
                 class="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3"
               >
-                @if (connection()) {
+                @if (connections().length > 0 && !addOpen()) {
                   <button
                     hlmBtn
                     size="sm"
                     variant="outline"
                     type="button"
-                    (click)="test()"
-                    [disabled]="testing()"
-                    data-testid="jira-test"
+                    (click)="addOpen.set(true)"
+                    data-testid="jira-add-site"
                   >
-                    @if (testing()) {
-                      <hlm-spinner class="h-4 w-4" />
-                    }
-                    {{ 'integrations.jira.test' | transloco }}
+                    <app-jira-mark [size]="15" />
+                    {{ 'integrations.jira.addSite' | transloco }}
                   </button>
-                  <button
-                    hlmBtn
-                    size="sm"
-                    variant="destructive"
-                    type="button"
-                    (click)="disconnectOpen.set(true)"
-                    data-testid="jira-disconnect"
-                  >
-                    {{ 'integrations.jira.disconnect' | transloco }}
-                  </button>
-                } @else if (tokenOpen()) {
-                  <button
-                    hlmBtn
-                    size="sm"
-                    type="button"
-                    (click)="connect()"
-                    [disabled]="form.invalid || connecting()"
-                    data-testid="jira-connect"
-                  >
-                    @if (connecting()) {
-                      <hlm-spinner class="h-4 w-4" />
-                    }
-                    {{ 'integrations.jira.connect' | transloco }}
-                  </button>
+                } @else {
+                  @if (connections().length > 0) {
+                    <button
+                      hlmBtn
+                      size="sm"
+                      variant="ghost"
+                      type="button"
+                      (click)="addOpen.set(false); tokenOpen.set(false)"
+                    >
+                      {{ 'common.cancel' | transloco }}
+                    </button>
+                  }
+                  @if (tokenOpen()) {
+                    <button
+                      hlmBtn
+                      size="sm"
+                      type="button"
+                      (click)="connect()"
+                      [disabled]="form.invalid || connecting()"
+                      data-testid="jira-connect"
+                    >
+                      @if (connecting()) {
+                        <hlm-spinner class="h-4 w-4" />
+                      }
+                      {{ 'integrations.jira.connect' | transloco }}
+                    </button>
+                  }
                 }
               </div>
             }
@@ -474,12 +530,17 @@ export class OrgIntegrations {
 
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly connecting = signal(false);
-  protected readonly testing = signal(false);
+  /** The connection being tested, if any. */
+  protected readonly testing = signal<string | null>(null);
   protected readonly disconnecting = signal(false);
   protected readonly disconnectOpen = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  /** The current Jira connection, or null when none is configured. */
-  protected readonly connection = signal<IntegrationConnectionResponse | null>(null);
+  /** The organization's Jira sites, newest first. */
+  protected readonly connections = signal<IntegrationConnectionResponse[]>([]);
+  /** The site the disconnect dialog is about. */
+  private readonly disconnectTarget = signal<IntegrationConnectionResponse | null>(null);
+  /** Whether the connect options are open next to sites that already exist. */
+  protected readonly addOpen = signal(false);
 
   /** Whether the browser is mid-redirect to Atlassian's consent screen. */
   protected readonly redirecting = signal(false);
@@ -487,6 +548,9 @@ export class OrgIntegrations {
   protected readonly oauthDisabled = signal(false);
   /** Whether the API-token fallback form is expanded. */
   protected readonly tokenOpen = signal(false);
+
+  /** Where to create a free Jira Cloud site (opens in a new tab). */
+  protected readonly freeSiteUrl = 'https://www.atlassian.com/software/jira/free';
 
   /** Where users mint an Atlassian API token (opens in a new tab). */
   protected readonly apiTokenUrl = 'https://id.atlassian.com/manage-profile/security/api-tokens';
@@ -510,11 +574,9 @@ export class OrgIntegrations {
     }
     this.api.listConnections(orgId).subscribe({
       next: (connections) => {
-        const jira = connections.find((c) => c.provider === 'JIRA') ?? null;
-        this.connection.set(jira);
+        this.connections.set(connections.filter((c) => c.provider === 'JIRA'));
         this.state.set('ready');
-        // Only probe OAuth availability when there's nothing to connect to yet.
-        if (!jira) this.probeOAuthAvailability(orgId);
+        this.probeOAuthAvailability(orgId);
       },
       error: () => this.state.set('error'),
     });
@@ -581,7 +643,9 @@ export class OrgIntegrations {
           this.connecting.set(false);
           // Never keep the token around — clear the whole form once submitted.
           this.form.reset();
-          this.connection.set(conn);
+          this.connections.update((list) => [conn, ...list]);
+          this.addOpen.set(false);
+          this.tokenOpen.set(false);
           this.toast.success(this.transloco.translate('integrations.jira.connected'));
         },
         error: (err: HttpErrorResponse) => {
@@ -595,22 +659,21 @@ export class OrgIntegrations {
       });
   }
 
-  protected test(): void {
+  protected test(conn: IntegrationConnectionResponse): void {
     const orgId = this.store.organizationId();
-    const conn = this.connection();
-    if (!orgId || !conn || this.testing()) return;
-    this.testing.set(true);
+    if (!orgId || this.testing()) return;
+    this.testing.set(conn.id);
     this.errorMessage.set(null);
     this.api.testConnection(orgId, conn.id).subscribe({
       next: (result) => {
-        this.testing.set(false);
+        this.testing.set(null);
         const message = result.accountName
           ? this.transloco.translate('integrations.jira.testOkNamed', { name: result.accountName })
           : this.transloco.translate('integrations.jira.testOk');
         this.toast.success(message);
       },
       error: (err: HttpErrorResponse) => {
-        this.testing.set(false);
+        this.testing.set(null);
         const message = messageForError(err, this.transloco);
         this.errorMessage.set(message);
         this.toast.error(message);
@@ -618,9 +681,14 @@ export class OrgIntegrations {
     });
   }
 
+  protected askDisconnect(conn: IntegrationConnectionResponse): void {
+    this.disconnectTarget.set(conn);
+    this.disconnectOpen.set(true);
+  }
+
   protected disconnect(): void {
     const orgId = this.store.organizationId();
-    const conn = this.connection();
+    const conn = this.disconnectTarget();
     if (!orgId || !conn || this.disconnecting()) return;
     this.disconnecting.set(true);
     this.errorMessage.set(null);
@@ -628,7 +696,8 @@ export class OrgIntegrations {
       next: () => {
         this.disconnecting.set(false);
         this.disconnectOpen.set(false);
-        this.connection.set(null);
+        this.connections.update((list) => list.filter((c) => c.id !== conn.id));
+        this.disconnectTarget.set(null);
         this.toast.success(this.transloco.translate('integrations.jira.disconnected'));
       },
       error: (err: HttpErrorResponse) => {

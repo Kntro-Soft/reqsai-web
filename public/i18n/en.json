@@ -1825,7 +1825,10 @@
         "whatSyncs": "The story title becomes the issue summary, and the description carries the role, action and benefit plus the acceptance criteria (Given/When/Then).",
         "oauthHint": "Connecting with Atlassian is the easiest — one click, nothing to type. The API token is an alternative if you can't use OAuth.",
         "learnMore": "Learn more about API tokens"
-      }
+      },
+      "addSite": "Connect another site",
+      "needsSite": "You need an Atlassian account with a Jira Cloud site.",
+      "createSite": "Create a free site"
     },
     "project": {
       "subtitle": "Map this project to Jira to push stories as issues, and review the GitHub code the copilot reads.",
