@@ -31,12 +31,16 @@ export function formatElapsed(ms: number): string {
  * pause/resume/stop controls. State lives in {@link SessionRecordingService},
  * so the bar renders the truth from anywhere in the app. Virtual-meeting
  * recordings show a meeting-audio badge, or a "share again" action once the
- * user stops sharing (the recording carries on with the mic meanwhile).
+ * user stops sharing (the recording carries on with the mic meanwhile). The bar
+ * adapts to its own width (container queries), not the window's: with the side
+ * panel open the capture column is narrow even on a wide screen, so the buttons
+ * fall back to icons until the bar has room for their labels.
  */
 @Component({
   selector: 'app-session-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HlmButton, HlmIcon, TranslocoPipe],
+  host: { class: 'block @container' },
   viewProviders: [
     provideIcons({
       lucideCircle,
@@ -51,7 +55,7 @@ export function formatElapsed(ms: number): string {
   template: `
     @if (recording.session(); as session) {
       <div
-        class="flex items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-lg backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5"
+        class="flex min-w-0 items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-lg backdrop-blur @xl:gap-3 @xl:px-4 @xl:py-2.5"
         data-testid="session-bar"
       >
         <span
@@ -76,7 +80,7 @@ export function formatElapsed(ms: number): string {
         <!-- Status label: visually hidden on mobile to keep the bar compact (the pulse
              colour shows recording vs. paused) but always announced to screen readers. -->
         <span
-          class="sr-only text-sm font-medium sm:not-sr-only"
+          class="sr-only text-sm font-medium @xl:not-sr-only"
           aria-live="polite"
           data-testid="session-bar-status"
         >
@@ -111,7 +115,10 @@ export function formatElapsed(ms: number): string {
 
         <!-- Real input level meter; hidden when the mic is not streaming here. -->
         @if (recorder.levels().length > 0) {
-          <div class="flex h-6 flex-1 items-center justify-center gap-[3px]" aria-hidden="true">
+          <div
+            class="flex h-6 min-w-0 flex-1 items-center justify-center gap-[3px] overflow-hidden"
+            aria-hidden="true"
+          >
             @for (level of recorder.levels(); track $index) {
               <span
                 class="w-[3px] rounded-full bg-primary transition-[height] duration-100"
@@ -120,7 +127,7 @@ export function formatElapsed(ms: number): string {
             }
           </div>
         } @else {
-          <div class="flex-1"></div>
+          <div class="min-w-0 flex-1"></div>
         }
 
         <!-- Sharing stopped mid-session: one click re-opens the picker (needs the
@@ -131,14 +138,14 @@ export function formatElapsed(ms: number): string {
             size="sm"
             variant="outline"
             type="button"
-            class="gap-0 border-pending-border bg-pending-soft px-2 text-pending hover:bg-pending-soft hover:text-pending sm:gap-2 sm:px-3"
+            class="gap-0 border-pending-border bg-pending-soft px-2 text-pending hover:bg-pending-soft hover:text-pending @2xl:gap-2 @2xl:px-3"
             (click)="reshareMeetingAudio()"
             [attr.aria-label]="'discovery.bar.reshare' | transloco"
             [title]="'discovery.bar.meetingAudioLost' | transloco"
             data-testid="session-bar-reshare"
           >
             <hlm-icon name="lucideScreenShare" size="14px" />
-            <span class="hidden sm:inline">{{ 'discovery.bar.reshare' | transloco }}</span>
+            <span class="hidden @2xl:inline">{{ 'discovery.bar.reshare' | transloco }}</span>
           </button>
         }
 
@@ -148,7 +155,7 @@ export function formatElapsed(ms: number): string {
             size="sm"
             variant="secondary"
             type="button"
-            class="gap-0 px-2 sm:gap-2 sm:px-3"
+            class="gap-0 px-2 @2xl:gap-2 @2xl:px-3"
             [disabled]="recording.busy()"
             (click)="pauseSession.emit()"
             [attr.aria-label]="'discovery.bar.pause' | transloco"
@@ -156,14 +163,14 @@ export function formatElapsed(ms: number): string {
             data-testid="session-bar-pause"
           >
             <hlm-icon name="lucidePause" size="14px" />
-            <span class="hidden sm:inline">{{ 'discovery.bar.pause' | transloco }}</span>
+            <span class="hidden @2xl:inline">{{ 'discovery.bar.pause' | transloco }}</span>
           </button>
         } @else {
           <button
             hlmBtn
             size="sm"
             type="button"
-            class="gap-0 px-2 sm:gap-2 sm:px-3"
+            class="gap-0 px-2 @2xl:gap-2 @2xl:px-3"
             [disabled]="recording.busy()"
             (click)="resumeSession.emit()"
             [attr.aria-label]="'discovery.bar.resume' | transloco"
@@ -171,7 +178,7 @@ export function formatElapsed(ms: number): string {
             data-testid="session-bar-resume"
           >
             <hlm-icon name="lucidePlay" size="14px" />
-            <span class="hidden sm:inline">{{ 'discovery.bar.resume' | transloco }}</span>
+            <span class="hidden @2xl:inline">{{ 'discovery.bar.resume' | transloco }}</span>
           </button>
         }
         <!-- When the AI analyzes (US46): on its own, or only when asked. -->
@@ -180,7 +187,7 @@ export function formatElapsed(ms: number): string {
           size="sm"
           variant="ghost"
           type="button"
-          class="hidden px-2 text-xs sm:inline-flex"
+          class="hidden px-2 text-xs @xl:inline-flex"
           (click)="toggleMode.emit()"
           [attr.aria-pressed]="manual()"
           [title]="'discovery.bar.modeHint' | transloco"
@@ -194,7 +201,7 @@ export function formatElapsed(ms: number): string {
           size="sm"
           variant="outline"
           type="button"
-          class="gap-0 px-2 sm:gap-2 sm:px-3"
+          class="gap-0 px-2 @2xl:gap-2 @2xl:px-3"
           [disabled]="recording.analyzing()"
           (click)="analyzeNow.emit()"
           [attr.aria-label]="'discovery.bar.analyze' | transloco"
@@ -202,14 +209,14 @@ export function formatElapsed(ms: number): string {
           data-testid="session-bar-analyze"
         >
           <hlm-icon name="lucideSparkles" size="14px" class="text-ai" />
-          <span class="hidden sm:inline">{{ 'discovery.bar.analyze' | transloco }}</span>
+          <span class="hidden @2xl:inline">{{ 'discovery.bar.analyze' | transloco }}</span>
         </button>
         <button
           hlmBtn
           size="sm"
           variant="destructive"
           type="button"
-          class="gap-0 px-2 sm:gap-2 sm:px-3"
+          class="gap-0 px-2 @2xl:gap-2 @2xl:px-3"
           [disabled]="recording.busy()"
           (click)="stopSession.emit()"
           [attr.aria-label]="'discovery.bar.stop' | transloco"
@@ -217,7 +224,7 @@ export function formatElapsed(ms: number): string {
           data-testid="session-bar-stop"
         >
           <hlm-icon name="lucideSquare" size="14px" />
-          <span class="hidden sm:inline">{{ 'discovery.bar.stop' | transloco }}</span>
+          <span class="hidden @2xl:inline">{{ 'discovery.bar.stop' | transloco }}</span>
         </button>
       </div>
     }
