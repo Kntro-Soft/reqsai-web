@@ -9,6 +9,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-14
+
+### Changed (AI project profile — `feature/120-ai-project-profile`, #120)
+- In the create-project wizard, continuing from the sources has the AI read the READMEs and manifests of the picked repositories (and the Jira project's text) and propose the project's name, description, domain, architecture, languages, frameworks, platforms and databases, filled in automatically. Nothing typed is overwritten, the review step shows the result ("Proposed by AI from your sources") and going back lets the person edit it. The same sources are not asked twice. When the AI cannot answer (allowance spent, no model, an outage) it falls back to what the sources' metadata says. The checkbox card of the previous version is gone. The usage page names the new "Project setup" AI feature. Needs reqsai-api#154.
+
+### Fixed (Session bar — `bugfix/118-session-bar-overflow`, #118)
+- The recording bar on the capture page no longer spills its buttons out with the side panel open. It now adapts to its own width (container queries) instead of the window's: Pause, Analyze now and Stop show icons only until the bar is wide enough for their labels, and the AI-mode toggle appears from a medium width.
+
 ## [1.6.0] - 2026-10-13
 
 ### Fixed (Wizard from sources — `bugfix/114-wizard-from-sources-draft`, #114)

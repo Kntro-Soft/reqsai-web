@@ -305,6 +305,8 @@ export class ProjectSourcesStep implements OnInit {
   readonly picks = model<PickedRepository[]>([]);
   /** What the chosen Jira project and repositories say about the project (name, description, languages). */
   readonly profile = output<SourceProfile>();
+  /** The Jira project picked (its name and description), or null. */
+  readonly jiraProject = output<{ name: string; description: string | null } | null>();
   /** Fired right before the page is left for Atlassian, GitHub or the settings: keep the draft. */
   readonly leaving = output<'jira' | 'github' | 'settings'>();
   /** The full navigation to the third party (overridden in tests). */
@@ -362,6 +364,9 @@ export class ProjectSourcesStep implements OnInit {
         ),
       );
       this.profile.emit(profileFromSources(project, chosen));
+      this.jiraProject.emit(
+        project ? { name: project.name, description: project.description?.trim() || null } : null,
+      );
     });
   }
 

@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslocoTestingModule } from '@jsverse/transloco';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { PermissionsStore } from '../../../../core/authz/permissions.store';
 import { GITHUB_RETURN_KEY } from '../../../discovery/data/codebase';
+import { ProjectProfileResponse } from '../../../discovery/data/codebase.models';
 import { CodebaseApiService } from '../../../discovery/data/codebase-api.service';
 import { IntegrationsApiService } from '../../data/integrations-api.service';
 import { JIRA_RETURN_KEY } from '../../data/integrations.models';
@@ -13,14 +14,34 @@ import { PROJECT_DRAFT_KEY, emptyDraft } from '../../data/project-setup';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { ProjectCreate } from './project-create';
 
+function emptyProposal(): ProjectProfileResponse {
+  return {
+    generated: false,
+    name: null,
+    description: null,
+    domain: null,
+    architecture: null,
+    programmingLanguages: [],
+    frameworks: [],
+    clientPlatforms: [],
+    databases: [],
+  };
+}
+
 describe('ProjectCreate wizard', () => {
   let createProject: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let propose: any;
 
   afterEach(() => sessionStorage.clear());
 
-  function render(): { fixture: ComponentFixture<ProjectCreate>; el: HTMLElement } {
+  function render(answer?: Observable<ProjectProfileResponse>): {
+    fixture: ComponentFixture<ProjectCreate>;
+    el: HTMLElement;
+  } {
     createProject = vi.fn(() => of({ id: 'p9' }));
+    propose = vi.fn(() => answer ?? of(emptyProposal()));
     TestBed.configureTestingModule({
       imports: [ProjectCreate, TranslocoTestingModule.forRoot({ langs: { en: {} } })],
       providers: [
@@ -40,7 +61,10 @@ describe('ProjectCreate wizard', () => {
         },
         {
           provide: CodebaseApiService,
-          useValue: { organizationGitHub: () => of({ available: false, installations: [] }) },
+          useValue: {
+            organizationGitHub: () => of({ available: false, installations: [] }),
+            proposeProjectProfile: (...args: unknown[]) => propose(...args),
+          },
         },
       ],
     });
@@ -114,46 +138,125 @@ describe('ProjectCreate wizard', () => {
     expect(navigate).toHaveBeenCalledWith(['/projects', 'p9']);
   });
 
-  it('starts from the sources with no name typed and fills the basics from them', () => {
-    const { fixture, el } = render();
+  it('starts from the sources with no name typed and takes the AI proposal for the basics', () => {
+    const { fixture, el } = render(
+      of({
+        ...emptyProposal(),
+        generated: true,
+        name: 'Te Tengo',
+        description: 'Control de gastos del hogar',
+        domain: 'Finanzas personales',
+        architecture: 'Microservicios',
+        programmingLanguages: ['Java', 'Dart'],
+        frameworks: ['Spring Boot', 'Flutter'],
+        clientPlatforms: ['Android'],
+        databases: ['PostgreSQL'],
+      }),
+    );
 
     byId(el, 'project-create-from-sources')!.click();
     fixture.detectChanges();
     expect(byId(el, 'project-create-sources')).not.toBeNull();
     expect((byId(el, 'project-create-review') as HTMLButtonElement).disabled).toBe(true);
 
-    internals(fixture).sourceProfile.set({
-      name: 'Pagos',
-      description: 'Cobros y conciliación',
-      languages: ['Java'],
-    });
+    internals(fixture).picks.set([
+      { installationId: 7, fullName: 'acme/te-tengo-general-api', branch: '' },
+      { installationId: 7, fullName: 'acme/te-tengo-mobile-flutter', branch: '' },
+    ]);
     fixture.detectChanges();
     expect((byId(el, 'project-create-review') as HTMLButtonElement).disabled).toBe(false);
-    expect(byId(el, 'project-create-autofill')).not.toBeNull();
+    expect(byId(el, 'project-create-autofill-hint')).not.toBeNull();
+
+    byId(el, 'project-create-review')!.click();
+    fixture.detectChanges();
+
+    expect(propose).toHaveBeenCalledWith(
+      'org-1',
+      expect.objectContaining({
+        repositories: [
+          { installationId: 7, fullName: 'acme/te-tengo-general-api' },
+          { installationId: 7, fullName: 'acme/te-tengo-mobile-flutter' },
+        ],
+      }),
+    );
+    expect(byId(el, 'project-create-ai-note')).not.toBeNull();
+    expect(byId(el, 'project-create-summary-description')!.textContent).toContain(
+      'gastos del hogar',
+    );
+    expect(byId(el, 'project-create-summary-profile')!.textContent).toContain('Spring Boot');
+    byId(el, 'project-create-confirm-submit')!.click();
+
+    const sent = createProject.mock.calls[0][1];
+    expect(sent.name).toBe('Te Tengo');
+    expect(sent.description).toBe('Control de gastos del hogar');
+    expect(sent.domain).toBe('Finanzas personales');
+    expect(sent.architecture).toBe('Microservicios');
+    expect(sent.programmingLanguages).toEqual(['Java', 'Dart']);
+    expect(sent.frameworks).toEqual(['Spring Boot', 'Flutter']);
+    expect(sent.databases).toEqual(['PostgreSQL']);
+  });
+
+  it('keeps what was typed and only fills what is empty', () => {
+    const { fixture, el } = render(
+      of({
+        ...emptyProposal(),
+        generated: true,
+        name: 'Pagos',
+        description: 'Cobros',
+        programmingLanguages: ['Java'],
+      }),
+    );
+    type(fixture, 'Portal');
+    internals(fixture).goTo(2);
+    internals(fixture).picks.set([{ installationId: 7, fullName: 'acme/pagos', branch: '' }]);
+    fixture.detectChanges();
 
     byId(el, 'project-create-review')!.click();
     fixture.detectChanges();
     byId(el, 'project-create-confirm-submit')!.click();
 
     const sent = createProject.mock.calls[0][1];
-    expect(sent.name).toBe('Pagos');
-    expect(sent.description).toBe('Cobros y conciliación');
-    expect(sent.programmingLanguages).toEqual(['Java']);
+    expect(sent.name).toBe('Portal');
+    expect(sent.description).toBe('Cobros');
   });
 
-  it('keeps a name that was typed unless the person asks for the source one', () => {
-    const { fixture, el } = render();
-    type(fixture, 'Portal');
-    internals(fixture).goTo(2);
-    internals(fixture).sourceProfile.set({ name: 'Pagos', description: null, languages: [] });
+  it('fills in from the sources metadata when the AI cannot answer', () => {
+    const { fixture, el } = render(throwError(() => ({ status: 402 })));
+    byId(el, 'project-create-from-sources')!.click();
+    fixture.detectChanges();
+    internals(fixture).picks.set([{ installationId: 7, fullName: 'acme/pagos', branch: '' }]);
+    internals(fixture).sourceProfile.set({
+      name: 'pagos',
+      description: 'Cobros',
+      languages: ['Java'],
+    });
     fixture.detectChanges();
 
     byId(el, 'project-create-review')!.click();
     fixture.detectChanges();
-    expect(byId(el, 'project-create-summary-jira')).toBeNull();
+    expect(byId(el, 'project-create-ai-note')).toBeNull();
     byId(el, 'project-create-confirm-submit')!.click();
 
-    expect(createProject.mock.calls[0][1].name).toBe('Portal');
+    const sent = createProject.mock.calls[0][1];
+    expect(sent.name).toBe('pagos');
+    expect(sent.programmingLanguages).toEqual(['Java']);
+  });
+
+  it('does not ask the AI again for the same sources', () => {
+    const { fixture, el } = render();
+    type(fixture, 'Portal');
+    internals(fixture).goTo(2);
+    internals(fixture).picks.set([{ installationId: 7, fullName: 'acme/pagos', branch: '' }]);
+    fixture.detectChanges();
+
+    byId(el, 'project-create-review')!.click();
+    fixture.detectChanges();
+    internals(fixture).goTo(2);
+    fixture.detectChanges();
+    byId(el, 'project-create-review')!.click();
+    fixture.detectChanges();
+
+    expect(propose).toHaveBeenCalledTimes(1);
   });
 
   it('holds back a half-filled Jira link and says why', () => {
