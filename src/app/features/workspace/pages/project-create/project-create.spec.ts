@@ -114,6 +114,48 @@ describe('ProjectCreate wizard', () => {
     expect(navigate).toHaveBeenCalledWith(['/projects', 'p9']);
   });
 
+  it('starts from the sources with no name typed and fills the basics from them', () => {
+    const { fixture, el } = render();
+
+    byId(el, 'project-create-from-sources')!.click();
+    fixture.detectChanges();
+    expect(byId(el, 'project-create-sources')).not.toBeNull();
+    expect((byId(el, 'project-create-review') as HTMLButtonElement).disabled).toBe(true);
+
+    internals(fixture).sourceProfile.set({
+      name: 'Pagos',
+      description: 'Cobros y conciliación',
+      languages: ['Java'],
+    });
+    fixture.detectChanges();
+    expect((byId(el, 'project-create-review') as HTMLButtonElement).disabled).toBe(false);
+    expect(byId(el, 'project-create-autofill')).not.toBeNull();
+
+    byId(el, 'project-create-review')!.click();
+    fixture.detectChanges();
+    byId(el, 'project-create-confirm-submit')!.click();
+
+    const sent = createProject.mock.calls[0][1];
+    expect(sent.name).toBe('Pagos');
+    expect(sent.description).toBe('Cobros y conciliación');
+    expect(sent.programmingLanguages).toEqual(['Java']);
+  });
+
+  it('keeps a name that was typed unless the person asks for the source one', () => {
+    const { fixture, el } = render();
+    type(fixture, 'Portal');
+    internals(fixture).goTo(2);
+    internals(fixture).sourceProfile.set({ name: 'Pagos', description: null, languages: [] });
+    fixture.detectChanges();
+
+    byId(el, 'project-create-review')!.click();
+    fixture.detectChanges();
+    expect(byId(el, 'project-create-summary-jira')).toBeNull();
+    byId(el, 'project-create-confirm-submit')!.click();
+
+    expect(createProject.mock.calls[0][1].name).toBe('Portal');
+  });
+
   it('holds back a half-filled Jira link and says why', () => {
     const { fixture, el } = render();
     type(fixture, 'Portal');
@@ -167,5 +209,17 @@ describe('ProjectCreate wizard', () => {
     expect(internals(fixture).picks()).toHaveLength(1);
     expect(byId(el, 'project-create-sources')).not.toBeNull();
     expect(sessionStorage.getItem(PROJECT_DRAFT_KEY)).toBeNull();
+  });
+
+  it('returns to the sources step after the trip when it started from them, with no name typed', () => {
+    const draft = { ...emptyDraft(), step: 2 as const, fromSources: true };
+    draft.repositories = [{ installationId: 7, fullName: 'acme/a', branch: '' }];
+    sessionStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft));
+
+    const { fixture, el } = render();
+
+    expect(internals(fixture).fromSources()).toBe(true);
+    expect(internals(fixture).step()).toBe(2);
+    expect(byId(el, 'project-create-sources')).not.toBeNull();
   });
 });

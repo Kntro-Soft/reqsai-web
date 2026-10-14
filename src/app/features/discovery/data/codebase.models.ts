@@ -94,6 +94,8 @@ export interface GitHubRepositoryResponse {
   htmlUrl: string;
   private: boolean;
   description: string | null;
+  /** Main language GitHub reports for it; absent on older deployments. */
+  language?: string | null;
   /** Last push (ISO 8601). */
   pushedAt: string | null;
   /** Whether the project already reads it. */

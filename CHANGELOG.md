@@ -9,6 +9,23 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-13
+
+### Fixed (Wizard from sources — `bugfix/114-wizard-from-sources-draft`, #114)
+- Starting the create-project wizard from Jira or GitHub with no name typed and coming back from the GitHub or Atlassian trip dropped the person on step 1. The draft now remembers it started from the sources and returns to step 2.
+
+### Fixed (Branch cleanup — `bugfix/112-branch-cleanup-pulls`, #112)
+- The weekly branch cleanup read each branch's pull requests with `gh api -f`, which sends a POST to the create-pull-request endpoint instead of listing, so every lookup failed with 422 and the open-PR and `do-not-delete` protections were never checked. It now lists with `--method GET`, and a branch whose PRs cannot be read is left alone.
+
+### Added (Create a project from its sources — `feature/110-wizard-from-sources`, #110)
+- In the create-project wizard, "Prefer to start from Jira or GitHub?" opens the sources first with no name typed. Once a Jira project or repositories are chosen, a card offers the project's name (the Jira project's, else the first repository's), description and languages (from the repositories) and applies what is ticked on the way to the review, so nothing has to be applied afterwards. A name already typed is kept unless its box is ticked. Needs reqsai-api#146 for the Jira description and the repository language.
+
+### Changed (Jira sites — `feature/108-jira-sites-ui`, #108)
+- Settings → Integrations lists every connected Jira site (Test and Disconnect per site) and "Connect another site" opens the connect options, like GitHub's accounts. The connect options now say an Atlassian account with a Jira Cloud site is needed, with a link to create one free (the "Access denied" Atlassian shows to accounts without a site). Needs reqsai-api#144.
+
+### Fixed (AI allowance — `feature/106-quota-gaps-ui`, #106)
+- With the monthly AI allowance spent, "Upload a recording" in the capture menu is disabled and says why (recording live keeps working). The API now also refuses uploading, processing and code verification with `AI_QUOTA_EXCEEDED`.
+
 ## [1.5.0] - 2026-10-12
 
 ### Added (Share a session — `feature/101-session-share-link`, #101)
