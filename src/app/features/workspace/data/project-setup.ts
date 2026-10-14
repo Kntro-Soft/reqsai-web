@@ -66,6 +66,8 @@ export interface ProjectDraft {
   showAdvanced: boolean;
   jira: JiraDraft;
   repositories: PickedRepository[];
+  /** The person started from the sources, so no name was typed yet. */
+  fromSources: boolean;
 }
 
 export function emptyDraft(): ProjectDraft {
@@ -88,6 +90,7 @@ export function emptyDraft(): ProjectDraft {
       importStories: false,
     },
     repositories: [],
+    fromSources: false,
   };
 }
 
@@ -229,6 +232,7 @@ export function sanitizeDraft(value: unknown): ProjectDraft | null {
       issueTypeName: text(jira['issueTypeName'], 100),
       importStories: jira['importStories'] === true,
     },
+    fromSources: raw['fromSources'] === true,
     repositories: repositories
       .filter(
         (r): r is Record<string, unknown> =>

@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (Wizard from sources — `bugfix/114-wizard-from-sources-draft`, #114)
+- Starting the create-project wizard from Jira or GitHub with no name typed and coming back from the GitHub or Atlassian trip dropped the person on step 1. The draft now remembers it started from the sources and returns to step 2.
+
 ### Fixed (Branch cleanup — `bugfix/112-branch-cleanup-pulls`, #112)
 - The weekly branch cleanup read each branch's pull requests with `gh api -f`, which sends a POST to the create-pull-request endpoint instead of listing, so every lookup failed with 422 and the open-PR and `do-not-delete` protections were never checked. It now lists with `--method GET`, and a branch whose PRs cannot be read is left alone.
 
