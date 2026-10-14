@@ -70,17 +70,24 @@ describe('SessionBar', () => {
     expect(stop.getAttribute('title')).toBeTruthy();
   });
 
-  it('hides the pause/stop button labels below the sm breakpoint', () => {
+  it('hides the pause/stop button labels until the bar itself is wide enough', () => {
     const { el } = render();
 
     const pause = el.querySelector('[data-testid="session-bar-pause"]') as HTMLButtonElement;
     const stop = el.querySelector('[data-testid="session-bar-stop"]') as HTMLButtonElement;
 
-    // "hidden sm:inline" is the app's established mobile-icon-only pattern
-    // (see the discovery header's history/panel-toggle buttons).
+    // The bar reacts to its own width (container queries): with the side panel open the capture
+    // column is narrow even on a wide window, so the labels wait for room instead of the viewport.
     expect(pause.querySelector('span')?.className).toContain('hidden');
-    expect(pause.querySelector('span')?.className).toContain('sm:inline');
+    expect(pause.querySelector('span')?.className).toContain('@2xl:inline');
     expect(stop.querySelector('span')?.className).toContain('hidden');
+  });
+
+  it('is its own size container so its buttons never overflow it', () => {
+    const { el } = render();
+
+    expect(el.className).toContain('@container');
+    expect(el.querySelector('[data-testid="session-bar"]')?.className).toContain('min-w-0');
   });
 
   it('keeps the status label announced on mobile (visually hidden, not removed)', () => {
@@ -89,7 +96,7 @@ describe('SessionBar', () => {
     const status = el.querySelector('[data-testid="session-bar-status"]') as HTMLElement;
 
     expect(status.className).toContain('sr-only');
-    expect(status.className).toContain('sm:not-sr-only');
+    expect(status.className).toContain('@xl:not-sr-only');
     expect(status.className).not.toContain('hidden');
     expect(status.getAttribute('aria-live')).toBe('polite');
   });
