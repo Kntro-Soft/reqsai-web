@@ -9,6 +9,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-14
+
 ### Changed (AI project profile — `feature/120-ai-project-profile`, #120)
 - In the create-project wizard, continuing from the sources has the AI read the READMEs and manifests of the picked repositories (and the Jira project's text) and propose the project's name, description, domain, architecture, languages, frameworks, platforms and databases, filled in automatically. Nothing typed is overwritten, the review step shows the result ("Proposed by AI from your sources") and going back lets the person edit it. The same sources are not asked twice. When the AI cannot answer (allowance spent, no model, an outage) it falls back to what the sources' metadata says. The checkbox card of the previous version is gone. The usage page names the new "Project setup" AI feature. Needs reqsai-api#154.
 
