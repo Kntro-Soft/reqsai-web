@@ -204,6 +204,7 @@
       "FINAL_STORIES": "Cierre de reuniones",
       "CODE_INDEX": "Lectura del código",
       "CODE_DEEP_SEARCH": "Búsqueda en el código",
+      "PROJECT_SETUP": "Creación de proyectos",
       "DOCUMENT_CLASSIFICATION": "Documentos del cliente",
       "EMBEDDINGS": "Búsqueda por similitud",
       "OTHER": "Otros"
@@ -554,12 +555,11 @@
     },
     "fromSources": {
       "link": "¿Prefieres partir de Jira o GitHub? Elige primero la fuente",
-      "title": "Completar el proyecto con estas fuentes",
-      "intro": "Se toma ahora, sin aplicar nada después. Luego puedes editarlo todo.",
-      "name": "Usar «{{value}}» como nombre",
-      "description": "Usar como descripción: {{value}}",
-      "languages": "Añadir los lenguajes: {{value}}",
-      "needName": "Elige un proyecto de Jira o un repositorio, o vuelve y escribe un nombre."
+      "needName": "Elige un proyecto de Jira o un repositorio, o vuelve y escribe un nombre.",
+      "hint": "Al continuar, ReqsAI lee los README y manifiestos de estas fuentes y propone el nombre, la descripción y el perfil técnico para que los revises.",
+      "generating": "Leyendo tus fuentes…",
+      "aiNote": "Propuesto por la IA a partir de tus fuentes. Vuelve atrás para editar lo que quieras.",
+      "profile": "Perfil"
     }
   },
   "orgPicker": {

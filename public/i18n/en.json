@@ -204,6 +204,7 @@
       "FINAL_STORIES": "Meeting wrap-up",
       "CODE_INDEX": "Reading the code",
       "CODE_DEEP_SEARCH": "Code search",
+      "PROJECT_SETUP": "Project setup",
       "DOCUMENT_CLASSIFICATION": "Client documents",
       "EMBEDDINGS": "Similarity search",
       "OTHER": "Other"
@@ -554,12 +555,11 @@
     },
     "fromSources": {
       "link": "Prefer to start from Jira or GitHub? Pick the source first",
-      "title": "Fill the project from these sources",
-      "intro": "Taken now, no need to apply anything later. You can still edit it all.",
-      "name": "Use \"{{value}}\" as the name",
-      "description": "Use as the description: {{value}}",
-      "languages": "Add the languages: {{value}}",
-      "needName": "Pick a Jira project or a repository, or go back and type a name."
+      "needName": "Pick a Jira project or a repository, or go back and type a name.",
+      "hint": "When you continue, ReqsAI reads the READMEs and manifests of these sources and proposes the name, description and technical profile for you to review.",
+      "generating": "Reading your sources…",
+      "aiNote": "Proposed by AI from your sources. Go back to edit any of it.",
+      "profile": "Profile"
     }
   },
   "orgPicker": {

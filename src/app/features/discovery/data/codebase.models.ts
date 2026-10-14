@@ -188,3 +188,24 @@ export interface StoryOrigin {
   sequence: number;
   quote: string;
 }
+
+/** The sources a project that does not exist yet was pointed at (POST .../code/github/project-profile). */
+export interface ProjectProfileRequest {
+  repositories: { installationId: number; fullName: string }[];
+  jiraName?: string | null;
+  jiraDescription?: string | null;
+  language?: string;
+}
+
+/** A proposed profile for a new project; `generated` is false when it only repeats the sources' metadata. */
+export interface ProjectProfileResponse {
+  generated: boolean;
+  name: string | null;
+  description: string | null;
+  domain: string | null;
+  architecture: string | null;
+  programmingLanguages: string[];
+  frameworks: string[];
+  clientPlatforms: string[];
+  databases: string[];
+}
