@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed (Session bar — `bugfix/118-session-bar-overflow`, #118)
+- The recording bar on the capture page no longer spills its buttons out with the side panel open. It now adapts to its own width (container queries) instead of the window's: Pause, Analyze now and Stop show icons only until the bar is wide enough for their labels, and the AI-mode toggle appears from a medium width.
+
 ## [1.6.0] - 2026-10-13
 
 ### Fixed (Wizard from sources — `bugfix/114-wizard-from-sources-draft`, #114)
