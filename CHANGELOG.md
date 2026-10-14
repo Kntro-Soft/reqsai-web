@@ -9,6 +9,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-13
+
 ### Fixed (Wizard from sources — `bugfix/114-wizard-from-sources-draft`, #114)
 - Starting the create-project wizard from Jira or GitHub with no name typed and coming back from the GitHub or Atlassian trip dropped the person on step 1. The draft now remembers it started from the sources and returns to step 2.
 
