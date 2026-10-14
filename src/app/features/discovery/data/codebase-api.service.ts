@@ -10,6 +10,8 @@ import {
   GitHubConnectionResponse,
   GitHubInstallResultResponse,
   GitHubRepositoryResponse,
+  ProjectProfileRequest,
+  ProjectProfileResponse,
 } from './codebase.models';
 
 /**
@@ -78,6 +80,17 @@ export class CodebaseApiService {
     return this.http.get<GitHubRepositoryResponse[]>(
       `/api/organizations/${orgId}/code/github/repositories`,
       { context: silentForbidden() },
+    );
+  }
+
+  /** Has the AI propose a new project's profile from its picked repositories and Jira project. */
+  proposeProjectProfile(
+    orgId: string,
+    body: ProjectProfileRequest,
+  ): Observable<ProjectProfileResponse> {
+    return this.http.post<ProjectProfileResponse>(
+      `/api/organizations/${orgId}/code/github/project-profile`,
+      body,
     );
   }
 

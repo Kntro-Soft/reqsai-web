@@ -7,6 +7,8 @@ import { lucideCheck, lucideChevronDown } from '@ng-icons/lucide';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { rememberReturnPath } from '../../../../core/navigation/return-path';
+import { CodebaseApiService } from '../../../discovery/data/codebase-api.service';
+import { ProjectProfileResponse } from '../../../discovery/data/codebase.models';
 import { WorkspaceStore } from '../../data/workspace.store';
 import { messageForError } from '../../../../core/errors/error-message';
 import { AnimatedBackdrop } from '../../../../shared/components/animated-backdrop/animated-backdrop';
@@ -299,63 +301,16 @@ import { ProjectSourcesStep } from '../../components/project-sources-step/projec
                 [(jira)]="jira"
                 [(picks)]="picks"
                 (profile)="sourceProfile.set($event)"
+                (jiraProject)="jiraProject.set($event)"
                 (leaving)="leave($event)"
               />
-              @if (hasProfile()) {
-                <section
-                  class="flex flex-col gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-4"
-                  data-testid="project-create-autofill"
+              @if (hasSourceSelection()) {
+                <p
+                  class="max-w-[65ch] text-sm text-muted-foreground"
+                  data-testid="project-create-autofill-hint"
                 >
-                  <div>
-                    <h3 class="text-sm font-semibold">
-                      {{ 'projectCreate.fromSources.title' | transloco }}
-                    </h3>
-                    <p class="text-xs text-muted-foreground">
-                      {{ 'projectCreate.fromSources.intro' | transloco }}
-                    </p>
-                  </div>
-                  @if (sourceProfile().name; as value) {
-                    <label class="flex cursor-pointer items-start gap-2.5 text-sm">
-                      <input
-                        type="checkbox"
-                        class="mt-0.5 size-4 shrink-0 accent-primary"
-                        [checked]="choice('name')"
-                        (change)="setChoice('name', $any($event.target).checked)"
-                        data-testid="autofill-name"
-                      />
-                      <span>{{ 'projectCreate.fromSources.name' | transloco: { value } }}</span>
-                    </label>
-                  }
-                  @if (sourceProfile().description; as value) {
-                    <label class="flex cursor-pointer items-start gap-2.5 text-sm">
-                      <input
-                        type="checkbox"
-                        class="mt-0.5 size-4 shrink-0 accent-primary"
-                        [checked]="choice('description')"
-                        (change)="setChoice('description', $any($event.target).checked)"
-                        data-testid="autofill-description"
-                      />
-                      <span class="line-clamp-2">{{
-                        'projectCreate.fromSources.description' | transloco: { value }
-                      }}</span>
-                    </label>
-                  }
-                  @if (sourceProfile().languages.length > 0) {
-                    <label class="flex cursor-pointer items-start gap-2.5 text-sm">
-                      <input
-                        type="checkbox"
-                        class="mt-0.5 size-4 shrink-0 accent-primary"
-                        [checked]="choice('languages')"
-                        (change)="setChoice('languages', $any($event.target).checked)"
-                        data-testid="autofill-languages"
-                      />
-                      <span>{{
-                        'projectCreate.fromSources.languages'
-                          | transloco: { value: sourceProfile().languages.join(', ') }
-                      }}</span>
-                    </label>
-                  }
-                </section>
+                  {{ 'projectCreate.fromSources.hint' | transloco }}
+                </p>
               }
               <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                 <button hlmBtn variant="ghost" type="button" (click)="goTo(1)">
@@ -364,11 +319,18 @@ import { ProjectSourcesStep } from '../../components/project-sources-step/projec
                 <button
                   hlmBtn
                   type="button"
-                  [disabled]="jiraPending() || (fromSources() && !canNameFromSources())"
+                  [disabled]="
+                    jiraPending() || generating() || (fromSources() && !canNameFromSources())
+                  "
                   (click)="goTo(3)"
                   data-testid="project-create-review"
                 >
-                  {{ 'projectCreate.steps.next' | transloco }}
+                  @if (generating()) {
+                    <hlm-spinner class="h-4 w-4" />
+                    {{ 'projectCreate.fromSources.generating' | transloco }}
+                  } @else {
+                    {{ 'projectCreate.steps.next' | transloco }}
+                  }
                 </button>
               </div>
               @if (fromSources() && !canNameFromSources() && !jiraPending()) {
@@ -400,10 +362,32 @@ import { ProjectSourcesStep } from '../../components/project-sources-step/projec
                     ) | transloco
                   }}
                 </p>
+                @if (proposalGenerated()) {
+                  <p
+                    class="mt-1 text-xs font-medium text-primary"
+                    data-testid="project-create-ai-note"
+                  >
+                    {{ 'projectCreate.fromSources.aiNote' | transloco }}
+                  </p>
+                }
               </div>
               <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[10rem_1fr]">
                 <dt class="text-muted-foreground">{{ 'projects.name' | transloco }}</dt>
                 <dd class="font-medium wrap-anywhere">{{ form.getRawValue().name }}</dd>
+                @if (form.getRawValue().description; as description) {
+                  <dt class="text-muted-foreground">{{ 'projects.description' | transloco }}</dt>
+                  <dd class="wrap-anywhere" data-testid="project-create-summary-description">
+                    {{ description }}
+                  </dd>
+                }
+                @if (profileLine(); as line) {
+                  <dt class="text-muted-foreground">
+                    {{ 'projectCreate.fromSources.profile' | transloco }}
+                  </dt>
+                  <dd class="wrap-anywhere" data-testid="project-create-summary-profile">
+                    {{ line }}
+                  </dd>
+                }
                 @if (jiraSummary(); as jiraText) {
                   <dt class="text-muted-foreground">Jira</dt>
                   <dd data-testid="project-create-summary-jira">
@@ -471,6 +455,7 @@ export class ProjectCreate {
   private readonly authStore = inject(AuthStore);
   private readonly store = inject(WorkspaceStore);
   private readonly router = inject(Router);
+  private readonly codebase = inject(CodebaseApiService);
   private readonly transloco = inject(TranslocoService);
 
   protected readonly loading = signal(false);
@@ -499,13 +484,22 @@ export class ProjectCreate {
   protected readonly sourceProfile = signal<SourceProfile>(EMPTY_SOURCE_PROFILE);
   /** The person started from Jira or GitHub, so the name may come from them. */
   protected readonly fromSources = signal(false);
-  private readonly choices = signal<Partial<Record<'name' | 'description' | 'languages', boolean>>>(
-    {},
+  /** The Jira project picked in the sources step, for the proposal. */
+  protected readonly jiraProject = signal<{ name: string; description: string | null } | null>(
+    null,
   );
+  /** The AI proposal was asked for and answered (not just the sources' metadata). */
+  protected readonly proposalGenerated = signal(false);
+  protected readonly generating = signal(false);
+  /** The sources the current proposal was made for, so going back and forth does not ask again. */
+  private proposedFor: string | null = null;
   protected readonly hasProfile = computed(() => {
     const p = this.sourceProfile();
     return p.name !== null || p.description !== null || p.languages.length > 0;
   });
+  protected readonly hasSourceSelection = computed(
+    () => this.jiraSummary() !== null || this.picks().length > 0,
+  );
 
   protected readonly programmingLanguages = signal<string[]>([]);
   protected readonly frameworks = signal<string[]>([]);
@@ -548,46 +542,120 @@ export class ProjectCreate {
     this.goTo(2);
   }
 
-  /** Whether the review can be reached: a name typed, or one the sources can give. */
+  /** Whether the review can be reached: a name typed, or sources the proposal can name it from. */
   protected canNameFromSources(): boolean {
-    return (
-      this.form.controls.name.value.trim() !== '' ||
-      (this.hasProfile() && !!this.sourceProfile().name)
-    );
+    return this.form.controls.name.value.trim() !== '' || this.hasSourceSelection();
   }
 
-  protected choice(key: 'name' | 'description' | 'languages'): boolean {
-    const chosen = this.choices()[key];
-    if (chosen !== undefined) return chosen;
-    if (key === 'name') return this.form.controls.name.value.trim() === '';
-    if (key === 'description') return this.form.controls.description.value.trim() === '';
-    return true;
+  /** The technical profile as one line, for the review. */
+  protected profileLine(): string {
+    const parts = [
+      this.form.getRawValue().domain,
+      this.form.getRawValue().architecture,
+      ...this.programmingLanguages(),
+      ...this.frameworks(),
+      ...this.clientPlatforms(),
+      ...this.databases(),
+    ].filter((part) => part.trim() !== '');
+    return parts.join(' · ');
   }
 
-  protected setChoice(key: 'name' | 'description' | 'languages', value: boolean): void {
-    this.choices.update((current) => ({ ...current, [key]: value }));
-  }
-
-  /** Puts what the person agreed to take from the sources into the basics. */
-  private applySourceProfile(): void {
-    const profile = this.sourceProfile();
-    if (profile.name && this.choice('name')) this.form.controls.name.setValue(profile.name);
-    if (profile.description && this.choice('description')) {
-      this.form.controls.description.setValue(profile.description.slice(0, 2000));
+  /**
+   * Asks the AI for the project's profile from the picked sources and fills in what is still empty: a name
+   * typed by the person is kept. When the AI cannot answer (allowance spent, no model, an outage) the
+   * wizard fills in what the sources' metadata says instead, so continuing never fails on it.
+   */
+  private propose(next: () => void): void {
+    const orgId = this.authStore.organizationId();
+    const picks = this.picks();
+    const jira = this.jira().enabled ? this.jiraProject() : null;
+    const key = JSON.stringify([picks.map((p) => [p.installationId, p.fullName]), jira?.name]);
+    if (!orgId || (picks.length === 0 && !jira)) {
+      this.applyProfile(this.sourceProfileAsResponse());
+      next();
+      return;
     }
-    if (this.choice('languages')) {
-      const merged = [...this.programmingLanguages()];
-      for (const language of profile.languages) {
-        if (!merged.some((known) => known.toLowerCase() === language.toLowerCase())) {
-          merged.push(language);
-        }
+    if (this.proposedFor === key) {
+      next();
+      return;
+    }
+    this.generating.set(true);
+    this.codebase
+      .proposeProjectProfile(orgId, {
+        repositories: picks.map((p) => ({
+          installationId: p.installationId,
+          fullName: p.fullName,
+        })),
+        jiraName: jira?.name ?? null,
+        jiraDescription: jira?.description ?? null,
+        language: this.transloco.getActiveLang(),
+      })
+      .subscribe({
+        next: (profile) => {
+          this.applyProfile(profile);
+          this.proposedFor = key;
+          this.generating.set(false);
+          next();
+        },
+        error: () => {
+          this.applyProfile(this.sourceProfileAsResponse());
+          this.generating.set(false);
+          next();
+        },
+      });
+  }
+
+  private sourceProfileAsResponse(): ProjectProfileResponse {
+    const p = this.sourceProfile();
+    return {
+      generated: false,
+      name: p.name,
+      description: p.description,
+      domain: null,
+      architecture: null,
+      programmingLanguages: p.languages,
+      frameworks: [],
+      clientPlatforms: [],
+      databases: [],
+    };
+  }
+
+  /** Fills in what is empty; lists are merged without repeating an entry. */
+  private applyProfile(profile: ProjectProfileResponse): void {
+    const form = this.form.controls;
+    const fill = (control: typeof form.name, value: string | null, max: number) => {
+      if (value && control.value.trim() === '') control.setValue(value.slice(0, max));
+    };
+    fill(form.name, profile.name, 150);
+    fill(form.description, profile.description, 2000);
+    fill(form.domain, profile.domain, 100);
+    fill(form.architecture, profile.architecture, 100);
+    const merge = (list: ReturnType<typeof signal<string[]>>, values: string[]) => {
+      const merged = [...list()];
+      for (const value of values) {
+        if (!merged.some((known) => known.toLowerCase() === value.toLowerCase()))
+          merged.push(value);
       }
-      this.programmingLanguages.set(merged);
-    }
+      list.set(merged);
+    };
+    merge(this.programmingLanguages, profile.programmingLanguages);
+    merge(this.frameworks, profile.frameworks);
+    merge(this.clientPlatforms, profile.clientPlatforms);
+    merge(this.databases, profile.databases);
+    this.proposalGenerated.set(profile.generated);
+    if (profile.domain || profile.architecture) this.showAdvanced.set(true);
   }
 
   protected goTo(step: 1 | 2 | 3): void {
-    if (step === 3 && this.step() === 2) this.applySourceProfile();
+    if (this.generating()) return;
+    if (step === 3 && this.step() === 2) {
+      this.propose(() => this.move(3));
+      return;
+    }
+    this.move(step);
+  }
+
+  private move(step: 1 | 2 | 3): void {
     if (step > 1 && this.form.invalid && !(step === 2 && this.fromSources())) return;
     this.errorMessage.set(null);
     this.step.set(step);
