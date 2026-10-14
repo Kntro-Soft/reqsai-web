@@ -210,4 +210,16 @@ describe('ProjectCreate wizard', () => {
     expect(byId(el, 'project-create-sources')).not.toBeNull();
     expect(sessionStorage.getItem(PROJECT_DRAFT_KEY)).toBeNull();
   });
+
+  it('returns to the sources step after the trip when it started from them, with no name typed', () => {
+    const draft = { ...emptyDraft(), step: 2 as const, fromSources: true };
+    draft.repositories = [{ installationId: 7, fullName: 'acme/a', branch: '' }];
+    sessionStorage.setItem(PROJECT_DRAFT_KEY, JSON.stringify(draft));
+
+    const { fixture, el } = render();
+
+    expect(internals(fixture).fromSources()).toBe(true);
+    expect(internals(fixture).step()).toBe(2);
+    expect(byId(el, 'project-create-sources')).not.toBeNull();
+  });
 });

@@ -617,6 +617,7 @@ export class ProjectCreate {
       showAdvanced: this.showAdvanced(),
       jira: this.jira(),
       repositories: this.picks(),
+      fromSources: this.fromSources(),
     };
   }
 
@@ -634,7 +635,8 @@ export class ProjectCreate {
     this.showAdvanced.set(draft.showAdvanced);
     this.jira.set(draft.jira);
     this.picks.set(draft.repositories);
-    this.step.set(draft.name.trim() ? draft.step : 1);
+    this.fromSources.set(draft.fromSources);
+    this.step.set(draft.name.trim() || draft.fromSources ? draft.step : 1);
   }
 
   protected submit(): void {
