@@ -9,6 +9,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-10-21
+
+### Changed
+- Dependency updates: vitest, the minor and patch group (22 packages) and `actions/create-github-app-token`.
+
 ## [1.7.0] - 2026-10-14
 
 ### Changed (AI project profile — `feature/120-ai-project-profile`, #120)
