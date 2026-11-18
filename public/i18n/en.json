@@ -1104,6 +1104,18 @@
     "sortedBy": "Sorted by: {{sort}}",
     "emptyRecord": "Record a session"
   },
+  "storySources": {
+    "action": "View origin",
+    "title": "Story origin",
+    "hint": "Fragments of the meeting this story came from, to check that it reflects what was agreed with the client.",
+    "loadError": "The story's origin could not be loaded.",
+    "manual": "This story does not come from a session: it was created manually.",
+    "unavailable": "Origin not available: the story was generated in a session, but it predates the storing of origin fragments.",
+    "session": "Session: {{title}}",
+    "sessionGone": "Deleted session",
+    "moment": "Moment of the meeting: {{time}}",
+    "notLocated": "Not located in the transcript"
+  },
   "storyForm": {
     "back": "Back to stories",
     "createTitle": "New story",

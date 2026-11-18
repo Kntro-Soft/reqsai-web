@@ -65,6 +65,7 @@ import {
 import { reviewTargets } from './story-review.helpers';
 import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
 import { ClientFeedback } from '../../components/client-feedback/client-feedback';
+import { StorySources } from '../../components/story-sources/story-sources';
 
 /**
  * Story detail / edit page. The saved title leads, with the story's review status
@@ -88,6 +89,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
     OriginBadge,
     StoryStatusBadge,
     ClientFeedback,
+    StorySources,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -151,6 +153,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
           </div>
           @if (state() === 'ready') {
             <div class="flex shrink-0 flex-wrap items-center gap-2">
+              <app-story-sources [projectId]="projectId()" [storyId]="storyId()" />
               <ng-container *appHasPermission="'STORY_APPROVE'">
                 @for (target of reviewOptions(); track target) {
                   <button

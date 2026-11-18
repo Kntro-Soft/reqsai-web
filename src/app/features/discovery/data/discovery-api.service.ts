@@ -28,6 +28,7 @@ import {
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+import { StorySourcesResponse } from './story-sources.models';
 
 /**
  * Builds the query params for the project backlog list endpoint from the optional
@@ -200,6 +201,16 @@ export class DiscoveryApiService {
   /** A single story by id, including its acceptance criteria (GET /stories/{id}). */
   getStory(projectId: string, storyId: string): Observable<UserStoryResponse> {
     return this.http.get<UserStoryResponse>(`/api/projects/${projectId}/stories/${storyId}`);
+  }
+
+  /**
+   * Where a story comes from in the meetings: the transcript fragments with the moment of the meeting, or
+   * why there are none (GET /stories/{id}/sources, US72).
+   */
+  getStorySources(projectId: string, storyId: string): Observable<StorySourcesResponse> {
+    return this.http.get<StorySourcesResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/sources`,
+    );
   }
 
   /**

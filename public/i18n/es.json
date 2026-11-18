@@ -1104,6 +1104,18 @@
     "sortedBy": "Ordenadas por: {{sort}}",
     "emptyRecord": "Grabar una sesión"
   },
+  "storySources": {
+    "action": "Ver origen",
+    "title": "Origen de la historia",
+    "hint": "Fragmentos de la reunión de los que salió esta historia, para verificar que refleja lo acordado con el cliente.",
+    "loadError": "No se pudo cargar el origen de la historia.",
+    "manual": "Esta historia no proviene de una sesión: se creó manualmente.",
+    "unavailable": "Origen no disponible: la historia se generó en una sesión, pero es anterior a que se guardaran los fragmentos de origen.",
+    "session": "Sesión: {{title}}",
+    "sessionGone": "Sesión eliminada",
+    "moment": "Momento de la reunión: {{time}}",
+    "notLocated": "No se ubicó en la transcripción"
+  },
   "storyForm": {
     "back": "Volver a historias",
     "createTitle": "Nueva historia",
