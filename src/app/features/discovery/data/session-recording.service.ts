@@ -13,7 +13,7 @@ import {
 /**
  * Singleton owner of the active recording session's lifecycle, so navigating
  * away from the discovery chat never kills a recording. Pressing record
- * creates a session implicitly (create → start) and begins audio streaming;
+ * creates a session implicitly (create → confirm consent → start) and begins audio streaming;
  * pause/resume/stop drive both the REST lifecycle and the local capture. A
  * pause keeps a shared meeting surface alive, so resuming needs no picker.
  *
@@ -71,8 +71,8 @@ export class SessionRecordingService {
   }
 
   /**
-   * Implicit session start: creates the session and immediately starts it,
-   * then begins audio streaming. The caller should have secured the capture
+   * Implicit session start: creates the session, records the participants' consent (the caller has
+   * already obtained it from the analyst, US70) and immediately starts it, then begins audio streaming. The caller should have secured the capture
    * first (so we never leave an orphan RECORDING session without audio); it is
    * released again if the session cannot start.
    */
@@ -82,7 +82,9 @@ export class SessionRecordingService {
   ): Observable<DiscoverySessionResponse> {
     this.busy.set(true);
     return this.api.createSession(projectId, request).pipe(
-      switchMap((created) => this.api.transition(projectId, created.id, 'start')),
+      // The participants' consent is recorded (who, when) before the capture starts (US70).
+      switchMap((created) => this.api.confirmRecordingConsent(projectId, created.id)),
+      switchMap((consented) => this.api.transition(projectId, consented.id, 'start')),
       tap({
         next: (session) => {
           this._session.set(session);

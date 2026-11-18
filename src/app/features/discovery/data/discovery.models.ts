@@ -47,6 +47,10 @@ export interface DiscoverySessionResponse {
   questionsAsked?: number | null;
   /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
   suggestionMode?: SuggestionMode;
+  /** When the analyst confirmed the participants' consent to the recording (US70); null until then. */
+  recordingConsentAt?: string | null;
+  /** User who confirmed the participants' consent (US70); null until then. */
+  recordingConsentBy?: string | null;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */

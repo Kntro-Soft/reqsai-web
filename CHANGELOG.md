@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Recording consent — `feature/132-recording-consent`, #132)
+- A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

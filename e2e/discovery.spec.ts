@@ -56,6 +56,12 @@ test.describe('Discovery capture', () => {
     // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
     await page.getByTestId('audio-source-mic').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
 
     // Live: the session bar shows the recording and the transcript streams in.
     await expect(page.getByTestId('session-bar')).toBeVisible();
@@ -79,5 +85,31 @@ test.describe('Discovery capture', () => {
     await expect(page.getByTestId('status-badge').filter({ visible: true }).first()).toHaveText(
       'Aprobada',
     );
+  });
+
+  test('the capture does not start until the participants consent to the recording', async ({
+    page,
+    request,
+  }) => {
+    const email = uniqueEmail('consent');
+    await registerVerified(request, email, PASSWORD);
+    const token = await apiLogin(request, email, PASSWORD);
+    await apiAcceptTerms(request, token);
+    const orgId = await apiCreateOrganization(request, token, `Consent ${Date.now()}`);
+    await apiSetActiveOrganization(request, token, orgId);
+    const activeToken = await apiRefresh(request);
+    const projectId = await apiCreateProject(request, activeToken, orgId, 'Restaurante');
+
+    await uiLogin(page, email, PASSWORD);
+    await page.goto(`/projects/${projectId}/sessions`);
+    await page.getByTestId('composer-record').click();
+    await page.getByTestId('audio-source-mic').click();
+
+    // Without the confirmation the dialog explains why the capture cannot start.
+    await expect(page.getByTestId('consent-required')).toBeVisible();
+    await expect(page.getByTestId('consent-confirm')).toBeDisabled();
+    await page.getByTestId('consent-cancel').click();
+    await expect(page.getByTestId('recording-consent')).toHaveCount(0);
+    await expect(page.getByTestId('session-bar')).toHaveCount(0);
   });
 });
