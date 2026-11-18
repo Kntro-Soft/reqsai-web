@@ -1154,6 +1154,32 @@
       "code": "Código relacionado"
     }
   },
+  "storyQuality": {
+    "title": "Calidad de la historia",
+    "hint": "Evaluación según ISO/IEC/IEEE 29148 y el marco Quality User Story. Corrige lo pendiente antes de aprobarla.",
+    "reevaluate": "Re-evaluar",
+    "reevaluated": "Calidad re-evaluada.",
+    "scoreLabel": "Puntaje de calidad: {{score}} de 100",
+    "evaluatedAt": "Evaluada el {{when}}",
+    "fix": "Cómo corregirlo",
+    "empty": "Esta historia aún no tiene una evaluación de calidad.",
+    "loadError": "No se pudo cargar la evaluación de calidad.",
+    "level": {
+      "GOOD": "Buena calidad",
+      "FAIR": "Mejorable",
+      "POOR": "Necesita trabajo"
+    },
+    "summary": {
+      "allMet": "Cumple todas las características evaluadas.",
+      "unmet": "{{count}} de {{total}} características por corregir."
+    },
+    "characteristic": {
+      "AMBIGUITY": "Ausencia de ambigüedad",
+      "ATOMICITY": "Atomicidad",
+      "VERIFIABILITY": "Verificabilidad",
+      "COMPLETENESS": "Completitud"
+    }
+  },
   "glossaryPage": {
     "title": "Glosario",
     "subtitle": "El vocabulario del dominio del proyecto, usado como contexto durante la captura.",

@@ -1154,6 +1154,32 @@
       "code": "Related code"
     }
   },
+  "storyQuality": {
+    "title": "Story quality",
+    "hint": "Assessed against ISO/IEC/IEEE 29148 and the Quality User Story framework. Fix what is pending before approving it.",
+    "reevaluate": "Re-evaluate",
+    "reevaluated": "Quality re-evaluated.",
+    "scoreLabel": "Quality score: {{score}} out of 100",
+    "evaluatedAt": "Evaluated on {{when}}",
+    "fix": "How to fix it",
+    "empty": "This story has no quality assessment yet.",
+    "loadError": "The quality assessment could not be loaded.",
+    "level": {
+      "GOOD": "Good quality",
+      "FAIR": "Needs improvement",
+      "POOR": "Needs work"
+    },
+    "summary": {
+      "allMet": "Meets every evaluated characteristic.",
+      "unmet": "{{count}} of {{total}} characteristics to fix."
+    },
+    "characteristic": {
+      "AMBIGUITY": "No ambiguity",
+      "ATOMICITY": "Atomicity",
+      "VERIFIABILITY": "Verifiability",
+      "COMPLETENESS": "Completeness"
+    }
+  },
   "glossaryPage": {
     "title": "Glossary",
     "subtitle": "The project's domain vocabulary, used as context during discovery.",

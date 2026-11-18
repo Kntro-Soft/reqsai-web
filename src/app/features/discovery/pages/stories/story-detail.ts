@@ -65,6 +65,7 @@ import {
 import { reviewTargets } from './story-review.helpers';
 import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
 import { ClientFeedback } from '../../components/client-feedback/client-feedback';
+import { StoryQuality } from '../../components/story-quality/story-quality';
 
 /**
  * Story detail / edit page. The saved title leads, with the story's review status
@@ -74,7 +75,8 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
  * story sentence in auto-growing fields and persist via PUT ("Guardar"), enabled
  * only once something changed. Criteria are Gherkin rows managed inline — each
  * saves individually (POST for a new row, PUT for an existing one), flags unsaved
- * edits, and removes via DELETE (a not-yet-saved new row is just dropped).
+ * edits, and removes via DELETE (a not-yet-saved new row is just dropped). The quality card (US68)
+ * shows the story's score and what to fix; it refreshes after every save.
  */
 @Component({
   selector: 'app-story-detail',
@@ -88,6 +90,7 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
     OriginBadge,
     StoryStatusBadge,
     ClientFeedback,
+    StoryQuality,
     HlmButton,
     HlmIcon,
     HlmInput,
@@ -319,6 +322,13 @@ import { ClientFeedback } from '../../components/client-feedback/client-feedback
             </section>
           }
         }
+
+        <!-- Quality score and the characteristics to fix before approving (US68). -->
+        <app-story-quality
+          [projectId]="projectId()"
+          [storyId]="storyId()"
+          [refreshKey]="qualityVersion()"
+        />
 
         <!-- Core fields: the story as its sentence, one full-width line per part. -->
         <form
@@ -600,6 +610,8 @@ export class StoryDetail implements OnInit {
   /** The review decision being saved, or null. */
   protected readonly reviewing = signal<StoryReviewStatus | null>(null);
   protected readonly formError = signal<string | null>(null);
+  /** Bumped after every save of the story or its criteria, so the quality card reads the refreshed score. */
+  protected readonly qualityVersion = signal(0);
   protected readonly criteria = signal<CriterionRow[]>([]);
   /** The loaded/last-saved story (drives the heading, status and origin). */
   protected readonly story = signal<UserStoryResponse | null>(null);
@@ -737,6 +749,7 @@ export class StoryDetail implements OnInit {
         this.saving.set(false);
         this.form.markAsPristine();
         this.story.update((current) => ({ ...(current ?? updated), ...updated }));
+        this.qualityVersion.update((v) => v + 1);
         this.toast.success(this.transloco.translate('storyForm.saved'));
       },
       error: (err: unknown) => {
@@ -850,6 +863,7 @@ export class StoryDetail implements OnInit {
       next: () => {
         this.rowBusy.set(null);
         this.criteria.update((list) => list.filter((_, i) => i !== index));
+        this.qualityVersion.update((v) => v + 1);
         this.toast.success(this.transloco.translate('storyForm.criteriaDeleted'));
       },
       error: (err) => {
@@ -878,6 +892,7 @@ export class StoryDetail implements OnInit {
         const savedRow = criterionToRow(saved);
         this.criteria.update((list) => list.map((r, i) => (i === index ? savedRow : r)));
         this.rememberSaved([savedRow]);
+        this.qualityVersion.update((v) => v + 1);
         this.toast.success(this.transloco.translate('storyForm.criteriaSaved'));
       },
       error: (err) => {

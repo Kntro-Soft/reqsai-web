@@ -28,6 +28,7 @@ import {
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+import { StoryQualityResponse } from './story-quality.models';
 
 /**
  * Builds the query params for the project backlog list endpoint from the optional
@@ -260,6 +261,29 @@ export class DiscoveryApiService {
     return this.http.post<BatchDeleteStoriesResult>(
       `/api/projects/${projectId}/stories/batch-delete`,
       { storyIds } satisfies BatchDeleteStoriesRequest,
+    );
+  }
+
+  // ---- Story quality (US68) ----
+
+  /**
+   * The latest quality assessment of a story (GET .../stories/{storyId}/quality). A story that was never
+   * evaluated answers 404 STORY_QUALITY_NOT_EVALUATED.
+   */
+  getStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.get<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+    );
+  }
+
+  /**
+   * Evaluates the story now and stores the result as its latest assessment (POST
+   * .../stories/{storyId}/quality). Needs STORY_WRITE; evaluating again replaces the previous result.
+   */
+  evaluateStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.post<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+      null,
     );
   }
 

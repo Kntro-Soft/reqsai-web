@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Story quality score — `feature/135-story-quality-score`, #135)
+- The story detail shows the quality score (ring), the four characteristics with their observation and "how to fix it", and a Re-evaluate button. A story never evaluated is evaluated when opened, and the result is read again after every save.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed
