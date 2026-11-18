@@ -15,6 +15,7 @@ const PRODUCT_URLS = [
   '/overview',
   '/projects',
   '/projects/p1/overview',
+  '/projects/p1/quality',
   '/projects/p1/sessions/history',
   '/projects/p1/stories',
   '/projects/p1/stories/new',

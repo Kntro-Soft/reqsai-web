@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Quality indicators — `feature/136-quality-indicators`, #136)
+- An "Indicadores" page for the project (nav item for those who can read stories and sessions) with a period selector (7, 30, 90 days or custom), three KPI cards, the no-data state, and a "clarification meeting" checkbox when uploading a recording.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

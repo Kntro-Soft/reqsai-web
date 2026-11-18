@@ -7,6 +7,7 @@ import {
   lucideCreditCard,
   lucideFileText,
   lucideFolder,
+  lucideGauge,
   lucideLayoutDashboard,
   lucideList,
   lucideLock,
@@ -31,6 +32,7 @@ const NAV_ICONS: Record<string, string> = {
   projects: 'lucideFolder',
   sessions: 'lucideMic',
   stories: 'lucideList',
+  quality: 'lucideGauge',
   glossary: 'lucideBookMarked',
   constraints: 'lucideRuler',
   documents: 'lucideFileText',
@@ -59,6 +61,7 @@ const NAV_ICONS: Record<string, string> = {
     provideIcons({
       lucideLayoutDashboard,
       lucideFolder,
+      lucideGauge,
       lucideMic,
       lucideList,
       lucideBookMarked,

@@ -74,7 +74,8 @@
     "constraints": "Constraints",
     "documents": "Client documents",
     "share": "Shared stories",
-    "code": "Code"
+    "code": "Code",
+    "quality": "Quality indicators"
   },
   "nav": {
     "projects": "Projects",
@@ -103,7 +104,8 @@
     "profile": "Profile",
     "security": "Security",
     "appearance": "Appearance",
-    "code": "Code"
+    "code": "Code",
+    "quality": "Indicators"
   },
   "authz": {
     "noAccess": "You don't have sufficient permissions.",
@@ -361,6 +363,56 @@
         "used": "{{used}} / {{limit}} tokens · {{pct}}%",
         "manage": "See usage"
       }
+    }
+  },
+  "quality": {
+    "title": "Quality indicators",
+    "subtitle": "Validate the pilot's success criteria: how much of what the AI proposes is accepted without rewriting, how long the review takes and how many clarification meetings were held.",
+    "kpiAria": "Quality indicators",
+    "loadError": "We could not load the indicators.",
+    "forbidden": "You need permission to read stories and sessions to see this project's indicators.",
+    "period": {
+      "label": "Period",
+      "days": "Last {{n}} days",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "invalid": "Pick two dates in order, no more than 366 days apart."
+    },
+    "empty": {
+      "title": "No data in this period",
+      "body": "There were no sessions and no stories decided from {{from}} to {{to}}. Pick another period to see the indicators."
+    },
+    "kpi": {
+      "acceptance": "Accepted without major rewriting",
+      "acceptanceHint": "{{kept}} of {{decided}} AI stories decided",
+      "acceptanceNone": "No AI stories approved or rejected in the period yet",
+      "postProcessing": "Post-processing time",
+      "postProcessingHint": "Median {{median}} · {{n}} sessions measured",
+      "postProcessingNone": "No session with a finished review in the period",
+      "clarification": "Clarification meetings",
+      "clarificationHint": "{{n}} of {{total}} sessions in the period",
+      "clarificationNone": "No sessions in the period"
+    },
+    "acceptance": {
+      "title": "How the AI stories ended",
+      "description": "An accepted story counts as not rewritten when its final text is at least {{n}} similar to the one the AI proposed.",
+      "empty": "No AI stories approved or rejected in this period yet.",
+      "kept": "Accepted without major rewriting",
+      "rewritten": "Accepted with major rewriting",
+      "rejected": "Rejected",
+      "excluded": "{{n}} decided stories are not from the AI or do not keep their original text, and are not counted."
+    },
+    "postProcessing": {
+      "title": "Review time per session",
+      "description": "From the end of the meeting to the last decision on its stories.",
+      "empty": "No session in the period has a finished review.",
+      "unmeasured": "{{n}} sessions not measured: they still have draft stories or produced none."
+    },
+    "purpose": {
+      "DISCOVERY": "Discovery",
+      "CLARIFICATION": "Clarification"
     }
   },
   "demo": {
@@ -1553,7 +1605,9 @@
         "transcribing": "Transcribing the audio",
         "generating": "Generating stories with AI"
       },
-      "quotaBlocked": "The monthly AI allowance is spent. Recording live still works."
+      "quotaBlocked": "The monthly AI allowance is spent. Recording live still works.",
+      "clarification": "This is a clarification meeting",
+      "clarificationHint": "It counts in the project's clarification meetings indicator."
     },
     "composer": {
       "record": "Start recording",

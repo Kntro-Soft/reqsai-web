@@ -47,6 +47,8 @@ export interface DiscoverySessionResponse {
   questionsAsked?: number | null;
   /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
   suggestionMode?: SuggestionMode;
+  /** What the meeting is for (US71); absent on older deployments (= DISCOVERY). */
+  purpose?: SessionPurpose;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */
@@ -84,9 +86,14 @@ export interface SegmentPage {
   hasMore: boolean;
 }
 
+/** A requirements-elicitation meeting, or a follow-up held to clarify requirements already captured. */
+type SessionPurpose = 'DISCOVERY' | 'CLARIFICATION';
+
 export interface CreateDiscoverySessionRequest {
   title: string;
   language: string;
+  /** Defaults to DISCOVERY on the server. */
+  purpose?: SessionPurpose;
 }
 
 /** Backlog priority accepted by the manual story-create endpoint. */

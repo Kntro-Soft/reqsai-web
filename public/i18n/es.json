@@ -74,7 +74,8 @@
     "constraints": "Restricciones",
     "documents": "Documentos del cliente",
     "share": "Historias compartidas",
-    "code": "Código"
+    "code": "Código",
+    "quality": "Indicadores de calidad"
   },
   "nav": {
     "projects": "Proyectos",
@@ -103,7 +104,8 @@
     "profile": "Perfil",
     "security": "Seguridad",
     "appearance": "Apariencia",
-    "code": "Código"
+    "code": "Código",
+    "quality": "Indicadores"
   },
   "authz": {
     "noAccess": "No tienes permisos suficientes.",
@@ -361,6 +363,56 @@
         "used": "{{used}} / {{limit}} tokens · {{pct}}%",
         "manage": "Ver uso"
       }
+    }
+  },
+  "quality": {
+    "title": "Indicadores de calidad",
+    "subtitle": "Valida los criterios de éxito del piloto: cuánto de lo que propone la IA se acepta sin reescribirlo, cuánto tarda la revisión y cuántas reuniones de aclaración hubo.",
+    "kpiAria": "Indicadores de calidad",
+    "loadError": "No pudimos cargar los indicadores.",
+    "forbidden": "Necesitas permiso para leer historias y sesiones para ver los indicadores de este proyecto.",
+    "period": {
+      "label": "Periodo",
+      "days": "Últimos {{n}} días",
+      "custom": "Personalizado",
+      "from": "Desde",
+      "to": "Hasta",
+      "apply": "Aplicar",
+      "invalid": "Elige dos fechas en orden y de no más de 366 días."
+    },
+    "empty": {
+      "title": "Sin datos en este periodo",
+      "body": "No hubo sesiones ni historias decididas del {{from}} al {{to}}. Elige otro periodo para ver los indicadores."
+    },
+    "kpi": {
+      "acceptance": "Aceptadas sin reescritura mayor",
+      "acceptanceHint": "{{kept}} de {{decided}} historias de la IA decididas",
+      "acceptanceNone": "Aún no hay historias de la IA aprobadas o rechazadas en el periodo",
+      "postProcessing": "Tiempo de postprocesamiento",
+      "postProcessingHint": "Mediana {{median}} · {{n}} sesiones medidas",
+      "postProcessingNone": "Ninguna sesión con la revisión terminada en el periodo",
+      "clarification": "Reuniones de aclaración",
+      "clarificationHint": "{{n}} de {{total}} sesiones del periodo",
+      "clarificationNone": "Sin sesiones en el periodo"
+    },
+    "acceptance": {
+      "title": "Cómo terminaron las historias de la IA",
+      "description": "Una historia aceptada cuenta como sin reescritura mayor si su texto final se parece al menos un {{n}} al que propuso la IA.",
+      "empty": "Aún no hay historias de la IA aprobadas o rechazadas en este periodo.",
+      "kept": "Aceptadas sin reescritura mayor",
+      "rewritten": "Aceptadas con reescritura mayor",
+      "rejected": "Rechazadas",
+      "excluded": "{{n}} historias decididas no vienen de la IA o no guardan su texto original, y no se cuentan."
+    },
+    "postProcessing": {
+      "title": "Tiempo de revisión por sesión",
+      "description": "Desde que termina la reunión hasta la última decisión sobre sus historias.",
+      "empty": "Ninguna sesión del periodo tiene la revisión terminada.",
+      "unmeasured": "{{n}} sesiones sin medir: aún tienen historias en borrador o no generaron historias."
+    },
+    "purpose": {
+      "DISCOVERY": "Levantamiento",
+      "CLARIFICATION": "Aclaración"
     }
   },
   "demo": {
@@ -1553,7 +1605,9 @@
         "transcribing": "Transcribiendo el audio",
         "generating": "Generando historias con la IA"
       },
-      "quotaBlocked": "Se agotó la cuota de IA del mes. Grabar en vivo sigue funcionando."
+      "quotaBlocked": "Se agotó la cuota de IA del mes. Grabar en vivo sigue funcionando.",
+      "clarification": "Es una reunión de aclaración",
+      "clarificationHint": "Cuenta en el indicador de reuniones de aclaración del proyecto."
     },
     "composer": {
       "record": "Iniciar grabación",
