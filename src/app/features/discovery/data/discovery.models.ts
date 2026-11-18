@@ -10,6 +10,13 @@ import {
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
+/**
+ * What became of the recording a session was created from (US69): kept until the organization's
+ * retention period runs out (`STORED`), deleted by that policy (`PURGED`; transcript and stories remain),
+ * or never kept (`NONE`: a live capture, or an organization that deletes audios immediately).
+ */
+export type AudioState = 'NONE' | 'STORED' | 'PURGED';
+
 /** When the assistant analyzes a live session: on its own, or only on "Analizar ahora" (US46). */
 export type SuggestionMode = 'AUTO' | 'MANUAL';
 
@@ -47,6 +54,10 @@ export interface DiscoverySessionResponse {
   questionsAsked?: number | null;
   /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
   suggestionMode?: SuggestionMode;
+  /** What became of the uploaded recording (US69); absent on older deployments (= NONE). */
+  audioState?: AudioState;
+  /** When the retention policy deleted the recording; set only when `audioState` is `PURGED`. */
+  audioPurgedAt?: string | null;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */

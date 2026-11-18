@@ -9,6 +9,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Audio retention purge — `feature/133-audio-retention-purge`, #133)
+- The session header and the history row say "Audio eliminado" when the retention policy purged the recording, and that the transcript and the stories are kept. The retention setting explains that expired audios are deleted automatically.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

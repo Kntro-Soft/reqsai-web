@@ -78,6 +78,7 @@ import {
 } from '../../data/discovery.models';
 import { AiActivity, aiActivityFor } from '../../data/ai-activity';
 import { SessionBar } from '../../components/session-bar/session-bar';
+import { AudioPurgedNotice } from '../../components/audio-purged-notice/audio-purged-notice';
 import { AudioSourcePicker } from '../../components/audio-source-picker/audio-source-picker';
 import { ActiveParticipants } from '../../components/active-participants/active-participants';
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
@@ -119,6 +120,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     DatePipe,
     TranslocoPipe,
     SessionBar,
+    AudioPurgedNotice,
     AudioSourcePicker,
     ActiveParticipants,
     DecisionQueue,
@@ -391,6 +393,8 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                             </span>
                           }
                         </span>
+                        <!-- The recording went past the retention period and was deleted (US69). -->
+                        <app-audio-purged-notice [session]="block.session" />
                         @if (block.speakerList.length > 0) {
                           <!-- Who spoke (US40): one chip per diarized voice with its color, name and
                            side; the analyst names them and marks client or team from here. -->
