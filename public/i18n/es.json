@@ -1255,6 +1255,42 @@
     "hoverOpen": "Abre la historia para ver cómo mejorarla.",
     "badgeAria": "Calidad {{score}} de 100, {{level}}"
   },
+  "storyImprovement": {
+    "action": "Mejorar con IA",
+    "requesting": "Mejorando…",
+    "title": "Propuesta de mejora",
+    "intro": "La IA propone una versión mejorada de la historia. Revísala y edítala: no cambia nada hasta que la apliques.",
+    "noChange": "La IA no encontró nada que cambiar en esta historia.",
+    "quality": "Calidad esperada",
+    "scoreAria": "La calidad pasaría de {{from}} a {{to}} de 100",
+    "scoreNote": "Es una estimación: puede variar al completar los valores pendientes.",
+    "fixes": "Qué se corrigió",
+    "pending": "Valores pendientes",
+    "pendingHint": "La IA no puede saber estos datos. Pídeselos al cliente y reemplaza cada marcador por el valor real.",
+    "filled": "Completado",
+    "fillIn": "Reemplaza este marcador por el valor real.",
+    "criterion": "Criterio de aceptación {{n}}",
+    "removedCriteria": "Criterios actuales sin equivalente en la propuesta (se eliminan al aplicar): {{count}}.",
+    "before": "Antes",
+    "after": "Después (editable)",
+    "changed": "Cambiado",
+    "empty": "(vacío)",
+    "field": {
+      "title": "Título",
+      "role": "Rol",
+      "action": "Acción",
+      "benefit": "Beneficio",
+      "scenario": "Escenario",
+      "given": "Dado",
+      "when": "Cuando",
+      "then": "Entonces"
+    },
+    "blockedPending": "Reemplaza los {{count}} valores pendientes marcados con [[ ]] para poder aplicar la propuesta.",
+    "blockedBlank": "Completa los campos vacíos para poder aplicar la propuesta.",
+    "apply": "Aplicar",
+    "discard": "Descartar",
+    "applied": "Mejora aplicada a la historia."
+  },
   "glossaryPage": {
     "title": "Glosario",
     "subtitle": "El vocabulario del dominio del proyecto, usado como contexto durante la captura.",
@@ -2176,7 +2212,8 @@
     "PROJECT_SETUP_STEP_NOT_FOUND": "Este proyecto no pidió ese paso de configuración.",
     "PROJECT_SETUP_STEP_NOT_RETRIABLE": "Ese paso no falló, no hace falta reintentarlo.",
     "SETUP_STEP_FAILED": "Ocurrió un error inesperado. Inténtalo de nuevo.",
-    "JIRA_LINK_FAILED": "Primero hay que vincular Jira."
+    "JIRA_LINK_FAILED": "Primero hay que vincular Jira.",
+    "IMPROVEMENT_PENDING_VALUES": "Quedan valores pendientes ([[ ]]) en la propuesta. Reemplázalos por valores reales antes de aplicarla."
   },
   "share": {
     "action": "Compartir con el cliente",

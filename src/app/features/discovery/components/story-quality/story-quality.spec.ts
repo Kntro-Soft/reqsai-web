@@ -10,6 +10,7 @@ import { StoryQuality } from './story-quality';
 
 const EN = {
   discovery: { retry: 'Retry' },
+  storyImprovement: { action: 'Improve with AI', requesting: 'Improving…' },
   storyQuality: {
     title: 'Story quality',
     hint: 'Hint',
@@ -298,6 +299,72 @@ describe('StoryQuality', () => {
 
       expect(query(el, 'story-quality-reevaluate')).toBeNull();
       expect(query(el, 'story-quality-value')).toBeTruthy();
+    });
+  });
+
+  describe('improve with AI', () => {
+    const improve = (el: HTMLElement) =>
+      query(el, 'story-improve-open') as HTMLButtonElement | null;
+
+    it('shows the button next to re-evaluate when characteristics are unmet', async () => {
+      const el = open();
+      http.expectOne(URL).flush(quality());
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(improve(el)?.textContent).toContain('Improve with AI');
+      expect(improve(el)?.disabled).toBe(false);
+    });
+
+    it('is hidden when the story already meets every characteristic', async () => {
+      const el = open();
+      http.expectOne(URL).flush(PERFECT);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(improve(el)).toBeNull();
+      expect(query(el, 'story-quality-reevaluate')).toBeTruthy();
+    });
+
+    it('is hidden from members without STORY_WRITE', async () => {
+      canWrite = false;
+      const el = open();
+      http.expectOne(URL).flush(quality());
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(improve(el)).toBeNull();
+    });
+
+    it('is held while the assessment is being evaluated', async () => {
+      const el = open();
+      http.expectOne(URL).flush(quality());
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      (query(el, 'story-quality-reevaluate') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(improve(el)?.disabled).toBe(true);
+      http.expectOne((r) => r.method === 'POST').flush(quality());
+    });
+
+    it('shows the quality that came with an applied improvement and tells the page, without reading again', async () => {
+      const el = open();
+      http.expectOne(URL).flush(quality());
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const emitted: unknown[] = [];
+      fixture.componentInstance.improved.subscribe((r) => emitted.push(r));
+
+      const response = { story: { id: 's1' }, quality: PERFECT };
+      (fixture.componentInstance as unknown as { onImproved(r: unknown): void }).onImproved(
+        response,
+      );
+      fixture.detectChanges();
+
+      expect(query(el, 'story-quality-value')?.textContent?.trim()).toBe('100');
+      expect(improve(el)).toBeNull();
+      expect(emitted).toEqual([response]);
     });
   });
 

@@ -62,6 +62,7 @@ import {
   isRowChanged,
   rowToRequest,
 } from './story-form.helpers';
+import { ApplyStoryImprovementResponse } from '../../data/story-improvement.models';
 import { reviewTargets } from './story-review.helpers';
 import { OriginBadge, StoryStatusBadge } from '../../components/story-badges/story-badges';
 import { ClientFeedback } from '../../components/client-feedback/client-feedback';
@@ -331,6 +332,8 @@ import { StorySources } from '../../components/story-sources/story-sources';
           [projectId]="projectId()"
           [storyId]="storyId()"
           [refreshKey]="qualityVersion()"
+          [story]="story()"
+          (improved)="onImproved($event)"
         />
 
         <!-- Core fields: the story as its sentence, one full-width line per part. -->
@@ -731,6 +734,23 @@ export class StoryDetail implements OnInit {
     this.criteria.set(rows);
     this.savedCriteria.set(new Map());
     this.rememberSaved(rows);
+  }
+
+  /**
+   * An AI improvement was applied: the story, its criteria and the form now show the saved version without a
+   * full reload. The quality card already shows the quality that came with it. When the answer does not carry
+   * the persisted criteria (with their ids) the story is read again quietly.
+   */
+  protected onImproved(applied: ApplyStoryImprovementResponse): void {
+    const criteria = applied.story.acceptanceCriteria;
+    if (Array.isArray(criteria) && criteria.every((c) => 'id' in c)) {
+      this.seed(applied.story);
+      return;
+    }
+    this.api.getStory(this.projectId(), this.storyId()).subscribe({
+      next: (story) => this.seed(story),
+      error: () => this.load(),
+    });
   }
 
   protected save(): void {

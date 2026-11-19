@@ -28,6 +28,11 @@ import {
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+import {
+  ApplyStoryImprovementResponse,
+  StoryImprovementProposal,
+  StoryImprovementResponse,
+} from './story-improvement.models';
 import { StoryQualityResponse } from './story-quality.models';
 import { StorySourcesResponse } from './story-sources.models';
 
@@ -306,6 +311,32 @@ export class DiscoveryApiService {
     return this.http.post<StoryQualityResponse>(
       `/api/projects/${projectId}/stories/${storyId}/quality`,
       null,
+    );
+  }
+
+  /**
+   * Asks the AI for an improved version of the story (POST .../stories/{storyId}/quality/improvement). Needs
+   * STORY_WRITE. It only proposes: the story does not change until {@link applyStoryImprovement}.
+   */
+  improveStory(projectId: string, storyId: string): Observable<StoryImprovementResponse> {
+    return this.http.post<StoryImprovementResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality/improvement`,
+      null,
+    );
+  }
+
+  /**
+   * Applies the (edited) proposal to the story (POST .../quality/improvement/apply). Answers 422
+   * IMPROVEMENT_PENDING_VALUES while a `[[...]]` placeholder is left; returns the saved story and its quality.
+   */
+  applyStoryImprovement(
+    projectId: string,
+    storyId: string,
+    proposal: StoryImprovementProposal,
+  ): Observable<ApplyStoryImprovementResponse> {
+    return this.http.post<ApplyStoryImprovementResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality/improvement/apply`,
+      proposal,
     );
   }
 

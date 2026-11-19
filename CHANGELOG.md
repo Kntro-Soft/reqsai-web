@@ -9,6 +9,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (Improve a story with AI — `feature/142-improve-story-with-ai`, #142)
+- A "Mejorar con IA" button in the story quality card (members who can write stories, while some characteristic is unmet) asks the AI for an improved version of the story and opens a "Propuesta de mejora" dialog: the score before and the expected one, what was fixed, and each field (title, role, action, benefit and every criterion) side by side, before and after, with the changed ones highlighted.
+- The proposed text is editable. Values the AI could not know appear as `[[...]]` markers with a hint, and Apply stays disabled, with the reason, until every marker has a real value. Apply saves the story and updates the page and the quality card without reloading; Discard closes the dialog and changes nothing.
+- The shared dialog accepts a wider size for content that needs two columns.
+
 ### Added (Quality indicators — `feature/136-quality-indicators`, #136)
 - An "Indicadores" page for the project (nav item for those who can read stories and sessions) with a period selector (7, 30, 90 days or custom), three KPI cards, the no-data state, and a "clarification meeting" checkbox when uploading a recording.
 
