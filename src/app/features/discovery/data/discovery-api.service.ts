@@ -28,6 +28,13 @@ import {
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+import {
+  ApplyStoryImprovementResponse,
+  StoryImprovementProposal,
+  StoryImprovementResponse,
+} from './story-improvement.models';
+import { StoryQualityResponse } from './story-quality.models';
+import { StorySourcesResponse } from './story-sources.models';
 
 /**
  * Builds the query params for the project backlog list endpoint from the optional
@@ -106,6 +113,17 @@ export class DiscoveryApiService {
   ): Observable<PageResponse<DiscoverySessionResponse>> {
     const params = new HttpParams().set('page', page).set('size', size);
     return this.http.get<PageResponse<DiscoverySessionResponse>>(this.base(projectId), { params });
+  }
+
+  /** Records that the participants consented to the recording; required before `start` (US70). */
+  confirmRecordingConsent(
+    projectId: string,
+    sessionId: string,
+  ): Observable<DiscoverySessionResponse> {
+    return this.http.post<DiscoverySessionResponse>(
+      `${this.base(projectId)}/${sessionId}/consent`,
+      {},
+    );
   }
 
   transition(
@@ -203,6 +221,16 @@ export class DiscoveryApiService {
   }
 
   /**
+   * Where a story comes from in the meetings: the transcript fragments with the moment of the meeting, or
+   * why there are none (GET /stories/{id}/sources, US72).
+   */
+  getStorySources(projectId: string, storyId: string): Observable<StorySourcesResponse> {
+    return this.http.get<StorySourcesResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/sources`,
+    );
+  }
+
+  /**
    * Manually creates a user story in the project backlog (POST
    * /projects/{projectId}/stories), saved as a DRAFT. On a near-duplicate the
    * backend responds 409 with a DUPLICATE_USER_STORY ProblemDetail whose
@@ -260,6 +288,55 @@ export class DiscoveryApiService {
     return this.http.post<BatchDeleteStoriesResult>(
       `/api/projects/${projectId}/stories/batch-delete`,
       { storyIds } satisfies BatchDeleteStoriesRequest,
+    );
+  }
+
+  // ---- Story quality (US68) ----
+
+  /**
+   * The latest quality assessment of a story (GET .../stories/{storyId}/quality). A story that was never
+   * evaluated answers 404 STORY_QUALITY_NOT_EVALUATED.
+   */
+  getStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.get<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+    );
+  }
+
+  /**
+   * Evaluates the story now and stores the result as its latest assessment (POST
+   * .../stories/{storyId}/quality). Needs STORY_WRITE; evaluating again replaces the previous result.
+   */
+  evaluateStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.post<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+      null,
+    );
+  }
+
+  /**
+   * Asks the AI for an improved version of the story (POST .../stories/{storyId}/quality/improvement). Needs
+   * STORY_WRITE. It only proposes: the story does not change until {@link applyStoryImprovement}.
+   */
+  improveStory(projectId: string, storyId: string): Observable<StoryImprovementResponse> {
+    return this.http.post<StoryImprovementResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality/improvement`,
+      null,
+    );
+  }
+
+  /**
+   * Applies the (edited) proposal to the story (POST .../quality/improvement/apply). Answers 422
+   * IMPROVEMENT_PENDING_VALUES while a `[[...]]` placeholder is left; returns the saved story and its quality.
+   */
+  applyStoryImprovement(
+    projectId: string,
+    storyId: string,
+    proposal: StoryImprovementProposal,
+  ): Observable<ApplyStoryImprovementResponse> {
+    return this.http.post<ApplyStoryImprovementResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality/improvement/apply`,
+      proposal,
     );
   }
 

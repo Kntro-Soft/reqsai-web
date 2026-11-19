@@ -9,6 +9,29 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-18
+
+### Added (Improve a story with AI — `feature/142-improve-story-with-ai`, #142)
+- A "Mejorar con IA" button in the story quality card (members who can write stories, while some characteristic is unmet) asks the AI for an improved version of the story and opens a "Propuesta de mejora" dialog: the score before and the expected one, what was fixed, and each field (title, role, action, benefit and every criterion) side by side, before and after, with the changed ones highlighted.
+- The proposed text is editable. Values the AI could not know appear as `[[...]]` markers with a hint, and Apply stays disabled, with the reason, until every marker has a real value. Apply saves the story and updates the page and the quality card without reloading; Discard closes the dialog and changes nothing.
+- The shared dialog accepts a wider size for content that needs two columns.
+
+### Added (Quality indicators — `feature/136-quality-indicators`, #136)
+- An "Indicadores" page for the project (nav item for those who can read stories and sessions) with a period selector (7, 30, 90 days or custom), three KPI cards, the no-data state, and a "clarification meeting" checkbox when uploading a recording.
+
+### Added (Story quality score — `feature/135-story-quality-score`, #135)
+- The story detail shows the quality score (ring), the four characteristics with their observation and "how to fix it", and a Re-evaluate button. A story never evaluated is evaluated when opened, and the result is read again after every save.
+- The stories table has a Quality column with the score as a percentage and its level (good, fair, poor), and the Discovery side panel shows the percentage on each story. Hovering or focusing it lists each characteristic with its score and what was found. Saving a story in the panel reads the backlog again so the figure is not stale.
+
+### Added (Story sources — `feature/134-story-source-fragments`, #134)
+- A "Ver origen" button in the story detail opens a dialog with the transcript fragments the story came from, their moment in the meeting and the session; manual stories and stories without a stored link say so instead of failing.
+
+### Added (Audio retention purge — `feature/133-audio-retention-purge`, #133)
+- The session header and the history row say "Audio eliminado" when the retention policy purged the recording, and that the transcript and the stories are kept. The retention setting explains that expired audios are deleted automatically.
+
+### Added (Recording consent — `feature/132-recording-consent`, #132)
+- A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

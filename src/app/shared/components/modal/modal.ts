@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  computed,
   effect,
   input,
   model,
@@ -15,7 +16,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
  * card with `role="dialog"`), which renders correctly without z-index/stacking pitfalls.
  *
  * Three projection slots: `[modalTitle]` (header), the default slot (body) and `[modalFooter]`
- * (a right-aligned footer row where the caller places Cancel / action buttons). Closes on backdrop
+ * (a right-aligned footer row where the caller places Cancel / action buttons). `size` picks the width. Closes on backdrop
  * click and Escape; on open it focuses the first element marked `data-autofocus` (a form's first
  * field) and falls back to the dialog itself. The enter animation is guarded by
  * `prefers-reduced-motion`.
@@ -39,7 +40,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
           role="dialog"
           aria-modal="true"
           (keydown)="onKeydown($event)"
-          class="fixed left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] w-[min(30rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl outline-none motion-safe:animate-[modal-in_140ms_ease-out]"
+          [class]="widthClass()"
+          class="fixed left-1/2 top-1/2 flex max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-2xl outline-none motion-safe:animate-[modal-in_140ms_ease-out]"
           data-testid="modal"
         >
           <div class="flex flex-col gap-4 overflow-y-auto p-5">
@@ -85,6 +87,12 @@ export class Modal {
   readonly open = model(false);
   /** Optional plain-text title; prefer the `[modalTitle]` projection slot for richer layout. */
   readonly title = input('');
+  /** `lg` widens the dialog for content that needs side-by-side columns; it is still capped to the viewport. */
+  readonly size = input<'md' | 'lg'>('md');
+
+  protected readonly widthClass = computed(() =>
+    this.size() === 'lg' ? 'w-[min(56rem,calc(100vw-2rem))]' : 'w-[min(30rem,calc(100vw-2rem))]',
+  );
 
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 

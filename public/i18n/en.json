@@ -74,7 +74,8 @@
     "constraints": "Constraints",
     "documents": "Client documents",
     "share": "Shared stories",
-    "code": "Code"
+    "code": "Code",
+    "quality": "Quality indicators"
   },
   "nav": {
     "projects": "Projects",
@@ -103,7 +104,8 @@
     "profile": "Profile",
     "security": "Security",
     "appearance": "Appearance",
-    "code": "Code"
+    "code": "Code",
+    "quality": "Indicators"
   },
   "authz": {
     "noAccess": "You don't have sufficient permissions.",
@@ -361,6 +363,56 @@
         "used": "{{used}} / {{limit}} tokens · {{pct}}%",
         "manage": "See usage"
       }
+    }
+  },
+  "quality": {
+    "title": "Quality indicators",
+    "subtitle": "Validate the pilot's success criteria: how much of what the AI proposes is accepted without rewriting, how long the review takes and how many clarification meetings were held.",
+    "kpiAria": "Quality indicators",
+    "loadError": "We could not load the indicators.",
+    "forbidden": "You need permission to read stories and sessions to see this project's indicators.",
+    "period": {
+      "label": "Period",
+      "days": "Last {{n}} days",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "invalid": "Pick two dates in order, no more than 366 days apart."
+    },
+    "empty": {
+      "title": "No data in this period",
+      "body": "There were no sessions and no stories decided from {{from}} to {{to}}. Pick another period to see the indicators."
+    },
+    "kpi": {
+      "acceptance": "Accepted without major rewriting",
+      "acceptanceHint": "{{kept}} of {{decided}} AI stories decided",
+      "acceptanceNone": "No AI stories approved or rejected in the period yet",
+      "postProcessing": "Post-processing time",
+      "postProcessingHint": "Median {{median}} · {{n}} sessions measured",
+      "postProcessingNone": "No session with a finished review in the period",
+      "clarification": "Clarification meetings",
+      "clarificationHint": "{{n}} of {{total}} sessions in the period",
+      "clarificationNone": "No sessions in the period"
+    },
+    "acceptance": {
+      "title": "How the AI stories ended",
+      "description": "An accepted story counts as not rewritten when its final text is at least {{n}} similar to the one the AI proposed.",
+      "empty": "No AI stories approved or rejected in this period yet.",
+      "kept": "Accepted without major rewriting",
+      "rewritten": "Accepted with major rewriting",
+      "rejected": "Rejected",
+      "excluded": "{{n}} decided stories are not from the AI or do not keep their original text, and are not counted."
+    },
+    "postProcessing": {
+      "title": "Review time per session",
+      "description": "From the end of the meeting to the last decision on its stories.",
+      "empty": "No session in the period has a finished review.",
+      "unmeasured": "{{n}} sessions not measured: they still have draft stories or produced none."
+    },
+    "purpose": {
+      "DISCOVERY": "Discovery",
+      "CLARIFICATION": "Clarification"
     }
   },
   "demo": {
@@ -827,6 +879,7 @@
     "languageDesc": "Default language for new discovery sessions.",
     "audioRetention": "Audio retention (days)",
     "audioRetentionHint": "Use -1 to keep indefinitely.",
+    "audioRetentionAutoDelete": "Audios older than this period are deleted automatically every day. The session transcript and stories are kept. With 0 the audio is deleted right away.",
     "saved": "Changes saved.",
     "save": "Save changes",
     "ownerOnlyHint": "Only the organization owner can edit these settings.",
@@ -1102,7 +1155,20 @@
     },
     "colOrigin": "Origin",
     "sortedBy": "Sorted by: {{sort}}",
-    "emptyRecord": "Record a session"
+    "emptyRecord": "Record a session",
+    "colQuality": "Quality"
+  },
+  "storySources": {
+    "action": "View origin",
+    "title": "Story origin",
+    "hint": "Fragments of the meeting this story came from, to check that it reflects what was agreed with the client.",
+    "loadError": "The story's origin could not be loaded.",
+    "manual": "This story does not come from a session: it was created manually.",
+    "unavailable": "Origin not available: the story was generated in a session, but it predates the storing of origin fragments.",
+    "session": "Session: {{title}}",
+    "sessionGone": "Deleted session",
+    "moment": "Moment of the meeting: {{time}}",
+    "notLocated": "Not located in the transcript"
   },
   "storyForm": {
     "back": "Back to stories",
@@ -1153,6 +1219,77 @@
       "viewInSession": "View in the session",
       "code": "Related code"
     }
+  },
+  "storyQuality": {
+    "title": "Story quality",
+    "hint": "Assessed against ISO/IEC/IEEE 29148 and the Quality User Story framework. Fix what is pending before approving it.",
+    "reevaluate": "Re-evaluate",
+    "reevaluated": "Quality re-evaluated.",
+    "scoreLabel": "Quality score: {{score}} out of 100",
+    "evaluatedAt": "Evaluated on {{when}}",
+    "fix": "How to fix it",
+    "empty": "This story has no quality assessment yet.",
+    "loadError": "The quality assessment could not be loaded.",
+    "level": {
+      "GOOD": "Good quality",
+      "FAIR": "Needs improvement",
+      "POOR": "Needs work"
+    },
+    "summary": {
+      "allMet": "Meets every evaluated characteristic.",
+      "unmet": "{{count}} of {{total}} characteristics to fix."
+    },
+    "characteristic": {
+      "AMBIGUITY": "No ambiguity",
+      "ATOMICITY": "Atomicity",
+      "VERIFIABILITY": "Verifiability",
+      "COMPLETENESS": "Completeness"
+    },
+    "badge": {
+      "GOOD": "Good",
+      "FAIR": "Fair",
+      "POOR": "Poor"
+    },
+    "notEvaluated": "Not evaluated",
+    "hoverTitle": "Story quality",
+    "hoverOpen": "Open the story to see how to improve it.",
+    "badgeAria": "Quality {{score}} out of 100, {{level}}"
+  },
+  "storyImprovement": {
+    "action": "Improve with AI",
+    "requesting": "Improving…",
+    "title": "Improvement proposal",
+    "intro": "The AI proposes an improved version of the story. Review and edit it: nothing changes until you apply it.",
+    "noChange": "The AI found nothing to change in this story.",
+    "quality": "Expected quality",
+    "scoreAria": "Quality would go from {{from}} to {{to}} out of 100",
+    "scoreNote": "This is an estimate: it may vary once the pending values are filled in.",
+    "fixes": "What was fixed",
+    "pending": "Pending values",
+    "pendingHint": "The AI cannot know these details. Ask the client and replace each placeholder with the real value.",
+    "filled": "Filled in",
+    "fillIn": "Replace this placeholder with the real value.",
+    "criterion": "Acceptance criterion {{n}}",
+    "removedCriteria": "Current criteria with no counterpart in the proposal (removed when applied): {{count}}.",
+    "before": "Before",
+    "after": "After (editable)",
+    "changed": "Changed",
+    "empty": "(empty)",
+    "field": {
+      "title": "Title",
+      "role": "Role",
+      "action": "Action",
+      "benefit": "Benefit",
+      "scenario": "Scenario",
+      "given": "Given",
+      "when": "When",
+      "then": "Then"
+    },
+    "blockedPending": "Replace the {{count}} pending values marked with [[ ]] to be able to apply the proposal.",
+    "blockedBlank": "Fill in the empty fields to be able to apply the proposal.",
+    "apply": "Apply",
+    "discard": "Discard",
+    "applied": "Improvement applied to the story."
   },
   "glossaryPage": {
     "title": "Glossary",
@@ -1464,6 +1601,10 @@
     "emptyBody": "Press record to capture your first requirements conversation.",
     "sessionSeparator": "Session",
     "sessionStories": "{{count}} stories",
+    "audio": {
+      "purged": "Audio deleted",
+      "purgedHint": "The audio went past your organization's retention period and was deleted automatically. The transcript and stories are kept."
+    },
     "sessionDefaultTitle": "Discovery session — {{date}}",
     "generatedStory": "Generated by AI",
     "speaker": "Speaker {{n}}",
@@ -1553,11 +1694,21 @@
         "transcribing": "Transcribing the audio",
         "generating": "Generating stories with AI"
       },
-      "quotaBlocked": "The monthly AI allowance is spent. Recording live still works."
+      "quotaBlocked": "The monthly AI allowance is spent. Recording live still works.",
+      "clarification": "This is a clarification meeting",
+      "clarificationHint": "It counts in the project's clarification meetings indicator."
     },
     "composer": {
       "record": "Start recording",
       "recordShort": "Record"
+    },
+    "consent": {
+      "title": "Recording consent",
+      "description": "Before the capture starts, confirm that the meeting participants were informed and agreed to be recorded, as required by Peruvian Law N.° 29733 on personal data protection.",
+      "checkbox": "I confirm that all participants consented to this meeting being recorded.",
+      "required": "Tick the box to start the capture: it can't be recorded without the participants' consent.",
+      "confirm": "Confirm and start",
+      "declined": "The capture did not start: the participants' consent has not been confirmed."
     },
     "language": {
       "label": "Meeting language",
@@ -2016,6 +2167,7 @@
     "EDGE_CASE_WITHOUT_TARGET": "This edge case needs an existing story to attach to.",
     "SESSION_ACCESS_DENIED": "You don't have access to this session.",
     "SESSION_ALREADY_ACTIVE": "There's already an active session.",
+    "RECORDING_CONSENT_REQUIRED": "The capture can't start until the participants' consent is confirmed.",
     "INTEGRATION_CONNECTION_NOT_FOUND": "That integration connection no longer exists.",
     "INTEGRATION_ALREADY_CONNECTED": "This organization already has a Jira connection.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "This project isn't mapped to Jira yet. Configure it in the project integration settings.",
@@ -2060,7 +2212,8 @@
     "PROJECT_SETUP_STEP_NOT_FOUND": "This project did not ask for that setup step.",
     "PROJECT_SETUP_STEP_NOT_RETRIABLE": "That step did not fail, so there is nothing to retry.",
     "SETUP_STEP_FAILED": "An unexpected error occurred. Try again.",
-    "JIRA_LINK_FAILED": "Jira has to be linked first."
+    "JIRA_LINK_FAILED": "Jira has to be linked first.",
+    "IMPROVEMENT_PENDING_VALUES": "The proposal still has pending values ([[ ]]). Replace them with real values before applying it."
   },
   "share": {
     "action": "Share with client",
