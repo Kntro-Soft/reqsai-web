@@ -879,6 +879,7 @@
     "languageDesc": "Idioma por defecto de las nuevas sesiones de descubrimiento.",
     "audioRetention": "Retención de audio (días)",
     "audioRetentionHint": "Usa -1 para conservar sin límite.",
+    "audioRetentionAutoDelete": "Los audios que superan este período se eliminan automáticamente cada día. La transcripción y las historias de la sesión se conservan. Con 0 el audio se elimina de inmediato.",
     "saved": "Cambios guardados.",
     "save": "Guardar cambios",
     "ownerOnlyHint": "Solo el propietario de la organización puede editar esta configuración.",
@@ -1154,7 +1155,20 @@
     },
     "colOrigin": "Origen",
     "sortedBy": "Ordenadas por: {{sort}}",
-    "emptyRecord": "Grabar una sesión"
+    "emptyRecord": "Grabar una sesión",
+    "colQuality": "Calidad"
+  },
+  "storySources": {
+    "action": "Ver origen",
+    "title": "Origen de la historia",
+    "hint": "Fragmentos de la reunión de los que salió esta historia, para verificar que refleja lo acordado con el cliente.",
+    "loadError": "No se pudo cargar el origen de la historia.",
+    "manual": "Esta historia no proviene de una sesión: se creó manualmente.",
+    "unavailable": "Origen no disponible: la historia se generó en una sesión, pero es anterior a que se guardaran los fragmentos de origen.",
+    "session": "Sesión: {{title}}",
+    "sessionGone": "Sesión eliminada",
+    "moment": "Momento de la reunión: {{time}}",
+    "notLocated": "No se ubicó en la transcripción"
   },
   "storyForm": {
     "back": "Volver a historias",
@@ -1205,6 +1219,41 @@
       "viewInSession": "Ver en la sesión",
       "code": "Código relacionado"
     }
+  },
+  "storyQuality": {
+    "title": "Calidad de la historia",
+    "hint": "Evaluación según ISO/IEC/IEEE 29148 y el marco Quality User Story. Corrige lo pendiente antes de aprobarla.",
+    "reevaluate": "Re-evaluar",
+    "reevaluated": "Calidad re-evaluada.",
+    "scoreLabel": "Puntaje de calidad: {{score}} de 100",
+    "evaluatedAt": "Evaluada el {{when}}",
+    "fix": "Cómo corregirlo",
+    "empty": "Esta historia aún no tiene una evaluación de calidad.",
+    "loadError": "No se pudo cargar la evaluación de calidad.",
+    "level": {
+      "GOOD": "Buena calidad",
+      "FAIR": "Mejorable",
+      "POOR": "Necesita trabajo"
+    },
+    "summary": {
+      "allMet": "Cumple todas las características evaluadas.",
+      "unmet": "{{count}} de {{total}} características por corregir."
+    },
+    "characteristic": {
+      "AMBIGUITY": "Ausencia de ambigüedad",
+      "ATOMICITY": "Atomicidad",
+      "VERIFIABILITY": "Verificabilidad",
+      "COMPLETENESS": "Completitud"
+    },
+    "badge": {
+      "GOOD": "Buena",
+      "FAIR": "Media",
+      "POOR": "Pésima"
+    },
+    "notEvaluated": "Sin evaluar",
+    "hoverTitle": "Calidad de la historia",
+    "hoverOpen": "Abre la historia para ver cómo mejorarla.",
+    "badgeAria": "Calidad {{score}} de 100, {{level}}"
   },
   "glossaryPage": {
     "title": "Glosario",
@@ -1516,6 +1565,10 @@
     "emptyBody": "Pulsa grabar para capturar tu primera conversación de requisitos.",
     "sessionSeparator": "Sesión",
     "sessionStories": "{{count}} historias",
+    "audio": {
+      "purged": "Audio eliminado",
+      "purgedHint": "El audio superó el período de retención de tu organización y se eliminó automáticamente. La transcripción y las historias se conservan."
+    },
     "sessionDefaultTitle": "Sesión de discovery — {{date}}",
     "generatedStory": "Generada por la IA",
     "speaker": "Hablante {{n}}",
@@ -1612,6 +1665,14 @@
     "composer": {
       "record": "Iniciar grabación",
       "recordShort": "Grabar"
+    },
+    "consent": {
+      "title": "Consentimiento de grabación",
+      "description": "Antes de iniciar la captura, confirma que los participantes de la reunión fueron informados y aceptaron que se grabe, conforme a la Ley N.° 29733 de Protección de Datos Personales.",
+      "checkbox": "Confirmo que todos los participantes consintieron la grabación de esta reunión.",
+      "required": "Marca la casilla para iniciar la captura: sin el consentimiento de los participantes no se puede grabar.",
+      "confirm": "Confirmar e iniciar",
+      "declined": "La captura no se inició: falta confirmar el consentimiento de los participantes."
     },
     "language": {
       "label": "Idioma de la reunión",
@@ -2070,6 +2131,7 @@
     "EDGE_CASE_WITHOUT_TARGET": "Este caso límite necesita una historia existente a la cual asociarse.",
     "SESSION_ACCESS_DENIED": "No tienes acceso a esta sesión.",
     "SESSION_ALREADY_ACTIVE": "Ya hay una sesión activa.",
+    "RECORDING_CONSENT_REQUIRED": "No se puede iniciar la captura sin confirmar el consentimiento de los participantes.",
     "INTEGRATION_CONNECTION_NOT_FOUND": "Esa conexión de integración ya no existe.",
     "INTEGRATION_ALREADY_CONNECTED": "Esta organización ya tiene una conexión con Jira.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "Este proyecto aún no está asociado a Jira. Configúralo en la configuración de integración del proyecto.",

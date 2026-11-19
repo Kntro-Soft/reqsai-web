@@ -113,6 +113,12 @@ test.describe('Code-aware copilot in a live meeting', () => {
     // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
     await page.getByTestId('audio-source-mic').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
     await expect(page.getByTestId('segment-bubble').first()).toBeVisible({ timeout: 60_000 });
 
     // A live suggestion carries the client's words; they point at a bubble of this transcript.

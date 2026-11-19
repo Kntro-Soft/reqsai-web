@@ -120,6 +120,7 @@ function toDisplayStory(story: UserStoryResponse): DisplayStory {
     createdAt: story.createdAt ?? null,
     acceptanceCriteria: suggestionCriteria(story.acceptanceCriteria),
     status: story.status ?? null,
+    quality: story.quality ?? null,
   };
 }
 
@@ -606,6 +607,8 @@ export class DiscoveryChatStore {
         ? stories.map((s) => (s.id === next.id ? next : s))
         : [next, ...stories],
     );
+    // The edit changed the story's quality and the update carries none: read the backlog again.
+    this.refreshProjectStories();
   }
 
   refreshProjectStories(): void {
