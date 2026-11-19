@@ -93,6 +93,20 @@ describe('visibleNavSegs', () => {
     expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER')))).not.toContain('code');
   });
 
+  it('shows the quality indicators to callers who can read both stories and sessions', () => {
+    const owner = segs(visibleNavSegs(PROJECT_ROOT_NAV, access('OWNER')));
+    expect(owner.indexOf('quality')).toBe(owner.indexOf('stories') + 1);
+    expect(
+      segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER', ['STORY_READ', 'SESSION_READ']))),
+    ).toContain('quality');
+    expect(segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER', ['STORY_READ'])))).not.toContain(
+      'quality',
+    );
+    expect(
+      segs(visibleNavSegs(PROJECT_ROOT_NAV, access('MEMBER', ['SESSION_READ']))),
+    ).not.toContain('quality');
+  });
+
   it('lists the account pages', () => {
     expect(segs(visibleNavSegs(ACCOUNT_NAV, access('MEMBER')))).toEqual([
       'profile',

@@ -25,6 +25,7 @@ import {
 import { HlmIcon, HlmSpinner } from '../../../../shared/ui';
 import { PanelStoryEditor } from '../panel-story-editor/panel-story-editor';
 import { PriorityBadge, StoryStatusBadge } from '../story-badges/story-badges';
+import { StoryQualityBadge } from '../story-quality/story-quality-badge';
 
 export type PanelTab = 'stories' | 'info' | 'glossary' | 'constraints';
 
@@ -47,7 +48,15 @@ const QUICK_VIEW_SIZE = 100;
 @Component({
   selector: 'app-side-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HlmIcon, HlmSpinner, PanelStoryEditor, PriorityBadge, StoryStatusBadge, TranslocoPipe],
+  imports: [
+    HlmIcon,
+    HlmSpinner,
+    PanelStoryEditor,
+    PriorityBadge,
+    StoryQualityBadge,
+    StoryStatusBadge,
+    TranslocoPipe,
+  ],
   viewProviders: [provideIcons({ lucideChevronDown, lucideSearch, lucideX })],
   host: { class: 'block h-full min-h-0' },
   template: `
@@ -200,6 +209,12 @@ const QUICK_VIEW_SIZE = 100;
                           >
                             {{ 'discovery.panel.points' | transloco: { n: story.storyPoints } }}
                           </span>
+                        }
+                        @if (story.quality) {
+                          <app-story-quality-badge
+                            [quality]="story.quality"
+                            data-testid="panel-story-quality"
+                          />
                         }
                         @if (story.status) {
                           <app-story-status-badge [status]="story.status" />

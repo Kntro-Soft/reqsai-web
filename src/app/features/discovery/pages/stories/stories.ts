@@ -57,6 +57,7 @@ import {
   PriorityBadge,
   StoryStatusBadge,
 } from '../../components/story-badges/story-badges';
+import { StoryQualityBadge } from '../../components/story-quality/story-quality-badge';
 import { sortByPriority } from './story-sort';
 import { ShareLinks } from '../../components/share-links/share-links';
 import {
@@ -94,6 +95,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
     NgTemplateOutlet,
     RouterLink,
     OriginBadge,
+    StoryQualityBadge,
     PriorityBadge,
     StoryStatusBadge,
     Select,
@@ -450,6 +452,7 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
                     [ngTemplateOutletContext]="{ field: 'status', label: 'stories.colStatus' }"
                   />
                 </th>
+                <th class="px-3 py-2.5 font-medium">{{ 'stories.colQuality' | transloco }}</th>
                 <th class="px-3 py-2.5 font-medium">{{ 'stories.colOrigin' | transloco }}</th>
                 <th class="px-3 py-2.5 text-right font-medium">
                   {{ 'stories.colPoints' | transloco }}
@@ -523,6 +526,9 @@ const COLUMN_SORT: Record<StorySort, SortValue> = {
                   </td>
                   <td class="hidden px-3 py-3 sm:table-cell">
                     <app-story-status-badge [status]="s.status" />
+                  </td>
+                  <td class="hidden px-3 py-3 sm:table-cell">
+                    <app-story-quality-badge [quality]="s.quality" [showLevel]="true" />
                   </td>
                   <td class="hidden px-3 py-3 sm:table-cell">
                     <app-origin-badge [sessionId]="s.sessionId" />

@@ -271,6 +271,16 @@ export const routes: Routes = [
               ),
           },
           {
+            // Quality indicators for the pilots: they quote stories and sessions, so both read permissions.
+            path: 'quality',
+            title: 'titles.quality',
+            canActivate: [requirePermission('STORY_READ'), requirePermission('SESSION_READ')],
+            loadComponent: () =>
+              import('./features/workspace/pages/project-quality/project-quality').then(
+                (m) => m.ProjectQuality,
+              ),
+          },
+          {
             // Discovery chat is the default project view under the (kept) "sessions" segment.
             path: 'sessions',
             title: 'titles.discovery',

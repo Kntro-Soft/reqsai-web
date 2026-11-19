@@ -9,6 +9,8 @@ import { OrgRole } from '../../core/authz/permissions.models';
 export interface NavSeg {
   seg: string;
   permission?: string;
+  /** Further project permissions the caller must hold as well as `permission`. */
+  alsoPermissions?: readonly string[];
   role?: OrgRole;
 }
 
@@ -37,6 +39,7 @@ export const PROJECT_ROOT_NAV: readonly NavSeg[] = [
   { seg: 'overview' },
   { seg: 'sessions', permission: 'SESSION_READ' },
   { seg: 'stories', permission: 'STORY_READ' },
+  { seg: 'quality', permission: 'STORY_READ', alsoPermissions: ['SESSION_READ'] },
   { seg: 'glossary', permission: 'GLOSSARY_READ' },
   { seg: 'constraints', permission: 'CONSTRAINT_READ' },
   { seg: 'documents', permission: 'DOCUMENT_READ' },
@@ -70,6 +73,7 @@ export function visibleNavSegs(segs: readonly NavSeg[], access: NavAccess): NavS
       if (!ok) return false;
     }
     if (s.permission && !access.has(s.permission)) return false;
+    if (s.alsoPermissions?.some((p) => !access.has(p))) return false;
     return true;
   });
 }

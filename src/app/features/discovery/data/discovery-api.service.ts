@@ -28,6 +28,8 @@ import {
   UpdateUserStoryRequest,
   UserStoryResponse,
 } from './discovery.models';
+import { StoryQualityResponse } from './story-quality.models';
+import { StorySourcesResponse } from './story-sources.models';
 
 /**
  * Builds the query params for the project backlog list endpoint from the optional
@@ -214,6 +216,16 @@ export class DiscoveryApiService {
   }
 
   /**
+   * Where a story comes from in the meetings: the transcript fragments with the moment of the meeting, or
+   * why there are none (GET /stories/{id}/sources, US72).
+   */
+  getStorySources(projectId: string, storyId: string): Observable<StorySourcesResponse> {
+    return this.http.get<StorySourcesResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/sources`,
+    );
+  }
+
+  /**
    * Manually creates a user story in the project backlog (POST
    * /projects/{projectId}/stories), saved as a DRAFT. On a near-duplicate the
    * backend responds 409 with a DUPLICATE_USER_STORY ProblemDetail whose
@@ -271,6 +283,29 @@ export class DiscoveryApiService {
     return this.http.post<BatchDeleteStoriesResult>(
       `/api/projects/${projectId}/stories/batch-delete`,
       { storyIds } satisfies BatchDeleteStoriesRequest,
+    );
+  }
+
+  // ---- Story quality (US68) ----
+
+  /**
+   * The latest quality assessment of a story (GET .../stories/{storyId}/quality). A story that was never
+   * evaluated answers 404 STORY_QUALITY_NOT_EVALUATED.
+   */
+  getStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.get<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+    );
+  }
+
+  /**
+   * Evaluates the story now and stores the result as its latest assessment (POST
+   * .../stories/{storyId}/quality). Needs STORY_WRITE; evaluating again replaces the previous result.
+   */
+  evaluateStoryQuality(projectId: string, storyId: string): Observable<StoryQualityResponse> {
+    return this.http.post<StoryQualityResponse>(
+      `/api/projects/${projectId}/stories/${storyId}/quality`,
+      null,
     );
   }
 

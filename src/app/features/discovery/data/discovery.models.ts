@@ -6,9 +6,17 @@ import {
   SuggestionCodeInsight,
   SuggestionEvidence,
 } from './codebase.models';
+import { StoryQualityResponse } from './story-quality.models';
 
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+
+/**
+ * What became of the recording a session was created from (US69): kept until the organization's
+ * retention period runs out (`STORED`), deleted by that policy (`PURGED`; transcript and stories remain),
+ * or never kept (`NONE`: a live capture, or an organization that deletes audios immediately).
+ */
+export type AudioState = 'NONE' | 'STORED' | 'PURGED';
 
 /** When the assistant analyzes a live session: on its own, or only on "Analizar ahora" (US46). */
 export type SuggestionMode = 'AUTO' | 'MANUAL';
@@ -47,6 +55,12 @@ export interface DiscoverySessionResponse {
   questionsAsked?: number | null;
   /** When the assistant analyzes the conversation (US46); absent on older deployments (= AUTO). */
   suggestionMode?: SuggestionMode;
+  /** What the meeting is for (US71); absent on older deployments (= DISCOVERY). */
+  purpose?: SessionPurpose;
+  /** What became of the uploaded recording (US69); absent on older deployments (= NONE). */
+  audioState?: AudioState;
+  /** When the retention policy deleted the recording; set only when `audioState` is `PURGED`. */
+  audioPurgedAt?: string | null;
   /** When the analyst confirmed the participants' consent to the recording (US70); null until then. */
   recordingConsentAt?: string | null;
   /** User who confirmed the participants' consent (US70); null until then. */
@@ -88,9 +102,14 @@ export interface SegmentPage {
   hasMore: boolean;
 }
 
+/** A requirements-elicitation meeting, or a follow-up held to clarify requirements already captured. */
+type SessionPurpose = 'DISCOVERY' | 'CLARIFICATION';
+
 export interface CreateDiscoverySessionRequest {
   title: string;
   language: string;
+  /** Defaults to DISCOVERY on the server. */
+  purpose?: SessionPurpose;
 }
 
 /** Backlog priority accepted by the manual story-create endpoint. */
@@ -214,6 +233,11 @@ export interface UserStoryResponse {
   origin?: StoryOrigin | null;
   /** The code modules the story touches (from the suggestion it was accepted from); [] when none. */
   codeReferences?: CodeReference[] | null;
+  /**
+   * The story's quality (score and one finding per characteristic). Only the story lists fill it; absent on
+   * older backends and on stories that arrive through realtime events.
+   */
+  quality?: StoryQualityResponse | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -243,6 +267,8 @@ export interface DisplayStory {
   acceptanceCriteria: AcceptanceCriterion[];
   /** Review status (DRAFT/APPROVED/…) when the source carried it (REST backlog). */
   status?: string | null;
+  /** Quality of the story when the source carried it (the story lists); absent for realtime events. */
+  quality?: StoryQualityResponse | null;
 }
 
 export interface PageResponse<T> {

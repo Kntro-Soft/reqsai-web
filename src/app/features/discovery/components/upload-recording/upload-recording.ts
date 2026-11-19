@@ -81,6 +81,23 @@ type UploadStage = 'creating' | 'transcribing' | 'generating';
           />
         </div>
 
+        <label class="flex w-fit cursor-pointer items-start gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            class="mt-0.5 size-4 shrink-0 accent-primary"
+            [checked]="clarification()"
+            [disabled]="busy()"
+            (change)="clarification.set($any($event.target).checked)"
+            data-testid="upload-clarification"
+          />
+          <span class="flex flex-col gap-0.5">
+            <span class="font-medium">{{ 'discovery.upload.clarification' | transloco }}</span>
+            <span class="text-xs text-muted-foreground">{{
+              'discovery.upload.clarificationHint' | transloco
+            }}</span>
+          </span>
+        </label>
+
         @if (problem(); as p) {
           <p class="text-sm text-destructive" role="alert" data-testid="upload-problem">
             {{ 'discovery.upload.problem.' + p | transloco }}
@@ -151,6 +168,8 @@ export class UploadRecording {
   protected readonly stages: readonly UploadStage[] = ['creating', 'transcribing', 'generating'];
   protected readonly file = signal<File | null>(null);
   protected readonly title = signal('');
+  /** The recording is of a follow-up meeting held to clarify requirements (US71). */
+  protected readonly clarification = signal(false);
   /** The title last derived from a file name, replaced when another file is picked. */
   private autoTitle = '';
   protected readonly problem = signal<RecordingProblem | null>(null);
@@ -187,7 +206,11 @@ export class UploadRecording {
     if (!file || !this.canSubmit()) return;
     this.stage.set('creating');
     this.api
-      .createSession(this.projectId(), { title: this.title().trim(), language: this.language() })
+      .createSession(this.projectId(), {
+        title: this.title().trim(),
+        language: this.language(),
+        purpose: this.clarification() ? 'CLARIFICATION' : 'DISCOVERY',
+      })
       .pipe(
         tap(() => this.stage.set('transcribing')),
         switchMap((session) => this.api.uploadAudio(session.id, file)),
@@ -211,6 +234,7 @@ export class UploadRecording {
     this.stage.set(null);
     this.file.set(null);
     this.title.set('');
+    this.clarification.set(false);
     this.autoTitle = '';
     this.problem.set(null);
   }
