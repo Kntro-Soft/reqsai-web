@@ -13,6 +13,12 @@ follows [Semantic Versioning](https://semver.org/).
 - The story detail shows the quality score (ring), the four characteristics with their observation and "how to fix it", and a Re-evaluate button. A story never evaluated is evaluated when opened, and the result is read again after every save.
 - The stories table has a Quality column with the score as a percentage and its level (good, fair, poor), and the Discovery side panel shows the percentage on each story. Hovering or focusing it lists each characteristic with its score and what was found. Saving a story in the panel reads the backlog again so the figure is not stale.
 
+### Added (Story sources — `feature/134-story-source-fragments`, #134)
+- A "Ver origen" button in the story detail opens a dialog with the transcript fragments the story came from, their moment in the meeting and the session; manual stories and stories without a stored link say so instead of failing.
+
+### Added (Audio retention purge — `feature/133-audio-retention-purge`, #133)
+- The session header and the history row say "Audio eliminado" when the retention policy purged the recording, and that the transcript and the stories are kept. The retention setting explains that expired audios are deleted automatically.
+
 ### Added (Recording consent — `feature/132-recording-consent`, #132)
 - A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
 

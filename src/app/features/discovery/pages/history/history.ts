@@ -14,6 +14,7 @@ import { provideIcons } from '@ng-icons/core';
 import { lucideArrowLeft } from '@ng-icons/lucide';
 import { DiscoveryApiService } from '../../data/discovery-api.service';
 import { DiscoverySessionResponse } from '../../data/discovery.models';
+import { AudioPurgedNotice } from '../../components/audio-purged-notice/audio-purged-notice';
 import { hasSessionStats, sessionDuration } from './history.helpers';
 import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 
@@ -26,7 +27,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
 @Component({
   selector: 'app-discovery-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, TranslocoPipe, HlmButton, HlmIcon, HlmSpinner],
+  imports: [RouterLink, DatePipe, TranslocoPipe, HlmButton, HlmIcon, HlmSpinner, AudioPurgedNotice],
   viewProviders: [provideIcons({ lucideArrowLeft })],
   template: `
     <div class="flex flex-col gap-5">
@@ -99,12 +100,15 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
                         {{ duration(session) }}
                       </td>
                       <td class="px-4 py-3">
-                        <span
-                          class="rounded-full px-2 py-0.5 text-[11px] font-medium"
-                          [class]="statusClass(session.status)"
-                        >
-                          {{ 'discovery.status.' + session.status | transloco }}
-                        </span>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          <span
+                            class="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                            [class]="statusClass(session.status)"
+                          >
+                            {{ 'discovery.status.' + session.status | transloco }}
+                          </span>
+                          <app-audio-purged-notice [session]="session" />
+                        </div>
                       </td>
                       @if (showStats()) {
                         <td class="px-4 py-3 tabular-nums">
