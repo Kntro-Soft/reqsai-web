@@ -1559,6 +1559,14 @@
       "record": "Start recording",
       "recordShort": "Record"
     },
+    "consent": {
+      "title": "Recording consent",
+      "description": "Before the capture starts, confirm that the meeting participants were informed and agreed to be recorded, as required by Peruvian Law N.° 29733 on personal data protection.",
+      "checkbox": "I confirm that all participants consented to this meeting being recorded.",
+      "required": "Tick the box to start the capture: it can't be recorded without the participants' consent.",
+      "confirm": "Confirm and start",
+      "declined": "The capture did not start: the participants' consent has not been confirmed."
+    },
     "language": {
       "label": "Meeting language",
       "search": "Search language…",
@@ -2016,6 +2024,7 @@
     "EDGE_CASE_WITHOUT_TARGET": "This edge case needs an existing story to attach to.",
     "SESSION_ACCESS_DENIED": "You don't have access to this session.",
     "SESSION_ALREADY_ACTIVE": "There's already an active session.",
+    "RECORDING_CONSENT_REQUIRED": "The capture can't start until the participants' consent is confirmed.",
     "INTEGRATION_CONNECTION_NOT_FOUND": "That integration connection no longer exists.",
     "INTEGRATION_ALREADY_CONNECTED": "This organization already has a Jira connection.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "This project isn't mapped to Jira yet. Configure it in the project integration settings.",
