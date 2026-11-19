@@ -1255,6 +1255,42 @@
     "hoverOpen": "Open the story to see how to improve it.",
     "badgeAria": "Quality {{score}} out of 100, {{level}}"
   },
+  "storyImprovement": {
+    "action": "Improve with AI",
+    "requesting": "Improving…",
+    "title": "Improvement proposal",
+    "intro": "The AI proposes an improved version of the story. Review and edit it: nothing changes until you apply it.",
+    "noChange": "The AI found nothing to change in this story.",
+    "quality": "Expected quality",
+    "scoreAria": "Quality would go from {{from}} to {{to}} out of 100",
+    "scoreNote": "This is an estimate: it may vary once the pending values are filled in.",
+    "fixes": "What was fixed",
+    "pending": "Pending values",
+    "pendingHint": "The AI cannot know these details. Ask the client and replace each placeholder with the real value.",
+    "filled": "Filled in",
+    "fillIn": "Replace this placeholder with the real value.",
+    "criterion": "Acceptance criterion {{n}}",
+    "removedCriteria": "Current criteria with no counterpart in the proposal (removed when applied): {{count}}.",
+    "before": "Before",
+    "after": "After (editable)",
+    "changed": "Changed",
+    "empty": "(empty)",
+    "field": {
+      "title": "Title",
+      "role": "Role",
+      "action": "Action",
+      "benefit": "Benefit",
+      "scenario": "Scenario",
+      "given": "Given",
+      "when": "When",
+      "then": "Then"
+    },
+    "blockedPending": "Replace the {{count}} pending values marked with [[ ]] to be able to apply the proposal.",
+    "blockedBlank": "Fill in the empty fields to be able to apply the proposal.",
+    "apply": "Apply",
+    "discard": "Discard",
+    "applied": "Improvement applied to the story."
+  },
   "glossaryPage": {
     "title": "Glossary",
     "subtitle": "The project's domain vocabulary, used as context during discovery.",
@@ -2176,7 +2212,8 @@
     "PROJECT_SETUP_STEP_NOT_FOUND": "This project did not ask for that setup step.",
     "PROJECT_SETUP_STEP_NOT_RETRIABLE": "That step did not fail, so there is nothing to retry.",
     "SETUP_STEP_FAILED": "An unexpected error occurred. Try again.",
-    "JIRA_LINK_FAILED": "Jira has to be linked first."
+    "JIRA_LINK_FAILED": "Jira has to be linked first.",
+    "IMPROVEMENT_PENDING_VALUES": "The proposal still has pending values ([[ ]]). Replace them with real values before applying it."
   },
   "share": {
     "action": "Share with client",

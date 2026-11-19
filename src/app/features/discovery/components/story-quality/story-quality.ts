@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -23,6 +24,9 @@ import {
   unmetFindings,
 } from '../../data/story-quality';
 import { StoryQualityResponse } from '../../data/story-quality.models';
+import { ApplyStoryImprovementResponse } from '../../data/story-improvement.models';
+import { UserStoryResponse } from '../../data/discovery.models';
+import { StoryImprovement } from '../story-improvement/story-improvement';
 import { HasPermission } from '../../../../shared/directives/has-permission';
 import { ToastService } from '../../../../shared/toast/toast.service';
 import { messageForError } from '../../../../core/errors/error-message';
@@ -41,7 +45,16 @@ const RING_RADIUS = 42;
 @Component({
   selector: 'app-story-quality',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, HasPermission, TranslocoPipe, HlmButton, HlmIcon, HlmSkeleton, HlmSpinner],
+  imports: [
+    DatePipe,
+    HasPermission,
+    StoryImprovement,
+    TranslocoPipe,
+    HlmButton,
+    HlmIcon,
+    HlmSkeleton,
+    HlmSpinner,
+  ],
   viewProviders: [provideIcons({ lucideCircleAlert, lucideCircleCheckBig, lucideRefreshCw })],
   template: `
     <section
@@ -53,23 +66,38 @@ const RING_RADIUS = 42;
           <h2 class="text-base font-semibold">{{ 'storyQuality.title' | transloco }}</h2>
           <p class="mt-0.5 text-xs text-muted-foreground">{{ 'storyQuality.hint' | transloco }}</p>
         </div>
-        <button
-          *appHasPermission="'STORY_WRITE'"
-          hlmBtn
-          size="sm"
-          variant="outline"
-          type="button"
-          (click)="evaluate()"
-          [disabled]="evaluating() || state() === 'loading'"
-          data-testid="story-quality-reevaluate"
-        >
-          @if (evaluating()) {
-            <hlm-spinner class="h-4 w-4" />
-          } @else {
-            <hlm-icon name="lucideRefreshCw" size="14px" />
+        <div class="flex flex-wrap items-center gap-2">
+          @if (quality(); as q) {
+            @if (unmet(q).length > 0) {
+              <app-story-improvement
+                *appHasPermission="'STORY_WRITE'"
+                [projectId]="projectId()"
+                [storyId]="storyId()"
+                [story]="story()"
+                [quality]="q"
+                [disabled]="evaluating() || state() === 'loading'"
+                (applied)="onImproved($event)"
+              />
+            }
           }
-          {{ 'storyQuality.reevaluate' | transloco }}
-        </button>
+          <button
+            *appHasPermission="'STORY_WRITE'"
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="evaluate()"
+            [disabled]="evaluating() || state() === 'loading'"
+            data-testid="story-quality-reevaluate"
+          >
+            @if (evaluating()) {
+              <hlm-spinner class="h-4 w-4" />
+            } @else {
+              <hlm-icon name="lucideRefreshCw" size="14px" />
+            }
+            {{ 'storyQuality.reevaluate' | transloco }}
+          </button>
+        </div>
       </div>
 
       @if (state() === 'loading') {
@@ -229,6 +257,10 @@ export class StoryQuality {
   readonly storyId = input.required<string>();
   /** Changes whenever the story or its criteria were saved, so the assessment is read again. */
   readonly refreshKey = input(0);
+  /** The story as saved: the "before" the AI improvement is compared against. */
+  readonly story = input<UserStoryResponse | null>(null);
+  /** The story and quality after the analyst applied an AI improvement, so the page can show them. */
+  readonly improved = output<ApplyStoryImprovementResponse>();
 
   protected readonly state = signal<'loading' | 'ready' | 'empty' | 'error'>('loading');
   protected readonly quality = signal<StoryQualityResponse | null>(null);
@@ -276,6 +308,16 @@ export class StoryQuality {
         this.toast.error(messageForError(err, this.transloco));
       },
     });
+  }
+
+  /** An AI improvement was applied: shows its fresh quality (no extra read) and tells the page. */
+  protected onImproved(response: ApplyStoryImprovementResponse): void {
+    // Any read or evaluation still in flight predates the improvement.
+    this.requestId++;
+    this.evaluating.set(false);
+    this.quality.set(response.quality);
+    this.state.set('ready');
+    this.improved.emit(response);
   }
 
   /** Reads the stored assessment; a story that was never evaluated is evaluated for the first time. */
