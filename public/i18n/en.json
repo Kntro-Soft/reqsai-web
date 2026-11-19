@@ -1102,7 +1102,8 @@
     },
     "colOrigin": "Origin",
     "sortedBy": "Sorted by: {{sort}}",
-    "emptyRecord": "Record a session"
+    "emptyRecord": "Record a session",
+    "colQuality": "Quality"
   },
   "storyForm": {
     "back": "Back to stories",
@@ -1178,7 +1179,16 @@
       "ATOMICITY": "Atomicity",
       "VERIFIABILITY": "Verifiability",
       "COMPLETENESS": "Completeness"
-    }
+    },
+    "badge": {
+      "GOOD": "Good",
+      "FAIR": "Fair",
+      "POOR": "Poor"
+    },
+    "notEvaluated": "Not evaluated",
+    "hoverTitle": "Story quality",
+    "hoverOpen": "Open the story to see how to improve it.",
+    "badgeAria": "Quality {{score}} out of 100, {{level}}"
   },
   "glossaryPage": {
     "title": "Glossary",

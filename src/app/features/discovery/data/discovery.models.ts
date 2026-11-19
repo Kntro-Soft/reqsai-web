@@ -6,6 +6,7 @@ import {
   SuggestionCodeInsight,
   SuggestionEvidence,
 } from './codebase.models';
+import { StoryQualityResponse } from './story-quality.models';
 
 export type SessionStatus =
   'DRAFT' | 'RECORDING' | 'PAUSED' | 'STOPPED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
@@ -210,6 +211,11 @@ export interface UserStoryResponse {
   origin?: StoryOrigin | null;
   /** The code modules the story touches (from the suggestion it was accepted from); [] when none. */
   codeReferences?: CodeReference[] | null;
+  /**
+   * The story's quality (score and one finding per characteristic). Only the story lists fill it; absent on
+   * older backends and on stories that arrive through realtime events.
+   */
+  quality?: StoryQualityResponse | null;
 }
 
 export interface ProcessTranscriptResponse {
@@ -239,6 +245,8 @@ export interface DisplayStory {
   acceptanceCriteria: AcceptanceCriterion[];
   /** Review status (DRAFT/APPROVED/…) when the source carried it (REST backlog). */
   status?: string | null;
+  /** Quality of the story when the source carried it (the story lists); absent for realtime events. */
+  quality?: StoryQualityResponse | null;
 }
 
 export interface PageResponse<T> {

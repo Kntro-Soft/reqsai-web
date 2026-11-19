@@ -1102,7 +1102,8 @@
     },
     "colOrigin": "Origen",
     "sortedBy": "Ordenadas por: {{sort}}",
-    "emptyRecord": "Grabar una sesión"
+    "emptyRecord": "Grabar una sesión",
+    "colQuality": "Calidad"
   },
   "storyForm": {
     "back": "Volver a historias",
@@ -1178,7 +1179,16 @@
       "ATOMICITY": "Atomicidad",
       "VERIFIABILITY": "Verificabilidad",
       "COMPLETENESS": "Completitud"
-    }
+    },
+    "badge": {
+      "GOOD": "Buena",
+      "FAIR": "Media",
+      "POOR": "Pésima"
+    },
+    "notEvaluated": "Sin evaluar",
+    "hoverTitle": "Calidad de la historia",
+    "hoverOpen": "Abre la historia para ver cómo mejorarla.",
+    "badgeAria": "Calidad {{score}} de 100, {{level}}"
   },
   "glossaryPage": {
     "title": "Glosario",
