@@ -274,6 +274,9 @@ const LANGUAGE_OPTIONS: SelectOption[] = [
                 <p class="text-sm text-muted-foreground">
                   {{ 'orgSettings.audioRetentionHint' | transloco }}
                 </p>
+                <p class="text-sm text-muted-foreground" data-testid="audio-retention-auto-delete">
+                  {{ 'orgSettings.audioRetentionAutoDelete' | transloco }}
+                </p>
               </div>
               <input
                 hlmInput
