@@ -1571,6 +1571,14 @@
       "record": "Iniciar grabación",
       "recordShort": "Grabar"
     },
+    "consent": {
+      "title": "Consentimiento de grabación",
+      "description": "Antes de iniciar la captura, confirma que los participantes de la reunión fueron informados y aceptaron que se grabe, conforme a la Ley N.° 29733 de Protección de Datos Personales.",
+      "checkbox": "Confirmo que todos los participantes consintieron la grabación de esta reunión.",
+      "required": "Marca la casilla para iniciar la captura: sin el consentimiento de los participantes no se puede grabar.",
+      "confirm": "Confirmar e iniciar",
+      "declined": "La captura no se inició: falta confirmar el consentimiento de los participantes."
+    },
     "language": {
       "label": "Idioma de la reunión",
       "search": "Buscar idioma…",
@@ -2028,6 +2036,7 @@
     "EDGE_CASE_WITHOUT_TARGET": "Este caso límite necesita una historia existente a la cual asociarse.",
     "SESSION_ACCESS_DENIED": "No tienes acceso a esta sesión.",
     "SESSION_ALREADY_ACTIVE": "Ya hay una sesión activa.",
+    "RECORDING_CONSENT_REQUIRED": "No se puede iniciar la captura sin confirmar el consentimiento de los participantes.",
     "INTEGRATION_CONNECTION_NOT_FOUND": "Esa conexión de integración ya no existe.",
     "INTEGRATION_ALREADY_CONNECTED": "Esta organización ya tiene una conexión con Jira.",
     "INTEGRATION_TARGET_NOT_CONFIGURED": "Este proyecto aún no está asociado a Jira. Configúralo en la configuración de integración del proyecto.",

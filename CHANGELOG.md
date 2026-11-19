@@ -12,6 +12,9 @@ follows [Semantic Versioning](https://semver.org/).
 ### Added (Story sources — `feature/134-story-source-fragments`, #134)
 - A "Ver origen" button in the story detail opens a dialog with the transcript fragments the story came from, their moment in the meeting and the session; manual stories and stories without a stored link say so instead of failing.
 
+### Added (Recording consent — `feature/132-recording-consent`, #132)
+- A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

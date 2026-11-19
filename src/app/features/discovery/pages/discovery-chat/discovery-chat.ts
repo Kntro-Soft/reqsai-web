@@ -83,6 +83,7 @@ import { ActiveParticipants } from '../../components/active-participants/active-
 import { DecisionQueue } from '../../components/decision-queue/decision-queue';
 import { CodeReferences } from '../../components/code-references/code-references';
 import { SuggestionCard } from '../../components/suggestion-card/suggestion-card';
+import { RecordingConsent } from '../../components/recording-consent/recording-consent';
 import { UploadRecording } from '../../components/upload-recording/upload-recording';
 import { CaptureMenu } from '../../components/capture-menu/capture-menu';
 import { ShareLinks } from '../../components/share-links/share-links';
@@ -125,6 +126,7 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
     SuggestionCard,
     CodeReferences,
     UploadRecording,
+    RecordingConsent,
     CaptureMenu,
     SidePanel,
     SpeakersPanel,
@@ -1205,6 +1207,12 @@ import { HlmButton, HlmIcon, HlmSpinner } from '../../../../shared/ui';
       />
     }
 
+    <app-recording-consent
+      [(open)]="consentOpen"
+      (confirmed)="onConsentConfirmed()"
+      (declined)="onConsentDeclined()"
+    />
+
     <app-upload-recording
       [(open)]="uploadOpen"
       [projectId]="projectId()"
@@ -1283,6 +1291,8 @@ export class DiscoveryChat implements OnInit {
 
   /** The "upload a recording" dialog (US41). */
   protected readonly uploadOpen = signal(false);
+  /** The participants' consent dialog that gates every live capture start (US70). */
+  protected readonly consentOpen = signal(false);
   protected readonly shareOpen = signal(false);
 
   /** The transcript bubble (`sessionId:sequence`) briefly highlighted after revealing evidence. */
@@ -1653,7 +1663,7 @@ export class DiscoveryChat implements OnInit {
     this.atBottom.set(el.scrollHeight - el.scrollTop - el.clientHeight < 120);
   }
 
-  protected async record(): Promise<void> {
+  protected record(): void {
     if (this.startLocked()) return;
     if (this.meetingSupported && !this.audioSourceChosen()) {
       // First recording: ask where the audio comes from; the pick starts it (see onSourcePicked).
@@ -1661,9 +1671,23 @@ export class DiscoveryChat implements OnInit {
       this.sourceMenuOpen.set(true);
       return;
     }
+    // No capture without the participants' consent: the dialog's confirmation continues below.
+    this.consentOpen.set(true);
+  }
+
+  protected onConsentConfirmed(): void {
+    void this.startCapture();
+  }
+
+  protected onConsentDeclined(): void {
+    this.toast.info(this.transloco.translate('discovery.consent.declined'));
+  }
+
+  private async startCapture(): Promise<void> {
+    if (this.startLocked()) return;
     this.preparingCapture.set(true);
     // Must stay the first await: the meeting source opens the screen-share
-    // picker, which needs this click's transient activation.
+    // picker, which needs the consent dialog's confirm click as its transient activation.
     const granted = await this.recorder.requestPermission(this.audioSource());
     this.preparingCapture.set(false);
     if (!granted) return;
@@ -1958,7 +1982,7 @@ export class DiscoveryChat implements OnInit {
       void this.recorder.shareMeetingAudio();
       return;
     }
-    void this.record();
+    this.record();
   }
 
   /**
@@ -2050,7 +2074,7 @@ export class DiscoveryChat implements OnInit {
     if (!this.askingSource()) return;
     this.askingSource.set(false);
     this.setAudioSource(source);
-    void this.record();
+    this.record();
   }
 
   /** Opens the speakers dialog of the current (live or latest) session from the ⋯ menu. */

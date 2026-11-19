@@ -52,6 +52,12 @@ test.describe('Analyze on demand', () => {
     // The first recording asks where the audio comes from; picking the microphone starts it.
     await page.getByTestId('composer-record').click();
     await page.getByTestId('audio-source-mic').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
+    // The participants' consent is confirmed before the capture starts (US70).
+    await page.getByTestId('consent-checkbox').check();
+    await page.getByTestId('consent-confirm').click();
     await expect(page.getByTestId('session-bar')).toBeVisible();
 
     const mode = page.getByTestId('session-bar-ai-mode');
