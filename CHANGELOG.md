@@ -12,6 +12,9 @@ follows [Semantic Versioning](https://semver.org/).
 ### Added (Audio retention purge — `feature/133-audio-retention-purge`, #133)
 - The session header and the history row say "Audio eliminado" when the retention policy purged the recording, and that the transcript and the stories are kept. The retention setting explains that expired audios are deleted automatically.
 
+### Added (Recording consent — `feature/132-recording-consent`, #132)
+- A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed

@@ -108,6 +108,17 @@ export class DiscoveryApiService {
     return this.http.get<PageResponse<DiscoverySessionResponse>>(this.base(projectId), { params });
   }
 
+  /** Records that the participants consented to the recording; required before `start` (US70). */
+  confirmRecordingConsent(
+    projectId: string,
+    sessionId: string,
+  ): Observable<DiscoverySessionResponse> {
+    return this.http.post<DiscoverySessionResponse>(
+      `${this.base(projectId)}/${sessionId}/consent`,
+      {},
+    );
+  }
+
   transition(
     projectId: string,
     sessionId: string,

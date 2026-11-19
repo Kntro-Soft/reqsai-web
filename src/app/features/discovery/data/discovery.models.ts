@@ -58,6 +58,10 @@ export interface DiscoverySessionResponse {
   audioState?: AudioState;
   /** When the retention policy deleted the recording; set only when `audioState` is `PURGED`. */
   audioPurgedAt?: string | null;
+  /** When the analyst confirmed the participants' consent to the recording (US70); null until then. */
+  recordingConsentAt?: string | null;
+  /** User who confirmed the participants' consent (US70); null until then. */
+  recordingConsentBy?: string | null;
 }
 
 /** Raw transcript of a session (GET /sessions/{id}/transcript; large text kept off the session resource). */
