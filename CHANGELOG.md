@@ -13,6 +13,9 @@ follows [Semantic Versioning](https://semver.org/).
 - The story detail shows the quality score (ring), the four characteristics with their observation and "how to fix it", and a Re-evaluate button. A story never evaluated is evaluated when opened, and the result is read again after every save.
 - The stories table has a Quality column with the score as a percentage and its level (good, fair, poor), and the Discovery side panel shows the percentage on each story. Hovering or focusing it lists each characteristic with its score and what was found. Saving a story in the panel reads the backlog again so the figure is not stale.
 
+### Added (Recording consent — `feature/132-recording-consent`, #132)
+- A dialog asks the analyst to confirm the participants' consent (checkbox) before a live capture starts; without it the capture does not start and the reason is shown. The recording service now creates the session, confirms the consent and then starts it. Needs the API `POST .../sessions/{id}/consent`.
+
 ## [1.7.1] - 2026-10-21
 
 ### Changed
